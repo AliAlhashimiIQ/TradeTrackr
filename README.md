@@ -1,36 +1,96 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trade Journal Application
+
+A modern trading journal application built with Next.js, React, and Supabase. Track your trades, analyze your performance, and improve your trading strategy with AI-powered insights.
+
+## Features
+
+- 📊 **Trade Tracking**: Log and manage your trading activities
+- 📅 **Calendar View**: Visualize your trades on a calendar
+- 📈 **Performance Analytics**: Track your trading performance with detailed metrics
+- 🤖 **AI Insights**: Get AI-powered analysis of your trading patterns
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile
+- 🔒 **Secure Authentication**: Powered by Supabase
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TailwindCSS
+- **State Management**: React Context + SWR
+- **Charts**: Recharts, Tremor
+- **Styling**: TailwindCSS
+- **Animation**: Framer Motion
+- **Backend**: Supabase
+- **Authentication**: Supabase Auth
+- **Database**: PostgreSQL (via Supabase)
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/trade-journal.git
+   cd trade-journal
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   Create a `.env.local` file with the following variables:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app directory
+├── components/         # React components
+│   ├── ai/            # AI-related components
+│   ├── analytics/     # Analytics components
+│   ├── calendar/      # Calendar components
+│   ├── common/        # Shared components
+│   ├── dashboard/     # Dashboard components
+│   └── trades/        # Trade-related components
+├── lib/               # Utilities and API functions
+├── hooks/             # Custom React hooks
+├── providers/         # Context providers
+├── styles/           # Global styles
+└── types/            # TypeScript type definitions
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Available Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Contributing
 
-## Learn More
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Acknowledgments
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js](https://nextjs.org/)
+- [Supabase](https://supabase.io/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Tremor](https://www.tremor.so/)
+- [Recharts](https://recharts.org/)
