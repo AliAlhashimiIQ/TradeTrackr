@@ -1,10 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
   Line,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -17,10 +22,16 @@ import {
 } from 'recharts';
 import { TimeSeriesPerformance } from '@/lib/tradeMetrics';
 
+interface DataPoint {
+  date: string;
+  value: number;
+}
+
 interface EquityCurveProps {
-  data: TimeSeriesPerformance[];
-  loading?: boolean;
+  data: DataPoint[];
   initialCapital?: number;
+  type?: 'line' | 'bar' | 'pie';
+  loading?: boolean;
 }
 
 // Consistent formatting functions that work the same on server and client
@@ -38,14 +49,34 @@ const formatDate = (dateStr: string) => {
   return `${month} ${day}`;
 };
 
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#1a1e2d] p-3 rounded-lg border border-indigo-900/20 shadow-lg">
+        <p className="text-xs text-gray-400 mb-1">{label}</p>
+        <p className="text-sm font-medium text-white">${payload[0].value.toFixed(2)}</p>
+        {payload[0].payload.change && (
+          <p className={`text-xs ${payload[0].payload.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {payload[0].payload.change >= 0 ? '+' : ''}
+            {payload[0].payload.change.toFixed(2)} ({payload[0].payload.changePercent.toFixed(2)}%)
+          </p>
+        )}
+      </div>
+    );
+  }
+  return null;
+};
+
 /**
  * EquityCurve component displays a trader's equity curve over time
  * with drawdown visualization
  */
 const EquityCurve: React.FC<EquityCurveProps> = ({
   data,
-  loading = false,
   initialCapital = 10000,
+  type = 'line',
+  loading = false,
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [showDrawdown, setShowDrawdown] = useState(true);
@@ -56,247 +87,180 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
     setIsClient(true);
   }, []);
   
+  // Process the data to include daily change
+  const processedData = data.map((point, index, arr) => {
+    const prevValue = index > 0 ? arr[index - 1].value : initialCapital;
+    const change = point.value - prevValue;
+    const changePercent = (change / prevValue) * 100;
+    
+    return {
+      ...point,
+      change,
+      changePercent
+    };
+  });
+
+  // For pie chart, calculate profit/loss categories
+  const profitLossData = (() => {
+    // Count days with profit, loss, or breakeven
+    const profitDays = processedData.filter(d => d.change > 0).length;
+    const lossDays = processedData.filter(d => d.change < 0).length;
+    const breakEvenDays = processedData.filter(d => d.change === 0).length;
+    
+    // Get total profit and loss amounts
+    const totalProfit = processedData
+      .filter(d => d.change > 0)
+      .reduce((sum, d) => sum + d.change, 0);
+    
+    const totalLoss = Math.abs(
+      processedData
+        .filter(d => d.change < 0)
+        .reduce((sum, d) => sum + d.change, 0)
+    );
+    
+    return [
+      { name: 'Profit', value: totalProfit, count: profitDays },
+      { name: 'Loss', value: totalLoss, count: lossDays },
+      { name: 'Breakeven', value: 0, count: breakEvenDays }
+    ];
+  })();
+
+  // For setting grid based on data
+  const minValue = Math.min(...processedData.map(d => d.value));
+  const maxValue = Math.max(...processedData.map(d => d.value));
+  
+  // Calculate appropriate tick values for Y axis
+  const valueDomain = [
+    Math.floor(minValue * 0.95),
+    Math.ceil(maxValue * 1.05)
+  ];
+
+  // Calculate if we're in profit or loss overall
+  const isOverallProfit = processedData.length > 0 && 
+    processedData[processedData.length - 1].value > initialCapital;
+
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="h-full w-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
 
-  if (!data || data.length === 0) {
+  if (data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No data available</p>
+      <div className="h-full w-full flex items-center justify-center text-gray-400">
+        No data available
       </div>
     );
   }
 
-  // Calculate maximum and minimum equity values for chart scaling
-  const maxEquity = Math.max(...data.map(d => d.equity));
-  const minEquity = Math.min(...data.map(d => d.equity));
-  
-  // Find the max drawdown periods
-  const maxDrawdownPoint = data.reduce((max, point) => 
-    point.drawdown > (max?.drawdown || 0) ? point : max, data[0]);
-
-  // Find data point with highest equity (peak)
-  const peakPoint = data.reduce((max, point) => 
-    point.equity > (max?.equity || 0) ? point : max, data[0]);
-  
-  // Calculate starting and ending equity
-  const startingEquity = data[0]?.equity || initialCapital;
-  const endingEquity = data[data.length - 1]?.equity || startingEquity;
-  
-  // Calculate overall return
-  const totalReturn = ((endingEquity - startingEquity) / startingEquity) * 100;
-  
-  // Create padding for the chart
-  const yDomain = [
-    Math.max(0, minEquity * 0.95), // Don't go below 0, and add 5% padding
-    maxEquity * 1.05, // Add 5% padding on top
-  ];
-  
-  // Custom tooltip formatter
-  const customTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-[#1f2937] p-3 rounded-lg shadow-lg border border-gray-700 text-xs">
-          <p className="font-bold text-white mb-1">{formatDate(label)}</p>
-          <p className="text-blue-400">
-            Equity: <span className="font-mono text-white">{formatCurrency(data.equity)}</span>
-          </p>
-          <p className="text-red-400">
-            Drawdown: <span className="font-mono text-white">{formatCurrency(data.drawdown)} ({data.drawdownPercent.toFixed(2)}%)</span>
-          </p>
-          <p className={`${data.dailyPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            Daily P&L: <span className="font-mono text-white">{formatCurrency(data.dailyPnL)}</span>
-          </p>
-        </div>
-      );
-    }
-    return null;
-  };
-
+  // Render appropriate chart based on type
   return (
-    <div className="w-full bg-[#131825] rounded-lg p-4">
-      {/* Stats summary */}
-      <div className="grid grid-cols-4 gap-2 mb-4">
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <p className="text-gray-400 text-xs">Starting Equity</p>
-          <p className="text-white text-sm font-mono">{formatCurrency(startingEquity)}</p>
-        </div>
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <p className="text-gray-400 text-xs">Current Equity</p>
-          <p className="text-white text-sm font-mono">{formatCurrency(endingEquity)}</p>
-        </div>
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <p className="text-gray-400 text-xs">Max Drawdown</p>
-          <p className="text-red-400 text-sm font-mono">{formatCurrency(maxDrawdownPoint.drawdown)} ({maxDrawdownPoint.drawdownPercent.toFixed(2)}%)</p>
-        </div>
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <p className="text-gray-400 text-xs">Total Return</p>
-          <p className={`text-sm font-mono ${totalReturn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {totalReturn >= 0 ? '+' : ''}{totalReturn.toFixed(2)}%
-          </p>
-        </div>
-      </div>
-      
-      {/* Display controls - Only show when client-side */}
-      {isClient && (
-        <div className="flex space-x-3 mb-2 text-xs">
-          <label className="flex items-center space-x-1 text-gray-300">
-            <input
-              type="checkbox"
-              checked={showDrawdown}
-              onChange={(e) => setShowDrawdown(e.target.checked)}
-              className="rounded text-blue-600 focus:ring-blue-500 h-3 w-3"
-            />
-            <span>Show Drawdown</span>
-          </label>
-          <label className="flex items-center space-x-1 text-gray-300">
-            <input
-              type="checkbox"
-              checked={showDailyPnL}
-              onChange={(e) => setShowDailyPnL(e.target.checked)}
-              className="rounded text-blue-600 focus:ring-blue-500 h-3 w-3"
-            />
-            <span>Show Daily P&L</span>
-          </label>
-        </div>
-      )}
-      
-      <div className="h-64">
+    <div className="h-full w-full">
+      {type === 'line' && (
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart
-            data={data}
-            margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke="#212946" />
-            <XAxis
-              dataKey="date"
-              tickFormatter={formatDate}
-              stroke="#6b7280"
-              tick={{ fontSize: 10 }}
-              tickLine={{ stroke: '#6b7280' }}
+          <ComposedChart data={processedData}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e2235" />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              axisLine={{ stroke: '#1e2235' }}
+              tickLine={{ stroke: '#1e2235' }}
+              tickFormatter={(value) => {
+                const date = new Date(value);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              }}
             />
-            <YAxis
-              stroke="#6b7280"
-              tick={{ fontSize: 10 }}
-              tickLine={{ stroke: '#6b7280' }}
-              tickFormatter={formatCurrency}
-              domain={yDomain}
+            <YAxis 
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              axisLine={{ stroke: '#1e2235' }}
+              tickLine={{ stroke: '#1e2235' }}
+              domain={valueDomain}
+              tickFormatter={(value) => `$${value.toLocaleString()}`}
             />
-            <Tooltip content={customTooltip} />
-            {isClient && (
-              <Legend 
-                wrapperStyle={{ color: '#9ca3af', fontSize: 12 }}
-                onClick={(e) => {
-                  if (e.dataKey === 'drawdown') {
-                    setShowDrawdown(!showDrawdown);
-                  } else if (e.dataKey === 'dailyPnL') {
-                    setShowDailyPnL(!showDailyPnL);
-                  }
-                }}
-              />
-            )}
-            
-            {/* Reference line for initial capital */}
-            <ReferenceLine 
-              y={initialCapital} 
-              stroke="#6b7280" 
-              strokeDasharray="3 3" 
-              label={{ 
-                value: 'Initial Capital', 
-                fill: '#9ca3af',
-                fontSize: 10,
-                position: 'insideBottomRight'
-              }} 
-            />
-            
-            {/* Reference area for max drawdown period */}
-            {showDrawdown && maxDrawdownPoint && maxDrawdownPoint.drawdown > 0 && (
-              <ReferenceArea 
-                x1={maxDrawdownPoint.date} 
-                x2={maxDrawdownPoint.date} 
-                y1={maxDrawdownPoint.equity} 
-                y2={maxDrawdownPoint.equity + maxDrawdownPoint.drawdown} 
-                stroke="red" 
-                strokeOpacity={0.3}
-                label={{ 
-                  value: 'Max DD', 
-                  fill: '#ef4444',
-                  fontSize: 8
-                }}
-              />
-            )}
-            
-            {/* Drawdown Area */}
-            {showDrawdown && (
-              <Area
-                type="monotone"
-                dataKey="drawdown"
-                name="Drawdown"
-                fill="#ef4444"
-                fillOpacity={0.1}
-                stroke="#ef4444"
-                strokeOpacity={0.5}
-                strokeWidth={1}
-                strokeDasharray="3 3"
-              />
-            )}
-            
-            {/* Daily P&L */}
-            {showDailyPnL && (
-              <Line
-                type="monotone"
-                dataKey="dailyPnL"
-                name="Daily P&L"
-                stroke="#10b981"
-                strokeWidth={1}
-                dot={false}
-                activeDot={{ r: 4, fill: '#10b981', stroke: '#064e3b', strokeWidth: 1 }}
-              />
-            )}
-            
-            {/* Equity Line */}
-            <Line
-              type="monotone"
-              dataKey="equity"
-              name="Equity"
-              stroke="#3b82f6"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 6, fill: '#3b82f6', stroke: '#1e3a8a', strokeWidth: 2 }}
-            />
-            
-            {/* Peak reference line */}
-            <ReferenceLine 
-              y={peakPoint.equity} 
+            <Tooltip content={<CustomTooltip />} />
+            <ReferenceLine y={initialCapital} stroke="#6b7280" strokeDasharray="3 3" />
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              fill="url(#colorValue)" 
               stroke="#3b82f6" 
-              strokeDasharray="3 3" 
-              label={{ 
-                value: 'Peak', 
-                position: 'insideTopRight',
-                fill: '#3b82f6',
-                fontSize: 10
-              }} 
+              strokeWidth={2}
+              animationDuration={800}
             />
           </ComposedChart>
         </ResponsiveContainer>
-      </div>
+      )}
       
-      {/* Time period selector - Only show when client-side */}
-      {isClient && (
-        <div className="flex justify-center mt-2 space-x-2">
-          <button className="text-xs bg-[#1a1f2c] px-2 py-1 rounded text-gray-300 hover:bg-[#252a38] transition-colors duration-150">1M</button>
-          <button className="text-xs bg-[#1a1f2c] px-2 py-1 rounded text-gray-300 hover:bg-[#252a38] transition-colors duration-150">3M</button>
-          <button className="text-xs bg-[#1a1f2c] px-2 py-1 rounded text-gray-300 hover:bg-[#252a38] transition-colors duration-150">6M</button>
-          <button className="text-xs bg-blue-600 px-2 py-1 rounded text-white transition-colors duration-150">YTD</button>
-          <button className="text-xs bg-[#1a1f2c] px-2 py-1 rounded text-gray-300 hover:bg-[#252a38] transition-colors duration-150">1Y</button>
-          <button className="text-xs bg-[#1a1f2c] px-2 py-1 rounded text-gray-300 hover:bg-[#252a38] transition-colors duration-150">All</button>
-        </div>
+      {type === 'bar' && (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={processedData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e2235" />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              axisLine={{ stroke: '#1e2235' }}
+              tickLine={{ stroke: '#1e2235' }}
+              tickFormatter={(value) => {
+                const date = new Date(value);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+              }}
+            />
+            <YAxis 
+              tick={{ fill: '#9ca3af', fontSize: 12 }}
+              axisLine={{ stroke: '#1e2235' }}
+              tickLine={{ stroke: '#1e2235' }}
+              tickFormatter={(value) => `$${value.toLocaleString()}`}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <ReferenceLine y={initialCapital} stroke="#6b7280" strokeDasharray="3 3" />
+            <Bar 
+              dataKey="change" 
+              animationDuration={800}
+            >
+              {processedData.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.change >= 0 ? '#10b981' : '#ef4444'} 
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      )}
+      
+      {type === 'pie' && (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={profitLossData}
+              cx="50%"
+              cy="50%"
+              innerRadius={80}
+              outerRadius={120}
+              paddingAngle={2}
+              dataKey="value"
+              animationDuration={800}
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+              labelLine={false}
+            >
+              <Cell fill="#10b981" /> {/* Profit */}
+              <Cell fill="#ef4444" /> {/* Loss */}
+              <Cell fill="#6b7280" /> {/* Breakeven */}
+            </Pie>
+            <Tooltip 
+              formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}
+            />
+            <Legend />
+          </PieChart>
+        </ResponsiveContainer>
       )}
     </div>
   );

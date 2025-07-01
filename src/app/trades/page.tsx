@@ -11,6 +11,104 @@ import Link from 'next/link'
 import { calculatePerformanceMetrics } from '@/lib/tradeMetrics'
 import TradeDetail from '@/components/trades/TradeDetail'
 import COLORS, { TRANSITIONS } from '@/lib/colorSystem'
+import TagModal from '@/components/trades/TagModal'
+import ExportModal from '@/components/trades/ExportModal'
+import Image from 'next/image'
+
+// Helper function to calculate trades per week
+const calculateTradesPerWeek = (trades: Trade[]): number => {
+  if (!trades.length) return 0;
+  const oldestTradeDate = new Date(Math.min(...trades.map(t => new Date(t.entry_time).getTime())));
+  const today = new Date();
+  const diffTime = Math.abs(today.getTime() - oldestTradeDate.getTime());
+  const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
+  return diffWeeks > 0 ? trades.length / diffWeeks : trades.length;
+};
+
+function MinimalEditTradeForm({ initialTrade, onSubmit, onCancel }: {
+  initialTrade: Partial<Trade>;
+  onSubmit: (trade: Partial<Trade>) => void;
+  onCancel: () => void;
+}) {
+  const [form, setForm] = useState({
+    symbol: initialTrade?.symbol || '',
+    type: initialTrade?.type || 'Long',
+    entry_price: initialTrade?.entry_price?.toString() || '',
+    exit_price: initialTrade?.exit_price?.toString() || '',
+    quantity: initialTrade?.quantity?.toString() || '',
+    entry_time: initialTrade?.entry_time || '',
+    exit_time: initialTrade?.exit_time || '',
+    notes: initialTrade?.notes || '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    onSubmit({
+      ...form,
+      entry_price: form.entry_price === '' ? undefined : Number(form.entry_price),
+      exit_price: form.exit_price === '' ? undefined : Number(form.exit_price),
+      quantity: form.quantity === '' ? undefined : Number(form.quantity),
+    });
+    setIsSubmitting(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
+      <div>
+        <label className="block text-gray-300 mb-1">Symbol</label>
+        <input name="symbol" value={form.symbol} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Type</label>
+        <select name="type" value={form.type} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white">
+          <option value="Long">Long</option>
+          <option value="Short">Short</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Entry Price</label>
+        <input name="entry_price" value={form.entry_price} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Exit Price</label>
+        <input name="exit_price" value={form.exit_price} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Quantity</label>
+        <input name="quantity" value={form.quantity} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Entry Date</label>
+        <input type="datetime-local" name="entry_time" value={form.entry_time} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Exit Date</label>
+        <input type="datetime-local" name="exit_time" value={form.exit_time} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div>
+        <label className="block text-gray-300 mb-1">Notes</label>
+        <textarea name="notes" value={form.notes} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
+      </div>
+      <div className="flex gap-3 mt-4">
+        <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+          {isSubmitting ? 'Saving...' : 'Save'}
+        </button>
+        <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
 
 export default function Trades() {
   const { user, loading } = useAuth()
@@ -22,14 +120,26 @@ export default function Trades() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [selectedDetailTrade, setSelectedDetailTrade] = useState<Trade | null>(null)
+  const [showFilters, setShowFilters] = useState(false)
   
-  // Filtering state
+  // Filtering and sorting state
   const [searchTerm, setSearchTerm] = useState('')
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'All' | 'Long' | 'Short'>('All')
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
   const [sortField, setSortField] = useState<keyof Trade>('entry_time')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [pnlRange, setPnlRange] = useState<{ min: number | null; max: number | null }>({ min: null, max: null })
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  
+  // Bulk actions state
+  const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([])
+  const [showBulkActions, setShowBulkActions] = useState(false)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [totalPages, setTotalPages] = useState(1)
   const [quickMetrics, setQuickMetrics] = useState<{
     winRate: number;
     profitFactor: number;
@@ -45,9 +155,10 @@ export default function Trades() {
     avgLoss: 0, 
     tradesPerWeek: 0 
   })
-  
-  // Toggle filter panel
-  const [showFilters, setShowFilters] = useState(false)
+  const [showTagModal, setShowTagModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user) {
@@ -69,11 +180,7 @@ export default function Trades() {
             const metrics = calculatePerformanceMetrics(tradesData);
             
             // Calculate trades per week
-            const oldestTradeDate = new Date(Math.min(...tradesData.map(t => new Date(t.entry_time).getTime())));
-            const today = new Date();
-            const diffTime = Math.abs(today.getTime() - oldestTradeDate.getTime());
-            const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-            const tradesPerWeek = diffWeeks > 0 ? tradesData.length / diffWeeks : tradesData.length;
+            const tradesPerWeek = calculateTradesPerWeek(tradesData);
             
             setQuickMetrics({
               winRate: metrics.winRate,
@@ -108,6 +215,7 @@ export default function Trades() {
       const term = searchTerm.toLowerCase();
       result = result.filter(trade => 
         trade.symbol.toLowerCase().includes(term) || 
+        (trade.tags?.some(tag => tag.toLowerCase().includes(term))) ||
         (trade.notes && trade.notes.toLowerCase().includes(term))
       );
     }
@@ -141,10 +249,26 @@ export default function Trades() {
           cutoffDate = new Date(now.setFullYear(now.getFullYear() - 1));
           break;
         default:
-          cutoffDate = new Date(0); // Beginning of time
+          cutoffDate = new Date(0);
       }
       
       result = result.filter(trade => new Date(trade.entry_time) >= cutoffDate);
+    }
+
+    // Apply P&L range filter
+    if (pnlRange.min !== null || pnlRange.max !== null) {
+      result = result.filter(trade => {
+        if (pnlRange.min !== null && trade.profit_loss < pnlRange.min) return false;
+        if (pnlRange.max !== null && trade.profit_loss > pnlRange.max) return false;
+        return true;
+      });
+    }
+
+    // Apply tags filter
+    if (selectedTags.length > 0) {
+      result = result.filter(trade => 
+        trade.tags?.every(tag => selectedTags.includes(tag))
+      );
     }
     
     // Apply sorting
@@ -163,27 +287,27 @@ export default function Trades() {
         ? (fieldA as number) - (fieldB as number) 
         : (fieldB as number) - (fieldA as number);
     });
+
+    // Calculate total pages
+    setTotalPages(Math.ceil(result.length / pageSize));
+    
+    // Apply pagination
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    result = result.slice(startIndex, endIndex);
     
     setFilteredTrades(result);
     
     // Update metrics for filtered results
     if (result.length > 0) {
       const metrics = calculatePerformanceMetrics(result);
-      
-      // Calculate trades per week for filtered results
-      const oldestTradeDate = new Date(Math.min(...result.map(t => new Date(t.entry_time).getTime())));
-      const today = new Date();
-      const diffTime = Math.abs(today.getTime() - oldestTradeDate.getTime());
-      const diffWeeks = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7));
-      const tradesPerWeek = diffWeeks > 0 ? result.length / diffWeeks : result.length;
-      
       setQuickMetrics({
         winRate: metrics.winRate,
         profitFactor: metrics.profitFactor,
         totalPnL: metrics.totalPnL,
         avgWin: metrics.averageWin,
         avgLoss: metrics.averageLoss,
-        tradesPerWeek
+        tradesPerWeek: calculateTradesPerWeek(result)
       });
     } else {
       setQuickMetrics({ 
@@ -195,7 +319,7 @@ export default function Trades() {
         tradesPerWeek: 0
       });
     }
-  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection]);
+  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, pnlRange, selectedTags, currentPage, pageSize]);
 
   const uniqueSymbols = Array.from(new Set(trades.map(trade => trade.symbol)));
 
@@ -214,8 +338,12 @@ export default function Trades() {
       setIsDeleting(tradeId)
       try {
         await deleteTrade(tradeId)
-        // Update local state
-        setTrades(prevTrades => prevTrades.filter(trade => trade.id !== tradeId))
+        // Refresh trades from backend
+        if (user) {
+          const tradesData = await getAllTrades(user.id)
+          setTrades(tradesData)
+          setFilteredTrades(tradesData)
+        }
       } catch (error) {
         console.error('Error deleting trade:', error)
         alert('Failed to delete trade. Please try again.')
@@ -240,7 +368,12 @@ export default function Trades() {
           trade.id === tradeData.id ? { ...trade, ...tradeData } as Trade : trade
         );
         setTrades(updatedTrades);
-        
+        // Refresh trades from backend
+        if (user) {
+          const tradesData = await getAllTrades(user.id)
+          setTrades(tradesData)
+          setFilteredTrades(tradesData)
+        }
         // Close the form
         setShowForm(false);
         setSelectedTrade(null);
@@ -289,6 +422,128 @@ export default function Trades() {
   // Handle viewing trade details
   const handleViewTradeDetails = (trade: Trade) => {
     setSelectedDetailTrade(trade);
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: 'delete' | 'export' | 'tag') => {
+    if (!selectedTradeIds.length) return;
+
+    switch (action) {
+      case 'delete':
+        if (window.confirm(`Are you sure you want to delete ${selectedTradeIds.length} trades?`)) {
+          setIsLoading(true);
+          try {
+            await Promise.all(selectedTradeIds.map(id => deleteTrade(id)));
+            // Refresh trades from backend
+            if (user) {
+              const tradesData = await getAllTrades(user.id)
+              setTrades(tradesData)
+              setFilteredTrades(tradesData)
+            }
+            setSelectedTradeIds([]);
+          } catch (error) {
+            console.error('Error deleting trades:', error);
+            alert('Failed to delete some trades. Please try again.');
+          } finally {
+            setIsLoading(false);
+          }
+        }
+        break;
+
+      case 'export':
+        setShowExportModal(true);
+        break;
+
+      case 'tag':
+        setShowTagModal(true);
+        break;
+    }
+  };
+
+  const handleExport = async (format: 'csv' | 'json' | 'pdf') => {
+    setIsProcessing(true);
+    try {
+      const selectedTrades = trades.filter(trade => selectedTradeIds.includes(trade.id));
+      exportTrades(selectedTrades, format);
+      setShowExportModal(false);
+    } catch (error) {
+      console.error('Error exporting trades:', error);
+      alert('Failed to export trades. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleAddTag = async (tag: string) => {
+    setIsProcessing(true);
+    try {
+      setTrades(prevTrades => 
+        prevTrades.map(trade => 
+          selectedTradeIds.includes(trade.id)
+            ? {
+                ...trade,
+                tags: [...(trade.tags || []), tag]
+              }
+            : trade
+        )
+      );
+      setSelectedTradeIds([]);
+      setShowTagModal(false);
+    } catch (error) {
+      console.error('Error adding tag:', error);
+      alert('Failed to add tag. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Export trades function
+  const exportTrades = (tradesToExport: Trade[], format: 'csv' | 'json' | 'pdf') => {
+    switch (format) {
+      case 'csv':
+        const csv = convertTradesToCSV(tradesToExport);
+        downloadFile(csv, 'trades.csv', 'text/csv');
+        break;
+      case 'json':
+        const json = JSON.stringify(tradesToExport, null, 2);
+        downloadFile(json, 'trades.json', 'application/json');
+        break;
+      case 'pdf':
+        // Implement PDF export
+        alert('PDF export not implemented yet');
+        break;
+    }
+  };
+
+  // Helper function to download files
+  const downloadFile = (content: string, filename: string, contentType: string) => {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Convert trades to CSV
+  const convertTradesToCSV = (tradesToConvert: Trade[]): string => {
+    const headers = ['Symbol', 'Type', 'Entry Price', 'Exit Price', 'Quantity', 'P/L', 'Entry Time', 'Exit Time', 'Tags', 'Notes'];
+    const rows = tradesToConvert.map(trade => [
+      trade.symbol,
+      trade.type,
+      trade.entry_price,
+      trade.exit_price,
+      trade.quantity,
+      trade.profit_loss,
+      trade.entry_time,
+      trade.exit_time,
+      trade.tags?.join(';') || '',
+      trade.notes || ''
+    ]);
+    return [headers, ...rows].map(row => row.join(',')).join('\n');
   };
 
   if (loading || isLoading) {
@@ -509,12 +764,72 @@ export default function Trades() {
           )}
         </div>
         
+        {/* Bulk Actions Bar */}
+        {selectedTradeIds.length > 0 && (
+          <div className="bg-[#1a1f2c] mb-6 p-4 rounded-lg border border-gray-800 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <span className="text-white">
+                {selectedTradeIds.length} trade{selectedTradeIds.length > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleBulkAction('delete')}
+                  className="px-4 py-2 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete
+                </button>
+                <button
+                  onClick={() => handleBulkAction('export')}
+                  className="px-4 py-2 bg-blue-900/30 text-blue-400 rounded-lg hover:bg-blue-900/50 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export
+                </button>
+                <button
+                  onClick={() => handleBulkAction('tag')}
+                  className="px-4 py-2 bg-purple-900/30 text-purple-400 rounded-lg hover:bg-purple-900/50 transition-colors flex items-center"
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  Tag
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setSelectedTradeIds([])}
+              className="text-gray-400 hover:text-white transition-colors"
+            >
+              Clear Selection
+            </button>
+          </div>
+        )}
+
         {/* Enhanced Trade Table */}
         <div className="bg-[#1a1f2c] rounded-xl border border-gray-800 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-[#151823] text-gray-400 text-left border-b border-gray-800">
+                  <th className="px-6 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedTradeIds.length === filteredTrades.length}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTradeIds(filteredTrades.map(t => t.id));
+                        } else {
+                          setSelectedTradeIds([]);
+                        }
+                      }}
+                      className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
+                    />
+                  </th>
                   <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('symbol')}>
                     <div className="flex items-center">
                       Symbol {getSortIndicator('symbol')}
@@ -551,6 +866,9 @@ export default function Trades() {
                     </div>
                   </th>
                   <th className="px-6 py-3">
+                    Screenshot
+                  </th>
+                  <th className="px-6 py-3">
                     <div className="flex items-center">
                       Details
                     </div>
@@ -573,6 +891,20 @@ export default function Trades() {
                 ) : (
                   filteredTrades.map((trade) => (
                     <tr key={trade.id} className="hover:bg-[#1d2333] transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={selectedTradeIds.includes(trade.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTradeIds(prev => [...prev, trade.id]);
+                            } else {
+                              setSelectedTradeIds(prev => prev.filter(id => id !== trade.id));
+                            }
+                          }}
+                          className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-3">
                           <div>
@@ -628,11 +960,11 @@ export default function Trades() {
                         }`}>
                           {trade.profit_loss > 0 ? '+' : ''}{formatCurrency(trade.profit_loss)}
                         </div>
-                        {trade.r_multiple && (
+                        {trade.r_multiple !== undefined && trade.r_multiple !== null && (
                           <div className={`text-xs ${
-                            trade.r_multiple > 0 ? 'text-green-500' : 'text-red-500'
+                            (trade.r_multiple || 0) > 0 ? 'text-green-500' : 'text-red-500'
                           }`}>
-                            {trade.r_multiple > 0 ? '+' : ''}{trade.r_multiple.toFixed(1)}R
+                            {(trade.r_multiple || 0) > 0 ? '+' : ''}{trade.r_multiple.toFixed(1)}R
                           </div>
                         )}
                       </td>
@@ -645,10 +977,29 @@ export default function Trades() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
+                        {trade.screenshot_url ? (
+                          <div className="w-16 h-10 relative cursor-pointer group" onClick={() => setSelectedScreenshotUrl(trade.screenshot_url)}>
+                            <Image
+                              src={trade.screenshot_url}
+                              alt="Trade Screenshot"
+                              fill
+                              className="object-cover rounded border border-gray-700 group-hover:brightness-75 transition"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <svg className="w-6 h-6 text-white bg-black/60 rounded-full p-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="w-16 h-10 flex items-center justify-center bg-gray-800 text-gray-500 text-xs rounded border border-gray-700">
+                            No Image
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          {trade.screenshot_url && (
-                            <div className="w-2 h-2 rounded-full bg-blue-400" title="Has screenshot"></div>
-                          )}
                           {trade.notes && (
                             <div className="w-2 h-2 rounded-full bg-purple-400" title="Has notes"></div>
                           )}
@@ -696,29 +1047,67 @@ export default function Trades() {
           </div>
           
           {/* Enhanced Pagination */}
-          {filteredTrades.length > 0 && (
-            <div className="px-6 py-4 bg-[#1a1f2c] border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center text-sm">
-              <div className="text-gray-400 mb-3 sm:mb-0">
-                Showing <span className="text-white">{Math.min(filteredTrades.length, 10)}</span> of <span className="text-white">{filteredTrades.length}</span> trades
-              </div>
-              <div className="flex items-center space-x-2">
-                <button className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button className="px-3 py-1 rounded-lg bg-blue-900/50 text-blue-400 border border-blue-800">1</button>
-                <button className="px-3 py-1 rounded-lg text-gray-400 hover:bg-gray-800">2</button>
-                <button className="px-3 py-1 rounded-lg text-gray-400 hover:bg-gray-800">3</button>
-                <span className="text-gray-400">...</span>
-                <button className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
+          <div className="px-6 py-4 bg-[#1a1f2c] border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center text-sm">
+            <div className="text-gray-400 mb-3 sm:mb-0">
+              Showing <span className="text-white">{Math.min(pageSize, filteredTrades.length)}</span> of{' '}
+              <span className="text-white">{trades.length}</span> trades
             </div>
-          )}
+            <div className="flex items-center space-x-2">
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="px-2 py-1 bg-[#151823] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="10">10 per page</option>
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+              </select>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* Page numbers */}
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`px-3 py-1 rounded-lg ${
+                      currentPage === pageNum
+                        ? 'bg-blue-900/50 text-blue-400 border border-blue-800'
+                        : 'text-gray-400 hover:bg-gray-800'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+              {totalPages > 5 && <span className="text-gray-400">...</span>}
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -739,11 +1128,18 @@ export default function Trades() {
                 </svg>
               </button>
             </div>
-            <EnhancedTradeForm
-              initialTrade={selectedTrade || undefined}
-              onSubmit={handleTradeFormSubmit}
-              onCancel={handleTradeFormClose}
-            />
+            {selectedTrade ? (
+              <MinimalEditTradeForm
+                initialTrade={selectedTrade}
+                onSubmit={handleTradeFormSubmit}
+                onCancel={handleTradeFormClose}
+              />
+            ) : (
+              <EnhancedTradeForm
+                onSubmit={handleTradeFormSubmit}
+                onCancel={handleTradeFormClose}
+              />
+            )}
           </div>
         </div>
       )}
@@ -754,6 +1150,43 @@ export default function Trades() {
           trade={selectedDetailTrade} 
           onClose={() => setSelectedDetailTrade(null)} 
         />
+      )}
+      
+      <TagModal
+        isOpen={showTagModal}
+        onClose={() => setShowTagModal(false)}
+        onConfirm={handleAddTag}
+        isLoading={isProcessing}
+      />
+      
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onConfirm={handleExport}
+        isLoading={isProcessing}
+      />
+
+      {/* Screenshot Modal */}
+      {selectedScreenshotUrl && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4" onClick={() => setSelectedScreenshotUrl(null)}>
+          <div className="max-w-3xl w-full relative" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setSelectedScreenshotUrl(null)}
+              className="absolute top-2 right-2 bg-gray-800 rounded-full p-2 text-white z-10"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="relative max-h-[80vh] flex items-center justify-center">
+              <img
+                src={selectedScreenshotUrl}
+                alt="Trade Screenshot Full"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

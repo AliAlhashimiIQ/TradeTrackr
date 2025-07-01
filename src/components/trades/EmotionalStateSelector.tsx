@@ -205,7 +205,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
   const selectedEmotion = getSelectedEmotion();
   
   return (
-    <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className}`}>
+    <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className} rounded-[2.5rem]`}>
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-white text-sm font-semibold flex items-center">
           <svg className="w-4 h-4 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

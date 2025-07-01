@@ -1,145 +1,137 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
+import COLORS, { TRANSITIONS } from '@/lib/colorSystem';
+import { TEXT, BUTTONS, FORMS, LAYOUT } from '@/lib/designSystem';
 
 export default function ResetPassword() {
-  const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [validToken, setValidToken] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const { updatePassword } = useAuth();
 
-  useEffect(() => {
-    const verifyToken = async () => {
-      const token = searchParams.get('token');
-      const type = searchParams.get('type');
-      
-      if (!token || type !== 'recovery') {
-        setMessage({ text: 'Invalid or expired reset link.', type: 'error' });
-        return;
-      }
-      
-      setValidToken(true);
-    };
+  const validatePassword = (password: string) => {
+    if (password.length < 8) return false;
+    if (!/[A-Z]/.test(password)) return false;
+    if (!/[a-z]/.test(password)) return false;
+    if (!/[0-9]/.test(password)) return false;
+    if (!/[^A-Za-z0-9]/.test(password)) return false;
+    return true;
+  };
 
-    verifyToken();
-  }, [searchParams]);
-
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== confirmPassword) {
-      setMessage({ text: 'Passwords do not match.', type: 'error' });
-      return;
-    }
-    
-    if (password.length < 6) {
-      setMessage({ text: 'Password must be at least 6 characters.', type: 'error' });
-      return;
-    }
-    
     setLoading(true);
-    setMessage(null);
-    
+    setError(null);
+
+    // Validate password strength
+    if (!validatePassword(newPassword)) {
+      setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters');
+      setLoading(false);
+      return;
+    }
+
+    // Validate passwords match
+    if (newPassword !== confirmPassword) {
+      setError("Passwords don't match");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      
-      if (error) {
-        throw error;
-      }
-      
-      setMessage({ text: 'Password updated successfully!', type: 'success' });
+      await updatePassword(newPassword);
+      setSuccess(true);
+      // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push('/login');
-      }, 2000);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to reset password.';
-      setMessage({ text: errorMessage, type: 'error' });
+      }, 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update password');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <div className="w-full max-w-md p-8 space-y-8 bg-gray-800 rounded-lg shadow-md">
+    <div className={`${LAYOUT.flexCenter} min-h-screen w-full py-12 px-4 bg-gradient-to-b from-[#0c0d14] to-[#0f1117]`}>
+      <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Reset Your Password</h1>
-          <p className="mt-2 text-gray-300">Enter your new password below</p>
+          <h2 className={TEXT.heading.h1}>Reset Your Password</h2>
+          <p className={`mt-2 ${TEXT.body.regular} text-[${COLORS.text.secondary}]`}>
+            Please enter your new password below
+          </p>
         </div>
-        
-        {message && (
-          <div className={`p-4 rounded-md ${
-            message.type === 'success' ? 'bg-green-800' : 'bg-red-800'
-          }`}>
-            {message.text}
-          </div>
-        )}
-        
-        {validToken ? (
-          <form className="mt-8 space-y-6" onSubmit={handleResetPassword}>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium">
-                New Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-700 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="New password"
-                />
+
+        <div className="gradient-border">
+          <div className={`bg-[${COLORS.background.dark}] rounded-xl p-8`}>
+            {success ? (
+              <div className={`bg-[${COLORS.success}]/10 border border-[${COLORS.success}]/30 text-[${COLORS.successLight}] ${TEXT.body.small} p-4 rounded-lg flex items-start`}>
+                <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Password updated successfully! Redirecting to login...</span>
               </div>
-            </div>
-            
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium">
-                Confirm New Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-700 bg-gray-700 placeholder-gray-400 text-white rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm new password"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {loading ? 'Resetting...' : 'Reset Password'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div className="text-center p-4">
-            <p>Invalid or expired reset link.</p>
-            <button
-              onClick={() => router.push('/login')}
-              className="mt-4 text-blue-400 hover:text-blue-300"
-            >
-              Return to Login
-            </button>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className={`bg-[${COLORS.danger}]/10 border border-[${COLORS.danger}]/30 text-[${COLORS.dangerLight}] ${TEXT.body.small} p-4 rounded-lg flex items-start`}>
+                    <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className={FORMS.group}>
+                  <label htmlFor="newPassword" className={FORMS.label.primary}>New Password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter your new password"
+                    className={FORMS.input}
+                    required
+                  />
+                </div>
+
+                <div className={FORMS.group}>
+                  <label htmlFor="confirmPassword" className={FORMS.label.primary}>Confirm New Password</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm your new password"
+                    className={FORMS.input}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className={`w-full ${LAYOUT.flexCenter} px-4 py-3 bg-gradient-to-r from-[${COLORS.primary}] to-[${COLORS.primaryDark}] hover:from-[${COLORS.primaryLight}] hover:to-[${COLORS.primary}] text-[${COLORS.text.primary}] font-medium rounded-lg ${TRANSITIONS.medium} transform hover:translate-y-[-1px] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
+                  >
+                    {loading && (
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    )}
+                    {loading ? 'Updating Password...' : 'Reset Password'}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

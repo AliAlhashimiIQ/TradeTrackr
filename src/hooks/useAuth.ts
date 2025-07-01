@@ -172,6 +172,30 @@ export const useAuth = () => {
     }
   }
 
+  const signInWithGoogle = async () => {
+    setAuthError(null)
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      })
+      if (error) {
+        setAuthError(error)
+        throw error
+      }
+      return data
+    } catch (error) {
+      console.error('Error signing in with Google:', error)
+      throw error
+    }
+  }
+
   return {
     user,
     session,
@@ -182,6 +206,7 @@ export const useAuth = () => {
     signOut,
     resetPassword,
     updatePassword,
-    verifyOtp
+    verifyOtp,
+    signInWithGoogle
   }
 } 

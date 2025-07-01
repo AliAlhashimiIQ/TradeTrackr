@@ -21,9 +21,13 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<TradingViewAnalysisResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
+  const [compressionEnabled, setCompressionEnabled] = useState<boolean>(true);
+  const [compressionQuality, setCompressionQuality] = useState<number>(0.7); // 70% quality by default
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropAreaRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Generate previews when screenshots change
   useEffect(() => {
@@ -91,7 +95,7 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
   };
   
   // Process uploaded files
-  const handleFiles = (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
     // Reset error state
     setUploadError(null);
     
@@ -102,8 +106,8 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
         return false;
       }
       
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setUploadError('File size exceeds 5MB limit.');
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit, we'll compress later if needed
+        setUploadError('File size exceeds 10MB limit.');
         return false;
       }
       
@@ -112,19 +116,117 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
     
     if (validFiles.length === 0) return;
     
+    // Compress images if enabled
+    const processedFiles: File[] = [];
+    
+    if (compressionEnabled) {
+      for (const file of validFiles) {
+        try {
+          const compressedFile = await compressImage(file, compressionQuality);
+          processedFiles.push(compressedFile);
+        } catch (error) {
+          console.error('Error compressing image:', error);
+          processedFiles.push(file); // Use original if compression fails
+        }
+      }
+    } else {
+      processedFiles.push(...validFiles);
+    }
+    
     // Add new screenshots
-    setScreenshots(prev => [...prev, ...validFiles]);
+    setScreenshots(prev => [...prev, ...processedFiles]);
     
     // Auto-analyze the first uploaded screenshot
-    if (validFiles.length > 0) {
-      analyzeScreenshot(validFiles[0]);
+    if (processedFiles.length > 0) {
+      analyzeScreenshot(processedFiles[0]);
     }
+    
+    // Show the first uploaded image in the preview modal
+    if (processedFiles.length > 0) {
+      setSelectedPreviewIndex(screenshots.length);
+    }
+  };
+  
+  // Compress image using canvas
+  const compressImage = (file: File, quality: number): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      
+      img.onload = () => {
+        // Use the canvas ref or create a new canvas element
+        const canvas = canvasRef.current || document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          URL.revokeObjectURL(img.src);
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        // Set canvas dimensions, maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        
+        // Cap dimensions at 1920px for very large images
+        const maxDimension = 1920;
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = Math.round((height * maxDimension) / width);
+            width = maxDimension;
+          } else {
+            width = Math.round((width * maxDimension) / height);
+            height = maxDimension;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Clean up the object URL
+        URL.revokeObjectURL(img.src);
+        
+        // Convert to blob with compression
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              reject(new Error('Canvas toBlob failed'));
+              return;
+            }
+            
+            // Create a new file from the compressed blob
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            
+            resolve(compressedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(img.src);
+        reject(new Error('Error loading image'));
+      };
+    });
   };
   
   // Remove a screenshot
   const handleRemove = (index: number) => {
     setScreenshots(prev => prev.filter((_, i) => i !== index));
     setPreviews(prev => prev.filter((_, i) => i !== index));
+    
+    if (selectedPreviewIndex === index) {
+      setSelectedPreviewIndex(null);
+    } else if (selectedPreviewIndex !== null && selectedPreviewIndex > index) {
+      setSelectedPreviewIndex(selectedPreviewIndex - 1);
+    }
   };
   
   // Analyze screenshot with AI
@@ -156,9 +258,39 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
       fileInputRef.current.click();
     }
   };
+
+  // Close preview modal
+  const closePreview = () => {
+    setSelectedPreviewIndex(null);
+  };
+  
+  // View image in full screen preview modal
+  const openPreview = (index: number) => {
+    setSelectedPreviewIndex(index);
+  };
+  
+  // Navigate between images in preview
+  const navigatePreview = (direction: 'prev' | 'next') => {
+    if (selectedPreviewIndex === null || previews.length <= 1) return;
+    
+    if (direction === 'prev') {
+      setSelectedPreviewIndex(prev => 
+        prev === 0 ? previews.length - 1 : prev - 1
+      );
+    } else {
+      setSelectedPreviewIndex(prev => 
+        prev === previews.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+  
+  // Handle compression quality change
+  const handleCompressionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCompressionQuality(parseFloat(e.target.value));
+  };
   
   return (
-    <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className}`}>
+    <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className} rounded-[2.5rem]`}>
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-white text-sm font-semibold flex items-center">
           <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,6 +301,38 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
         <p className="text-gray-400 text-xs mt-1">
           Upload trading chart screenshots to help document your trades
         </p>
+        
+        {/* Compression Settings */}
+        <div className="mt-3 flex flex-col space-y-2">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="enable-compression"
+              checked={compressionEnabled}
+              onChange={(e) => setCompressionEnabled(e.target.checked)}
+              className="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="enable-compression" className="text-xs text-gray-300">
+              Compress images automatically
+            </label>
+          </div>
+          
+          {compressionEnabled && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-400">Quality:</span>
+              <input
+                type="range"
+                min="0.1"
+                max="1"
+                step="0.1"
+                value={compressionQuality}
+                onChange={handleCompressionChange}
+                className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-xs text-gray-400">{Math.round(compressionQuality * 100)}%</span>
+            </div>
+          )}
+        </div>
       </div>
       
       {/* Upload Area */}
@@ -198,7 +362,7 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
           Drag & drop your chart screenshots here
         </p>
         <p className="text-xs text-gray-500">
-          or click to browse (maximum 5MB per file)
+          or click to browse (maximum 10MB per file)
         </p>
       </div>
       
@@ -226,6 +390,7 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
                     alt={`Screenshot ${index + 1}`}
                     fill
                     className="object-cover"
+                    onClick={() => openPreview(index)}
                   />
                   
                   {/* Screenshot Controls */}
@@ -234,9 +399,25 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleManualAnalysis(index);
+                        openPreview(index);
                       }}
                       className="px-3 py-1.5 bg-blue-600/80 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors"
+                    >
+                      <div className="flex items-center">
+                        <svg className="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        Preview
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleManualAnalysis(index);
+                      }}
+                      className="px-3 py-1.5 bg-green-600/80 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
                     >
                       <div className="flex items-center">
                         <svg className="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -263,10 +444,13 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
                   </div>
                 </div>
                 
-                {/* Screenshot Info */}
-                <div className="p-2 text-xs text-gray-400 flex justify-between items-center">
-                  <span>Screenshot {index + 1}</span>
-                  <span>{(screenshots[index].size / 1024).toFixed(1)} KB</span>
+                <div className="p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-300 truncate">Screenshot {index + 1}</span>
+                    <span className="text-gray-500 text-xs">
+                      {(screenshots[index].size / 1024).toFixed(1)} KB
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
@@ -274,106 +458,62 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
         </div>
       )}
       
-      {/* AI Analysis Status */}
-      {isAnalyzing && (
-        <div className="m-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-          <div className="flex items-center">
-            <div className="mr-3">
-              <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+      {/* Hidden canvas for image compression */}
+      <canvas ref={canvasRef} className="hidden" />
+      
+      {/* Full-screen preview modal */}
+      {selectedPreviewIndex !== null && selectedPreviewIndex < previews.length && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4">
+          <div className="max-w-6xl w-full relative">
+            {/* Close button */}
+            <button
+              onClick={closePreview}
+              className="absolute top-2 right-2 bg-gray-800 rounded-full p-2 text-white z-10"
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Image container */}
+            <div className="relative max-h-[80vh] flex items-center justify-center">
+              <img
+                src={previews[selectedPreviewIndex]}
+                alt={`Screenshot ${selectedPreviewIndex + 1}`}
+                className="max-w-full max-h-[80vh] object-contain"
+              />
             </div>
-            <div>
-              <p className="text-blue-400 text-sm font-medium">Analyzing screenshot...</p>
-              <p className="text-gray-500 text-xs mt-0.5">Using AI to extract trade details</p>
+            
+            {/* Navigation buttons */}
+            {previews.length > 1 && (
+              <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between">
+                <button
+                  onClick={() => navigatePreview('prev')}
+                  className="ml-4 bg-gray-800 rounded-full p-2 text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <button
+                  onClick={() => navigatePreview('next')}
+                  className="mr-4 bg-gray-800 rounded-full p-2 text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            
+            {/* Image info */}
+            <div className="text-center text-white mt-4">
+              Screenshot {selectedPreviewIndex + 1} of {previews.length}
             </div>
           </div>
         </div>
       )}
-      
-      {/* Analysis Results */}
-      {analysisResult && !isAnalyzing && (
-        <div className="m-4 p-3 bg-green-900/20 border border-green-500/30 rounded-lg">
-          <h4 className="text-green-400 text-sm font-medium mb-2 flex items-center">
-            <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Analysis Complete
-          </h4>
-          
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {analysisResult.symbol && (
-              <div className="bg-[#1a1f2c] p-2 rounded">
-                <span className="text-gray-400">Symbol:</span>
-                <span className="text-white ml-1.5">{analysisResult.symbol}</span>
-              </div>
-            )}
-            
-            {analysisResult.tradeType && (
-              <div className="bg-[#1a1f2c] p-2 rounded">
-                <span className="text-gray-400">Type:</span>
-                <span className={`ml-1.5 ${
-                  analysisResult.tradeType === 'Long' ? 'text-green-400' : 'text-red-400'
-                }`}>
-                  {analysisResult.tradeType}
-                </span>
-              </div>
-            )}
-            
-            {analysisResult.entryPrice && (
-              <div className="bg-[#1a1f2c] p-2 rounded">
-                <span className="text-gray-400">Entry Price:</span>
-                <span className="text-white ml-1.5">${analysisResult.entryPrice}</span>
-              </div>
-            )}
-            
-            {analysisResult.takeProfitPrice && (
-              <div className="bg-[#1a1f2c] p-2 rounded">
-                <span className="text-gray-400">Take Profit:</span>
-                <span className="text-white ml-1.5">${analysisResult.takeProfitPrice}</span>
-              </div>
-            )}
-            
-            {analysisResult.patterns && analysisResult.patterns.length > 0 && (
-              <div className="bg-[#1a1f2c] p-2 rounded col-span-2">
-                <span className="text-gray-400">Patterns:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {analysisResult.patterns.map((pattern, i) => (
-                    <span key={i} className="px-1.5 py-0.5 bg-purple-900/30 text-purple-400 rounded">
-                      {pattern.name}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {analysisResult.suggestedTags && analysisResult.suggestedTags.length > 0 && (
-              <div className="bg-[#1a1f2c] p-2 rounded col-span-2">
-                <span className="text-gray-400">Suggested Tags:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {analysisResult.suggestedTags.map((tag, i) => (
-                    <span key={i} className="px-1.5 py-0.5 bg-blue-900/30 text-blue-400 rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      
-      {/* Add Image Button */}
-      <div className="p-4 pt-0">
-        <button
-          type="button"
-          onClick={openFileDialog}
-          className="w-full p-2 rounded-lg border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors flex items-center justify-center"
-        >
-          <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Add Screenshot
-        </button>
-      </div>
     </div>
   );
 };

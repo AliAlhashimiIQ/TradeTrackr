@@ -175,16 +175,16 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
       const filteredEntries = batchEntries.filter(entry => 
         entry.symbol.trim() && entry.entry_price && entry.exit_price && entry.quantity
       );
-      
-      const formattedTrades = filteredEntries.map(entry => ({
+    
+    const formattedTrades = filteredEntries.map(entry => ({
         symbol: entry.symbol.trim().toUpperCase(),
-        type: entry.type,
-        entry_price: parseFloat(entry.entry_price),
-        exit_price: parseFloat(entry.exit_price),
-        quantity: parseFloat(entry.quantity),
-        entry_time: new Date(entry.entry_time).toISOString(),
-        exit_time: new Date(entry.exit_time).toISOString(),
-        profit_loss: entry.profit_loss || 0,
+      type: entry.type,
+      entry_price: parseFloat(entry.entry_price),
+      exit_price: parseFloat(entry.exit_price),
+      quantity: parseFloat(entry.quantity),
+      entry_time: new Date(entry.entry_time).toISOString(),
+      exit_time: new Date(entry.exit_time).toISOString(),
+      profit_loss: entry.profit_loss || 0,
         notes: entry.notes || `Batch entry trade for ${entry.symbol}`
       }));
       
@@ -290,9 +290,9 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
         </AnimatePresence>
 
         {/* Trades Table */}
-        <div className="overflow-x-auto">
+      <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
+          <thead>
               <tr className="text-left border-b border-indigo-900/20">
                 <th className="pb-3 text-xs font-medium text-indigo-300">Symbol</th>
                 <th className="pb-3 text-xs font-medium text-indigo-300">Type</th>
@@ -303,71 +303,71 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
                 <th className="pb-3 text-xs font-medium text-indigo-300">Exit Date</th>
                 <th className="pb-3 text-xs font-medium text-indigo-300">P/L</th>
                 <th className="pb-3 text-xs font-medium text-indigo-300"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {batchEntries.map((entry, index) => (
+            </tr>
+          </thead>
+          <tbody>
+            {batchEntries.map((entry, index) => (
                 <tr key={entry.id} className="border-b border-indigo-900/10 last:border-0">
                   <td className="py-3 pr-4">
-                    <input
+                  <input
                       id={`symbol-${entry.id}`}
-                      type="text"
-                      value={entry.symbol}
-                      onChange={(e) => handleChangeField(entry.id, 'symbol', e.target.value)}
+                    type="text"
+                    value={entry.symbol}
+                    onChange={(e) => handleChangeField(entry.id, 'symbol', e.target.value)}
                       placeholder="AAPL"
                       className="w-full py-2 px-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                       disabled={isPending}
-                    />
-                  </td>
+                  />
+                </td>
                   <td className="py-3 pr-4">
-                    <select
-                      value={entry.type}
-                      onChange={(e) => handleChangeField(entry.id, 'type', e.target.value as 'Long' | 'Short')}
+                  <select
+                    value={entry.type}
+                    onChange={(e) => handleChangeField(entry.id, 'type', e.target.value as 'Long' | 'Short')}
                       className="w-full py-2 px-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                       disabled={isPending}
-                    >
-                      <option value="Long">Long</option>
-                      <option value="Short">Short</option>
-                    </select>
-                  </td>
+                  >
+                    <option value="Long">Long</option>
+                    <option value="Short">Short</option>
+                  </select>
+                </td>
                   <td className="py-3 pr-4">
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span className="text-gray-500">$</span>
                       </div>
-                      <input
-                        type="number"
-                        value={entry.entry_price}
-                        onChange={(e) => handleChangeField(entry.id, 'entry_price', e.target.value)}
+                  <input
+                    type="number"
+                    value={entry.entry_price}
+                    onChange={(e) => handleChangeField(entry.id, 'entry_price', e.target.value)}
                         step="0.01"
                         placeholder="0.00"
                         className="w-full py-2 pl-7 pr-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                         disabled={isPending}
                       />
                     </div>
-                  </td>
+                </td>
                   <td className="py-3 pr-4">
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <span className="text-gray-500">$</span>
                       </div>
-                      <input
-                        type="number"
-                        value={entry.exit_price}
-                        onChange={(e) => handleChangeField(entry.id, 'exit_price', e.target.value)}
+                  <input
+                    type="number"
+                    value={entry.exit_price}
+                    onChange={(e) => handleChangeField(entry.id, 'exit_price', e.target.value)}
                         step="0.01"
                         placeholder="0.00"
                         className="w-full py-2 pl-7 pr-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                         disabled={isPending}
                       />
                     </div>
-                  </td>
+                </td>
                   <td className="py-3 pr-4">
-                    <input
-                      type="number"
-                      value={entry.quantity}
-                      onChange={(e) => handleChangeField(entry.id, 'quantity', e.target.value)}
-                      step="0.01"
+                  <input
+                    type="number"
+                    value={entry.quantity}
+                    onChange={(e) => handleChangeField(entry.id, 'quantity', e.target.value)}
+                    step="0.01"
                       placeholder="0"
                       className="w-full py-2 px-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                       disabled={isPending}
@@ -389,8 +389,8 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
                       onChange={(e) => handleChangeField(entry.id, 'exit_time', e.target.value)}
                       className="w-full py-2 px-3 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner text-sm"
                       disabled={isPending}
-                    />
-                  </td>
+                  />
+                </td>
                   <td className="py-3 pr-4">
                     <div className={`py-2 px-3 rounded-lg text-sm font-medium ${
                       entry.profit_loss
@@ -402,13 +402,13 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
                       {entry.profit_loss
                         ? `${entry.profit_loss > 0 ? '+' : ''}${entry.profit_loss.toFixed(2)}`
                         : '--'}
-                    </div>
-                  </td>
+                  </div>
+                </td>
                   <td className="py-3">
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => handleRemoveRow(entry.id)}
+                    onClick={() => handleRemoveRow(entry.id)}
                       disabled={isPending || batchEntries.length === 1}
                       className={`p-2 rounded-lg transition-colors ${
                         batchEntries.length === 1
@@ -417,17 +417,17 @@ const BatchEntryMode: React.FC<BatchEntryModeProps> = ({
                       }`}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                     </motion.button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
         </div>
       </div>
-
+      
       {/* Action Buttons */}
       <div className="px-6 py-4 bg-gradient-to-r from-indigo-900/20 via-blue-900/20 to-purple-900/20 border-t border-indigo-900/20">
         <div className="flex justify-end space-x-3">

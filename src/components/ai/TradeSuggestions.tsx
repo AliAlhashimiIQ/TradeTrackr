@@ -39,13 +39,12 @@ export default function TradeSuggestions({ trades, loading = false, className = 
 
   if (loading || isLoading) {
     return (
-      <div className={`bg-[#131825] rounded-lg p-4 ${className}`}>
-        <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-700 rounded w-3/4"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-            <div className="h-4 bg-gray-700 rounded w-4/6"></div>
-          </div>
+      <div className="animate-pulse">
+        <div className="h-4 bg-gray-700 rounded w-3/4 mb-4"></div>
+        <div className="space-y-3">
+          <div className="h-10 bg-gray-700 rounded"></div>
+          <div className="h-10 bg-gray-700 rounded"></div>
+          <div className="h-10 bg-gray-700 rounded"></div>
         </div>
       </div>
     );
@@ -69,6 +68,19 @@ export default function TradeSuggestions({ trades, loading = false, className = 
   const highPrioritySuggestions = suggestions.filter(s => s.priority === 'high');
   const mediumPrioritySuggestions = suggestions.filter(s => s.priority === 'medium');
   const lowPrioritySuggestions = suggestions.filter(s => s.priority === 'low');
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-900/20 border-red-500/30 text-red-400';
+      case 'medium':
+        return 'bg-yellow-900/20 border-yellow-500/30 text-yellow-400';
+      case 'low':
+        return 'bg-blue-900/20 border-blue-500/30 text-blue-400';
+      default:
+        return 'bg-gray-900/20 border-gray-500/30 text-gray-400';
+    }
+  };
 
   return (
     <div className={`bg-[#131825] rounded-lg overflow-hidden ${className}`}>
@@ -94,13 +106,44 @@ export default function TradeSuggestions({ trades, loading = false, className = 
             </h4>
             <div className="space-y-3">
               {highPrioritySuggestions.map(suggestion => (
-                <div key={suggestion.id} className="bg-[#1a1f2c] rounded-lg p-3 border-l-2 border-red-500">
-                  <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
-                  <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
-                  <div className="mt-2">
-                    <span className="text-xs px-2 py-0.5 bg-[#131825] text-gray-400 rounded">
-                      {suggestion.category}
-                    </span>
+                <div key={suggestion.id} className={`bg-[#1a1f2c] rounded-lg p-3 border-l-2 ${getPriorityColor(suggestion.priority)}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          suggestion.priority === 'high' 
+                            ? 'bg-red-500/20 text-red-400'
+                            : suggestion.priority === 'medium'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {suggestion.priority.toUpperCase()} PRIORITY
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">
+                          #{suggestion.tag}
+                        </span>
+                      </div>
+                      
+                      <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
+                      <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
+                    </div>
+                    
+                    <div className="ml-4">
+                      <button className="text-gray-400 hover:text-white transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center gap-2">
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Apply to Strategy
+                    </button>
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Learn More
+                    </button>
                   </div>
                 </div>
               ))}
@@ -117,13 +160,44 @@ export default function TradeSuggestions({ trades, loading = false, className = 
             </h4>
             <div className="space-y-3">
               {mediumPrioritySuggestions.map(suggestion => (
-                <div key={suggestion.id} className="bg-[#1a1f2c] rounded-lg p-3 border-l-2 border-yellow-500">
-                  <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
-                  <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
-                  <div className="mt-2">
-                    <span className="text-xs px-2 py-0.5 bg-[#131825] text-gray-400 rounded">
-                      {suggestion.category}
-                    </span>
+                <div key={suggestion.id} className={`bg-[#1a1f2c] rounded-lg p-3 border-l-2 ${getPriorityColor(suggestion.priority)}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          suggestion.priority === 'high' 
+                            ? 'bg-red-500/20 text-red-400'
+                            : suggestion.priority === 'medium'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {suggestion.priority.toUpperCase()} PRIORITY
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">
+                          #{suggestion.tag}
+                        </span>
+                      </div>
+                      
+                      <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
+                      <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
+                    </div>
+                    
+                    <div className="ml-4">
+                      <button className="text-gray-400 hover:text-white transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center gap-2">
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Apply to Strategy
+                    </button>
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Learn More
+                    </button>
                   </div>
                 </div>
               ))}
@@ -140,13 +214,44 @@ export default function TradeSuggestions({ trades, loading = false, className = 
             </h4>
             <div className="space-y-3">
               {lowPrioritySuggestions.map(suggestion => (
-                <div key={suggestion.id} className="bg-[#1a1f2c] rounded-lg p-3 border-l-2 border-blue-500">
-                  <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
-                  <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
-                  <div className="mt-2">
-                    <span className="text-xs px-2 py-0.5 bg-[#131825] text-gray-400 rounded">
-                      {suggestion.category}
-                    </span>
+                <div key={suggestion.id} className={`bg-[#1a1f2c] rounded-lg p-3 border-l-2 ${getPriorityColor(suggestion.priority)}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          suggestion.priority === 'high' 
+                            ? 'bg-red-500/20 text-red-400'
+                            : suggestion.priority === 'medium'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {suggestion.priority.toUpperCase()} PRIORITY
+                        </span>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">
+                          #{suggestion.tag}
+                        </span>
+                      </div>
+                      
+                      <h5 className="text-sm font-medium text-white">{suggestion.title}</h5>
+                      <p className="text-xs text-gray-400 mt-1">{suggestion.description}</p>
+                    </div>
+                    
+                    <div className="ml-4">
+                      <button className="text-gray-400 hover:text-white transition-colors">
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex items-center gap-2">
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Apply to Strategy
+                    </button>
+                    <button className="text-xs px-3 py-1 rounded-md bg-white/5 hover:bg-white/10 text-white transition-colors">
+                      Learn More
+                    </button>
                   </div>
                 </div>
               ))}

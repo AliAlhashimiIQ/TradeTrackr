@@ -28,9 +28,9 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 sticky top-0 z-10">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex justify-between items-center">
+    <header className="bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700/50 sticky top-0 z-10 w-full">
+      <div className="w-full px-4 py-3">
+        <div className="max-w-screen-xl mx-auto flex justify-between items-center">
           <div className="flex items-center">
             <svg className="w-6 h-6 text-indigo-400 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

@@ -10,6 +10,7 @@ import { TEXT, BUTTONS, FORMS, LAYOUT } from "@/lib/designSystem";
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -18,51 +19,55 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { 
     user, 
-    signIn, 
+    signIn,
+    signInWithGoogle, 
     resetPassword, 
-    loading: authLoading
+    loading: authLoading 
   } = useAuth();
 
+  // Load remembered email if exists
   useEffect(() => {
-    // Show login errors from URL
-    const errorParam = searchParams.get('error');
-    if (errorParam) {
-      console.log('Login page: Error parameter detected in URL:', errorParam);
-      
-      // Show specific error messages based on the error type
-      if (errorParam === 'missing_verifier') {
-        setError('Authentication session expired. Please try signing in again.');
-      } else if (errorParam === 'auth_error') {
-        setError('Authentication failed. Please try again or use a different sign-in method.');
-      } else if (errorParam === 'no_session') {
-        setError('Unable to establish a secure session. Please try again.');
-      } else if (errorParam === 'unexpected') {
-        setError('An unexpected error occurred. Please try again later.');
-      } else {
-      setError('Authentication failed. Please try again.');
-      }
+    const rememberedEmail = localStorage.getItem('rememberedEmail');
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberMe(true);
     }
-    
-    // Redirect if already logged in
-    if (!authLoading && user) {
-      console.log('Login page: User already logged in, redirecting to dashboard');
-      router.push('/dashboard');
-    }
-  }, [searchParams, user, authLoading, router]);
+  }, []);
+
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string) => {
+    return password.length >= 6;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate email
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    // Validate password
+    if (!forgotPasswordMode && !validatePassword(password)) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
     
     if (forgotPasswordMode) {
       try {
-        console.log('Login page: Sending password reset email to', email);
         await resetPassword(email);
         setSuccessMessage('Password reset link sent to your email');
         setForgotPasswordMode(false);
       } catch (err) {
-        console.error('Login page: Reset password error', err);
         setError(err instanceof Error ? err.message : 'Failed to send reset link');
       } finally {
         setLoading(false);
@@ -71,13 +76,26 @@ export default function LoginPage() {
     }
     
     try {
-      console.log('Login page: Attempting sign in with email', email);
       await signIn(email, password);
+      // Handle remember me
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', email);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
       // Navigation is handled by useAuth hook onAuthStateChange
     } catch (err) {
-      console.error('Login page: Sign in error', err);
       setError(err instanceof Error ? err.message : 'Failed to sign in');
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithGoogle();
+      // Navigation will be handled by the OAuth callback
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign in with Google');
     }
   };
 
@@ -159,27 +177,42 @@ export default function LoginPage() {
               </div>
               
               {!forgotPasswordMode && (
-                <div className={FORMS.group}>
-                  <div className={`flex justify-between items-center mb-1`}>
-                    <label htmlFor="password" className={FORMS.label.primary}>Password</label>
-                    <button 
-                      type="button"
-                      onClick={toggleForgotPassword}
-                      className={`text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}] ${TEXT.body.small} font-medium ${TRANSITIONS.fast}`}
-                    >
-                      Forgot your password?
-                    </button>
+                <>
+                  <div className={FORMS.group}>
+                    <div className={`flex justify-between items-center mb-1`}>
+                      <label htmlFor="password" className={FORMS.label.primary}>Password</label>
+                      <button 
+                        type="button"
+                        onClick={toggleForgotPassword}
+                        className={`text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}] ${TEXT.body.small} font-medium ${TRANSITIONS.fast}`}
+                      >
+                        Forgot your password?
+                      </button>
+                    </div>
+                    <input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className={FORMS.input}
+                      required
+                    />
                   </div>
-                  <input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    className={FORMS.input}
-                    required
-                  />
-                </div>
+
+                  <div className="flex items-center">
+                    <input
+                      id="remember-me"
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300">
+                      Remember me
+                    </label>
+                  </div>
+                </>
               )}
               
               <div>
@@ -203,6 +236,32 @@ export default function LoginPage() {
                 </button>
               </div>
 
+              {!forgotPasswordMode && (
+                <>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-700"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className={`px-2 bg-[${COLORS.background.dark}] text-gray-400`}>
+                        Or continue with
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleSignIn}
+                    className="w-full flex items-center justify-center px-4 py-3 border border-gray-700 rounded-lg text-gray-300 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/>
+                    </svg>
+                    Sign in with Google
+                  </button>
+                </>
+              )}
+
               {forgotPasswordMode && (
                 <button
                   type="button"
@@ -215,23 +274,30 @@ export default function LoginPage() {
             </form>
 
             {!forgotPasswordMode && (
-                <div className="mt-6 text-center">
-                  <p className={`${TEXT.body.small} text-[${COLORS.text.secondary}]`}>
-                    Don't have an account?{' '}
-                    <Link 
-                      href="/signup" 
-                      className={`font-medium text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}] ${TRANSITIONS.fast}`}
-                    >
-                      Sign up for free
-                    </Link>
-                  </p>
-                </div>
+              <div className="mt-6 text-center">
+                <p className={`${TEXT.body.small} text-[${COLORS.text.secondary}]`}>
+                  Don't have an account?{' '}
+                  <Link 
+                    href="/signup" 
+                    className={`font-medium text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}] ${TRANSITIONS.fast}`}
+                  >
+                    Sign up for free
+                  </Link>
+                </p>
+              </div>
             )}
           </div>
         </div>
         
         <p className={`text-center ${TEXT.body.small} text-[${COLORS.text.tertiary}]`}>
-          By signing in, you agree to our Terms of Service and Privacy Policy
+          By signing in, you agree to our{' '}
+          <Link href="/terms" className={`text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}]`}>
+            Terms of Service
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className={`text-[${COLORS.primary}] hover:text-[${COLORS.primaryLight}]`}>
+            Privacy Policy
+          </Link>
         </p>
       </div>
     </div>

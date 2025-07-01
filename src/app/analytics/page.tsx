@@ -570,9 +570,9 @@ export default function AnalyticsPage() {
               </div>
             </div>
             
-            {/* Charts - First Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+            {/* Charts - First Row and Second Row as a single grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Equity Curve</h2>
                   <div className="flex items-center space-x-2">
@@ -586,10 +586,11 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                 </div>
-                <EquityCurve data={equityCurveData} loading={loading} />
+                <div className="flex-1 overflow-y-auto">
+                  <EquityCurve data={equityCurveData} loading={loading} />
+                </div>
               </div>
-              
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Trade Distribution</h2>
                   <div className="flex items-center space-x-2 text-xs text-gray-400">
@@ -603,30 +604,31 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                 </div>
-                <WinLossDistribution data={distributionData} loading={loading} />
+                <div className="flex-1 overflow-y-auto">
+                  <WinLossDistribution data={distributionData} loading={loading} />
+                </div>
               </div>
-            </div>
-            
-            {/* Charts - Second Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Monthly Performance</h2>
                   <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
                     {!loading && monthlyData.length > 0 ? `${monthlyData.length} months` : 'No data'}
                   </div>
                 </div>
-                <MonthlyPerformance data={monthlyData} loading={loading} />
+                <div className="flex-1 overflow-y-auto">
+                  <MonthlyPerformance data={monthlyData} loading={loading} />
+                </div>
               </div>
-              
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Drawdown Analysis</h2>
                   <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
                     {!loading && metrics ? `Max: ${metrics.maxDrawdownPercent.toFixed(1)}%` : 'No data'}
                   </div>
                 </div>
-                <DrawdownChart data={equityCurveData} loading={loading} />
+                <div className="flex-1 overflow-y-auto">
+                  <DrawdownChart data={equityCurveData} loading={loading} />
+                </div>
               </div>
             </div>
             

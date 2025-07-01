@@ -1,10 +1,14 @@
+'use client'
+
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { BarChart, LineChart, PieChart } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
-import { TradeMetrics } from '@/lib/types';
-import { PerformanceMetrics } from '@/lib/tradeMetrics';
+import { TradeMetrics, PerformanceMetrics } from '@/lib/types';
 import { DateRange } from '@/components/dashboard/DateRangeSelector';
 import COLORS, { TRANSITIONS } from '@/lib/colorSystem';
 import { CARDS, TEXT, LAYOUT } from '@/lib/designSystem';
+import EquityCurve from '@/components/charts/EquityCurve';
 
 // Types for component props
 interface DashboardPerformanceOverviewProps {
@@ -69,6 +73,8 @@ const mockPerformanceData = {
   }
 };
 
+type ChartType = 'line' | 'bar' | 'pie';
+
 const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> = ({ 
   dateRange,
   metrics,
@@ -78,6 +84,8 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
   const [timeframe, setTimeframe] = useState<TimeframeOption>('30D');
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipData, setTooltipData] = useState({ x: 0, y: 0, value: 0, date: '' });
+  const [chartType, setChartType] = useState<ChartType>('line');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Use the real metrics if available
   const displayMetrics = {
@@ -103,209 +111,21 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
     averageDaysHeld: '0.0'
   };
   
-  // Draw equity curve with SVG
-  const renderEquityCurve = () => {
-    // Check if we have any trades first
-    if (displayMetrics.totalTrades === 0 || !equityData || equityData.labels.length === 0) {
-      return (
-        <div className="h-40 flex items-center justify-center text-gray-400">
-          No trade data available
-        </div>
-      );
-    }
-    
-    const width = 600;
-    const height = 150;
-    
-    // Check if data is valid and has balance values
-    const validData = equityData.labels.map((label, i) => ({ 
-      date: label, 
-      balance: equityData.values[i] 
-    })).filter(d => 
-      d && d.balance !== undefined && !isNaN(d.balance) && d.date
-    );
-    
-    if (validData.length === 0) {
-      return (
-        <div className="h-40 flex items-center justify-center text-gray-400">
-          No valid equity data available
-        </div>
-      );
-    }
-    
-    // Calculate min and max values
-    const maxBalance = Math.max(...validData.map(d => d.balance));
-    const minBalance = Math.min(...validData.map(d => d.balance));
-    
-    // Add padding to range to avoid points at edges
-    const range = maxBalance - minBalance > 0 
-      ? maxBalance - minBalance 
-      : 1; // Avoid division by zero
-    
-    // Create points for the area path
-    const points = validData.map((d, i) => {
-      const x = validData.length > 1 ? (i / (validData.length - 1)) * width : 0;
-      const y = height - ((d.balance - minBalance) / range) * height;
-      return { x, y };
-    });
-    
-    // Filter out any invalid points
-    const validPoints = points.filter(p => !isNaN(p.x) && !isNaN(p.y));
-    
-    // Create path string
-    let pathD = '';
-    
-    if (validPoints.length > 0) {
-      pathD = `M${validPoints[0].x},${validPoints[0].y}`;
-      
-      for (let i = 1; i < validPoints.length; i++) {
-        pathD += ` L${validPoints[i].x},${validPoints[i].y}`;
-      }
-      
-      // Add the bottom corners to create an area
-      pathD += ` L${validPoints[validPoints.length - 1].x},${height}`;
-      pathD += ` L${validPoints[0].x},${height}`;
-      pathD += ' Z';
-    }
-    
-    return (
-      <div className="relative h-40">
-        <svg 
-          width="100%" 
-          height="100%" 
-          viewBox={`0 0 ${width} ${height}`} 
-          preserveAspectRatio="none"
-          className="overflow-visible"
-        >
-          {/* Grid lines */}
-          <line x1="0" y1={height} x2={width} y2={height} stroke="#374151" strokeWidth="1" strokeDasharray="2" />
-          <line x1="0" y1={height/2} x2={width} y2={height/2} stroke="#374151" strokeWidth="1" strokeDasharray="2" />
-          <line x1="0" y1="0" x2={width} y2="0" stroke="#374151" strokeWidth="1" strokeDasharray="2" />
-          
-          {/* Area gradient */}
-          <defs>
-            <linearGradient id="equityGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          
-          {/* Area fill */}
-          {pathD && (
-            <path 
-              d={pathD} 
-              fill="url(#equityGradient)" 
-              stroke="none" 
-            />
-          )}
-          
-          {/* Line */}
-          {validPoints.length > 1 && (
-            <path
-              d={`M${validPoints[0].x},${validPoints[0].y} ${validPoints.slice(1).map(p => `L${p.x},${p.y}`).join(' ')}`}
-              fill="none"
-              stroke="#3b82f6"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          )}
-          
-          {/* Data points */}
-          {validPoints.map((point, i) => {
-            // Add validation to prevent NaN values
-            if (isNaN(point.x) || isNaN(point.y)) return null;
-            
-            return (
-              <circle
-                key={i}
-                cx={point.x}
-                cy={point.y}
-                r="1.5"
-                fill="#3b82f6"
-                onMouseOver={(e) => {
-                  if (validData[i]) {
-                    setTooltipData({ 
-                      x: e.clientX, 
-                      y: e.clientY, 
-                      value: validData[i].balance, 
-                      date: validData[i].date 
-                    });
-                    setShowTooltip(true);
-                  }
-                }}
-                onMouseLeave={() => setShowTooltip(false)}
-              />
-            );
-          })}
-        </svg>
-        
-        {/* Y-axis labels */}
-        <div className="absolute top-0 left-0 h-full flex flex-col justify-between text-xs text-gray-400">
-          <div>{formatCurrency(maxBalance)}</div>
-          <div>{formatCurrency(minBalance + range/2)}</div>
-          <div>{formatCurrency(minBalance)}</div>
-        </div>
-        
-        {/* Tooltip */}
-        {showTooltip && tooltipData && (
-          <div 
-            className="absolute bg-gray-800 text-white text-xs p-2 rounded shadow-lg z-10"
-            style={{ 
-              top: tooltipData.y - 70, 
-              left: tooltipData.x - 50,
-              transform: 'translate(-50%, -50%)'
-            }}
-          >
-            <div className="font-medium">{tooltipData.date}</div>
-            <div>{formatCurrency(tooltipData.value)}</div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  // Format equity data for the selected chart
+  const formattedEquityData = equityData.labels.map((date, index) => ({
+    date,
+    value: equityData.values[index]
+  }));
   
-  // Render monthly performance chart
-  const renderMonthlyPerformance = () => {
-    // Check if we have any trades first
-    if (displayMetrics.totalTrades === 0) {
-      return (
-        <div className="h-40 flex items-center justify-center text-gray-400">
-          No trade data available
-        </div>
-      );
-    }
-    
-    const data = mockPerformanceData.monthlyPerformance;
-    const maxProfit = Math.max(...data.map(d => Math.abs(d.profit)));
-    
-    return (
-      <div className="h-40 flex items-end space-x-2">
-        {data.map((month, index) => {
-          const barHeight = maxProfit > 0 ? (Math.abs(month.profit) / maxProfit) * 100 : 0;
-          const isPositive = month.profit >= 0;
-          
-          return (
-            <div key={index} className="flex flex-col items-center flex-1">
-              <div className="flex items-end w-full">
-                <div 
-                  className={`w-full rounded-t ${isPositive ? 'bg-green-500' : 'bg-red-500'}`}
-                  style={{ height: `${barHeight}%` }}
-                >
-                  {/* Win rate indicator */}
-                  <div 
-                    className={`h-1 rounded-full ${month.winRate > 50 ? 'bg-blue-300' : 'bg-yellow-400'}`} 
-                    style={{ width: `${month.winRate}%` }} 
-                  />
-                </div>
-              </div>
-              <div className="text-gray-400 text-xs mt-1">{month.month}</div>
-            </div>
-          );
-        })}
-      </div>
-    );
-  };
+  // Sample performance metrics to display
+  const displayMetricsSample = [
+    { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: 'text-blue-400' },
+    { label: 'Profit Factor', value: advancedMetrics?.profitFactor.toFixed(2) || 'N/A', color: 'text-green-400' },
+    { label: 'Avg. Win', value: `$${metrics.avg_win.toFixed(2)}`, color: 'text-green-400' },
+    { label: 'Avg. Loss', value: `$${metrics.avg_loss.toFixed(2)}`, color: 'text-red-400' },
+    { label: 'Risk/Reward', value: advancedMetrics?.riskRewardRatio.toFixed(2) || 'N/A', color: 'text-purple-400' },
+    { label: 'Max Drawdown', value: advancedMetrics ? `${advancedMetrics.maxDrawdownPercent.toFixed(2)}%` : 'N/A', color: 'text-amber-400' },
+  ];
   
   return (
     <div className={`${CARDS.panel} overflow-hidden`}>
@@ -318,92 +138,116 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
         </div>
       </div>
       
-      {/* Main metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 p-6">
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Total P&L</div>
-          <div className={`${TEXT.heading.h3} ${displayMetrics.pnl >= 0 ? `text-[${COLORS.success}]` : `text-[${COLORS.danger}]`}`}>
-            {formatCurrency(displayMetrics.pnl)}
-          </div>
-        </div>
+      {/* Chart Type Selector */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h3 className="text-lg font-semibold text-white">Performance Overview</h3>
         
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Win Rate</div>
-          <div className={`${TEXT.heading.h3} text-[${COLORS.text.primary}]`}>
-            {displayMetrics.winRate?.toFixed(1) ?? "0.0"}%
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Avg. Win</div>
-          <div className={`${TEXT.heading.h3} text-[${COLORS.success}]`}>
-            {formatCurrency(displayMetrics.avgWin)}
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Avg. Loss</div>
-          <div className={`${TEXT.heading.h3} text-[${COLORS.danger}]`}>
-            {formatCurrency(displayMetrics.avgLoss)}
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Total Trades</div>
-          <div className={`${TEXT.heading.h3} text-[${COLORS.text.primary}]`}>
-            {displayMetrics.totalTrades}
-          </div>
+        <div className="flex items-center bg-[#1a1e2d] rounded-lg p-1 space-x-1">
+          <button 
+            onClick={() => setChartType('line')}
+            className={`p-2 rounded-md ${chartType === 'line' 
+              ? 'bg-indigo-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+            } transition-colors`}
+          >
+            <LineChart size={16} />
+          </button>
+          <button 
+            onClick={() => setChartType('bar')}
+            className={`p-2 rounded-md ${chartType === 'bar' 
+              ? 'bg-indigo-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+            } transition-colors`}
+          >
+            <BarChart size={16} />
+          </button>
+          <button 
+            onClick={() => setChartType('pie')}
+            className={`p-2 rounded-md ${chartType === 'pie' 
+              ? 'bg-indigo-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-white/5'
+            } transition-colors`}
+          >
+            <PieChart size={16} />
+          </button>
         </div>
       </div>
       
-      {/* Equity curve */}
-      <div className="p-6 pt-0">
-        <div className={`mb-2 ${LAYOUT.flexBetween}`}>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>Equity Curve</div>
-        </div>
-        
-        {renderEquityCurve()}
+      {/* Chart display */}
+      <div className="bg-[#1a1e2d] rounded-xl overflow-hidden mb-6 p-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-80">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          </div>
+        ) : equityData.values.length > 0 ? (
+          <div className="h-80">
+            <EquityCurve 
+              data={formattedEquityData}
+              type={chartType}
+              initialCapital={10000}
+            />
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-80 text-gray-400">
+            No performance data available for the selected period
+          </div>
+        )}
       </div>
       
-      {/* Risk metrics */}
-      <div className={`grid grid-cols-5 gap-4 p-4 border-t border-[${COLORS.border.primary}] bg-[${COLORS.background.medium}]`}>
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Max Drawdown</div>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>
-            {riskMetrics.maxDrawdown}%
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {displayMetricsSample.map((metric, index) => (
+          <div 
+            key={index}
+            className="bg-[#1a1e2d] rounded-lg p-4"
+          >
+            <div className="text-sm text-gray-400 mb-1">{metric.label}</div>
+            <div className={`text-xl font-bold ${metric.color}`}>{metric.value}</div>
           </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Avg R:R Ratio</div>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>
-            {riskMetrics.avgRiskReward}
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Sharpe Ratio</div>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>
-            {riskMetrics.sharpeRatio}
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Success Rate</div>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>
-            {riskMetrics.successRate}%
-          </div>
-        </div>
-        
-        <div>
-          <div className={`${TEXT.body.small} text-[${COLORS.text.tertiary}] mb-1`}>Avg Days Held</div>
-          <div className={`${TEXT.body.regular} font-medium text-[${COLORS.text.primary}]`}>
-            {riskMetrics.averageDaysHeld} days
-          </div>
-        </div>
+        ))}
+      </div>
+      
+      {/* Date Range Info */}
+      <div className="mt-6 text-xs text-gray-400 text-center">
+        Showing data for: {getDateRangeDescription(dateRange)}
       </div>
     </div>
   );
 };
+
+function getDateRangeDescription(range: DateRange): string {
+  const now = new Date();
+  
+  switch (range) {
+    case '7d':
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(now.getDate() - 7);
+      return `Last 7 days (${formatDate(sevenDaysAgo)} - ${formatDate(now)})`;
+    case '30d':
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(now.getDate() - 30);
+      return `Last 30 days (${formatDate(thirtyDaysAgo)} - ${formatDate(now)})`;
+    case '90d':
+      const ninetyDaysAgo = new Date(now);
+      ninetyDaysAgo.setDate(now.getDate() - 90);
+      return `Last 90 days (${formatDate(ninetyDaysAgo)} - ${formatDate(now)})`;
+    case '1y':
+      const oneYearAgo = new Date(now);
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+      return `Last year (${formatDate(oneYearAgo)} - ${formatDate(now)})`;
+    case 'all':
+      return 'All time';
+    default:
+      return 'Custom date range';
+  }
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+}
 
 export default DashboardPerformanceOverview; 

@@ -152,7 +152,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           Advanced Price Entry
-        </h3>
+      </h3>
 
         {/* Market Data */}
         <div className="mb-6">
@@ -222,8 +222,8 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
 
         {/* Price Controls */}
         <div className="space-y-6">
-          {/* Entry Price */}
-          <div>
+        {/* Entry Price */}
+        <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-indigo-300">Entry Price</label>
               <motion.button
@@ -253,10 +253,10 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
                 className="w-full py-2.5 pl-8 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
               />
             </div>
-          </div>
+        </div>
 
-          {/* Exit Price */}
-          <div>
+        {/* Exit Price */}
+        <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-indigo-300">Exit Price</label>
               <motion.button
@@ -284,9 +284,9 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
                 step="0.01"
                 placeholder="0.00"
                 className="w-full py-2.5 pl-8 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
-              />
-            </div>
-          </div>
+          />
+        </div>
+      </div>
 
           {/* Visual Price Slider */}
           <div>
@@ -303,7 +303,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
               <span>{formatCurrency(visualRange.min)}</span>
               <span>{formatCurrency(visualRange.max)}</span>
             </div>
-          </div>
+      </div>
 
           {/* Profit/Loss Display */}
           {entryPrice && exitPrice && quantity && (

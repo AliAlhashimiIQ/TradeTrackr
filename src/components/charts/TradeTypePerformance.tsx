@@ -118,7 +118,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
 
   const onPieEnter = (_: any, index: number) => {
     if (isClient) {
-      setActiveIndex(index);
+    setActiveIndex(index);
     }
   };
 
@@ -228,7 +228,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
   const renderView = () => {
     switch (viewMode) {
       case 'bar':
-        return (
+  return (
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
@@ -341,36 +341,36 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
         return (
           <div className="h-60">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
+        <PieChart>
+          <Pie
                   activeIndex={isClient ? activeIndex : undefined}
                   activeShape={(props) => renderActiveShape({ ...props, winRate: pieChartData[activeIndex]?.winRate || 0 })}
                   data={pieChartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  dataKey="value"
-                  onMouseEnter={onPieEnter}
-                >
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={80}
+            dataKey="value"
+            onMouseEnter={onPieEnter}
+          >
                   {pieChartData.map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+              <Cell 
+                key={`cell-${index}`} 
                       fill={entry.type === 'Long' ? COLORS.Long : COLORS.Short}
                       stroke={entry.isProfit ? COLORS.Profit : COLORS.Loss}
-                      strokeWidth={entry.isProfit ? 3 : 1}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value, name, props) => [
-                    formatCurrency(props.payload.pnL),
-                    props.payload.type
-                  ]}
-                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+                strokeWidth={entry.isProfit ? 3 : 1}
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={(value, name, props) => [
+              formatCurrency(props.payload.pnL),
+              props.payload.type
+            ]}
+            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
           </div>
         );
     }

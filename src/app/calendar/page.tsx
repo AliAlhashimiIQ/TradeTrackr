@@ -437,7 +437,7 @@ export default function CalendarPage() {
               {day}
             </div>
           ))}
-        </div>
+          </div>
         <div className="grid grid-cols-7">
           {weekDates.map((date) => {
             const dateStr = date.toISOString().split('T')[0]
@@ -468,16 +468,16 @@ export default function CalendarPage() {
                       {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
                     </span>
                   )}
-                </div>
+            </div>
                 {pnl !== 0 && (
                   <div className={`text-xl font-bold ${pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {formatCurrency(pnl)}
-                  </div>
+            </div>
                 )}
               </motion.div>
             )
           })}
-        </div>
+              </div>
         {/* Add Week Total Section */}
         <div className="p-4 border-t border-indigo-900/20 bg-[#1a1e2d]">
           <div className="flex justify-between items-center">
@@ -485,9 +485,9 @@ export default function CalendarPage() {
             <span className={`text-xl font-bold ${weekTotal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {formatCurrency(weekTotal)}
             </span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
     )
   }
 
@@ -526,17 +526,17 @@ export default function CalendarPage() {
                 <span className={`text-lg font-medium ${isToday ? 'text-indigo-400' : 'text-gray-400'}`}>
                   {dayNumber}
                 </span>
-                {dayTrades.length > 0 && (
+                      {dayTrades.length > 0 && (
                   <span className="px-2 py-1 text-xs rounded-full bg-indigo-900/20 text-indigo-400">
                     {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
                   </span>
                 )}
-              </div>
+                        </div>
               {pnl !== 0 && (
                 <div className={`text-xl font-bold ${pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {formatCurrency(pnl)}
-                </div>
-              )}
+                        </div>
+                      )}
             </>
           )}
         </motion.div>
@@ -549,17 +549,17 @@ export default function CalendarPage() {
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
             <div key={day} className="p-4 text-center text-sm font-medium text-gray-400">
               {day}
-            </div>
-          ))}
-        </div>
+                        </div>
+                      ))}
+                        </div>
         <div className="grid grid-cols-7">
           {days}
-        </div>
-      </div>
+                    </div>
+            </div>
     )
   }
-  
-  return (
+                  
+                  return (
     <div className="min-h-screen bg-[#0f1117]">
       <Header />
       
@@ -574,8 +574,8 @@ export default function CalendarPage() {
               <p className="text-gray-400 mt-2">
                 Monthly P&L: {formatCurrency(calculateTotalPnL(trades))}
               </p>
-            </div>
-          
+                      </div>
+                      
             <div className="flex items-center space-x-3">
               <div className="flex bg-[#151823] rounded-xl p-1 border border-indigo-900/20">
                 <motion.button
@@ -602,9 +602,9 @@ export default function CalendarPage() {
                 >
                   Month
                 </motion.button>
-              </div>
-            </div>
-          </div>
+                        </div>
+                        </div>
+                    </div>
         </div>
         
         {/* Calendar Controls */}
@@ -621,7 +621,7 @@ export default function CalendarPage() {
                   </svg>
                 </button>
             
-            <button
+                  <button 
               onClick={() => {
                 const today = new Date()
                 setCurrentDate(today)
@@ -632,10 +632,10 @@ export default function CalendarPage() {
               className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300"
             >
               Today
-            </button>
-            </div>
-          </div>
-          
+                  </button>
+                </div>
+              </div>
+              
         {/* Calendar */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -650,7 +650,7 @@ export default function CalendarPage() {
         </AnimatePresence>
         
         {/* Selected Day Details with AI Analysis */}
-        {selectedDate && (
+            {selectedDate && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -669,7 +669,7 @@ export default function CalendarPage() {
                     <span className={calendarStyles.tradeDetails.statValue}>
                       {Math.round((selectedDayTrades.filter(t => t.profit_loss > 0).length / selectedDayTrades.length) * 100)}%
                     </span>
-                  </div>
+                            </div>
                   <div className={calendarStyles.tradeDetails.statItem}>
                     <span className={calendarStyles.tradeDetails.statLabel}>Avg. Win</span>
                     <span className={`${calendarStyles.tradeDetails.statValue} text-green-400`}>
@@ -677,8 +677,8 @@ export default function CalendarPage() {
                         selectedDayTrades.filter(t => t.profit_loss > 0).reduce((sum, t) => sum + t.profit_loss, 0) / 
                         selectedDayTrades.filter(t => t.profit_loss > 0).length || 0
                       )}
-                    </span>
-                  </div>
+                                </span>
+                            </div>
                   <div className={calendarStyles.tradeDetails.statItem}>
                     <span className={calendarStyles.tradeDetails.statLabel}>Avg. Loss</span>
                     <span className={`${calendarStyles.tradeDetails.statValue} text-red-400`}>
@@ -687,7 +687,7 @@ export default function CalendarPage() {
                         selectedDayTrades.filter(t => t.profit_loss < 0).length || 0
                       )}
                     </span>
-                  </div>
+                        </div>
                   <div className={calendarStyles.tradeDetails.statItem}>
                     <span className={calendarStyles.tradeDetails.statLabel}>Largest Trade</span>
                     <span className={`${calendarStyles.tradeDetails.statValue} ${
@@ -695,10 +695,10 @@ export default function CalendarPage() {
                     }`}>
                       {formatCurrency(Math.max(...selectedDayTrades.map(t => Math.abs(t.profit_loss))))}
                     </span>
-                  </div>
-                </div>
-              )}
-            </div>
+                              </div>
+                            </div>
+                            )}
+                          </div>
 
             {/* AI Analysis Section */}
             {selectedDayAnalysis && (
@@ -712,19 +712,19 @@ export default function CalendarPage() {
                       selectedDayAnalysis.score >= 50 ? 'text-yellow-400' : 'text-red-400'
                     }`}>
                       {selectedDayAnalysis.score}/100
-                    </span>
-                  </div>
-                </div>
+                                </span>
+                            </div>
+                        </div>
 
                 {selectedDayAnalysis.emotionalState && (
                   <div className="mb-6">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Emotional State</h4>
                     <div className="inline-block px-3 py-1 rounded-full bg-indigo-900/20 text-indigo-400">
                       {selectedDayAnalysis.emotionalState}
-                    </div>
-                  </div>
-                )}
-
+                </div>
+              </div>
+            )}
+            
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Strengths */}
                   <div>
@@ -739,8 +739,8 @@ export default function CalendarPage() {
                         </li>
                       ))}
                     </ul>
-                  </div>
-
+            </div>
+            
                   {/* Areas for Improvement */}
                   <div>
                     <h4 className="text-sm font-medium text-gray-400 mb-3">Areas for Improvement</h4>
@@ -754,10 +754,10 @@ export default function CalendarPage() {
                         </li>
                       ))}
                     </ul>
-                  </div>
                 </div>
               </div>
-            )}
+          </div>
+        )}
 
             {/* Trades List */}
             <div className="space-y-4">
@@ -772,54 +772,54 @@ export default function CalendarPage() {
                         {trade.type === 'Long' ? (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                          </svg>
+              </svg>
                         ) : (
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                          </svg>
+              </svg>
                         )}
                         {trade.type}
                       </span>
                       <span className="text-lg font-medium text-white">{trade.symbol}</span>
-                    </div>
+          </div>
                     <span className={`text-lg font-bold ${trade.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {formatCurrency(trade.profit_loss)}
                     </span>
-                  </div>
+        </div>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                    <div>
+                <div>
                       <span className="text-gray-400">Entry</span>
                       <div className="font-medium text-white">{formatCurrency(trade.entry_price)}</div>
-                    </div>
-                    <div>
+                </div>
+                <div>
                       <span className="text-gray-400">Exit</span>
                       <div className="font-medium text-white">{formatCurrency(trade.exit_price)}</div>
-                    </div>
-                    <div>
+                </div>
+                  <div>
                       <span className="text-gray-400">Time</span>
                       <div className="font-medium text-white">
                         {new Date(trade.entry_time).toLocaleTimeString()}
-                      </div>
                     </div>
-                    <div>
+                  </div>
+                  <div>
                       <span className="text-gray-400">Duration</span>
                       <div className="font-medium text-white">
                         {Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / (1000 * 60))}m
-                      </div>
-                    </div>
                   </div>
-                  
+                  </div>
+                </div>
+                
                   {trade.notes && (
                     <div className="mt-4 pt-4 border-t border-indigo-900/20">
                       <p className="text-gray-400">{trade.notes}</p>
-                    </div>
+                </div>
                   )}
                 </div>
               ))}
-            </div>
+              </div>
           </motion.div>
-        )}
+      )}
       </div>
     </div>
   )

@@ -106,4 +106,34 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10,
     }
   }
-}) 
+})
+
+export const uploadTradeScreenshot = async (file: File, userId: string, tradeId: string): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${userId}/${tradeId}/${Date.now()}.${fileExt}`;
+    console.log('Uploading screenshot:', {
+      file,
+      userId,
+      tradeId,
+      filePath,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    const { error } = await supabase.storage.from('trade-screenshots').upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type,
+    });
+    if (error) {
+      console.error('Error uploading screenshot:', error.message || error);
+      return `UPLOAD_ERROR: ${error.message || error}`;
+    }
+    const { data } = supabase.storage.from('trade-screenshots').getPublicUrl(filePath);
+    console.log('Public URL from Supabase:', data?.publicUrl);
+    return data?.publicUrl || null;
+  } catch (err) {
+    console.error('Exception during screenshot upload:', err);
+    return `EXCEPTION: ${err}`;
+  }
+}; 
