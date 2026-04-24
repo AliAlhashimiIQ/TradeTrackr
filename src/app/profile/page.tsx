@@ -154,7 +154,7 @@ export default function ProfilePage() {
 
     
     const fileExt = avatarFile.name.split('.').pop();
-    const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const fileName = `${user.id}-${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`; // Use user ID as folder for proper RLS
     
 
