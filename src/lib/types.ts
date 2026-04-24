@@ -19,6 +19,7 @@ export interface Trade {
   risk?: number;
   r_multiple?: number;
   emotional_state?: string;
+  video_url?: string | null;
 }
 
 export interface TradeMetrics {

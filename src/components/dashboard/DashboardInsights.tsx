@@ -14,69 +14,6 @@ interface DashboardInsightsProps {
 // Insight tabs
 type InsightTab = 'Strategy' | 'Instrument' | 'Timing';
 
-// For mock development purposes - will be replaced by real data
-const mockInsightsData = {
-  instrumentPerformance: [
-    { symbol: 'EURUSD', trades: 28, winRate: 68, avgPnL: 42.6 },
-    { symbol: 'GBPUSD', trades: 19, winRate: 58, avgPnL: 31.2 },
-    { symbol: 'BTCUSD', trades: 15, winRate: 53, avgPnL: 124.5 },
-    { symbol: 'AAPL', trades: 12, winRate: 75, avgPnL: 52.8 },
-    { symbol: 'XAUUSD', trades: 10, winRate: 60, avgPnL: 64.3 }
-  ],
-  dayOfWeekPerformance: [
-    { day: 'Mon', trades: 18, winRate: 55, pnl: 420 },
-    { day: 'Tue', trades: 22, winRate: 68, pnl: 860 },
-    { day: 'Wed', trades: 25, winRate: 72, pnl: 1240 },
-    { day: 'Thu', trades: 20, winRate: 65, pnl: 760 },
-    { day: 'Fri', trades: 15, winRate: 53, pnl: 320 }
-  ],
-  timeOfDayPerformance: [
-    { time: '8-10', trades: 15, winRate: 60, pnl: 540 },
-    { time: '10-12', trades: 28, winRate: 71, pnl: 980 },
-    { time: '12-14', trades: 22, winRate: 64, pnl: 720 },
-    { time: '14-16', trades: 25, winRate: 68, pnl: 850 },
-    { time: '16-18', trades: 10, winRate: 50, pnl: 210 }
-  ],
-  strategyPerformance: [
-    { name: 'Breakout', trades: 32, winRate: 65, avgPnL: 48.5, totalPnL: 1552 },
-    { name: 'Trend Following', trades: 28, winRate: 71, avgPnL: 62.3, totalPnL: 1744.4 },
-    { name: 'Support/Resistance', trades: 24, winRate: 58, avgPnL: 37.8, totalPnL: 907.2 },
-    { name: 'Scalping', trades: 16, winRate: 56, avgPnL: 22.4, totalPnL: 358.4 }
-  ],
-  psychologicalInsights: [
-    { mood: 'Calm', trades: 42, winRate: 76, avgPnL: 58.2 },
-    { mood: 'Excited', trades: 24, winRate: 54, avgPnL: 32.5 },
-    { mood: 'Tired', trades: 18, winRate: 44, avgPnL: 21.3 },
-    { mood: 'Stressed', trades: 16, winRate: 38, avgPnL: 18.6 }
-  ],
-  learningPoints: [
-    { type: 'success', text: 'Trades with predefined stop loss have 23% higher win rate' },
-    { type: 'success', text: 'Morning trades outperform afternoon trades by 18%' },
-    { type: 'mistake', text: 'Entering trades against major trend leads to 65% failure rate' },
-    { type: 'mistake', text: 'Overtrading on Fridays results in 40% more losses' }
-  ],
-  timingInsights: {
-    bestDays: [
-      { day: 'Mon', winRate: 70 },
-      { day: 'Tue', winRate: 68 },
-      { day: 'Wed', winRate: 65 },
-      { day: 'Thu', winRate: 60 },
-      { day: 'Fri', winRate: 55 }
-    ],
-    bestTimes: [
-      { time: '8-10', winRate: 70 },
-      { time: '10-12', winRate: 71 },
-      { time: '12-14', winRate: 64 },
-      { time: '14-16', winRate: 68 },
-      { time: '16-18', winRate: 50 }
-    ],
-    optimalHoldingTime: {
-      value: '3 days',
-      winRate: 72
-    }
-  }
-};
-
 const DashboardInsights: React.FC<DashboardInsightsProps> = ({ 
   dateRange,
   trades,
@@ -87,9 +24,8 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   // Generate insights from real trade data
   const insightsData = useMemo(() => {
     if (!trades || trades.length === 0) {
-      return mockInsightsData;
+      return null;
     }
-    
     // Strategy performance calculation
     const strategyMap = new Map<string, {
       trades: number;
@@ -97,7 +33,6 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
       lossCount: number;
       total: number;
     }>();
-    
     // Instrument performance calculation
     const instrumentMap = new Map<string, {
       trades: number;
@@ -105,10 +40,12 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
       lossCount: number;
       total: number;
     }>();
-    
+    // Timing performance (by hour and day)
+    const dayMap = new Map<string, { trades: number; winCount: number; total: number }>();
+    const hourMap = new Map<string, { trades: number; winCount: number; total: number }>();
     // Process trade data
     trades.forEach(trade => {
-      // Handle strategy performance
+      // Strategy
       const strategy = trade.strategy || 'Unknown';
       if (!strategyMap.has(strategy)) {
         strategyMap.set(strategy, { trades: 0, winCount: 0, lossCount: 0, total: 0 });
@@ -121,8 +58,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
         stratData.lossCount += 1;
       }
       stratData.total += trade.profit_loss;
-      
-      // Handle instrument performance
+      // Instrument
       if (!instrumentMap.has(trade.symbol)) {
         instrumentMap.set(trade.symbol, { trades: 0, winCount: 0, lossCount: 0, total: 0 });
       }
@@ -134,9 +70,24 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
         instData.lossCount += 1;
       }
       instData.total += trade.profit_loss;
+      // Timing (by day and hour)
+      const entryDate = new Date(trade.entry_time);
+      const day = entryDate.toLocaleString('en-US', { weekday: 'short' });
+      const hour = entryDate.getHours();
+      if (!dayMap.has(day)) dayMap.set(day, { trades: 0, winCount: 0, total: 0 });
+      if (!hourMap.has(hour.toString())) hourMap.set(hour.toString(), { trades: 0, winCount: 0, total: 0 });
+      const dayData = dayMap.get(day)!;
+      const hourData = hourMap.get(hour.toString())!;
+      dayData.trades += 1;
+      hourData.trades += 1;
+      if (trade.profit_loss > 0) {
+        dayData.winCount += 1;
+        hourData.winCount += 1;
+      }
+      dayData.total += trade.profit_loss;
+      hourData.total += trade.profit_loss;
     });
-    
-    // Convert to array and sort by profitability
+    // Convert to arrays
     const strategyPerformance = Array.from(strategyMap.entries())
       .map(([strategy, data]) => ({
         name: strategy,
@@ -145,7 +96,6 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
         avgPnL: data.total / data.trades
       }))
       .sort((a, b) => b.avgPnL - a.avgPnL);
-    
     const instrumentPerformance = Array.from(instrumentMap.entries())
       .map(([symbol, data]) => ({
         symbol,
@@ -154,15 +104,27 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
         avgPnL: data.total / data.trades
       }))
       .sort((a, b) => b.avgPnL - a.avgPnL);
-    
-    // For timing insights, we'd need more detailed data analysis
-    // Using mock data for now
-    const timingInsights = mockInsightsData.timingInsights;
-    
+    const dayPerformance = Array.from(dayMap.entries())
+      .map(([day, data]) => ({
+        day,
+        trades: data.trades,
+        winRate: (data.winCount / data.trades) * 100,
+        avgPnL: data.total / data.trades
+      }))
+      .sort((a, b) => b.avgPnL - a.avgPnL);
+    const hourPerformance = Array.from(hourMap.entries())
+      .map(([hour, data]) => ({
+        hour,
+        trades: data.trades,
+        winRate: (data.winCount / data.trades) * 100,
+        avgPnL: data.total / data.trades
+      }))
+      .sort((a, b) => parseInt(a.hour) - parseInt(b.hour));
     return {
       strategyPerformance,
       instrumentPerformance,
-      timingInsights
+      dayPerformance,
+      hourPerformance
     };
   }, [trades]);
   
@@ -175,12 +137,13 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   
   // Render strategy performance tab
   const renderStrategyPerformance = () => {
-    const strategies = insightsData.strategyPerformance || mockInsightsData.strategyPerformance;
-    
+    if (!insightsData || insightsData.strategyPerformance.length === 0) {
+      return <div className="text-xs text-gray-400">Not enough data for strategy insights.</div>;
+    }
+    const strategies = insightsData.strategyPerformance;
     return (
       <div>
         <h3 className="text-sm font-medium text-white mb-4">Performance by Strategy</h3>
-        
         <div className="space-y-3">
           {strategies.map((strategy, index) => (
             <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
@@ -191,21 +154,15 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(strategy.winRate)}`}>
-                    {strategy.winRate.toFixed(1)}% win rate
+                    {strategy.winRate != null ? strategy.winRate.toFixed(1) : '--'}% win rate
                   </span>
                 </div>
               </div>
-              
-              {/* Win rate bar */}
               <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full ${strategy.winRate >= 70 ? 'bg-green-500' : strategy.winRate >= 50 ? 'bg-blue-500' : 'bg-red-500'}`}
+                <div
+                  className={`h-full ${getWinRateColor(strategy.winRate)}`}
                   style={{ width: `${strategy.winRate}%` }}
                 ></div>
-              </div>
-              
-              <div className="mt-2 text-xs text-gray-400">
-                Avg. P&L: <span className={getValueColorClass(strategy.avgPnL)}>{formatCurrency(strategy.avgPnL)}</span>
               </div>
             </div>
           ))}
@@ -216,8 +173,10 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   
   // Render instrument performance tab
   const renderInstrumentPerformance = () => {
-    const instruments = insightsData.instrumentPerformance || mockInsightsData.instrumentPerformance;
-    
+    if (!insightsData || insightsData.instrumentPerformance.length === 0) {
+      return <div className="text-xs text-gray-400">Not enough data for instrument insights.</div>;
+    }
+    const instruments = insightsData.instrumentPerformance;
     return (
       <div>
         <h3 className="text-sm font-medium text-white mb-4">Performance by Instrument</h3>
@@ -232,7 +191,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(instrument.winRate)}`}>
-                    {instrument.winRate.toFixed(1)}% win rate
+                    {instrument.winRate != null ? instrument.winRate.toFixed(1) : '--'}% win rate
                   </span>
                 </div>
               </div>
@@ -240,7 +199,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
               {/* Win rate bar */}
               <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${instrument.winRate >= 70 ? 'bg-green-500' : instrument.winRate >= 50 ? 'bg-blue-500' : 'bg-red-500'}`}
+                  className={`h-full ${getWinRateColor(instrument.winRate)}`}
                   style={{ width: `${instrument.winRate}%` }}
                 ></div>
               </div>
@@ -255,52 +214,87 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
     );
   };
   
-  // Render timing insights tab
-  const renderTimingInsights = () => {
+  // Render day performance tab
+  const renderDayPerformance = () => {
+    if (!insightsData || insightsData.dayPerformance.length === 0) {
+      return <div className="text-xs text-gray-400">Not enough data for day insights.</div>;
+    }
+    const days = insightsData.dayPerformance;
     return (
       <div>
-        <h3 className="text-sm font-medium text-white mb-4">Trading Timing Insights</h3>
+        <h3 className="text-sm font-medium text-white mb-4">Performance by Day</h3>
         
-        <div className="space-y-4">
-          {/* Best days */}
-          <div className="bg-[#1a1f2c] rounded-lg p-3">
-            <div className="text-sm font-medium text-white mb-2">Best Trading Days</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {mockInsightsData.timingInsights.bestDays.map((day, index) => (
-                <div key={index} className="bg-[#131825] rounded p-2 text-center">
-                  <div className="text-white font-medium">{day.day}</div>
-                  <div className="text-xs text-green-400">{day.winRate}% win rate</div>
+        <div className="space-y-3">
+          {days.map((day, index) => (
+            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+              <div className="flex justify-between mb-2">
+                <div className="flex items-center">
+                  <span className="text-white font-medium">{day.day}</span>
+                  <span className="ml-2 text-xs text-gray-400">{day.trades} trades</span>
                 </div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Best times */}
-          <div className="bg-[#1a1f2c] rounded-lg p-3">
-            <div className="text-sm font-medium text-white mb-2">Best Trading Hours</div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {mockInsightsData.timingInsights.bestTimes.map((time, index) => (
-                <div key={index} className="bg-[#131825] rounded p-2 text-center">
-                  <div className="text-white font-medium">{time.time}</div>
-                  <div className="text-xs text-green-400">{time.winRate}% win rate</div>
+                <div className="flex items-center">
+                  <span className={`text-sm font-medium ${getWinRateColor(day.winRate)}`}>
+                    {day.winRate != null ? day.winRate.toFixed(1) : '--'}% win rate
+                  </span>
                 </div>
-              ))}
+              </div>
+              
+              {/* Win rate bar */}
+              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${getWinRateColor(day.winRate)}`}
+                  style={{ width: `${day.winRate}%` }}
+                ></div>
+              </div>
+              
+              <div className="mt-2 text-xs text-gray-400">
+                Avg. P&L: <span className={getValueColorClass(day.avgPnL)}>{formatCurrency(day.avgPnL)}</span>
+              </div>
             </div>
-          </div>
-          
-          {/* Holding time */}
-          <div className="bg-[#1a1f2c] rounded-lg p-3">
-            <div className="text-sm font-medium text-white mb-2">Optimal Holding Time</div>
-            <div className="text-white text-center mb-2">
-              {mockInsightsData.timingInsights.optimalHoldingTime.value}
-              <span className="text-xs text-gray-400 ml-1">
-                ({mockInsightsData.timingInsights.optimalHoldingTime.winRate}% win rate)
-              </span>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  
+  // Render hour performance tab
+  const renderHourPerformance = () => {
+    if (!insightsData || insightsData.hourPerformance.length === 0) {
+      return <div className="text-xs text-gray-400">Not enough data for hour insights.</div>;
+    }
+    const hours = insightsData.hourPerformance;
+    return (
+      <div>
+        <h3 className="text-sm font-medium text-white mb-4">Performance by Hour</h3>
+        
+        <div className="space-y-3">
+          {hours.map((hour, index) => (
+            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+              <div className="flex justify-between mb-2">
+                <div className="flex items-center">
+                  <span className="text-white font-medium">{hour.hour}:00</span>
+                  <span className="ml-2 text-xs text-gray-400">{hour.trades} trades</span>
+                </div>
+                <div className="flex items-center">
+                  <span className={`text-sm font-medium ${getWinRateColor(hour.winRate)}`}>
+                    {hour.winRate != null ? hour.winRate.toFixed(1) : '--'}% win rate
+                  </span>
+                </div>
+              </div>
+              
+              {/* Win rate bar */}
+              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full ${getWinRateColor(hour.winRate)}`}
+                  style={{ width: `${hour.winRate}%` }}
+                ></div>
+              </div>
+              
+              <div className="mt-2 text-xs text-gray-400">
+                Avg. P&L: <span className={getValueColorClass(hour.avgPnL)}>{formatCurrency(hour.avgPnL)}</span>
+              </div>
             </div>
-            <div className="text-xs text-gray-400 text-center">
-              Your trades with this holding time perform best
-            </div>
-          </div>
+          ))}
         </div>
       </div>
     );
@@ -314,7 +308,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
       case 'Instrument':
         return renderInstrumentPerformance();
       case 'Timing':
-        return renderTimingInsights();
+        return renderHourPerformance();
       default:
         return renderStrategyPerformance();
     }

@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { getAllTrades, getMarketEvents, getEconomicEvents, getCustomEvents, addCustomEvent, updateCustomEvent, deleteCustomEvent } from '@/lib/tradingApi'
+import { getAllTrades, getEconomicEvents, addCustomEvent, updateCustomEvent, deleteCustomEvent } from '@/lib/tradingApi'
 import { Trade, MarketEvent, EconomicEvent, CustomEvent } from '@/lib/types'
 import Link from 'next/link'
 import COLORS, { TRANSITIONS } from '@/lib/colorSystem'
 import { TEXT, BUTTONS, CARDS, LAYOUT } from '@/lib/designSystem'
-import Header from '@/components/layout/Header'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { analyzeTradePatterns, analyzeTrade } from '@/lib/ai/aiService'
 import { TradeAnalysis } from '@/lib/ai/aiService'
 
@@ -166,7 +166,6 @@ export default function CalendarPage() {
   const [selectedDayTrades, setSelectedDayTrades] = useState<Trade[]>([])
   
   // New state variables for calendar integration
-  const [marketEvents, setMarketEvents] = useState<MarketEvent[]>([])
   const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([])
   const [customEvents, setCustomEvents] = useState<CustomEvent[]>([])
   const [showEventModal, setShowEventModal] = useState(false)
@@ -226,8 +225,7 @@ export default function CalendarPage() {
       
       // Fetch market events if enabled
       if (showMarketEvents) {
-        const events = await getMarketEvents(startDate, endDate)
-        setMarketEvents(events)
+        // Fetch market events if enabled
       }
       
       // Fetch economic events if enabled
@@ -237,8 +235,8 @@ export default function CalendarPage() {
       }
       
       // Fetch custom events
-      const events = await getCustomEvents(user.id, startDate, endDate)
-      setCustomEvents(events)
+      // const events = await getCustomEvents(user.id, startDate, endDate)
+      // setCustomEvents(events)
     }
     
     fetchEvents()
@@ -294,8 +292,17 @@ export default function CalendarPage() {
   
   // Calculate trading streak
   const calculateTradingStreak = () => {
-    // Simplified calculation - just return a placeholder value
-    return 5
+    if (trades.length === 0) return 0;
+    const sorted = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime());
+    let streak = 0;
+    for (const trade of sorted) {
+      if (trade.profit_loss > 0) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
   }
   
   // New functions for handling custom events
@@ -451,27 +458,28 @@ export default function CalendarPage() {
                 key={dateStr}
                 onClick={() => handleDateClick(date)}
                 className={`
-                  min-h-[200px] p-4 border-r border-b border-indigo-900/20 cursor-pointer
-                  ${isSelected ? 'bg-indigo-900/20' : 'hover:bg-indigo-900/10'}
-                  ${isToday ? 'bg-indigo-900/5' : ''}
-                  relative
+                  min-h-[120px] p-4 border transition-all duration-200
+                  ${!isSelected ? 'bg-[#0f1117]/50' : pnl > 0 ? 'bg-green-100 border-green-300 hover:bg-green-200' : pnl < 0 ? 'bg-red-100 border-red-300 hover:bg-red-200' : 'bg-[#151823] border-[#1c2033] hover:bg-[#23263a]'}
+                  ${isToday ? 'ring-2 ring-blue-400 bg-blue-50' : ''}
+                  rounded-lg shadow-sm relative hover:scale-[1.03]
                 `}
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
               >
-                <div className="flex justify-between items-start mb-4">
-                  <span className={`text-lg font-medium ${isToday ? 'text-indigo-400' : 'text-gray-400'}`}>
+                <div className="flex justify-between items-center mb-2">
+                  <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>
                     {date.getDate()}
                   </span>
                   {dayTrades.length > 0 && (
-                    <span className="px-2 py-1 text-xs rounded-full bg-indigo-900/20 text-indigo-400">
+                    <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 font-semibold">
                       {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
                     </span>
                   )}
             </div>
                 {pnl !== 0 && (
-                  <div className={`text-xl font-bold ${pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatCurrency(pnl)}
+                  <div className={`text-lg font-semibold ${pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl > 0 ? '+' : ''}{formatCurrency(pnl)}</div>
+                )}
+                {dayTrades.length > 0 && (
+                  <div className="mt-1 text-xs text-gray-500">
+                    Win Rate: {calculateWinRate(dayTrades)}%
             </div>
                 )}
               </motion.div>
@@ -511,33 +519,27 @@ export default function CalendarPage() {
           key={i}
           onClick={() => date && handleDateClick(date)}
           className={`
-            min-h-[120px] p-4 border-r border-b border-indigo-900/20
-            ${!isValidDay ? 'bg-[#0f1117]/50' : isSelected ? 'bg-indigo-900/20' : 'hover:bg-indigo-900/10'}
-            ${isToday ? 'bg-indigo-900/5' : ''}
+            min-h-[120px] p-4 border transition-all duration-200
+            ${!isValidDay ? 'bg-[#0f1117]/50' : isSelected ? 'ring-2 ring-blue-400 bg-blue-50' : pnl > 0 ? 'bg-green-100 border-green-300 hover:bg-green-200' : pnl < 0 ? 'bg-red-100 border-red-300 hover:bg-red-200' : 'bg-[#151823] border-[#1c2033] hover:bg-[#23263a]'}
             ${isValidDay ? 'cursor-pointer' : ''}
-            relative
+            rounded-lg shadow-sm relative hover:scale-[1.03]
           `}
-          whileHover={isValidDay ? { scale: 1.02 } : {}}
-          transition={{ duration: 0.2 }}
         >
-          {isValidDay && (
-            <>
-              <div className="flex justify-between items-start mb-4">
-                <span className={`text-lg font-medium ${isToday ? 'text-indigo-400' : 'text-gray-400'}`}>
-                  {dayNumber}
-                </span>
+          <div className="flex justify-between items-center mb-2">
+            <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>{dayNumber}</span>
                       {dayTrades.length > 0 && (
-                  <span className="px-2 py-1 text-xs rounded-full bg-indigo-900/20 text-indigo-400">
+              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 font-semibold">
                     {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
                   </span>
                 )}
                         </div>
               {pnl !== 0 && (
-                <div className={`text-xl font-bold ${pnl > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {formatCurrency(pnl)}
+            <div className={`text-lg font-semibold ${pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl > 0 ? '+' : ''}{formatCurrency(pnl)}</div>
+          )}
+          {dayTrades.length > 0 && (
+            <div className="mt-1 text-xs text-gray-500">
+              Win Rate: {calculateWinRate(dayTrades)}%
                         </div>
-                      )}
-            </>
           )}
         </motion.div>
       )
@@ -560,9 +562,7 @@ export default function CalendarPage() {
   }
                   
                   return (
-    <div className="min-h-screen bg-[#0f1117]">
-      <Header />
-      
+    <AuthenticatedLayout>
       <div className={`${LAYOUT.container} py-8`}>
         {/* Page Header */}
         <div className="mb-8">
@@ -572,7 +572,7 @@ export default function CalendarPage() {
                 {monthName} {currentYear}
               </h1>
               <p className="text-gray-400 mt-2">
-                Monthly P&L: {formatCurrency(calculateTotalPnL(trades))}
+                Monthly P&L: <span className={calculateTotalPnL(trades) > 0 ? 'text-green-400' : calculateTotalPnL(trades) < 0 ? 'text-red-400' : 'text-gray-300'}>{calculateTotalPnL(trades) > 0 ? '+' : ''}{formatCurrency(calculateTotalPnL(trades))}</span>
               </p>
                       </div>
                       
@@ -782,7 +782,7 @@ export default function CalendarPage() {
                       </span>
                       <span className="text-lg font-medium text-white">{trade.symbol}</span>
           </div>
-                    <span className={`text-lg font-bold ${trade.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    <span className={`text-xl font-bold ${trade.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {formatCurrency(trade.profit_loss)}
                     </span>
         </div>
@@ -821,7 +821,7 @@ export default function CalendarPage() {
           </motion.div>
       )}
       </div>
-    </div>
+    </AuthenticatedLayout>
   )
 } 
 

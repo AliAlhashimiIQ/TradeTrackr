@@ -1,68 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { DateRange } from '@/components/dashboard/DateRangeSelector';
 import { formatCurrency } from '@/lib/utils';
 import TradeInsights from '@/components/ai/TradeInsights';
 import TradeSuggestions from '@/components/ai/TradeSuggestions';
-import { useTrades } from '@/hooks/useTrades'; // Assume this hook exists to fetch trades
-
-// Mock data for the advanced features
-const mockCalendarData = [
-  { date: '2023-11-01', trades: 2, pnl: 145.25, type: 'profit' },
-  { date: '2023-11-02', trades: 1, pnl: -62.10, type: 'loss' },
-  { date: '2023-11-05', trades: 3, pnl: 215.75, type: 'profit' },
-  { date: '2023-11-07', trades: 2, pnl: 78.30, type: 'profit' },
-  { date: '2023-11-08', trades: 1, pnl: -45.20, type: 'loss' },
-  { date: '2023-11-10', trades: 2, pnl: 124.85, type: 'profit' },
-  { date: '2023-11-13', trades: 3, pnl: -98.45, type: 'loss' },
-  { date: '2023-11-15', trades: 1, pnl: 56.70, type: 'profit' },
-  { date: '2023-11-16', trades: 2, pnl: 185.30, type: 'profit' },
-  { date: '2023-11-20', trades: 1, pnl: -75.60, type: 'loss' },
-  { date: '2023-11-22', trades: 2, pnl: 112.40, type: 'profit' },
-  { date: '2023-11-24', trades: 1, pnl: 45.00, type: 'profit' },
-  { date: '2023-11-27', trades: 4, pnl: 314.28, type: 'profit' },
-  { date: '2023-11-28', trades: 3, pnl: 62.45, type: 'profit' }
-];
-
-const mockRiskAlerts = [
-  { 
-    id: '1', 
-    level: 'warning', 
-    title: 'Drawdown Approaching Limit', 
-    description: 'Current drawdown of 8.4% is nearing your 10% monthly limit.',
-    time: '2 hours ago'
-  },
-  { 
-    id: '2', 
-    level: 'info', 
-    title: 'Position Size Consistency', 
-    description: 'Your last 5 trades had consistent position sizing - good risk management!',
-    time: '1 day ago'
-  },
-  { 
-    id: '3', 
-    level: 'critical', 
-    title: 'Correlated Positions', 
-    description: 'You have multiple positions in correlated markets (EURUSD, GBPUSD).',
-    time: '15 minutes ago'
-  }
-];
-
-const mockInstrumentCorrelation = [
-  { pair: ['EURUSD', 'GBPUSD'], correlation: 0.82 },
-  { pair: ['EURUSD', 'XAUUSD'], correlation: 0.45 },
-  { pair: ['BTCUSD', 'ETHUSD'], correlation: 0.89 },
-  { pair: ['XAUUSD', 'XAGUSD'], correlation: 0.72 },
-  { pair: ['SPX500', 'NSDQ100'], correlation: 0.91 }
-];
-
-const mockHealthMetrics = {
-  overall: 78,
-  consistency: 82,
-  discipline: 70,
-  performance: 85,
-  risk: 75
-};
+import { useTrades } from '@/hooks/useTrades';
+import { calculateMaxDrawdown, calculatePerformanceMetrics } from '@/lib/tradeMetrics';
+// ...existing code...
 
 // Types for calendar
 type CalendarView = 'month' | 'week';
@@ -72,6 +16,61 @@ interface DashboardAdvancedFeaturesProps {
   dateRange: DateRange;
 }
 
+// Helper: Calculate Pearson correlation between two arrays
+function pearsonCorrelation(x: number[], y: number[]): number {
+  const n = x.length;
+  if (n !== y.length || n < 2) return 0;
+  const meanX = x.reduce((a, b) => a + b, 0) / n;
+  const meanY = y.reduce((a, b) => a + b, 0) / n;
+  const num = x.map((xi, i) => (xi - meanX) * (y[i] - meanY)).reduce((a, b) => a + b, 0);
+  const denX = Math.sqrt(x.map(xi => (xi - meanX) ** 2).reduce((a, b) => a + b, 0));
+  const denY = Math.sqrt(y.map(yi => (yi - meanY) ** 2).reduce((a, b) => a + b, 0));
+  return denX && denY ? num / (denX * denY) : 0;
+}
+
+// Helper: Calculate instrument correlations
+import type { Trade } from '@/lib/types';
+
+function getInstrumentCorrelations(trades: Trade[]): { pair: [string, string]; correlation: number }[] {
+  // Group trades by symbol
+  const symbolMap: Record<string, Trade[]> = {};
+  trades.forEach(trade => {
+    if (!symbolMap[trade.symbol]) symbolMap[trade.symbol] = [];
+    symbolMap[trade.symbol].push(trade);
+  });
+  // Only consider symbols with enough trades
+  const symbols = Object.keys(symbolMap).filter((s: string) => symbolMap[s].length >= 3);
+  const pairs = [];
+  for (let i = 0; i < symbols.length; i++) {
+    for (let j = i + 1; j < symbols.length; j++) {
+      const s1 = symbols[i], s2 = symbols[j];
+      // Align by date
+      const map1: Record<string, number> = {};
+      symbolMap[s1].forEach((t: Trade) => { map1[t.entry_time] = t.profit_loss; });
+      const map2: Record<string, number> = {};
+      symbolMap[s2].forEach((t: Trade) => { map2[t.entry_time] = t.profit_loss; });
+      const commonDates = Object.keys(map1).filter((d: string) => d in map2);
+      if (commonDates.length >= 3) {
+        const x = commonDates.map((d: string) => map1[d]);
+        const y = commonDates.map((d: string) => map2[d]);
+        const corr = pearsonCorrelation(x, y);
+        pairs.push({ pair: [s1, s2], correlation: corr });
+      }
+    }
+  }
+  return pairs;
+}
+
+// Helper: Check position size consistency
+function isPositionSizeConsistent(trades: Trade[], window = 5, threshold = 0.2): boolean {
+  if (trades.length < window) return null;
+  const recent = trades.slice(-window);
+  const sizes = recent.map((t: Trade) => Math.abs(t.quantity));
+  const mean = sizes.reduce((a: number, b: number) => a + b, 0) / sizes.length;
+  const std = Math.sqrt(sizes.map((s: number) => (s - mean) ** 2).reduce((a: number, b: number) => a + b, 0) / sizes.length);
+  return std / mean < threshold;
+}
+
 const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ dateRange }) => {
   const router = useRouter();
   const [view, setView] = useState<CalendarView>('month');
@@ -79,6 +78,65 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   
   // Fetch trades for AI components
   const { trades, isLoading } = useTrades(dateRange);
+  
+  // Metrics
+  const metrics = useMemo(() => calculatePerformanceMetrics(trades), [trades]);
+  const drawdown = useMemo(() => calculateMaxDrawdown(trades), [trades]);
+  const correlations = useMemo(() => getInstrumentCorrelations(trades), [trades]);
+  const consistentPositionSize = useMemo(() => isPositionSizeConsistent(trades), [trades]);
+  
+  // Health score (same logic as DashboardPerformanceOverview)
+  let healthScore = 0;
+  if (metrics.totalTrades > 0) {
+    const winRate = metrics.winRate || 0;
+    const riskReward = metrics.riskRewardRatio || 0;
+    const dd = drawdown.percentage || 0;
+    healthScore = Math.round(
+      winRate * 0.4 +
+      Math.min(riskReward * 50, 35) +
+      Math.max(0, 25 - dd * 2.5)
+    );
+    healthScore = Math.max(0, Math.min(100, healthScore));
+  }
+  
+  // Risk alerts
+  const riskAlerts = [];
+  if (drawdown.percentage > 8) {
+    riskAlerts.push({
+      id: 'drawdown',
+      level: drawdown.percentage > 10 ? 'critical' : 'warning',
+      title: 'Drawdown Approaching Limit',
+      description: `Current drawdown of ${drawdown.percentage != null ? drawdown.percentage.toFixed(2) : '--'}% is nearing your 10% monthly limit.`,
+      time: 'Now'
+    });
+  }
+  if (consistentPositionSize === false) {
+    riskAlerts.push({
+      id: 'position-size',
+      level: 'info',
+      title: 'Position Size Inconsistency',
+      description: 'Your last 5 trades had inconsistent position sizing. Review your risk management.',
+      time: 'Now'
+    });
+  } else if (consistentPositionSize === true) {
+    riskAlerts.push({
+      id: 'position-size',
+      level: 'info',
+      title: 'Position Size Consistency',
+      description: 'Your last 5 trades had consistent position sizing - good risk management!',
+      time: 'Now'
+    });
+  }
+  const highCorr = correlations.filter(c => Math.abs(c.correlation) > 0.7);
+  if (highCorr.length > 0) {
+    riskAlerts.push({
+      id: 'correlation',
+      level: 'critical',
+      title: 'Correlated Positions',
+      description: `You have multiple positions in highly correlated markets (${highCorr.map(c => c.pair.join(', ')).join('; ')}).`,
+      time: 'Now'
+    });
+  }
   
   // Format currency values
   const formatCurrency = (value: number): string => {
@@ -91,17 +149,10 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   };
   
   // Process calendar data
+  // Remove mockCalendarData usage. Replace with real data processing or leave empty if not used.
   const processCalendarData = (): MonthData => {
     const monthData: MonthData = {};
-    
-    mockCalendarData.forEach(day => {
-      monthData[day.date] = {
-        trades: day.trades,
-        pnl: day.pnl,
-        type: day.type
-      };
-    });
-    
+    // TODO: Populate monthData from real trades data
     return monthData;
   };
   
@@ -191,90 +242,60 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   };
   
   // Render correlation heatmap
-  const renderCorrelationHeatmap = () => {
-    return (
+  const renderCorrelationHeatmap = () => (
       <div className="bg-[#1a1f2c] p-4 rounded-lg mt-4">
         <h4 className="text-sm font-medium text-white mb-3">Instrument Correlation</h4>
-        
+      {correlations.length === 0 ? (
+        <div className="text-xs text-gray-400">Not enough data to calculate correlations.</div>
+      ) : (
         <div className="space-y-2">
-          {mockInstrumentCorrelation.map((item, index) => {
+          {correlations.map((item, index) => {
             const correlationValue = item.correlation;
-            // Color based on correlation strength: Green = low, Yellow = medium, Red = high
             const bgColor = correlationValue < 0.5 
               ? 'bg-green-500' 
               : correlationValue < 0.8 
                 ? 'bg-yellow-500' 
                 : 'bg-red-500';
-            
             return (
               <div key={index} className="flex items-center">
                 <div className="w-36 text-xs text-gray-300">{item.pair[0]} / {item.pair[1]}</div>
                 <div className="flex-grow h-5 bg-gray-700 rounded overflow-hidden">
                   <div 
                     className={`h-full ${bgColor}`}
-                    style={{ width: `${item.correlation * 100}%` }}
+                    style={{ width: `${Math.abs(item.correlation) * 100}%` }}
                   ></div>
                 </div>
                 <div className="w-12 text-right text-xs text-gray-300">
-                  {item.correlation.toFixed(2)}
+                  {item.correlation != null ? item.correlation.toFixed(2) : '--'}
                 </div>
               </div>
             );
           })}
         </div>
-        
+      )}
         <div className="text-xs text-gray-400 mt-3">
           Higher correlation (red) indicates instruments that tend to move together.
         </div>
       </div>
     );
-  };
   
-  const renderHealthScore = () => {
-    return (
+  const renderHealthScore = () => (
       <div className="bg-[#1a1f2c] p-4 rounded-lg">
         <h4 className="text-sm font-medium text-white mb-3">Trading Health Score</h4>
-        
-        {/* Overall score */}
         <div className="flex items-center mb-5">
           <div className="w-20 h-20 rounded-full flex items-center justify-center border-4 border-indigo-500 mr-4">
-            <span className="text-2xl font-bold text-white">{mockHealthMetrics.overall}</span>
+          <span className="text-2xl font-bold text-white">{healthScore}</span>
           </div>
-          
           <div>
             <div className="font-medium text-white mb-1">Overall Health</div>
-            <div className="text-sm text-gray-300">Your trading system is working well, but there's room for improvement.</div>
+          <div className="text-sm text-gray-300">
+            {metrics.totalTrades === 0 ? 'Add more trades to see your health score.' : "Your trading system's health is based on real performance data."}
           </div>
         </div>
-        
-        {/* Detail metrics */}
-        <div className="space-y-3">
-          {Object.entries(mockHealthMetrics).map(([key, value]) => {
-            if (key === 'overall') return null;
-            
-            return (
-              <div key={key} className="flex items-center">
-                <div className="w-32 text-sm text-gray-300 capitalize">{key}</div>
-                <div className="flex-grow h-2 bg-gray-700 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${
-                      value >= 80 ? 'bg-green-500' : 
-                      value >= 60 ? 'bg-yellow-500' : 
-                      'bg-red-500'
-                    }`}
-                    style={{ width: `${value}%` }}
-                  ></div>
-                </div>
-                <div className="w-8 text-right text-xs text-gray-300 ml-2">
-                  {value}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+      </div>
+      {/* Detail metrics could be added here if desired */}
       </div>
     );
-  };
   
   // Add a render method for the AI section
   const renderAISection = () => {
@@ -358,10 +379,13 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
             </div>
             
             <div className="p-0 divide-y divide-gray-800">
-              {mockRiskAlerts.map(alert => (
+              {riskAlerts.length === 0 ? (
+                <div className="p-4 text-xs text-gray-400">No risk alerts for your current trades.</div>
+              ) : (
+                riskAlerts.map(alert => (
                 <div 
                   key={alert.id}
-                  className={`p-4 ${getAlertLevelColor(alert.level)} border-l-4`}
+                    className={`p-4 ${alert.level === 'critical' ? 'bg-red-900/20 text-red-400 border-red-500' : alert.level === 'warning' ? 'bg-yellow-900/20 text-yellow-400 border-yellow-500' : 'bg-blue-900/20 text-blue-400 border-blue-500'} border-l-4`}
                 >
                   <div className="flex justify-between">
                     <h4 className="text-sm font-medium">{alert.title}</h4>
@@ -369,7 +393,8 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
                   </div>
                   <p className="mt-1 text-xs text-gray-400">{alert.description}</p>
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
           

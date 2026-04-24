@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
-import Header from '@/components/layout/Header';
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 
 type ProfileData = {
   username: string | null;
@@ -34,7 +34,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     if (!user) return;
     
-    console.log('Fetching profile for user:', user.id);
+
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -47,7 +47,7 @@ export default function ProfilePage() {
         console.error('Error fetching profile data:', error);
         // Create a minimal profile if one doesn't exist
         if (error.code === 'PGRST116') { // "No rows returned" error code
-          console.log('No profile found, creating a new one');
+
           const newProfile = {
             username: null,
             full_name: null,
@@ -73,24 +73,24 @@ export default function ProfilePage() {
           throw error;
         }
       } else {
-        console.log('Profile found:', data);
+
         // Profile exists - ensure avatar_url is properly formatted
         let avatarUrl = data?.avatar_url;
         
         // Check if the avatar URL is a valid URL
         if (avatarUrl) {
-          console.log('Original avatar URL:', avatarUrl);
+
           
           if (!avatarUrl.startsWith('http')) {
             // Try to get the public URL for the avatar
             try {
-              console.log('Converting storage path to public URL');
+
               const { data: publicUrlData } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(avatarUrl);
                 
               avatarUrl = publicUrlData.publicUrl;
-              console.log('Public URL:', avatarUrl);
+
             } catch (urlError) {
               console.error('Error getting public avatar URL:', urlError);
               avatarUrl = null;
@@ -105,7 +105,7 @@ export default function ProfilePage() {
           avatar_url: avatarUrl
         };
         
-        console.log('Setting profile data:', profileData);
+
         setProfileData(profileData);
         setFormData(profileData);
       }
@@ -151,20 +151,20 @@ export default function ProfilePage() {
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile || !user) return null;
     
-    console.log('Uploading avatar file:', avatarFile.name, avatarFile.type, avatarFile.size);
+
     
     const fileExt = avatarFile.name.split('.').pop();
     const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `${user.id}/${fileName}`; // Use user ID as folder for proper RLS
     
-    console.log('Avatar upload path:', filePath);
+
     
     try {
       // Remove old avatar file if it exists and doesn't start with http
       // (meaning it's a storage path not a URL)
       if (formData?.avatar_url && !formData.avatar_url.startsWith('http')) {
         try {
-          console.log('Removing old avatar:', formData.avatar_url);
+
           await supabase.storage
             .from('avatars')
             .remove([formData.avatar_url]);
@@ -174,7 +174,7 @@ export default function ProfilePage() {
         }
       }
       
-      console.log('Starting avatar upload');
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(filePath, avatarFile);
@@ -184,12 +184,12 @@ export default function ProfilePage() {
         throw uploadError;
       }
       
-      console.log('Avatar uploaded successfully');
+
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(filePath);
         
-      console.log('Public URL:', data.publicUrl);
+
       return data.publicUrl;
     } catch (error) {
       console.error('Error uploading avatar:', error);
@@ -247,9 +247,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a10]">
-      <Header />
-      
+    <AuthenticatedLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">My Profile</h1>
@@ -284,11 +282,13 @@ export default function ProfilePage() {
                               e.currentTarget.onerror = null; // Prevent infinite loop
                               e.currentTarget.src = ''; // Clear src
                               // Show fallback
-                              e.currentTarget.parentElement.innerHTML = `
-                                <div class="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
-                                  ${formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
-                                </div>
-                              `;
+                              if (e.currentTarget.parentElement) {
+                                e.currentTarget.parentElement.innerHTML = `
+                                  <div class="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
+                                    ${formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
+                                  </div>
+                                `;
+                              }
                             }}
                           />
                         ) : (
@@ -383,6 +383,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
-    </div>
+    </AuthenticatedLayout>
   );
 } 

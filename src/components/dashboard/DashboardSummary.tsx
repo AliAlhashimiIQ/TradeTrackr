@@ -17,6 +17,7 @@ import MetricCards from './MetricCards';
 import RecentTradesList from './RecentTradesList';
 import EquityChart from './EquityChart';
 import AIInsights from './AIInsights';
+import AccountDetails from './AccountDetails';
 
 interface OpenPositionProps {
   positions: OpenPosition[];
@@ -137,41 +138,59 @@ export default function DashboardSummary() {
   }, [user]);
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header with welcome message and date */}
-      <DashboardHeader />
-      
-      {/* Action buttons */}
-      <DashboardActions />
-      
-      {/* Metrics cards */}
-      <div className="mb-6">
-        <MetricCards metrics={metrics} isLoading={isLoading} />
+    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8 bg-gradient-to-br from-[#10131c] via-[#181e2e] to-[#232a3d] min-h-screen rounded-3xl shadow-2xl border border-blue-900/30 backdrop-blur-xl relative overflow-hidden">
+      {/* Decorative glassmorphic background shapes */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-blue-500/30 to-indigo-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-gradient-to-br from-indigo-500/30 to-blue-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
+      <div className="relative z-10">
+        {/* Header with welcome message and date */}
+        <DashboardHeader />
 
-      {/* Main content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          {/* Recent trades */}
-          <div className="mb-6">
-            <RecentTradesList trades={trades} isLoading={isLoading} />
-          </div>
-          
-          {/* Open positions */}
-          <div>
-            <OpenPositions positions={positions} isLoading={isLoading} />
-          </div>
+        {/* Account Details */}
+        <div className="mb-8">
+          {/* Pass trades to AccountDetails for balance/growth tracking */}
+          <AccountDetails initialBalance={25000} trades={trades} />
         </div>
-        
-        <div className="space-y-6">
-          {/* P/L Chart */}
-          <div className="bg-[#131825] rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-white mb-4">P/L Chart</h3>
-            <EquityChart data={equityData} isLoading={isLoading} />
+
+        {/* Action buttons */}
+        <DashboardActions />
+
+        {/* Metrics cards */}
+        <div className="mb-8">
+          <MetricCards metrics={metrics} isLoading={isLoading} />
+        </div>
+
+        {/* Main content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Recent trades */}
+            <div className="bg-gradient-to-br from-[#181e2e]/80 to-[#232a3d]/80 rounded-2xl shadow-xl border border-blue-900/20 hover:shadow-2xl transition-all">
+              <RecentTradesList trades={trades} isLoading={isLoading} />
+            </div>
+
+            {/* Open positions */}
+            <div className="bg-gradient-to-br from-[#181e2e]/80 to-[#232a3d]/80 rounded-2xl shadow-xl border border-blue-900/20 hover:shadow-2xl transition-all">
+              <OpenPositions positions={positions} isLoading={isLoading} />
+            </div>
           </div>
-          
-          {/* AI Insights */}
-          <AIInsights insights={[]} isLoading={isLoading} trades={trades} />
+
+          <div className="space-y-8">
+            {/* P/L Chart */}
+            <div className="bg-gradient-to-br from-[#181e2e]/80 to-[#232a3d]/80 rounded-2xl shadow-xl border border-blue-900/20 hover:shadow-2xl transition-all">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" /></svg>
+                P/L Chart
+              </h3>
+              <EquityChart data={equityData} isLoading={isLoading} />
+            </div>
+
+            {/* AI Insights */}
+            <div className="bg-gradient-to-br from-[#181e2e]/80 to-[#232a3d]/80 rounded-2xl shadow-xl border border-blue-900/20 hover:shadow-2xl transition-all">
+              <AIInsights insights={[]} isLoading={isLoading} trades={trades} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

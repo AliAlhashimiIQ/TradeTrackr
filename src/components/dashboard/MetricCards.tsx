@@ -47,7 +47,7 @@ export default function MetricCards({ metrics, isLoading }: MetricCardsProps) {
   };
 
   const formatPercentage = (value: number) => {
-    return `${value.toFixed(0)}%`;
+    return value != null ? `${value.toFixed(0)}%` : '--';
   };
 
   return (

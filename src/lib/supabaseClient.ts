@@ -106,7 +106,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       eventsPerSecond: 10,
     }
   }
-})
+}) 
 
 export const uploadTradeScreenshot = async (file: File, userId: string, tradeId: string): Promise<string | null> => {
   try {

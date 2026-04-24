@@ -4,18 +4,17 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Trade } from '@/lib/types'
-import { getAllTrades, deleteTrade } from '@/lib/tradingApi'
+import { getAllTrades, deleteTrade, addTrade } from '@/lib/tradingApi'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
-import Header from '@/components/layout/Header'
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
 import { calculatePerformanceMetrics } from '@/lib/tradeMetrics'
 import TradeDetail from '@/components/trades/TradeDetail'
-import COLORS, { TRANSITIONS } from '@/lib/colorSystem'
 import TagModal from '@/components/trades/TagModal'
 import ExportModal from '@/components/trades/ExportModal'
-import Image from 'next/image'
+import TradeAIChatBox from '@/components/trades/TradeAIChatBox'
+import { motion, AnimatePresence } from 'framer-motion'
 
-// Helper function to calculate trades per week
 const calculateTradesPerWeek = (trades: Trade[]): number => {
   if (!trades.length) return 0;
   const oldestTradeDate = new Date(Math.min(...trades.map(t => new Date(t.entry_time).getTime())));
@@ -25,90 +24,9 @@ const calculateTradesPerWeek = (trades: Trade[]): number => {
   return diffWeeks > 0 ? trades.length / diffWeeks : trades.length;
 };
 
-function MinimalEditTradeForm({ initialTrade, onSubmit, onCancel }: {
-  initialTrade: Partial<Trade>;
-  onSubmit: (trade: Partial<Trade>) => void;
-  onCancel: () => void;
-}) {
-  const [form, setForm] = useState({
-    symbol: initialTrade?.symbol || '',
-    type: initialTrade?.type || 'Long',
-    entry_price: initialTrade?.entry_price?.toString() || '',
-    exit_price: initialTrade?.exit_price?.toString() || '',
-    quantity: initialTrade?.quantity?.toString() || '',
-    entry_time: initialTrade?.entry_time || '',
-    exit_time: initialTrade?.exit_time || '',
-    notes: initialTrade?.notes || '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    onSubmit({
-      ...form,
-      entry_price: form.entry_price === '' ? undefined : Number(form.entry_price),
-      exit_price: form.exit_price === '' ? undefined : Number(form.exit_price),
-      quantity: form.quantity === '' ? undefined : Number(form.quantity),
-    });
-    setIsSubmitting(false);
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-4">
-      {error && <div className="text-red-400 text-sm mb-2">{error}</div>}
-      <div>
-        <label className="block text-gray-300 mb-1">Symbol</label>
-        <input name="symbol" value={form.symbol} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Type</label>
-        <select name="type" value={form.type} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white">
-          <option value="Long">Long</option>
-          <option value="Short">Short</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Entry Price</label>
-        <input name="entry_price" value={form.entry_price} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Exit Price</label>
-        <input name="exit_price" value={form.exit_price} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Quantity</label>
-        <input name="quantity" value={form.quantity} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Entry Date</label>
-        <input type="datetime-local" name="entry_time" value={form.entry_time} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Exit Date</label>
-        <input type="datetime-local" name="exit_time" value={form.exit_time} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div>
-        <label className="block text-gray-300 mb-1">Notes</label>
-        <textarea name="notes" value={form.notes} onChange={handleChange} className="w-full p-2 rounded bg-[#23273a] text-white" />
-      </div>
-      <div className="flex gap-3 mt-4">
-        <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
-          {isSubmitting ? 'Saving...' : 'Save'}
-        </button>
-        <button type="button" onClick={onCancel} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition">
-          Cancel
-        </button>
-      </div>
-    </form>
-  );
-}
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+};
 
 export default function Trades() {
   const { user, loading } = useAuth()
@@ -122,49 +40,24 @@ export default function Trades() {
   const [selectedDetailTrade, setSelectedDetailTrade] = useState<Trade | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   
-  // Filtering and sorting state
   const [searchTerm, setSearchTerm] = useState('')
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'All' | 'Long' | 'Short'>('All')
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
   const [sortField, setSortField] = useState<keyof Trade>('entry_time')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
-  const [pnlRange, setPnlRange] = useState<{ min: number | null; max: number | null }>({ min: null, max: null })
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
   
-  // Bulk actions state
   const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([])
-  const [showBulkActions, setShowBulkActions] = useState(false)
-  
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
-  const [quickMetrics, setQuickMetrics] = useState<{
-    winRate: number;
-    profitFactor: number;
-    totalPnL: number;
-    avgWin: number;
-    avgLoss: number;
-    tradesPerWeek: number;
-  }>({ 
-    winRate: 0, 
-    profitFactor: 0, 
-    totalPnL: 0, 
-    avgWin: 0, 
-    avgLoss: 0, 
-    tradesPerWeek: 0 
-  })
+  const [quickMetrics, setQuickMetrics] = useState({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 })
   const [showTagModal, setShowTagModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
-  }, [user, loading, router])
+  useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
   useEffect(() => {
     async function fetchTrades() {
@@ -174,1020 +67,430 @@ export default function Trades() {
           const tradesData = await getAllTrades(user.id)
           setTrades(tradesData)
           setFilteredTrades(tradesData)
-          
-          // Calculate quick metrics
           if (tradesData.length > 0) {
             const metrics = calculatePerformanceMetrics(tradesData);
-            
-            // Calculate trades per week
-            const tradesPerWeek = calculateTradesPerWeek(tradesData);
-            
-            setQuickMetrics({
-              winRate: metrics.winRate,
-              profitFactor: metrics.profitFactor,
-              totalPnL: metrics.totalPnL,
-              avgWin: metrics.averageWin,
-              avgLoss: metrics.averageLoss,
-              tradesPerWeek
-            });
+            setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(tradesData) });
           }
-        } catch (error) {
-          console.error('Error fetching trades:', error)
-        } finally {
-          setIsLoading(false)
-        }
+        } catch (error) { console.error('Error fetching trades:', error) }
+        finally { setIsLoading(false) }
       }
     }
-
-    if (user) {
-      fetchTrades()
-    }
+    if (user) fetchTrades()
   }, [user])
   
-  // Apply filters and sorting
+  // Apply filters
   useEffect(() => {
     if (!trades.length) return;
-    
     let result = [...trades];
-    
-    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter(trade => 
-        trade.symbol.toLowerCase().includes(term) || 
-        (trade.tags?.some(tag => tag.toLowerCase().includes(term))) ||
-        (trade.notes && trade.notes.toLowerCase().includes(term))
-      );
+      result = result.filter(t => t.symbol.toLowerCase().includes(term) || t.notes?.toLowerCase().includes(term) || t.tags?.some(tag => tag.toLowerCase().includes(term)));
     }
-    
-    // Apply symbol filter
-    if (symbolFilter) {
-      result = result.filter(trade => trade.symbol === symbolFilter);
-    }
-    
-    // Apply type filter
-    if (typeFilter !== 'All') {
-      result = result.filter(trade => trade.type === typeFilter);
-    }
-    
-    // Apply date filter
+    if (symbolFilter) result = result.filter(t => t.symbol === symbolFilter);
+    if (typeFilter !== 'All') result = result.filter(t => t.type === typeFilter);
     if (dateFilter !== 'All') {
       const now = new Date();
-      let cutoffDate: Date;
-      
-      switch (dateFilter) {
-        case '7d':
-          cutoffDate = new Date(now.setDate(now.getDate() - 7));
-          break;
-        case '30d':
-          cutoffDate = new Date(now.setDate(now.getDate() - 30));
-          break;
-        case '90d':
-          cutoffDate = new Date(now.setDate(now.getDate() - 90));
-          break;
-        case '1y':
-          cutoffDate = new Date(now.setFullYear(now.getFullYear() - 1));
-          break;
-        default:
-          cutoffDate = new Date(0);
-      }
-      
-      result = result.filter(trade => new Date(trade.entry_time) >= cutoffDate);
+      const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter] || 0;
+      const cutoff = new Date(now.getTime() - days * 86400000);
+      result = result.filter(t => new Date(t.entry_time) >= cutoff);
     }
-
-    // Apply P&L range filter
-    if (pnlRange.min !== null || pnlRange.max !== null) {
-      result = result.filter(trade => {
-        if (pnlRange.min !== null && trade.profit_loss < pnlRange.min) return false;
-        if (pnlRange.max !== null && trade.profit_loss > pnlRange.max) return false;
-        return true;
-      });
-    }
-
-    // Apply tags filter
-    if (selectedTags.length > 0) {
-      result = result.filter(trade => 
-        trade.tags?.every(tag => selectedTags.includes(tag))
-      );
-    }
-    
-    // Apply sorting
     result.sort((a, b) => {
-      const fieldA = a[sortField];
-      const fieldB = b[sortField];
-      
-      if (typeof fieldA === 'string' && typeof fieldB === 'string') {
-        return sortDirection === 'asc' 
-          ? fieldA.localeCompare(fieldB) 
-          : fieldB.localeCompare(fieldA);
-      }
-      
-      // For numeric fields
-      return sortDirection === 'asc' 
-        ? (fieldA as number) - (fieldB as number) 
-        : (fieldB as number) - (fieldA as number);
+      const fA = a[sortField], fB = b[sortField];
+      if (typeof fA === 'string' && typeof fB === 'string') return sortDirection === 'asc' ? fA.localeCompare(fB) : fB.localeCompare(fA);
+      return sortDirection === 'asc' ? (fA as number) - (fB as number) : (fB as number) - (fA as number);
     });
-
-    // Calculate total pages
     setTotalPages(Math.ceil(result.length / pageSize));
-    
-    // Apply pagination
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    result = result.slice(startIndex, endIndex);
-    
-    setFilteredTrades(result);
-    
-    // Update metrics for filtered results
     if (result.length > 0) {
       const metrics = calculatePerformanceMetrics(result);
-      setQuickMetrics({
-        winRate: metrics.winRate,
-        profitFactor: metrics.profitFactor,
-        totalPnL: metrics.totalPnL,
-        avgWin: metrics.averageWin,
-        avgLoss: metrics.averageLoss,
-        tradesPerWeek: calculateTradesPerWeek(result)
-      });
+      setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(result) });
     } else {
-      setQuickMetrics({ 
-        winRate: 0, 
-        profitFactor: 0, 
-        totalPnL: 0,
-        avgWin: 0,
-        avgLoss: 0,
-        tradesPerWeek: 0
-      });
+      setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
     }
-  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, pnlRange, selectedTags, currentPage, pageSize]);
+    const start = (currentPage - 1) * pageSize;
+    setFilteredTrades(result.slice(start, start + pageSize));
+  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, currentPage, pageSize]);
 
-  const uniqueSymbols = Array.from(new Set(trades.map(trade => trade.symbol)));
-
-  const handleAddTrade = () => {
-    setSelectedTrade(null)
-    setShowForm(true)
-  }
-
-  const handleEditTrade = (trade: Trade) => {
-    setSelectedTrade(trade)
-    setShowForm(true)
-  }
+  const uniqueSymbols = Array.from(new Set(trades.map(t => t.symbol)));
 
   const handleDeleteTrade = async (tradeId: string) => {
-    if (window.confirm('Are you sure you want to delete this trade?')) {
-      setIsDeleting(tradeId)
-      try {
-        await deleteTrade(tradeId)
-        // Refresh trades from backend
-        if (user) {
-          const tradesData = await getAllTrades(user.id)
-          setTrades(tradesData)
-          setFilteredTrades(tradesData)
-        }
-      } catch (error) {
-        console.error('Error deleting trade:', error)
-        alert('Failed to delete trade. Please try again.')
-      } finally {
-        setIsDeleting(null)
-      }
-    }
-  }
-
-  const handleTradeFormClose = () => {
-    setShowForm(false)
-    setSelectedTrade(null)
-  }
-
-  const handleTradeFormSubmit = async (tradeData: Partial<Trade>) => {
-    // This will update an existing trade
-    if (selectedTrade && tradeData.id) {
-      try {
-        // In a real app, this would call an API to update the trade
-        // For now, we'll just update the local state
-        const updatedTrades = trades.map(trade => 
-          trade.id === tradeData.id ? { ...trade, ...tradeData } as Trade : trade
-        );
-        setTrades(updatedTrades);
-        // Refresh trades from backend
-        if (user) {
-          const tradesData = await getAllTrades(user.id)
-          setTrades(tradesData)
-          setFilteredTrades(tradesData)
-        }
-        // Close the form
-        setShowForm(false);
-        setSelectedTrade(null);
-      } catch (error) {
-        console.error('Error updating trade:', error);
-        alert('Failed to update trade. Please try again.');
-      }
-    }
-  }
-  
-  const handleSort = (field: keyof Trade) => {
-    if (field === sortField) {
-      // Toggle direction if clicking the same field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new field and reset to desc direction
-      setSortField(field);
-      setSortDirection('desc');
-    }
-  }
-  
-  const getSortIndicator = (field: keyof Trade) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === 'asc' ? (
-      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7" />
-      </svg>
-    ) : (
-      <svg className="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-      </svg>
-    );
-  }
-
-  // Format currency
-  const formatCurrency = (value: number): string => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  }
-
-  // Handle viewing trade details
-  const handleViewTradeDetails = (trade: Trade) => {
-    setSelectedDetailTrade(trade);
+    if (!window.confirm('Delete this trade?')) return;
+    setIsDeleting(tradeId);
+    try {
+      await deleteTrade(tradeId);
+      if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
+    } catch (e) { console.error(e); } finally { setIsDeleting(null); }
   };
 
-  // Handle bulk actions
+  const handleTradeFormSubmit = async (tradeData: Partial<Trade>) => {
+    if (selectedTrade && tradeData.id) {
+      const updated = trades.map(t => t.id === tradeData.id ? { ...t, ...tradeData } as Trade : t);
+      setTrades(updated);
+      if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
+      setShowForm(false); setSelectedTrade(null);
+    } else {
+      if (!user) return;
+      await addTrade({ ...tradeData, user_id: user.id } as Trade);
+      const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d);
+      setShowForm(false); setSelectedTrade(null);
+    }
+  };
+
   const handleBulkAction = async (action: 'delete' | 'export' | 'tag') => {
     if (!selectedTradeIds.length) return;
-
-    switch (action) {
-      case 'delete':
-        if (window.confirm(`Are you sure you want to delete ${selectedTradeIds.length} trades?`)) {
-          setIsLoading(true);
-          try {
-            await Promise.all(selectedTradeIds.map(id => deleteTrade(id)));
-            // Refresh trades from backend
-            if (user) {
-              const tradesData = await getAllTrades(user.id)
-              setTrades(tradesData)
-              setFilteredTrades(tradesData)
-            }
-            setSelectedTradeIds([]);
-          } catch (error) {
-            console.error('Error deleting trades:', error);
-            alert('Failed to delete some trades. Please try again.');
-          } finally {
-            setIsLoading(false);
-          }
-        }
-        break;
-
-      case 'export':
-        setShowExportModal(true);
-        break;
-
-      case 'tag':
-        setShowTagModal(true);
-        break;
-    }
+    if (action === 'delete') {
+      if (!window.confirm(`Delete ${selectedTradeIds.length} trades?`)) return;
+      setIsLoading(true);
+      await Promise.all(selectedTradeIds.map(id => deleteTrade(id)));
+      if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
+      setSelectedTradeIds([]); setIsLoading(false);
+    } else if (action === 'export') setShowExportModal(true);
+    else if (action === 'tag') setShowTagModal(true);
   };
 
   const handleExport = async (format: 'csv' | 'json' | 'pdf') => {
     setIsProcessing(true);
-    try {
-      const selectedTrades = trades.filter(trade => selectedTradeIds.includes(trade.id));
-      exportTrades(selectedTrades, format);
-      setShowExportModal(false);
-    } catch (error) {
-      console.error('Error exporting trades:', error);
-      alert('Failed to export trades. Please try again.');
-    } finally {
-      setIsProcessing(false);
+    const selected = trades.filter(t => selectedTradeIds.includes(t.id));
+    if (format === 'csv') {
+      const headers = ['Symbol','Type','Entry','Exit','Qty','P/L','Entry Time','Exit Time','Tags','Notes'];
+      const rows = selected.map(t => [t.symbol,t.type,t.entry_price,t.exit_price,t.quantity,t.profit_loss,t.entry_time,t.exit_time,t.tags?.join(';')||'',t.notes||'']);
+      const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' }); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'trades.csv'; a.click(); URL.revokeObjectURL(url);
+    } else if (format === 'json') {
+      const blob = new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'trades.json'; a.click(); URL.revokeObjectURL(url);
     }
+    setShowExportModal(false); setIsProcessing(false);
   };
 
   const handleAddTag = async (tag: string) => {
     setIsProcessing(true);
-    try {
-      setTrades(prevTrades => 
-        prevTrades.map(trade => 
-          selectedTradeIds.includes(trade.id)
-            ? {
-                ...trade,
-                tags: [...(trade.tags || []), tag]
-              }
-            : trade
-        )
-      );
-      setSelectedTradeIds([]);
-      setShowTagModal(false);
-    } catch (error) {
-      console.error('Error adding tag:', error);
-      alert('Failed to add tag. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
+    setTrades(prev => prev.map(t => selectedTradeIds.includes(t.id) ? { ...t, tags: [...(t.tags || []), tag] } : t));
+    setSelectedTradeIds([]); setShowTagModal(false); setIsProcessing(false);
   };
 
-  // Export trades function
-  const exportTrades = (tradesToExport: Trade[], format: 'csv' | 'json' | 'pdf') => {
-    switch (format) {
-      case 'csv':
-        const csv = convertTradesToCSV(tradesToExport);
-        downloadFile(csv, 'trades.csv', 'text/csv');
-        break;
-      case 'json':
-        const json = JSON.stringify(tradesToExport, null, 2);
-        downloadFile(json, 'trades.json', 'application/json');
-        break;
-      case 'pdf':
-        // Implement PDF export
-        alert('PDF export not implemented yet');
-        break;
-    }
+  const handleSort = (field: keyof Trade) => {
+    if (field === sortField) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortField(field); setSortDirection('desc'); }
   };
 
-  // Helper function to download files
-  const downloadFile = (content: string, filename: string, contentType: string) => {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Convert trades to CSV
-  const convertTradesToCSV = (tradesToConvert: Trade[]): string => {
-    const headers = ['Symbol', 'Type', 'Entry Price', 'Exit Price', 'Quantity', 'P/L', 'Entry Time', 'Exit Time', 'Tags', 'Notes'];
-    const rows = tradesToConvert.map(trade => [
-      trade.symbol,
-      trade.type,
-      trade.entry_price,
-      trade.exit_price,
-      trade.quantity,
-      trade.profit_loss,
-      trade.entry_time,
-      trade.exit_time,
-      trade.tags?.join(';') || '',
-      trade.notes || ''
-    ]);
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
-  };
+  const selectedTradesForAI = trades.filter(t => selectedTradeIds.includes(t.id));
 
   if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <AuthenticatedLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        </div>
+      </AuthenticatedLayout>
     )
   }
 
-  if (!user) {
-    return null // This prevents the page from flashing before redirect
-  }
-
   return (
-    <div className="bg-[#0a0a10] min-h-screen">
-      <Header />
-
+    <AuthenticatedLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Page Header with Metrics */}
-        <div className="mb-6">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Trade History</h1>
-              <p className="text-gray-400 mt-1">Track, analyze, and manage your trading activity</p>
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Trades</h1>
+            <p className="text-gray-500 text-sm mt-0.5">{trades.length} total trades logged</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <input
+                type="text" placeholder="Search..." value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-44 pl-9 pr-3 py-2 bg-[#0d0e16] border border-white/[0.06] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search trades..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full sm:w-64 p-2 pl-8 rounded-lg bg-[#1a1f2c] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <svg className="w-4 h-4 absolute left-2.5 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+            <button onClick={() => setShowFilters(!showFilters)}
+              className={`p-2 rounded-xl border transition-all ${showFilters ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' : 'bg-[#0d0e16] border-white/[0.06] text-gray-400 hover:text-white'}`}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+            </button>
+            <Link href="/trades/new"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-blue-500 shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+              Log Trade
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+          {[
+            { label: 'Total P&L', value: formatCurrency(quickMetrics.totalPnL), color: quickMetrics.totalPnL >= 0 ? 'emerald' : 'red',
+              icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+            { label: 'Win Rate', value: `${quickMetrics.winRate.toFixed(1)}%`, color: quickMetrics.winRate >= 50 ? 'emerald' : 'red',
+              icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+            { label: 'Profit Factor', value: quickMetrics.profitFactor.toFixed(2), color: quickMetrics.profitFactor >= 1 ? 'emerald' : 'red',
+              icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+            { label: 'Total Trades', value: trades.length.toString(), color: 'indigo',
+              icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
+          ].map((m, i) => (
+            <div key={i} className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">{m.label}</span>
+                <div className={`${m.color === 'emerald' ? 'text-emerald-500/50' : m.color === 'red' ? 'text-red-500/50' : 'text-indigo-500/50'}`}>{m.icon}</div>
               </div>
-              
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className="px-3 py-2 bg-[#1a1f2c] text-white rounded-lg hover:bg-[#262f3f] transition-colors flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                {showFilters ? 'Hide Filters' : 'Show Filters'}
-              </button>
-              
-              <Link 
-                href="/trades/new"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
-              >
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Trade
+              <div className={`text-xl font-bold ${m.color === 'emerald' ? 'text-emerald-400' : m.color === 'red' ? 'text-red-400' : 'text-indigo-400'}`}>
+                {m.value}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              className="mb-6 overflow-hidden">
+              <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Symbol</label>
+                    <select value={symbolFilter || ''} onChange={e => setSymbolFilter(e.target.value || null)}
+                      className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                      <option value="">All Symbols</option>
+                      {uniqueSymbols.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Direction</label>
+                    <select value={typeFilter} onChange={e => setTypeFilter(e.target.value as 'All' | 'Long' | 'Short')}
+                      className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                      <option value="All">All</option><option value="Long">Long</option><option value="Short">Short</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Period</label>
+                    <select value={dateFilter} onChange={e => setDateFilter(e.target.value as typeof dateFilter)}
+                      className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                      <option value="All">All Time</option><option value="7d">7 Days</option><option value="30d">30 Days</option><option value="90d">90 Days</option><option value="1y">1 Year</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button onClick={() => { setSearchTerm(''); setSymbolFilter(null); setTypeFilter('All'); setDateFilter('All'); }}
+                      className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white bg-[#151823] border border-white/[0.06] rounded-lg transition-colors">
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bulk Actions */}
+        <AnimatePresence>
+          {selectedTradeIds.length > 0 && (
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              className="mb-4 p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-indigo-300 font-medium">{selectedTradeIds.length} selected</span>
+                <div className="flex gap-1.5">
+                  <button onClick={() => handleBulkAction('delete')} className="px-3 py-1.5 text-xs font-medium bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
+                  <button onClick={() => handleBulkAction('export')} className="px-3 py-1.5 text-xs font-medium bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
+                  <button onClick={() => handleBulkAction('tag')} className="px-3 py-1.5 text-xs font-medium bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
+                </div>
+              </div>
+              <button onClick={() => setSelectedTradeIds([])} className="text-xs text-gray-500 hover:text-white transition-colors">Clear</button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Trade List */}
+        <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-hidden">
+          {/* Table Header */}
+          <div className="hidden md:grid grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_1fr_100px_80px] gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
+            <div className="flex items-center">
+              <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
+                onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
+                className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
+            </div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('symbol')}>
+              Symbol {sortField === 'symbol' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('type')}>Side</div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_price')}>Entry</div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('exit_price')}>Exit</div>
+            <div>Lots</div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('profit_loss')}>
+              P&L {sortField === 'profit_loss' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </div>
+            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_time')}>
+              Date {sortField === 'entry_time' && (sortDirection === 'asc' ? '↑' : '↓')}
+            </div>
+            <div className="text-right">Actions</div>
+          </div>
+
+          {/* Rows */}
+          {filteredTrades.length === 0 ? (
+            <div className="px-6 py-20 text-center">
+              <div className="text-gray-600 mb-3">
+                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+              </div>
+              <p className="text-gray-400 font-medium mb-1">No trades found</p>
+              <p className="text-gray-600 text-sm mb-4">Start by logging your first trade</p>
+              <Link href="/trades/new" className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-colors text-sm font-medium">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+                Log Trade
               </Link>
             </div>
-          </div>
-
-          {/* Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                  </svg>
+          ) : (
+            filteredTrades.map((trade, idx) => (
+              <div key={trade.id}
+                className={`grid grid-cols-1 md:grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_1fr_100px_80px] gap-2 px-4 py-3.5 items-center hover:bg-white/[0.02] transition-colors ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}>
+                {/* Checkbox */}
+                <div className="hidden md:flex items-center">
+                  <input type="checkbox" checked={selectedTradeIds.includes(trade.id)}
+                    onChange={e => setSelectedTradeIds(e.target.checked ? [...selectedTradeIds, trade.id] : selectedTradeIds.filter(id => id !== trade.id))}
+                    className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
                 </div>
-                <div>
-                  <div className="text-xs text-gray-400">Total Trades</div>
-                  <div className="text-xl font-bold text-white">{filteredTrades.length}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-              <div className="flex items-center">
-                <div className={`w-10 h-10 rounded-full ${quickMetrics.winRate >= 60 ? 'bg-green-500/20' : quickMetrics.winRate >= 50 ? 'bg-blue-500/20' : 'bg-red-500/20'} flex items-center justify-center mr-3`}>
-                  <svg className={`w-5 h-5 ${quickMetrics.winRate >= 60 ? 'text-green-400' : quickMetrics.winRate >= 50 ? 'text-blue-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Win Rate</div>
-                  <div className={`text-xl font-bold ${quickMetrics.winRate >= 60 ? 'text-green-400' : quickMetrics.winRate >= 50 ? 'text-blue-400' : 'text-red-400'}`}>
-                    {quickMetrics.winRate.toFixed(1)}%
+                
+                {/* Symbol */}
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                    {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
                   </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-              <div className="flex items-center">
-                <div className={`w-10 h-10 rounded-full ${quickMetrics.totalPnL >= 0 ? 'bg-green-500/20' : 'bg-red-500/20'} flex items-center justify-center mr-3`}>
-                  <svg className={`w-5 h-5 ${quickMetrics.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Total P&L</div>
-                  <div className={`text-xl font-bold ${quickMetrics.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {formatCurrency(quickMetrics.totalPnL)}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center mr-3">
-                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="text-xs text-gray-400">Profit Factor</div>
-                  <div className="text-xl font-bold text-white">{quickMetrics.profitFactor.toFixed(2)}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Advanced Metrics (conditional on showFilters) */}
-          {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-                <div className="text-xs text-gray-400 mb-1">Avg Win</div>
-                <div className="text-lg font-medium text-green-400">{formatCurrency(quickMetrics.avgWin)}</div>
-              </div>
-              
-              <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-                <div className="text-xs text-gray-400 mb-1">Avg Loss</div>
-                <div className="text-lg font-medium text-red-400">{formatCurrency(Math.abs(quickMetrics.avgLoss))}</div>
-              </div>
-              
-              <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-                <div className="text-xs text-gray-400 mb-1">Avg RR Ratio</div>
-                <div className="text-lg font-medium text-white">
-                  {quickMetrics.avgLoss !== 0 ? (quickMetrics.avgWin / Math.abs(quickMetrics.avgLoss)).toFixed(2) : '0.00'}
-                </div>
-              </div>
-              
-              <div className="bg-[#1a1f2c] rounded-lg p-4 border border-gray-800">
-                <div className="text-xs text-gray-400 mb-1">Trades Per Week</div>
-                <div className="text-lg font-medium text-white">{quickMetrics.tradesPerWeek.toFixed(1)}</div>
-              </div>
-            </div>
-          )}
-          
-          {/* Filter Controls (conditional) */}
-          {showFilters && (
-            <div className="bg-[#0f1117] rounded-lg p-4 border border-gray-800 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Symbol</label>
-                  <select
-                    value={symbolFilter || ''}
-                    onChange={(e) => setSymbolFilter(e.target.value || null)}
-                    className="w-full p-2 rounded-lg bg-[#1a1f2c] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="">All Symbols</option>
-                    {uniqueSymbols.map(symbol => (
-                      <option key={symbol} value={symbol}>{symbol}</option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Type</label>
-                  <select
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value as 'All' | 'Long' | 'Short')}
-                    className="w-full p-2 rounded-lg bg-[#1a1f2c] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="All">All Types</option>
-                    <option value="Long">Long Only</option>
-                    <option value="Short">Short Only</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-xs text-gray-400 mb-1">Time Period</label>
-                  <select
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value as 'All' | '7d' | '30d' | '90d' | '1y')}
-                    className="w-full p-2 rounded-lg bg-[#1a1f2c] border border-gray-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="All">All Time</option>
-                    <option value="7d">Last 7 Days</option>
-                    <option value="30d">Last 30 Days</option>
-                    <option value="90d">Last 90 Days</option>
-                    <option value="1y">Last Year</option>
-                  </select>
-                </div>
-                
-                <div className="flex items-end">
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setSymbolFilter(null);
-                      setTypeFilter('All');
-                      setDateFilter('All');
-                    }}
-                    className="w-full p-2 text-gray-400 hover:text-white bg-[#1a1f2c] rounded-lg border border-gray-700 text-sm flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Reset Filters
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Bulk Actions Bar */}
-        {selectedTradeIds.length > 0 && (
-          <div className="bg-[#1a1f2c] mb-6 p-4 rounded-lg border border-gray-800 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <span className="text-white">
-                {selectedTradeIds.length} trade{selectedTradeIds.length > 1 ? 's' : ''} selected
-              </span>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => handleBulkAction('delete')}
-                  className="px-4 py-2 bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete
-                </button>
-                <button
-                  onClick={() => handleBulkAction('export')}
-                  className="px-4 py-2 bg-blue-900/30 text-blue-400 rounded-lg hover:bg-blue-900/50 transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Export
-                </button>
-                <button
-                  onClick={() => handleBulkAction('tag')}
-                  className="px-4 py-2 bg-purple-900/30 text-purple-400 rounded-lg hover:bg-purple-900/50 transition-colors flex items-center"
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  Tag
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={() => setSelectedTradeIds([])}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              Clear Selection
-            </button>
-          </div>
-        )}
-
-        {/* Enhanced Trade Table */}
-        <div className="bg-[#1a1f2c] rounded-xl border border-gray-800 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-[#151823] text-gray-400 text-left border-b border-gray-800">
-                  <th className="px-6 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedTradeIds.length === filteredTrades.length}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedTradeIds(filteredTrades.map(t => t.id));
-                        } else {
-                          setSelectedTradeIds([]);
-                        }
-                      }}
-                      className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
-                    />
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('symbol')}>
-                    <div className="flex items-center">
-                      Symbol {getSortIndicator('symbol')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('type')}>
-                    <div className="flex items-center">
-                      Type {getSortIndicator('type')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('entry_price')}>
-                    <div className="flex items-center">
-                      Entry {getSortIndicator('entry_price')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('exit_price')}>
-                    <div className="flex items-center">
-                      Exit {getSortIndicator('exit_price')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('quantity')}>
-                    <div className="flex items-center">
-                      Qty {getSortIndicator('quantity')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('profit_loss')}>
-                    <div className="flex items-center">
-                      P/L {getSortIndicator('profit_loss')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3 cursor-pointer select-none" onClick={() => handleSort('entry_time')}>
-                    <div className="flex items-center">
-                      Date {getSortIndicator('entry_time')}
-                    </div>
-                  </th>
-                  <th className="px-6 py-3">
-                    Screenshot
-                  </th>
-                  <th className="px-6 py-3">
-                    <div className="flex items-center">
-                      Details
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-800">
-                {filteredTrades.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-16 text-center">
-                      <div className="flex flex-col items-center justify-center">
-                        <svg className="w-12 h-12 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        <p className="text-gray-400 text-lg mb-2">No trades found</p>
-                        <p className="text-gray-500 text-sm">Try adjusting your filters or add a new trade</p>
+                  <div>
+                    <div className="text-sm font-bold text-white">{trade.symbol}</div>
+                    {trade.tags && trade.tags.length > 0 && (
+                      <div className="flex gap-1 mt-0.5">
+                        {trade.tags.slice(0, 2).map((tag, i) => (
+                          <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400">{tag}</span>
+                        ))}
+                        {trade.tags.length > 2 && <span className="text-[9px] text-gray-600">+{trade.tags.length - 2}</span>}
                       </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredTrades.map((trade) => (
-                    <tr key={trade.id} className="hover:bg-[#1d2333] transition-colors">
-                      <td className="px-6 py-4">
-                        <input
-                          type="checkbox"
-                          checked={selectedTradeIds.includes(trade.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedTradeIds(prev => [...prev, trade.id]);
-                            } else {
-                              setSelectedTradeIds(prev => prev.filter(id => id !== trade.id));
-                            }
-                          }}
-                          className="rounded border-gray-600 text-blue-500 focus:ring-blue-500 bg-gray-700"
-                        />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-3">
-                          <div>
-                            <div className="font-medium text-white">{trade.symbol}</div>
-                            {trade.strategy && (
-                              <div className="text-xs text-gray-500 mt-1">{trade.strategy}</div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
-                          trade.type === 'Long' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
-                        }`}>
-                          {trade.type}
-                        </span>
-                        {trade.tags && trade.tags.length > 0 && (
-                          <div className="mt-1 flex flex-wrap gap-1">
-                            {trade.tags.slice(0, 2).map((tag, index) => (
-                              <span key={index} className="inline-block px-1.5 py-0.5 text-xs rounded bg-blue-900/30 text-blue-400">
-                                {tag}
-                              </span>
-                            ))}
-                            {trade.tags.length > 2 && (
-                              <span className="text-xs text-gray-500">+{trade.tags.length - 2}</span>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-mono text-white">{formatCurrency(trade.entry_price)}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(trade.entry_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-mono text-white">{formatCurrency(trade.exit_price)}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {new Date(trade.exit_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-white">{trade.quantity}</div>
-                        {trade.risk && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Risk: {formatCurrency(trade.risk)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className={`font-medium ${
-                          trade.profit_loss > 0 ? 'text-green-400' : trade.profit_loss < 0 ? 'text-red-400' : 'text-gray-400'
-                        }`}>
-                          {trade.profit_loss > 0 ? '+' : ''}{formatCurrency(trade.profit_loss)}
-                        </div>
-                        {trade.r_multiple !== undefined && trade.r_multiple !== null && (
-                          <div className={`text-xs ${
-                            (trade.r_multiple || 0) > 0 ? 'text-green-500' : 'text-red-500'
-                          }`}>
-                            {(trade.r_multiple || 0) > 0 ? '+' : ''}{trade.r_multiple.toFixed(1)}R
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-white">
-                          {new Date(trade.entry_time).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {new Date(trade.entry_time).getFullYear()}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {trade.screenshot_url ? (
-                          <div className="w-16 h-10 relative cursor-pointer group" onClick={() => setSelectedScreenshotUrl(trade.screenshot_url)}>
-                            <Image
-                              src={trade.screenshot_url}
-                              alt="Trade Screenshot"
-                              fill
-                              className="object-cover rounded border border-gray-700 group-hover:brightness-75 transition"
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                              <svg className="w-6 h-6 text-white bg-black/60 rounded-full p-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="w-16 h-10 flex items-center justify-center bg-gray-800 text-gray-500 text-xs rounded border border-gray-700">
-                            No Image
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          {trade.notes && (
-                            <div className="w-2 h-2 rounded-full bg-purple-400" title="Has notes"></div>
-                          )}
-                          <button 
-                            onClick={() => handleViewTradeDetails(trade)}
-                            className="text-gray-400 hover:text-white transition-colors"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </button>
-                          <button 
-                            onClick={() => handleEditTrade(trade)}
-                            className="text-gray-400 hover:text-white transition-colors"
-                            disabled={isDeleting === trade.id}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTrade(trade.id)}
-                            className="text-gray-400 hover:text-red-400 transition-colors"
-                            disabled={isDeleting === trade.id}
-                          >
-                            {isDeleting === trade.id ? (
-                              <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          {/* Enhanced Pagination */}
-          <div className="px-6 py-4 bg-[#1a1f2c] border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center text-sm">
-            <div className="text-gray-400 mb-3 sm:mb-0">
-              Showing <span className="text-white">{Math.min(pageSize, filteredTrades.length)}</span> of{' '}
-              <span className="text-white">{trades.length}</span> trades
-            </div>
-            <div className="flex items-center space-x-2">
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="px-2 py-1 bg-[#151823] border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="10">10 per page</option>
-                <option value="25">25 per page</option>
-                <option value="50">50 per page</option>
-                <option value="100">100 per page</option>
-              </select>
+                    )}
+                  </div>
+                </div>
 
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+                {/* Side */}
+                <div>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                    {trade.type === 'Long' ? 'BUY' : 'SELL'}
+                  </span>
+                </div>
 
-              {/* Page numbers */}
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                const pageNum = i + 1;
-                return (
-                  <button
-                    key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-1 rounded-lg ${
-                      currentPage === pageNum
-                        ? 'bg-blue-900/50 text-blue-400 border border-blue-800'
-                        : 'text-gray-400 hover:bg-gray-800'
-                    }`}
-                  >
-                    {pageNum}
+                {/* Entry */}
+                <div className="text-sm font-mono text-gray-300">{(trade.entry_price ?? 0).toFixed(2)}</div>
+
+                {/* Exit */}
+                <div className="text-sm font-mono text-gray-300">{(trade.exit_price ?? 0).toFixed(2)}</div>
+
+                {/* Lots */}
+                <div className="text-sm text-gray-400">{trade.quantity}</div>
+
+                {/* P&L */}
+                <div className={`text-sm font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                  {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                </div>
+
+                {/* Date */}
+                <div className="text-sm text-gray-400">
+                  {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-1">
+                  {trade.screenshot_url && (
+                    <button onClick={() => setSelectedScreenshotUrl(trade.screenshot_url)}
+                      className="p-1.5 text-gray-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-white/[0.04]">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </button>
+                  )}
+                  <button onClick={() => setSelectedDetailTrade(trade)}
+                    className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                   </button>
-                );
-              })}
+                  <button onClick={() => { setSelectedTrade(trade); setShowForm(true); }}
+                    className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button onClick={() => handleDeleteTrade(trade.id)} disabled={isDeleting === trade.id}
+                    className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/[0.04] disabled:opacity-50">
+                    {isDeleting === trade.id ? (
+                      <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    )}
+                  </button>
+                </div>
 
-              {totalPages > 5 && <span className="text-gray-400">...</span>}
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 rounded-lg bg-gray-800 text-gray-400 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
+                {/* Mobile layout */}
+                <div className="md:hidden col-span-full flex items-center justify-between mt-2 pt-2 border-t border-white/[0.03]">
+                  <div className="flex items-center gap-3">
+                    <span className={`text-xs font-bold ${trade.type === 'Long' ? 'text-emerald-400' : 'text-red-400'}`}>{trade.type}</span>
+                    <span className="text-xs text-gray-500">{trade.entry_price} → {trade.exit_price}</span>
+                  </div>
+                  <span className={`text-sm font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {(trade.profit_loss ?? 0) >= 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+          
+          {/* Pagination */}
+          {filteredTrades.length > 0 && (
+            <div className="px-4 py-3 border-t border-white/[0.04] flex items-center justify-between">
+              <span className="text-xs text-gray-600">{trades.length} trades total</span>
+              <div className="flex items-center gap-1">
+                <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                  className="px-2 py-1 bg-[#151823] border border-white/[0.06] rounded-lg text-gray-400 text-xs focus:outline-none [color-scheme:dark]">
+                  <option value="10">10</option><option value="25">25</option><option value="50">50</option>
+                </select>
+                <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <span className="text-xs text-gray-400 px-2">{currentPage}/{totalPages}</span>
+                <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                  className="p-1.5 rounded-lg text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Trade Form Modal */}
+      {/* Edit Trade Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 overflow-auto flex items-center justify-center p-4">
-          <div className="bg-[#0f1117] rounded-lg shadow-2xl border border-gray-800 w-full max-w-4xl max-h-[90vh] overflow-auto">
-            <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-white">
-                {selectedTrade ? 'Edit Trade' : 'Add New Trade'}
-              </h2>
-              <button 
-                onClick={handleTradeFormClose}
-                className="text-gray-400 hover:text-white"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-auto flex items-start justify-center p-4 pt-20">
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#0a0b12] rounded-2xl border border-white/[0.08] w-full max-w-4xl max-h-[80vh] overflow-auto">
+            <div className="p-4 border-b border-white/[0.06] flex justify-between items-center sticky top-0 bg-[#0a0b12] z-10">
+              <h2 className="text-lg font-bold text-white">{selectedTrade ? 'Edit Trade' : 'Add Trade'}</h2>
+              <button onClick={() => { setShowForm(false); setSelectedTrade(null); }} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            {selectedTrade ? (
-              <MinimalEditTradeForm
-                initialTrade={selectedTrade}
-                onSubmit={handleTradeFormSubmit}
-                onCancel={handleTradeFormClose}
-              />
-            ) : (
-              <EnhancedTradeForm
-                onSubmit={handleTradeFormSubmit}
-                onCancel={handleTradeFormClose}
-              />
-            )}
-          </div>
+            <div className="p-6">
+              <EnhancedTradeForm initialTrade={selectedTrade || undefined} onSubmit={handleTradeFormSubmit} onCancel={() => { setShowForm(false); setSelectedTrade(null); }} />
+            </div>
+          </motion.div>
         </div>
       )}
       
-      {/* Trade Detail Modal */}
-      {selectedDetailTrade && (
-        <TradeDetail 
-          trade={selectedDetailTrade} 
-          onClose={() => setSelectedDetailTrade(null)} 
-        />
-      )}
-      
-      <TagModal
-        isOpen={showTagModal}
-        onClose={() => setShowTagModal(false)}
-        onConfirm={handleAddTag}
-        isLoading={isProcessing}
-      />
-      
-      <ExportModal
-        isOpen={showExportModal}
-        onClose={() => setShowExportModal(false)}
-        onConfirm={handleExport}
-        isLoading={isProcessing}
-      />
+      {selectedDetailTrade && <TradeDetail trade={selectedDetailTrade} onClose={() => setSelectedDetailTrade(null)} />}
+      <TagModal isOpen={showTagModal} onClose={() => setShowTagModal(false)} onConfirm={handleAddTag} isLoading={isProcessing} />
+      <ExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} onConfirm={handleExport} isLoading={isProcessing} />
 
       {/* Screenshot Modal */}
       {selectedScreenshotUrl && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center p-4" onClick={() => setSelectedScreenshotUrl(null)}>
-          <div className="max-w-3xl w-full relative" onClick={e => e.stopPropagation()}>
-            <button
-              onClick={() => setSelectedScreenshotUrl(null)}
-              className="absolute top-2 right-2 bg-gray-800 rounded-full p-2 text-white z-10"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedScreenshotUrl(null)}>
+          <div className="max-w-4xl w-full relative" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSelectedScreenshotUrl(null)} className="absolute -top-10 right-0 text-gray-400 hover:text-white transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <div className="relative max-h-[80vh] flex items-center justify-center">
-              <img
-                src={selectedScreenshotUrl}
-                alt="Trade Screenshot Full"
-                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-              />
-            </div>
+            <img src={selectedScreenshotUrl} alt="Trade Screenshot" className="max-w-full max-h-[80vh] object-contain rounded-xl mx-auto" />
           </div>
         </div>
       )}
-    </div>
+
+      <TradeAIChatBox selectedTrades={selectedTradesForAI.length > 0 ? selectedTradesForAI : filteredTrades} />
+    </AuthenticatedLayout>
   )
-} 
+}

@@ -56,6 +56,7 @@ export interface Database {
           emotional_state: string | null
           created_at: string
           updated_at: string
+          video_url?: string
         }
         Insert: {
           id?: string
@@ -74,6 +75,7 @@ export interface Database {
           emotional_state?: string | null
           created_at?: string
           updated_at?: string
+          video_url?: string
         }
         Update: {
           id?: string
@@ -92,6 +94,7 @@ export interface Database {
           emotional_state?: string | null
           created_at?: string
           updated_at?: string
+          video_url?: string
         }
       }
       open_positions: {

@@ -10,6 +10,7 @@ interface AdvancedPriceEntryProps {
   quantity: number | undefined;
   onEntryPriceChange: (price: number | undefined) => void;
   onExitPriceChange: (price: number | undefined) => void;
+  onQuantityChange?: (quantity: number | undefined) => void;
   className?: string;
 }
 
@@ -24,6 +25,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
   quantity,
   onEntryPriceChange,
   onExitPriceChange,
+  onQuantityChange,
   className = '',
 }) => {
   const [visualRange, setVisualRange] = useState<{min: number, max: number}>({ min: 0, max: 0 });
@@ -284,6 +286,22 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
                 step="0.01"
                 placeholder="0.00"
                 className="w-full py-2.5 pl-8 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
+          />
+        </div>
+      </div>
+
+        {/* Quantity Input */}
+        <div>
+          <label className="text-sm font-medium text-indigo-300 mb-2 block">Quantity</label>
+          <div className="relative">
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={quantity ?? ''}
+              onChange={e => onQuantityChange && onQuantityChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
+              placeholder="0"
+              className="w-full py-2.5 pl-4 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
           />
         </div>
       </div>

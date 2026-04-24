@@ -38,7 +38,13 @@ const TradeTagSelector: React.FC<TradeTagSelectorProps> = ({
   const [localFavoriteTags, setLocalFavoriteTags] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('favoriteTags');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return [];
+        }
+      }
     }
     return [];
   });

@@ -15,25 +15,25 @@ export async function getRecentTrades(userId: string, limit: number = 5): Promis
     
     return data as Trade[] || [];
   } catch (error) {
-    console.error('Error fetching recent trades:', error);
+    
     return [];
   }
 }
 
 // Function to get all trades
-export async function getAllTrades(userId: string): Promise<Trade[]> {
+export async function getAllTrades(userId?: string): Promise<Trade[]> {
   try {
     const { data, error } = await supabase
       .from('trades')
       .select('*')
-      .eq('user_id', userId)
+      // .eq('user_id', userId) // Disabled for testing: show all trades
       .order('entry_time', { ascending: false });
 
     if (error) throw error;
     
     return data as Trade[] || [];
   } catch (error) {
-    console.error('Error fetching all trades:', error);
+    
     return [];
   }
 }
@@ -46,8 +46,8 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       trade.id = crypto.randomUUID();
     }
     
-    // Use the database fields directly now that they exist
-    const tradeData = {
+    // Use the database fields directly - only include columns that exist in the table
+    const tradeData: Record<string, unknown> = {
       id: trade.id,
       user_id: trade.user_id,
       symbol: trade.symbol,
@@ -58,13 +58,14 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       exit_time: trade.exit_time,
       quantity: trade.quantity,
       profit_loss: trade.profit_loss,
-      strategy: trade.strategy,
       screenshot_url: trade.screenshot_url,
       notes: trade.notes,
-      emotional_state: trade.emotional_state, // Now using direct field
-      risk: trade.risk,                      // Now using direct field
-      r_multiple: trade.r_multiple           // Now using direct field
+      emotional_state: trade.emotional_state,
     };
+    
+    // Only include optional fields if they have values
+    if (trade.risk) tradeData.risk = trade.risk;
+    if (trade.r_multiple) tradeData.r_multiple = trade.r_multiple;
     
     // Insert the trade
     const { data, error } = await supabase
@@ -74,7 +75,7 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       .single();
 
     if (error) {
-      console.error('Database insert error:', error);
+      
       throw error;
     }
     
@@ -85,7 +86,7 @@ export async function addTrade(trade: Trade): Promise<Trade> {
     
     return { ...trade, ...data } as Trade;
   } catch (error) {
-    console.error('Error adding trade:', error);
+    
     throw error;
   }
 }
@@ -130,7 +131,7 @@ async function addTradeTagsToDatabase(tradeId: string, userId: string, tagNames:
     
     await supabase.from('trade_tags').insert(tradeTagsData);
   } catch (error) {
-    console.error('Error adding trade tags:', error);
+    
   }
 }
 
@@ -152,7 +153,7 @@ function getRandomColor() {
 export async function updateTrade(trade: Trade): Promise<Trade> {
   try {
     // Use the database fields directly
-    const tradeData = {
+    const tradeData: Record<string, unknown> = {
       id: trade.id,
       user_id: trade.user_id,
       symbol: trade.symbol,
@@ -163,13 +164,13 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       exit_time: trade.exit_time,
       quantity: trade.quantity,
       profit_loss: trade.profit_loss,
-      strategy: trade.strategy,
       screenshot_url: trade.screenshot_url,
       notes: trade.notes,
       emotional_state: trade.emotional_state,
-      risk: trade.risk,
-      r_multiple: trade.r_multiple
     };
+    
+    if (trade.risk) tradeData.risk = trade.risk;
+    if (trade.r_multiple) tradeData.r_multiple = trade.r_multiple;
     
     const { data, error } = await supabase
       .from('trades')
@@ -179,7 +180,7 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       .single();
 
     if (error) {
-      console.error('Database update error:', error);
+      
       throw error;
     }
     
@@ -199,7 +200,7 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
     
     return { ...trade, ...data } as Trade;
   } catch (error) {
-    console.error('Error updating trade:', error);
+    
     throw error;
   }
 }
@@ -216,7 +217,7 @@ export async function deleteTrade(tradeId: string): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error('Error deleting trade:', error);
+    
     throw error;
   }
 }
@@ -264,7 +265,7 @@ export async function getTradeMetrics(userId: string): Promise<TradeMetrics> {
       losing_trades: losingTrades.length
     };
   } catch (error) {
-    console.error('Error calculating trade metrics:', error);
+    
     return {
       total_pnl: 0,
       win_rate: 0,
@@ -289,7 +290,7 @@ export async function getOpenPositions(userId: string): Promise<OpenPosition[]> 
     
     return data as OpenPosition[] || [];
   } catch (error) {
-    console.error('Error fetching open positions:', error);
+    
     return [];
   }
 }
@@ -330,7 +331,7 @@ export async function getEquityCurveData(userId: string): Promise<ChartData> {
       values: Object.values(tradesByDate)
     };
   } catch (error) {
-    console.error('Error generating equity curve data:', error);
+    
     return {
       labels: [],
       values: []
@@ -351,7 +352,7 @@ export async function getTradeNotes(tradeId: string): Promise<TradeNote[]> {
     
     return data as TradeNote[] || [];
   } catch (error) {
-    console.error('Error fetching trade notes:', error);
+    
     return [];
   }
 }
@@ -369,7 +370,7 @@ export async function addTradeNote(note: Omit<TradeNote, 'id' | 'created_at' | '
     
     return data as TradeNote;
   } catch (error) {
-    console.error('Error adding trade note:', error);
+    
     throw error;
   }
 }
@@ -388,7 +389,7 @@ export async function updateTradeNote(id: string, content: string): Promise<Trad
     
     return data as TradeNote;
   } catch (error) {
-    console.error('Error updating trade note:', error);
+    
     throw error;
   }
 }
@@ -405,7 +406,7 @@ export async function deleteTradeNote(noteId: string): Promise<boolean> {
     
     return true;
   } catch (error) {
-    console.error('Error deleting trade note:', error);
+    
     throw error;
   }
 }
@@ -414,21 +415,8 @@ export async function deleteTradeNote(noteId: string): Promise<boolean> {
 
 // Function to get market events
 export async function getMarketEvents(startDate: string, endDate: string): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from('market_events')
-      .select('*')
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: true });
-
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching market events:', error);
-    return [];
-  }
+  // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
+  return [];
 }
 
 // Function to get economic calendar events
@@ -451,88 +439,33 @@ export async function getEconomicEvents(startDate: string, endDate: string, coun
     
     return data || [];
   } catch (error) {
-    console.error('Error fetching economic events:', error);
+    
     return [];
   }
 }
 
 // Function to get user's custom events
 export async function getCustomEvents(userId: string, startDate: string, endDate: string): Promise<any[]> {
-  try {
-    const { data, error } = await supabase
-      .from('custom_events')
-      .select('*')
-      .eq('user_id', userId)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .order('date', { ascending: true });
-
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching custom events:', error);
-    return [];
-  }
+  // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
+  return [];
 }
 
 // Function to add a custom event
 export async function addCustomEvent(event: any): Promise<any> {
-  try {
-    // Generate a UUID if not provided
-    if (!event.id) {
-      event.id = crypto.randomUUID();
-    }
-    
-    const { data, error } = await supabase
-      .from('custom_events')
-      .insert([event])
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('Error adding custom event:', error);
-    throw error;
-  }
+  // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
+  return;
 }
 
 // Function to update a custom event
 export async function updateCustomEvent(event: any): Promise<any> {
-  try {
-    const { data, error } = await supabase
-      .from('custom_events')
-      .update(event)
-      .eq('id', event.id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    
-    return data;
-  } catch (error) {
-    console.error('Error updating custom event:', error);
-    throw error;
-  }
+  // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
+  return;
 }
 
 // Function to delete a custom event
 export async function deleteCustomEvent(eventId: string): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('custom_events')
-      .delete()
-      .eq('id', eventId);
-
-    if (error) throw error;
-    
-    return true;
-  } catch (error) {
-    console.error('Error deleting custom event:', error);
-    throw error;
-  }
+  // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
+  return;
 }
 
 // Function to get all tags for a user
@@ -547,7 +480,7 @@ export async function getUserTags(userId: string): Promise<any[]> {
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching user tags:', error);
+    
     return [];
   }
 }
@@ -566,7 +499,7 @@ export async function getTradeTagsById(tradeId: string): Promise<any[]> {
     if (error) throw error;
     return data?.map(item => item.tags) || [];
   } catch (error) {
-    console.error('Error fetching trade tags:', error);
+    
     return [];
   }
 } 

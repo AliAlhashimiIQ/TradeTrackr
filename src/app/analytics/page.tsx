@@ -37,6 +37,7 @@ import {
   HeatmapData
 } from '@/lib/tradeMetrics';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
+import AIInsights from '@/components/dashboard/AIInsights';
 
 // Time period options for filtering
 type TimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
@@ -587,7 +588,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <EquityCurve data={equityCurveData} loading={loading} />
+                <EquityCurve data={equityCurveData} loading={loading} />
                 </div>
               </div>
               <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
@@ -605,9 +606,9 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <WinLossDistribution data={distributionData} loading={loading} />
-                </div>
+                <WinLossDistribution data={distributionData} loading={loading} />
               </div>
+            </div>
               <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Monthly Performance</h2>
@@ -616,7 +617,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <MonthlyPerformance data={monthlyData} loading={loading} />
+                <MonthlyPerformance data={monthlyData} loading={loading} />
                 </div>
               </div>
               <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
@@ -627,80 +628,13 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                  <DrawdownChart data={equityCurveData} loading={loading} />
+                <DrawdownChart data={equityCurveData} loading={loading} />
                 </div>
               </div>
             </div>
             
             {/* Key Insights */}
-            <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-6 shadow-sm mb-8">
-              <div className="flex items-center mb-5">
-                <div className="p-2 bg-indigo-500/10 rounded-lg mr-3">
-                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h2 className="text-white text-lg font-medium">Key Insights</h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex items-start bg-[#1a1e2d] p-4 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 mr-4">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium mb-1">Detailed Journaling Pays Off</p>
-                    <p className="text-gray-400 text-xs">
-                      Your most profitable trades have detailed journal entries and pre-trade planning.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start bg-[#1a1e2d] p-4 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400 mr-4">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium mb-1">Pre-Trade Planning Works</p>
-                    <p className="text-gray-400 text-xs">
-                      Win rate increases by 15% when you document your trade plan before entry.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start bg-[#1a1e2d] p-4 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 mr-4">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium mb-1">Weekday Performance</p>
-                    <p className="text-gray-400 text-xs">
-                      Your most profitable trading occurs mid-week, with Wednesdays showing the best results.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start bg-[#1a1e2d] p-4 rounded-lg">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center text-red-400 mr-4">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-white text-sm font-medium mb-1">Trading Fatigue</p>
-                    <p className="text-gray-400 text-xs">
-                      After 3 consecutive trades, your win rate drops significantly. Consider taking short breaks.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AIInsights trades={filteredTrades} isLoading={loading} />
           </>
         )}
         

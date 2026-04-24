@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
-import { analyzeTradingScreenshot, TradingViewAnalysisResult } from '@/lib/aiService';
+import NextImage from 'next/image';
 
 interface TradeScreenshotUploaderProps {
   onScreenshotsChange: (files: File[]) => void;
@@ -22,26 +21,16 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
   const [analysisResult, setAnalysisResult] = useState<TradingViewAnalysisResult | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number | null>(null);
-  const [compressionEnabled, setCompressionEnabled] = useState<boolean>(true);
-  const [compressionQuality, setCompressionQuality] = useState<number>(0.7); // 70% quality by default
-  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropAreaRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Generate previews when screenshots change
   useEffect(() => {
-    // Clean up old previews
     previews.forEach(preview => URL.revokeObjectURL(preview));
-    
-    // Generate new previews
     const newPreviews = screenshots.map(file => URL.createObjectURL(file));
     setPreviews(newPreviews);
-    
-    // Notify parent component
     onScreenshotsChange(screenshots);
-    
-    // Clean up function
     return () => {
       newPreviews.forEach(preview => URL.revokeObjectURL(preview));
     };
@@ -94,127 +83,26 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
     }
   };
   
-  // Process uploaded files
+  // Process uploaded files (no compression)
   const handleFiles = async (files: File[]) => {
-    // Reset error state
     setUploadError(null);
-    
-    // Validate files
     const validFiles = files.filter(file => {
       if (!file.type.startsWith('image/')) {
         setUploadError('Only image files are allowed.');
         return false;
       }
-      
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit, we'll compress later if needed
+      if (file.size > 10 * 1024 * 1024) {
         setUploadError('File size exceeds 10MB limit.');
         return false;
       }
-      
       return true;
     });
-    
     if (validFiles.length === 0) return;
-    
-    // Compress images if enabled
-    const processedFiles: File[] = [];
-    
-    if (compressionEnabled) {
-      for (const file of validFiles) {
-        try {
-          const compressedFile = await compressImage(file, compressionQuality);
-          processedFiles.push(compressedFile);
-        } catch (error) {
-          console.error('Error compressing image:', error);
-          processedFiles.push(file); // Use original if compression fails
-        }
-      }
-    } else {
-      processedFiles.push(...validFiles);
-    }
-    
-    // Add new screenshots
-    setScreenshots(prev => [...prev, ...processedFiles]);
-    
-    // Auto-analyze the first uploaded screenshot
-    if (processedFiles.length > 0) {
-      analyzeScreenshot(processedFiles[0]);
-    }
-    
-    // Show the first uploaded image in the preview modal
-    if (processedFiles.length > 0) {
+    setScreenshots(prev => [...prev, ...validFiles]);
+    if (validFiles.length > 0) {
+      analyzeScreenshot(validFiles[0]);
       setSelectedPreviewIndex(screenshots.length);
     }
-  };
-  
-  // Compress image using canvas
-  const compressImage = (file: File, quality: number): Promise<File> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.src = URL.createObjectURL(file);
-      
-      img.onload = () => {
-        // Use the canvas ref or create a new canvas element
-        const canvas = canvasRef.current || document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          URL.revokeObjectURL(img.src);
-          reject(new Error('Could not get canvas context'));
-          return;
-        }
-        
-        // Set canvas dimensions, maintaining aspect ratio
-        let width = img.width;
-        let height = img.height;
-        
-        // Cap dimensions at 1920px for very large images
-        const maxDimension = 1920;
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Clean up the object URL
-        URL.revokeObjectURL(img.src);
-        
-        // Convert to blob with compression
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Canvas toBlob failed'));
-              return;
-            }
-            
-            // Create a new file from the compressed blob
-            const compressedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            
-            resolve(compressedFile);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      
-      img.onerror = () => {
-        URL.revokeObjectURL(img.src);
-        reject(new Error('Error loading image'));
-      };
-    });
   };
   
   // Remove a screenshot
@@ -284,11 +172,6 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
     }
   };
   
-  // Handle compression quality change
-  const handleCompressionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCompressionQuality(parseFloat(e.target.value));
-  };
-  
   return (
     <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className} rounded-[2.5rem]`}>
       <div className="p-4 border-b border-gray-800">
@@ -301,38 +184,6 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
         <p className="text-gray-400 text-xs mt-1">
           Upload trading chart screenshots to help document your trades
         </p>
-        
-        {/* Compression Settings */}
-        <div className="mt-3 flex flex-col space-y-2">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="enable-compression"
-              checked={compressionEnabled}
-              onChange={(e) => setCompressionEnabled(e.target.checked)}
-              className="mr-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <label htmlFor="enable-compression" className="text-xs text-gray-300">
-              Compress images automatically
-            </label>
-          </div>
-          
-          {compressionEnabled && (
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-400">Quality:</span>
-              <input
-                type="range"
-                min="0.1"
-                max="1"
-                step="0.1"
-                value={compressionQuality}
-                onChange={handleCompressionChange}
-                className="w-24 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
-              />
-              <span className="text-xs text-gray-400">{Math.round(compressionQuality * 100)}%</span>
-            </div>
-          )}
-        </div>
       </div>
       
       {/* Upload Area */}
@@ -385,11 +236,10 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
             {previews.map((preview, index) => (
               <div key={index} className="relative rounded-lg overflow-hidden bg-[#151823] border border-gray-800 group">
                 <div className="aspect-video relative">
-                  <Image
+                  <img
                     src={preview}
                     alt={`Screenshot ${index + 1}`}
-                    fill
-                    className="object-cover"
+                    className="object-cover w-full h-full"
                     onClick={() => openPreview(index)}
                   />
                   
@@ -480,7 +330,7 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
               <img
                 src={previews[selectedPreviewIndex]}
                 alt={`Screenshot ${selectedPreviewIndex + 1}`}
-                className="max-w-full max-h-[80vh] object-contain"
+                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
               />
             </div>
             

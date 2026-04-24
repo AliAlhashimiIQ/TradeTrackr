@@ -68,10 +68,10 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
                 <td className={`px-4 py-3 whitespace-nowrap text-sm ${trade.type === 'Long' ? 'text-green-400' : 'text-red-400'}`}>
                   {trade.type}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.entry_price.toFixed(4)}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.exit_price.toFixed(4)}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.entry_price != null ? trade.entry_price.toFixed(4) : '--'}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.exit_price != null ? trade.exit_price.toFixed(4) : '--'}</td>
                 <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${trade.profit_loss > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  {formatPnL(trade.profit_loss)}
+                  {trade.profit_loss != null ? formatPnL(trade.profit_loss) : '--'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-400">
                   <button className="flex items-center space-x-1">

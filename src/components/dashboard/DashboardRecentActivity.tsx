@@ -99,7 +99,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                             ? 'text-red-400' 
                             : 'text-gray-400'
                       }`}>
-                        {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss.toFixed(2)}
+                        {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss != null ? trade.profit_loss.toFixed(2) : '--'}
                       </div>
                       <div className="text-sm text-gray-400">
                         {((trade.exit_price - trade.entry_price) / trade.entry_price * 100).toFixed(2)}%
@@ -128,10 +128,10 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                 {/* Trade details section */}
                 <div className="mt-3 text-sm grid grid-cols-2 gap-2">
                   <div className="text-gray-400">
-                    Entry: <span className="text-white">${trade.entry_price.toFixed(2)}</span>
+                    Entry: <span className="text-white">${trade.entry_price != null ? trade.entry_price.toFixed(2) : '--'}</span>
                   </div>
                   <div className="text-gray-400">
-                    Exit: <span className="text-white">${trade.exit_price.toFixed(2)}</span>
+                    Exit: <span className="text-white">${trade.exit_price != null ? trade.exit_price.toFixed(2) : '--'}</span>
                   </div>
                   {trade.tags && trade.tags.length > 0 && (
                     <div className="col-span-2 mt-2 flex flex-wrap gap-1">

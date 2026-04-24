@@ -239,9 +239,8 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                 <CartesianGrid strokeDasharray="3 3" stroke="#212946" />
                 <XAxis 
                   type="number" 
-                  tickFormatter={(value, name) => {
-                    const metric = barChartData.find(d => d.name === name);
-                    return metric && metric.unit === '%' ? `${value}%` : value.toString();
+                  tickFormatter={(value: number) => {
+                    return value.toString();
                   }}
                 />
                 <YAxis 
@@ -265,10 +264,10 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                     position="right" 
                     fill="#ffffff" 
                     fontSize={10}
-                    formatter={(value, entry) => {
-                      const metric = entry.payload;
-                      if (metric.unit === '%') return `${value}%`;
-                      if (metric.unit === '$') return formatCurrency(value as number);
+                    formatter={(value: number, entry: any) => {
+                      const metric = entry?.payload;
+                      if (metric?.unit === '%') return `${value}%`;
+                      if (metric?.unit === '$') return formatCurrency(value as number);
                       return value;
                     }}
                   />
@@ -279,10 +278,10 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                     position="right" 
                     fill="#ffffff" 
                     fontSize={10}
-                    formatter={(value, entry) => {
-                      const metric = entry.payload;
-                      if (metric.unit === '%') return `${value}%`;
-                      if (metric.unit === '$') return formatCurrency(value as number);
+                    formatter={(value: number, entry: any) => {
+                      const metric = entry?.payload;
+                      if (metric?.unit === '%') return `${value}%`;
+                      if (metric?.unit === '$') return formatCurrency(value as number);
                       return value;
                     }}
                   />
@@ -344,7 +343,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
         <PieChart>
           <Pie
                   activeIndex={isClient ? activeIndex : undefined}
-                  activeShape={(props) => renderActiveShape({ ...props, winRate: pieChartData[activeIndex]?.winRate || 0 })}
+                  activeShape={(props: any) => renderActiveShape({ ...props, winRate: pieChartData[activeIndex]?.winRate || 0 })}
                   data={pieChartData}
             cx="50%"
             cy="50%"

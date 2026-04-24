@@ -110,7 +110,7 @@ export async function getEconomicCalendar(params: {
     // Combine all parameters
     url = `${url}?${queryParts.join('&')}`;
     
-    console.log('Fetching economic calendar from URL (API key hidden for security)');
+    ');
     
     // Make the API request with a timeout
     const controller = new AbortController();
@@ -145,7 +145,7 @@ export async function getEconomicCalendar(params: {
       return [];
     }
     
-    console.log(`Economic calendar: Retrieved ${Array.isArray(data) ? data.length : 0} events`);
+     ? data.length : 0} events`);
     return data;
   } catch (error) {
     console.error('Economic calendar API error:', error);

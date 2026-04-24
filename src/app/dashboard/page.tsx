@@ -18,6 +18,13 @@ import SparkLineChart from '@/components/charts/SparkLineChart'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
+import {
+  detectStreaksAndBehaviors,
+  analyzeTagPerformance,
+  analyzeEmotionOutcomes,
+  getMindsetTrends,
+  simulateWhatIf
+} from '@/lib/ai/aiService';
 
 interface ProfileDropdownProps {
   user: User;
@@ -61,11 +68,8 @@ const SearchOverlay: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isO
 }
 
 const NotificationsPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const notifications = [
-    { id: 1, title: 'New Trade Alert', message: 'AAPL position closed with +2.3% profit', time: '2 min ago' },
-    { id: 2, title: 'Market Update', message: 'SPY approaching key resistance level', time: '15 min ago' },
-    { id: 3, title: 'Account Update', message: 'Monthly performance report available', time: '1 hour ago' },
-  ]
+  const notifications: { id: number; title: string; message: string; time: string }[] = []
+
 
   return (
     <AnimatePresence>
@@ -83,7 +87,10 @@ const NotificationsPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = (
             </button>
           </div>
           <div className="space-y-4">
-            {notifications.map(notification => (
+            {notifications.length === 0 ? (
+              <div className="text-center py-4 text-gray-400 text-sm">No new notifications</div>
+            ) : (
+              notifications.map(notification => (
               <motion.div
                 key={notification.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -94,7 +101,8 @@ const NotificationsPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = (
                 <div className="text-sm text-gray-400">{notification.message}</div>
                 <div className="text-xs text-gray-500 mt-2">{notification.time}</div>
               </motion.div>
-            ))}
+              ))
+            )}
           </div>
         </motion.div>
       )}
@@ -110,7 +118,7 @@ const NotificationBell: React.FC<{ onClick: () => void }> = ({ onClick }) => {
       onClick={onClick}
     >
       <Bell className="w-5 h-5 text-gray-400" />
-      <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+
     </motion.button>
   )
 }
@@ -258,6 +266,14 @@ export default function Dashboard() {
     )}
   ]
 
+  // Advanced analytics
+  const streaksAndBehaviors = detectStreaksAndBehaviors(typedTrades);
+  const tagPerf = analyzeTagPerformance(typedTrades);
+  const emotionOutcomes = analyzeEmotionOutcomes(typedTrades);
+  const mindsetTrends = getMindsetTrends(typedTrades);
+  const whatIfNoFomo = simulateWhatIf(typedTrades, 'no-fomo');
+  const whatIfAlwaysPlan = simulateWhatIf(typedTrades, 'always-plan');
+
   // Show loading state
   if (isLoading) {
     return (
@@ -347,7 +363,7 @@ export default function Dashboard() {
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
+              </svg>
                   New Trade
                 </motion.button>
               </Link>
@@ -363,7 +379,7 @@ export default function Dashboard() {
                 key={item.id}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setActiveView(item.id as any)}
+                onClick={() => setActiveView(item.id as 'overview' | 'trades' | 'analysis')}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md transition-all ${
                   activeView === item.id
                     ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg'
@@ -409,7 +425,7 @@ export default function Dashboard() {
                       </div>
                       <div className="relative">
                         <div className="text-sm text-green-400 mb-1">Total Profit/Loss</div>
-                        <div className="text-2xl font-bold text-white">${typedMetrics.total_pnl.toFixed(2)}</div>
+                        <div className="text-2xl font-bold text-white">{typedMetrics.total_pnl != null ? `$${typedMetrics.total_pnl.toFixed(2)}` : '--'}</div>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             typedMetrics.total_pnl >= 0 
@@ -493,29 +509,107 @@ export default function Dashboard() {
                     </motion.div>
                   </div>
 
-                  {/* Performance Overview */}
+                  {/* --- Advanced Analytics Section --- */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {/* Streaks & Behaviors */}
+                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
+                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Streaks & Behavioral Alerts</h3>
+                      {streaksAndBehaviors.streaks.length === 0 && streaksAndBehaviors.behaviors.length === 0 && (
+                        <div className="text-gray-400">No streaks or behavioral triggers detected.</div>
+                      )}
+                      {streaksAndBehaviors.streaks.map((s, i) => (
+                        <div key={i} className="text-sm text-indigo-200 mb-1">
+                          {s.type === 'win' ? 'Winning' : 'Losing'} streak: {s.count} trades (from #{s.start + 1} to #{s.end + 1})
+                        </div>
+                      ))}
+                      {streaksAndBehaviors.behaviors.map((b, i) => (
+                        <div key={i} className="text-sm text-yellow-300 mb-1">{b.message} (Trade #{b.index + 1})</div>
+                      ))}
+                    </div>
+
+                    {/* Tag/Strategy Performance */}
+                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
+                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Tag/Strategy Performance</h3>
+                      <table className="w-full text-xs text-gray-300 mb-2">
+                        <thead>
+                          <tr>
+                            <th className="text-left">Tag</th><th>Win Rate</th><th>Avg P&L</th><th>Avg Risk</th><th>Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tagPerf.tagPerformance.map(tp => (
+                            <tr key={tp.tag}>
+                              <td>{tp.tag}</td>
+                              <td>{tp.winRate.toFixed(1)}%</td>
+                              <td>{tp.avgPnL.toFixed(2)}</td>
+                              <td>{tp.avgRisk.toFixed(2)}</td>
+                              <td>{tp.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="text-green-400 text-xs mb-1"><b>Best Setup:</b> {tagPerf.best?.tag} ({tagPerf.best?.winRate.toFixed(1)}% win rate)</div>
+                      <div className="text-red-400 text-xs"><b>Worst Setup:</b> {tagPerf.worst?.tag} ({tagPerf.worst?.winRate.toFixed(1)}% win rate)</div>
+                    </div>
+
+                    {/* Emotion-Outcome Correlation */}
+                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
+                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Emotion-Outcome Correlation</h3>
+                      <table className="w-full text-xs text-gray-300">
+                        <thead>
+                          <tr>
+                            <th className="text-left">Emotion</th><th>Win Rate</th><th>Avg P&L</th><th>Count</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {emotionOutcomes.emotionPerformance.map(ep => (
+                            <tr key={ep.emotion}>
+                              <td>{ep.emotion}</td>
+                              <td>{ep.winRate.toFixed(1)}%</td>
+                              <td>{ep.avgPnL.toFixed(2)}</td>
+                              <td>{ep.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* What-If Simulator */}
+                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
+                      <h3 className="text-lg font-bold text-indigo-300 mb-2">What-If Analysis</h3>
+                      <div className="text-xs text-gray-300 mb-1">
+                        If you always followed your plan: <span className="text-green-400">P&L = ${whatIfAlwaysPlan.totalPnL.toFixed(2)}</span> ({whatIfAlwaysPlan.tradeCount} trades)
+                      </div>
+                      <div className="text-xs text-gray-300">
+                        If you avoided FOMO trades: <span className="text-green-400">P&L = ${whatIfNoFomo.totalPnL.toFixed(2)}</span> ({whatIfNoFomo.tradeCount} trades)
+                      </div>
+                    </div>
+                  </div>
+                  {/* --- End Advanced Analytics Section --- */}
+
+          {/* Performance Overview */}
                   <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-                    <DashboardPerformanceOverview
-                      dateRange={dateRange}
+            <DashboardPerformanceOverview
+              dateRange={dateRange}
                       metrics={typedMetrics}
                       equityData={typedEquityData}
-                      advancedMetrics={advancedMetrics}
-                    />
-                  </div>
-                  
+              advancedMetrics={advancedMetrics}
+            />
+          </div>
+          
                   {/* Two Column Layout */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
                       <DashboardRecentActivity trades={typedTrades} />
-                    </div>
-                    
+          </div>
+          
                     <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-                      <DashboardInsights
-                        dateRange={dateRange}
+            <DashboardInsights
+              dateRange={dateRange}
                         trades={typedTrades}
                         metrics={typedMetrics}
-                      />
-                    </div>
+            />
+          </div>
                   </div>
                 </>
               )}
@@ -532,7 +626,7 @@ export default function Dashboard() {
             >
               <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
                 <DashboardAdvancedFeatures dateRange={dateRange} />
-              </div>
+          </div>
             </motion.div>
           )}
 
@@ -545,8 +639,8 @@ export default function Dashboard() {
               className="space-y-6"
             >
               <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-                <DashboardPersonalization />
-              </div>
+            <DashboardPersonalization />
+          </div>
             </motion.div>
           )}
         </AnimatePresence>

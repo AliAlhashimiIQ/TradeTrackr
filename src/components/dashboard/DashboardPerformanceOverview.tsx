@@ -21,58 +21,6 @@ interface DashboardPerformanceOverviewProps {
 // Type for mock data (will be replaced later)
 type TimeframeOption = '7D' | '30D' | '90D' | 'YTD' | 'ALL';
 
-// Mock performance data for initial development
-const mockPerformanceData = {
-  accountStats: {
-    balance: 25432.78,
-    totalPnL: 4328.92,
-    percentageGain: 17.28,
-    winRate: 62.5,
-    profitFactor: 2.35
-  },
-  riskMetrics: {
-    maxDrawdown: 8.4,
-    avgRiskReward: 1.8,
-    sharpeRatio: 1.34,
-    successRate: 63.2,
-    averageDaysHeld: 3.5
-  },
-  // Mock equity curve data - dates and balance values
-  equityCurveData: [
-    { date: '2023-01-01', balance: 21000 },
-    { date: '2023-02-01', balance: 22100 },
-    { date: '2023-03-01', balance: 21800 },
-    { date: '2023-04-01', balance: 22500 },
-    { date: '2023-05-01', balance: 23100 },
-    { date: '2023-06-01', balance: 22800 },
-    { date: '2023-07-01', balance: 23500 },
-    { date: '2023-08-01', balance: 24200 },
-    { date: '2023-09-01', balance: 24800 },
-    { date: '2023-10-01', balance: 25100 },
-    { date: '2023-11-01', balance: 24700 },
-    { date: '2023-12-01', balance: 25400 }
-  ],
-  // Monthly performance data
-  monthlyPerformance: [
-    { month: 'Jan', profit: 1100, trades: 12, winRate: 66 },
-    { month: 'Feb', profit: -300, trades: 8, winRate: 38 },
-    { month: 'Mar', profit: 700, trades: 10, winRate: 70 },
-    { month: 'Apr', profit: 600, trades: 9, winRate: 55 },
-    { month: 'May', profit: -300, trades: 11, winRate: 45 },
-    { month: 'Jun', profit: 700, trades: 14, winRate: 64 },
-    { month: 'Jul', profit: 700, trades: 13, winRate: 62 },
-    { month: 'Aug', profit: 600, trades: 12, winRate: 58 },
-    { month: 'Sep', profit: 300, trades: 7, winRate: 57 },
-    { month: 'Oct', profit: -400, trades: 9, winRate: 33 },
-    { month: 'Nov', profit: 700, trades: 10, winRate: 70 }
-  ],
-  // Current trading streak
-  currentStreak: {
-    type: 'win', // 'win' or 'loss'
-    count: 4
-  }
-};
-
 type ChartType = 'line' | 'bar' | 'pie';
 
 const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> = ({ 
@@ -86,6 +34,24 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
   const [tooltipData, setTooltipData] = useState({ x: 0, y: 0, value: 0, date: '' });
   const [chartType, setChartType] = useState<ChartType>('line');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Only show metrics if there are trades
+  const hasTrades = metrics?.total_trades && metrics.total_trades > 0;
+
+  // Health score calculation (0-100)
+  let healthScore = 0;
+  if (hasTrades) {
+    const winRate = metrics.win_rate || 0;
+    const riskReward = advancedMetrics?.riskRewardRatio || 0;
+    const drawdown = advancedMetrics?.maxDrawdownPercent || 0;
+    // Weighted formula: Win Rate (40%), Risk/Reward (35%), Drawdown (25%)
+    healthScore = Math.round(
+      (winRate * 100) * 0.4 +
+      Math.min(riskReward * 50, 35) + // Cap risk/reward contribution
+      Math.max(0, 25 - drawdown * 2.5) // Lower score for higher drawdown
+    );
+    healthScore = Math.max(0, Math.min(100, healthScore));
+  }
   
   // Use the real metrics if available
   const displayMetrics = {
@@ -119,12 +85,12 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
   
   // Sample performance metrics to display
   const displayMetricsSample = [
-    { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: 'text-blue-400' },
-    { label: 'Profit Factor', value: advancedMetrics?.profitFactor.toFixed(2) || 'N/A', color: 'text-green-400' },
-    { label: 'Avg. Win', value: `$${metrics.avg_win.toFixed(2)}`, color: 'text-green-400' },
-    { label: 'Avg. Loss', value: `$${metrics.avg_loss.toFixed(2)}`, color: 'text-red-400' },
-    { label: 'Risk/Reward', value: advancedMetrics?.riskRewardRatio.toFixed(2) || 'N/A', color: 'text-purple-400' },
-    { label: 'Max Drawdown', value: advancedMetrics ? `${advancedMetrics.maxDrawdownPercent.toFixed(2)}%` : 'N/A', color: 'text-amber-400' },
+    { label: 'Win Rate', value: hasTrades ? `${(metrics.win_rate * 100).toFixed(1)}%` : 'N/A', color: 'text-blue-400' },
+    { label: 'Profit Factor', value: hasTrades && advancedMetrics ? advancedMetrics.profitFactor.toFixed(2) : 'N/A', color: 'text-green-400' },
+    { label: 'Avg. Win', value: hasTrades ? `$${metrics.avg_win.toFixed(2)}` : 'N/A', color: 'text-green-400' },
+    { label: 'Avg. Loss', value: hasTrades ? `$${metrics.avg_loss.toFixed(2)}` : 'N/A', color: 'text-red-400' },
+    { label: 'Risk/Reward', value: hasTrades && advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : 'N/A', color: 'text-purple-400' },
+    { label: 'Max Drawdown', value: hasTrades && advancedMetrics ? `${advancedMetrics.maxDrawdownPercent.toFixed(2)}%` : 'N/A', color: 'text-amber-400' },
   ];
   
   return (
@@ -179,7 +145,7 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
           <div className="flex items-center justify-center h-80">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
           </div>
-        ) : equityData.values.length > 0 ? (
+        ) : hasTrades && equityData.values.length > 0 ? (
           <div className="h-80">
             <EquityCurve 
               data={formattedEquityData}
@@ -191,6 +157,18 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
           <div className="flex items-center justify-center h-80 text-gray-400">
             No performance data available for the selected period
           </div>
+        )}
+      </div>
+      
+      {/* Health Score */}
+      <div className="my-6 flex flex-col items-center">
+        {hasTrades ? (
+          <div className="flex flex-col items-center">
+            <div className="text-4xl font-bold text-blue-400 mb-2">{healthScore}/100</div>
+            <div className="text-sm text-gray-400">Trading Health Score</div>
+          </div>
+        ) : (
+          <div className="text-gray-400 text-center">Add more trades to see your Trading Health Score.</div>
         )}
       </div>
       

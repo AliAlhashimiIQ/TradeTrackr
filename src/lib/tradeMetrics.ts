@@ -744,7 +744,13 @@ export function generateTradeTypePerformanceData(trades: Trade[]): TradeTypePerf
   
   // Group trades by type
   trades.forEach(trade => {
+    if (trade.type && typeMap[trade.type]) {
     typeMap[trade.type].push(trade);
+    } else {
+      // Optionally group unknown/missing types
+      // typeMap['Unknown'] = typeMap['Unknown'] || [];
+      // typeMap['Unknown'].push(trade);
+    }
   });
   
   // Calculate metrics for each type

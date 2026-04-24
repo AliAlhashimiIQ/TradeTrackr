@@ -10,133 +10,35 @@ import { aiServiceConfig } from '../aiConfig';
  * Analyzes a set of trades to identify patterns and provide insights
  */
 export async function analyzeTradePatterns(trades: Trade[]): Promise<TradeInsight[]> {
-  // Check if mock data should be used (development mode or no API key)
-  if (shouldUseMockData()) {
-    console.log('Using mock data for trade pattern analysis...');
-    return generateMockInsights(trades);
-  }
-  
-  try {
-    console.log('Analyzing trade patterns with AI...');
-    
-    // Prepare the data for analysis
-    const tradeData = trades.map(trade => ({
-      symbol: trade.symbol,
-      type: trade.type,
-      entry_price: trade.entry_price,
-      exit_price: trade.exit_price,
-      profit_loss: trade.profit_loss,
-      entry_time: trade.entry_time,
-      exit_time: trade.exit_time,
-      emotional_state: trade.emotional_state,
-      notes: trade.notes
-    }));
-    
-    // Call the AI API
-    const response = await fetch('/api/ai/analyze-trades', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        trades: tradeData
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.insights;
-  } catch (error) {
-    console.error('Error analyzing trade patterns:', error);
-    // Fall back to mock data on error
-    return generateMockInsights(trades);
-  }
+  if (!trades.length) return [];
+  const tradesForPrompt = trades.slice(0, 30).map((t, i) =>
+    `#${i + 1}: Symbol=${t.symbol}, Type=${t.type}, Entry=${t.entry_price}, Exit=${t.exit_price}, Qty=${t.quantity}, P&L=${t.profit_loss}, Tags=${(t.tags || []).join(',')}, Notes=${t.notes || ''}`
+  ).join('\n');
+  const prompt = `Analyze these trades and return a JSON array of insights. Each insight should have: id, title, description, insightType (pattern|risk|opportunity), confidence (0-1), impactScore (1-10), relatedTags.` +
+    `\nTrades:\n${tradesForPrompt}`;
+  return await callOpenAIForAnalytics(prompt);
 }
 
 /**
  * Generates personalized trade suggestions based on historical performance
  */
 export async function generateTradeSuggestions(trades: Trade[]): Promise<TradeSuggestion[]> {
-  // Check if mock data should be used
-  if (shouldUseMockData()) {
-    console.log('Using mock data for trade suggestions...');
-    return generateMockSuggestions(trades);
-  }
-  
-  try {
-    console.log('Generating trade suggestions with AI...');
-    
-    // Prepare the data
-    const tradeData = trades.map(trade => ({
-      symbol: trade.symbol,
-      type: trade.type,
-      entry_price: trade.entry_price,
-      exit_price: trade.exit_price,
-      profit_loss: trade.profit_loss,
-      entry_time: trade.entry_time,
-      exit_time: trade.exit_time
-    }));
-    
-    // Call the AI API
-    const response = await fetch('/api/ai/generate-suggestions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        trades: tradeData
-      }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.suggestions;
-  } catch (error) {
-    console.error('Error generating trade suggestions:', error);
-    // Fall back to mock data on error
-    return generateMockSuggestions(trades);
-  }
+  if (!trades.length) return [];
+  const tradesForPrompt = trades.slice(0, 30).map((t, i) =>
+    `#${i + 1}: Symbol=${t.symbol}, Type=${t.type}, Entry=${t.entry_price}, Exit=${t.exit_price}, Qty=${t.quantity}, P&L=${t.profit_loss}, Tags=${(t.tags || []).join(',')}, Notes=${t.notes || ''}`
+  ).join('\n');
+  const prompt = `Based on these trades, return a JSON array of actionable suggestions. Each suggestion should have: id, title, description, category (timing|selection|risk|strategy), priority (low|medium|high).` +
+    `\nTrades:\n${tradesForPrompt}`;
+  return await callOpenAIForAnalytics(prompt);
 }
 
 /**
  * Analyzes a specific trade and provides feedback
  */
 export async function analyzeTrade(trade: Trade): Promise<TradeAnalysis> {
-  // Check if mock data should be used
-  if (shouldUseMockData()) {
-    console.log('Using mock data for trade analysis...');
-    return generateMockTradeAnalysis(trade);
-  }
-  
-  try {
-    console.log('Analyzing trade with AI...');
-    
-    // Call the AI API
-    const response = await fetch('/api/ai/analyze-trade', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ trade }),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`AI API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.analysis;
-  } catch (error) {
-    console.error('Error analyzing trade:', error);
-    // Fall back to mock data on error
-    return generateMockTradeAnalysis(trade);
-  }
+  const prompt = `Analyze this trade and return a JSON object with: strengths (string[]), weaknesses (string[]), improvementAreas (string[]), sentiment (positive|negative|neutral), score (0-100).` +
+    `\nTrade: Symbol=${trade.symbol}, Type=${trade.type}, Entry=${trade.entry_price}, Exit=${trade.exit_price}, Qty=${trade.quantity}, P&L=${trade.profit_loss}, Tags=${(trade.tags || []).join(',')}, Notes=${trade.notes || ''}`;
+  return await callOpenAIForAnalytics(prompt);
 }
 
 /**
@@ -165,7 +67,7 @@ export async function generateJournalSuggestions(trade: Trade): Promise<string[]
   }
   
   try {
-    console.log('Generating journal suggestions with AI...');
+    
     
     // Call the AI API
     const response = await fetch('/api/ai/journal-suggestions', {
@@ -210,185 +112,33 @@ function shouldUseMockData(): boolean {
   return false;
 }
 
-// Helper function to generate mock insights for development
-function generateMockInsights(trades: Trade[]): TradeInsight[] {
-  if (trades.length === 0) return [];
-  
-  // Analyze the trades to create somewhat realistic insights
-  const symbolCounts: Record<string, number> = {};
-  const winningTrades = trades.filter(t => t.profit_loss > 0);
-  const winRate = trades.length > 0 ? (winningTrades.length / trades.length) * 100 : 0;
-  
-  // Count occurrences of each symbol
-  trades.forEach(trade => {
-    if (!symbolCounts[trade.symbol]) {
-      symbolCounts[trade.symbol] = 0;
-    }
-    symbolCounts[trade.symbol]++;
-  });
-  
-  // Find most traded symbol
-  let mostTradedSymbol = '';
-  let maxTrades = 0;
-  
-  Object.entries(symbolCounts).forEach(([symbol, count]) => {
-    if (count > maxTrades) {
-      mostTradedSymbol = symbol;
-      maxTrades = count;
-    }
-  });
-  
-  const insights: TradeInsight[] = [
-    {
-      id: 'insight-1',
-      title: 'Time of Day Pattern',
-      description: 'Your most profitable trades occur in the morning session (9:30-11:00 AM).',
-      insightType: 'pattern',
-      confidence: 0.87,
-      impactScore: 8,
-      relatedTags: ['timing', 'morning']
+// Helper to call OpenAI for analytics
+async function callOpenAIForAnalytics(prompt: string, max_tokens = 600): Promise<any> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OpenAI API key not set');
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
     },
-    {
-      id: 'insight-2',
-      title: 'Position Sizing',
-      description: 'Larger position sizes correlate with lower win rates in your trading.',
-      insightType: 'risk',
-      confidence: 0.72,
-      impactScore: 7,
-      relatedTags: ['risk-management', 'position-sizing']
-    },
-    {
-      id: 'insight-3',
-      title: 'Holding Period',
-      description: 'Your win rate increases significantly for trades held less than 2 hours.',
-      insightType: 'pattern',
-      confidence: 0.89,
-      impactScore: 9,
-      relatedTags: ['timing', 'short-term']
-    }
-  ];
-  
-  // Add insights based on actual trade data
-  if (mostTradedSymbol) {
-    insights.push({
-      id: 'insight-4',
-      title: `${mostTradedSymbol} Trading Frequency`,
-      description: `You trade ${mostTradedSymbol} most frequently (${maxTrades} trades). Consider specializing further in this instrument.`,
-      insightType: 'opportunity',
-      confidence: 0.94,
-      impactScore: 8,
-      relatedTags: ['symbol', 'specialization']
-    });
-  }
-  
-  if (winRate > 0) {
-    insights.push({
-      id: 'insight-5',
-      title: `Win Rate: ${winRate.toFixed(1)}%`,
-      description: `Your overall win rate is ${winRate.toFixed(1)}% across ${trades.length} trades.`,
-      insightType: 'pattern',
-      confidence: 0.98,
-      impactScore: 9,
-      relatedTags: ['performance', 'statistics']
-    });
-  }
-  
-  return insights;
-}
-
-// Helper function to generate mock trade suggestions
-function generateMockSuggestions(trades: Trade[]): TradeSuggestion[] {
-  // Create somewhat data-driven suggestions based on the actual trades
-  
-  const suggestions: TradeSuggestion[] = [];
-  
-  // Add timing suggestion
-  suggestions.push({
-    id: 'suggestion-1',
-    title: 'Optimize Entry Timing',
-    description: 'Consider entering trades after the first hour of market open, which shows a 23% higher success rate in your historical data.',
-    category: 'timing',
-    priority: 'high'
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        { role: 'system', content: 'You are a professional trading coach AI. Respond in JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens,
+      temperature: 0.7
+    })
   });
-  
-  // Add risk management suggestion
-  suggestions.push({
-    id: 'suggestion-2',
-    title: 'Reduce Position Size on Volatile Stocks',
-    description: 'For stocks with >3% daily range, reducing position size by 20% could improve your risk-adjusted returns.',
-    category: 'risk',
-    priority: 'medium'
-  });
-  
-  // If there are enough trades, add a suggestion based on symbols
-  if (trades.length >= 5) {
-    // Count profits by sector/symbol
-    const symbolPerformance: Record<string, { count: number, totalPnL: number }> = {};
-    
-    trades.forEach(trade => {
-      if (!symbolPerformance[trade.symbol]) {
-        symbolPerformance[trade.symbol] = { count: 0, totalPnL: 0 };
-      }
-      
-      symbolPerformance[trade.symbol].count++;
-      symbolPerformance[trade.symbol].totalPnL += trade.profit_loss;
-    });
-    
-    // Find best performing symbol with at least 3 trades
-    let bestSymbol = '';
-    let bestPnL = -Infinity;
-    
-    Object.entries(symbolPerformance).forEach(([symbol, data]) => {
-      if (data.count >= 3 && data.totalPnL > bestPnL) {
-        bestSymbol = symbol;
-        bestPnL = data.totalPnL;
-      }
-    });
-    
-    if (bestSymbol) {
-      suggestions.push({
-        id: 'suggestion-3',
-        title: `Focus on ${bestSymbol}`,
-        description: `Your performance with ${bestSymbol} is significantly better than other instruments. Consider specializing more in this area.`,
-        category: 'selection',
-        priority: 'high'
-      });
-    }
+  if (!response.ok) throw new Error('OpenAI API error');
+  const data = await response.json();
+  try {
+    return JSON.parse(data.choices?.[0]?.message?.content || '{}');
+  } catch {
+    return data.choices?.[0]?.message?.content || '';
   }
-  
-  return suggestions;
-}
-
-// Helper function to generate mock trade analysis
-function generateMockTradeAnalysis(trade: Trade): TradeAnalysis {
-  const isWin = trade.profit_loss > 0;
-  
-  const analysis: TradeAnalysis = {
-    strengths: isWin ? [
-      'Good entry price relative to daily range',
-      'Proper position sizing',
-      'Aligned with market trend'
-    ] : [
-      'Stopped out according to plan',
-      'Position size was appropriate'
-    ],
-    weaknesses: isWin ? [
-      'Exit could have captured more profit',
-      'Entry timing could be optimized'
-    ] : [
-      'Entry against the trend',
-      'Poor timing relative to market conditions',
-      'No clear catalyst identified'
-    ],
-    improvementAreas: [
-      'Consider market conditions more carefully',
-      'Review trade setup criteria',
-      'Optimize exit strategy'
-    ],
-    score: isWin ? 75 : 45
-  };
-  
-  return analysis;
 }
 
 // Type definitions
@@ -415,5 +165,317 @@ export interface TradeAnalysis {
   strengths: string[];
   weaknesses: string[];
   improvementAreas: string[];
+  sentiment: 'positive' | 'negative' | 'neutral';
   score: number; // 0-100
+}
+
+export function analyzeTradeDeep(trade: Trade): TradeAnalysis {
+  const strengths: string[] = [];
+  const weaknesses: string[] = [];
+  const improvementAreas: string[] = [];
+  const notes = (trade.notes || '').toLowerCase();
+  const tags = (trade.tags || []).map(t => t.toLowerCase());
+
+  // Sentiment analysis (simple keyword-based)
+  let sentimentScore = 0;
+  if (notes.match(/(good|great|happy|calm|confident|plan|win|profit|disciplined)/)) sentimentScore++;
+  if (notes.match(/(bad|fear|fomo|angry|frustrated|loss|late|anxious|regret|mistake)/)) sentimentScore--;
+  let sentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+  if (sentimentScore > 0) sentiment = 'positive';
+  if (sentimentScore < 0) sentiment = 'negative';
+
+  // Strengths
+  if (trade.profit_loss > 0) strengths.push('Profitable trade');
+  if (tags.includes('plan') || notes.includes('plan')) strengths.push('Followed trading plan');
+  if (notes.includes('calm') || tags.includes('calm')) strengths.push('Maintained discipline');
+  if (trade.tags && trade.tags.length > 0) strengths.push('Used tags for organization');
+
+  // Weaknesses
+  if (trade.profit_loss < 0) weaknesses.push('Losing trade');
+  if (notes.includes('fomo') || tags.includes('fomo')) weaknesses.push('FOMO affected decision');
+  if (notes.includes('late')) weaknesses.push('Late entry/exit');
+  if (notes.includes('fear')) weaknesses.push('Fear impacted decision');
+  if (trade.quantity && trade.quantity > 2 * ((trade.average_quantity as number) || 1)) weaknesses.push('Oversized position');
+  if (!trade.tags || trade.tags.length === 0) weaknesses.push('No tags used');
+
+  // Improvements
+  if (notes.includes('late')) improvementAreas.push('Work on entry/exit timing');
+  if (notes.includes('fear')) improvementAreas.push('Address fear in trading');
+  if (!trade.tags || trade.tags.length === 0) improvementAreas.push('Add tags for better analysis');
+  if (notes.match(/(angry|frustrated|anxious)/)) improvementAreas.push('Work on trading psychology');
+  if (notes.includes('plan') === false) improvementAreas.push('Write a trading plan for each trade');
+
+  // Score (simple example)
+  let score = 50;
+  if (trade.profit_loss > 0) score += 20;
+  score += strengths.length * 5;
+  score -= weaknesses.length * 5;
+  if (sentiment === 'positive') score += 5;
+  if (sentiment === 'negative') score -= 5;
+  score = Math.max(0, Math.min(100, score));
+
+  return { strengths, weaknesses, improvementAreas, sentiment, score };
+}
+
+// Aggregate deep analysis for dashboard-level feedback
+export function aggregateDeepAnalysis(trades: Trade[]) {
+  const allStrengths: string[] = [];
+  const allWeaknesses: string[] = [];
+  const allImprovements: string[] = [];
+  const sentimentScores: number[] = [];
+  let totalScore = 0;
+
+  trades.forEach(trade => {
+    const analysis = analyzeTradeDeep(trade);
+    allStrengths.push(...analysis.strengths);
+    allWeaknesses.push(...analysis.weaknesses);
+    allImprovements.push(...analysis.improvementAreas);
+    sentimentScores.push(analysis.sentiment === 'positive' ? 1 : analysis.sentiment === 'negative' ? -1 : 0);
+    totalScore += analysis.score;
+  });
+
+  // Top 3 of each
+  function topN(arr: string[], n = 3) {
+    const freq: Record<string, number> = {};
+    arr.forEach(s => { freq[s] = (freq[s] || 0) + 1; });
+    return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k);
+  }
+
+  const topStrengths = topN(allStrengths);
+  const topWeaknesses = topN(allWeaknesses);
+  const topImprovements = topN(allImprovements);
+  const avgSentiment = sentimentScores.length ? sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length : 0;
+  const avgScore = trades.length ? Math.round(totalScore / trades.length) : 0;
+  let overallSentiment: 'positive' | 'negative' | 'neutral' = 'neutral';
+  if (avgSentiment > 0.3) overallSentiment = 'positive';
+  if (avgSentiment < -0.3) overallSentiment = 'negative';
+
+  return {
+    topStrengths,
+    topWeaknesses,
+    topImprovements,
+    overallSentiment,
+    avgScore
+  };
+}
+
+// 1. Streak & Behavior Detection
+export function detectStreaksAndBehaviors(trades: Trade[]) {
+  if (!trades.length) return { streaks: [], behaviors: [] };
+  const streaks = [];
+  let currentStreak = { type: '', count: 0, start: 0, end: 0 };
+  let lastResult: 'win' | 'loss' | null = null;
+  let behaviors = [];
+
+  // Detect streaks
+  trades.forEach((trade, i) => {
+    const result = trade.profit_loss > 0 ? 'win' : 'loss';
+    if (result === lastResult) {
+      currentStreak.count++;
+      currentStreak.end = i;
+    } else {
+      if (currentStreak.count >= 3) streaks.push({ ...currentStreak });
+      currentStreak = { type: result, count: 1, start: i, end: i };
+    }
+    lastResult = result;
+  });
+  if (currentStreak.count >= 3) streaks.push({ ...currentStreak });
+
+  // Detect behavioral triggers
+  for (let i = 1; i < trades.length; i++) {
+    const prev = trades[i - 1];
+    const curr = trades[i];
+    // Revenge trading: after a loss, next trade is larger
+    if (prev.profit_loss < 0 && curr.quantity > prev.quantity) {
+      behaviors.push({
+        type: 'revenge',
+        index: i,
+        message: 'Possible revenge trading: increased position size after a loss.'
+      });
+    }
+    // Overconfidence: after a win, next trade is larger
+    if (prev.profit_loss > 0 && curr.quantity > prev.quantity) {
+      behaviors.push({
+        type: 'overconfidence',
+        index: i,
+        message: 'Possible overconfidence: increased position size after a win.'
+      });
+    }
+  }
+
+  return { streaks, behaviors };
+}
+
+// 2. Tag-Based Performance
+export function analyzeTagPerformance(trades: Trade[]) {
+  const tagStats: Record<string, { count: number, wins: number, totalPnL: number, totalRisk: number }> = {};
+  trades.forEach(trade => {
+    (trade.tags || []).forEach(tag => {
+      if (!tagStats[tag]) tagStats[tag] = { count: 0, wins: 0, totalPnL: 0, totalRisk: 0 };
+      tagStats[tag].count++;
+      if (trade.profit_loss > 0) tagStats[tag].wins++;
+      tagStats[tag].totalPnL += trade.profit_loss || 0;
+      tagStats[tag].totalRisk += trade.risk || 0;
+    });
+  });
+  // Calculate win rate, avg PnL, avg risk
+  const tagPerformance = Object.entries(tagStats).map(([tag, stats]) => ({
+    tag,
+    winRate: stats.count ? (stats.wins / stats.count) * 100 : 0,
+    avgPnL: stats.count ? stats.totalPnL / stats.count : 0,
+    avgRisk: stats.count ? stats.totalRisk / stats.count : 0,
+    count: stats.count
+  }));
+  // Best/worst setups
+  const best = tagPerformance.filter(t => t.count >= 3).sort((a, b) => b.winRate - a.winRate)[0];
+  const worst = tagPerformance.filter(t => t.count >= 3).sort((a, b) => a.winRate - b.winRate)[0];
+  return { tagPerformance, best, worst };
+}
+
+// 3. Emotional State Analytics
+export function analyzeEmotionOutcomes(trades: Trade[]) {
+  const emotionStats: Record<string, { count: number, wins: number, totalPnL: number }> = {};
+  trades.forEach(trade => {
+    // From tags
+    (trade.tags || []).forEach(tag => {
+      if (!emotionStats[tag]) emotionStats[tag] = { count: 0, wins: 0, totalPnL: 0 };
+      emotionStats[tag].count++;
+      if (trade.profit_loss > 0) emotionStats[tag].wins++;
+      emotionStats[tag].totalPnL += trade.profit_loss || 0;
+    });
+    // From notes (simple keyword extraction)
+    const notes = (trade.notes || '').toLowerCase();
+    ['fear', 'fomo', 'calm', 'angry', 'confident', 'anxious', 'plan'].forEach(emotion => {
+      if (notes.includes(emotion)) {
+        if (!emotionStats[emotion]) emotionStats[emotion] = { count: 0, wins: 0, totalPnL: 0 };
+        emotionStats[emotion].count++;
+        if (trade.profit_loss > 0) emotionStats[emotion].wins++;
+        emotionStats[emotion].totalPnL += trade.profit_loss || 0;
+      }
+    });
+  });
+  // Calculate win rate, avg PnL
+  const emotionPerformance = Object.entries(emotionStats).map(([emotion, stats]) => ({
+    emotion,
+    winRate: stats.count ? (stats.wins / stats.count) * 100 : 0,
+    avgPnL: stats.count ? stats.totalPnL / stats.count : 0,
+    count: stats.count
+  }));
+  return { emotionPerformance };
+}
+
+// 4. Mindset Trends (for charting)
+export function getMindsetTrends(trades: Trade[]) {
+  // For each trade, extract date and emotion keywords
+  const trends: { date: string, emotions: string[] }[] = [];
+  trades.forEach(trade => {
+    const date = trade.entry_time.split('T')[0];
+    const emotions: string[] = [];
+    const notes = (trade.notes || '').toLowerCase();
+    ['fear', 'fomo', 'calm', 'angry', 'confident', 'anxious', 'plan'].forEach(emotion => {
+      if ((trade.tags || []).includes(emotion) || notes.includes(emotion)) {
+        emotions.push(emotion);
+      }
+    });
+    trends.push({ date, emotions });
+  });
+  // Aggregate for charting: { date, emotionCounts: { [emotion]: count } }
+  const dateEmotionCounts: Record<string, Record<string, number>> = {};
+  trends.forEach(({ date, emotions }) => {
+    if (!dateEmotionCounts[date]) dateEmotionCounts[date] = {};
+    emotions.forEach(emotion => {
+      dateEmotionCounts[date][emotion] = (dateEmotionCounts[date][emotion] || 0) + 1;
+    });
+  });
+  return dateEmotionCounts;
+}
+
+// 5. AI-Powered What-If Analysis
+export function simulateWhatIf(trades: Trade[], scenario: 'no-fomo' | 'always-plan') {
+  let filtered: Trade[] = trades;
+  if (scenario === 'no-fomo') {
+    filtered = trades.filter(t => !((t.tags || []).includes('fomo') || (t.notes || '').toLowerCase().includes('fomo')));
+  }
+  if (scenario === 'always-plan') {
+    filtered = trades.map(t => {
+      if (!((t.tags || []).includes('plan') || (t.notes || '').toLowerCase().includes('plan'))) {
+        // Simulate: if trade had a plan, increase PnL by 10%
+        return { ...t, profit_loss: t.profit_loss ? t.profit_loss * 1.1 : t.profit_loss };
+      }
+      return t;
+    });
+  }
+  // Calculate new total PnL
+  const totalPnL = filtered.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+  return { scenario, totalPnL, tradeCount: filtered.length };
+}
+
+// AI chat handler for trades page
+export async function answerTradeQuestion(trades: Trade[], question: string): Promise<string> {
+  if (!trades.length) return 'No trades selected.';
+  try {
+    const res = await fetch('/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trades, question })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.answer) return data.answer;
+    } else {
+      // Try to get error details
+      const err = await res.json().catch(() => ({}));
+      if (err && err.error) return `AI error: ${err.error}`;
+    }
+  } catch (e) {
+    // Fallback to in-app logic below
+  }
+  // --- Fallback to previous logic if API fails ---
+  const q = question.toLowerCase();
+  if (q.includes('fomo')) {
+    const fomoTrades = trades.filter(t => (t.tags || []).includes('fomo') || (t.notes || '').toLowerCase().includes('fomo'));
+    if (!fomoTrades.length) return 'No FOMO trades found in your selection.';
+    const winRate = (fomoTrades.filter(t => t.profit_loss > 0).length / fomoTrades.length) * 100;
+    const avgPnL = fomoTrades.reduce((sum, t) => sum + (t.profit_loss || 0), 0) / fomoTrades.length;
+    return `You have ${fomoTrades.length} FOMO trades. Win rate: ${winRate.toFixed(1)}%. Avg P&L: ${avgPnL.toFixed(2)}.`;
+  }
+  if (q.includes('win rate')) {
+    const winRate = (trades.filter(t => t.profit_loss > 0).length / trades.length) * 100;
+    return `Your win rate for these trades is ${winRate.toFixed(1)}%.`;
+  }
+  if (q.includes('p&l') || q.includes('profit') || q.includes('loss')) {
+    const totalPnL = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+    return `Total P&L for these trades: ${totalPnL.toFixed(2)}.`;
+  }
+  if (q.includes('tag') || q.includes('setup') || q.includes('strategy')) {
+    const tagCounts: Record<string, number> = {};
+    trades.forEach(t => (t.tags || []).forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; }));
+    const tagList = Object.entries(tagCounts).map(([tag, count]) => `${tag}: ${count}`).join(', ');
+    return tagList ? `Tag usage: ${tagList}` : 'No tags found in your selected trades.';
+  }
+  if (q.includes('emotion') || q.includes('feel') || q.includes('mindset')) {
+    const emotionStats: Record<string, number> = {};
+    trades.forEach(t => {
+      (t.tags || []).forEach(tag => { emotionStats[tag] = (emotionStats[tag] || 0) + 1; });
+      const notes = (t.notes || '').toLowerCase();
+      ['fear', 'fomo', 'calm', 'angry', 'confident', 'anxious', 'plan'].forEach(emotion => {
+        if (notes.includes(emotion)) {
+          emotionStats[emotion] = (emotionStats[emotion] || 0) + 1;
+        }
+      });
+    });
+    const emotionList = Object.entries(emotionStats).map(([e, c]) => `${e}: ${c}`).join(', ');
+    return emotionList ? `Emotion frequency: ${emotionList}` : 'No emotions detected in your selected trades.';
+  }
+  if (q.includes('summary') || q.includes('summarize')) {
+    const winRate = (trades.filter(t => t.profit_loss > 0).length / trades.length) * 100;
+    const totalPnL = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+    const tagCounts: Record<string, number> = {};
+    trades.forEach(t => (t.tags || []).forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; }));
+    const tagList = Object.entries(tagCounts).map(([tag, count]) => `${tag}: ${count}`).join(', ');
+    return `Summary: ${trades.length} trades. Win rate: ${winRate.toFixed(1)}%. Total P&L: ${totalPnL.toFixed(2)}. Tags: ${tagList || 'none'}`;
+  }
+  const winRate = (trades.filter(t => t.profit_loss > 0).length / trades.length) * 100;
+  const totalPnL = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+  return `You selected ${trades.length} trades. Win rate: ${winRate.toFixed(1)}%. Total P&L: ${totalPnL.toFixed(2)}.`;
 } 

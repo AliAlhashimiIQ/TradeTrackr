@@ -1,27 +1,26 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
-import TradeTagSelector from "@/components/trades/TradeTagSelector";
-import SmartSuggestions from "@/components/trades/SmartSuggestions";
-import TradeSuggestions from "@/components/ai/TradeSuggestions";
+import { useRouter } from 'next/navigation';
+import { addTrade } from '@/lib/tradingApi';
+import { Trade } from '@/lib/types';
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm';
-import Header from '@/components/layout/Header';
-
-const COMMON_SYMBOLS = [
-  "EURUSD",
-  "AAPL",
-  "BTCUSD",
-  "SPY",
-  "QQQ",
-  "TSLA",
-  "XAUUSD",
-  "US100",
-];
+import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 
 export default function NewTrade() {
+  const router = useRouter();
+  
+  const handleSubmit = async (trade: Partial<Trade>) => {
+    await addTrade(trade as Trade);
+    router.push('/trades');
+  };
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-[var(--background)] py-10">
-      <Header />
-      <EnhancedTradeForm onSubmit={() => {}} />
-    </div>
+    <AuthenticatedLayout>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <EnhancedTradeForm 
+          onSubmit={handleSubmit} 
+          onCancel={() => router.push('/trades')}
+        />
+      </div>
+    </AuthenticatedLayout>
   );
-} 
+}

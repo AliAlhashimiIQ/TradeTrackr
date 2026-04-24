@@ -105,25 +105,26 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     if (savedSymbols) {
       try {
         setCustomSymbols(JSON.parse(savedSymbols));
-      } catch (error) {
-        console.error('Error loading custom symbols:', error);
+      } catch (e) {
+        setCustomSymbols([]);
       }
     }
     
     // Load last used symbols
     const recentSymbols = localStorage.getItem('recentSymbols');
     if (recentSymbols) {
+      let parsedSymbols: string[] = [];
       try {
-        const parsedSymbols = JSON.parse(recentSymbols);
+        parsedSymbols = JSON.parse(recentSymbols);
+      } catch (e) {
+        parsedSymbols = [];
+      }
         if (Array.isArray(parsedSymbols) && parsedSymbols.length > 0) {
           // Update the frequent category
           symbolCategories[0].symbols = parsedSymbols.slice(0, 5).map(s => ({
             name: s,
             color: getRandomColor()
           })).concat(symbolCategories[0].symbols.slice(0, 3));
-        }
-      } catch (error) {
-        console.error('Error loading recent symbols:', error);
       }
     }
   }, []);
@@ -167,7 +168,12 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
   // Update the recent symbols list
   const updateRecentSymbols = (symbol: string) => {
     const recentSymbols = localStorage.getItem('recentSymbols');
-    let symbols = recentSymbols ? JSON.parse(recentSymbols) : [];
+    let symbols: string[] = [];
+    try {
+      symbols = recentSymbols ? JSON.parse(recentSymbols) : [];
+    } catch (e) {
+      symbols = [];
+    }
     symbols = [symbol, ...symbols.filter((s: string) => s !== symbol)].slice(0, 10);
     localStorage.setItem('recentSymbols', JSON.stringify(symbols));
   };

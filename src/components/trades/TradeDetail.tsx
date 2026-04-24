@@ -131,9 +131,9 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
           {/* Floating action buttons */}
           <div className="flex items-center space-x-2">
             <button 
-              onClick={() => console.log('Edit trade')}
+              onClick={onClose}
               className="p-2 rounded-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"
-              title="Edit Trade"
+              title="Close"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -141,9 +141,9 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
             </button>
             
             <button 
-              onClick={() => console.log('Delete trade')}
+              onClick={onClose}
               className="p-2 rounded-full bg-red-600/20 text-red-400 hover:bg-red-600/30 transition-colors"
-              title="Delete Trade"
+              title="Close"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -286,17 +286,17 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
 
               {/* Right Column - Additional Information */}
               <div className="space-y-6">
-                {trade.strategy && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4">
-                    <h3 className="text-gray-400 text-sm mb-3">Strategy</h3>
-                    <p className="text-white">{trade.strategy}</p>
-                  </div>
-                )}
-
                 {trade.emotional_state && (
                   <div className="bg-[#1a1f2c] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Emotional State</h3>
-                    <p className="text-white">{trade.emotional_state}</p>
+                    <p className="text-white capitalize">{trade.emotional_state}</p>
+                  </div>
+                )}
+
+                {trade.screenshot_url && typeof trade.screenshot_url === 'string' && (
+                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                    <h3 className="text-gray-400 text-sm mb-3">Screenshot</h3>
+                    <a href={trade.screenshot_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
                   </div>
                 )}
               </div>
@@ -310,14 +310,14 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                   {/* Screenshot Gallery */}
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {Array.isArray(trade.screenshot_url) ? (
-                      trade.screenshot_url.map((url, index) => (
+                      trade.screenshot_url.map((url: string, index: number) => (
                         <div
                           key={index}
-                          onClick={() => openScreenshot(url)}
+                          onClick={() => openScreenshot(url ?? '')}
                           className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                         >
                           <Image
-                            src={url}
+                            src={url ?? ''}
                             alt={`Trade Screenshot ${index + 1}`}
                             layout="fill"
                             objectFit="cover"
@@ -335,11 +335,11 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                       ))
                     ) : (
                       <div
-                        onClick={() => openScreenshot(trade.screenshot_url)}
+                        onClick={() => openScreenshot(trade.screenshot_url ?? '')}
                         className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                       >
                         <Image
-                          src={trade.screenshot_url}
+                          src={trade.screenshot_url ?? ''}
                           alt="Trade Screenshot"
                           layout="fill"
                           objectFit="cover"
@@ -371,7 +371,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
 
           {activeTab === 'notes' && (
             <div>
-              <TradeNotes notes={trade.notes} />
+              <TradeNotes tradeId={trade.id} userId={trade.user_id} />
             </div>
           )}
         </div>
@@ -428,7 +428,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
             onMouseLeave={handleMouseUp}
           >
             <img
-              src={selectedScreenshot}
+              src={selectedScreenshot ?? undefined}
               alt="Trade Screenshot"
               className="max-h-[85vh] transition-transform"
               style={{
