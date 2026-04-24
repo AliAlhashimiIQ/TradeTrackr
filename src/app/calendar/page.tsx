@@ -51,7 +51,7 @@ const groupTradesByDate = (trades: Trade[]) => {
   const grouped: Record<string, Trade[]> = {}
   
   trades.forEach(trade => {
-    const date = new Date(trade.entry_time).toISOString().split('T')[0]
+    const date = new Date(trade.entry_time).toISOString().slice(0, 10)
     if (!grouped[date]) {
       grouped[date] = []
     }
@@ -216,12 +216,12 @@ export default function CalendarPage() {
       
       // Format dates for API calls
       const startDate = viewMode === 'Month' 
-        ? new Date(currentYear, currentMonth, 1).toISOString().split('T')[0]
-        : weekDates[0].toISOString().split('T')[0]
+        ? new Date(currentYear, currentMonth, 1).toISOString().slice(0, 10)
+        : weekDates[0].toISOString().slice(0, 10)
         
       const endDate = viewMode === 'Month'
-        ? new Date(currentYear, currentMonth + 1, 0).toISOString().split('T')[0]
-        : weekDates[6].toISOString().split('T')[0]
+        ? new Date(currentYear, currentMonth + 1, 0).toISOString().slice(0, 10)
+        : weekDates[6].toISOString().slice(0, 10)
       
       // Fetch market events if enabled
       if (showMarketEvents) {
@@ -256,7 +256,7 @@ export default function CalendarPage() {
   // Set selected date and fetch trades for that day
   const handleDateClick = (date: Date) => {
     setSelectedDate(date)
-    const dateString = date.toISOString().split('T')[0]
+    const dateString = date.toISOString().slice(0, 10)
     const dayTrades = tradesByDate[dateString] || []
     setSelectedDayTrades(dayTrades)
     analyzeDayTrades(dayTrades)
@@ -361,12 +361,9 @@ export default function CalendarPage() {
   useEffect(() => {
     if (trades.length > 0 && !selectedDate) {
       // Find the first day in the current view with trades
-      for (const date of dates) {
-        const dateString = date.toISOString().split('T')[0]
-        if (tradesByDate[dateString]) {
-          handleDateClick(date)
-          break
-        }
+      const firstDayWithTrades = dates.find(date => tradesByDate[date.toISOString().slice(0, 10)])
+      if (firstDayWithTrades) {
+        handleDateClick(firstDayWithTrades)
       }
     }
   }, [trades, dates])
@@ -412,7 +409,7 @@ export default function CalendarPage() {
   // Add function to calculate week's total P&L
   const calculateWeekTotal = (dates: Date[]) => {
     return dates.reduce((total, date) => {
-      const dateString = date.toISOString().split('T')[0]
+      const dateString = date.toISOString().slice(0, 10)
       const dayTrades = tradesByDate[dateString] || []
       return total + calculateTotalPnL(dayTrades)
     }, 0)
@@ -447,7 +444,7 @@ export default function CalendarPage() {
           </div>
         <div className="grid grid-cols-7">
           {weekDates.map((date) => {
-            const dateStr = date.toISOString().split('T')[0]
+            const dateStr = date.toISOString().slice(0, 10)
             const dayTrades = tradesByDate[dateStr] || []
             const pnl = calculateDayPnL(dayTrades)
             const isToday = date.toDateString() === new Date().toDateString()
@@ -508,7 +505,7 @@ export default function CalendarPage() {
       const dayNumber = i - firstDayOfMonth + 1
       const isValidDay = dayNumber > 0 && dayNumber <= daysInMonth
       const date = isValidDay ? new Date(currentYear, currentMonth, dayNumber) : null
-      const dateStr = date?.toISOString().split('T')[0]
+      const dateStr = date?.toISOString().slice(0, 10)
       const dayTrades = dateStr ? (tradesByDate[dateStr] || []) : []
       const pnl = dateStr ? calculateDayPnL(dayTrades) : 0
       const isToday = date?.toDateString() === new Date().toDateString()
@@ -626,7 +623,7 @@ export default function CalendarPage() {
                 const today = new Date()
                 setCurrentDate(today)
                 setSelectedDate(today)
-                const dateString = today.toISOString().split('T')[0]
+                const dateString = today.toISOString().slice(0, 10)
                 setSelectedDayTrades(tradesByDate[dateString] || [])
               }}
               className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300"
