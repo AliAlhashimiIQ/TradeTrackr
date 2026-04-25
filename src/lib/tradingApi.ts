@@ -1,6 +1,37 @@
 import { supabase } from './supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote } from './types';
 
+async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
+  if (!trades.length) return trades;
+
+  const tradeIds = trades.map((trade) => trade.id);
+  const { data, error } = await supabase
+    .from('trade_tags')
+    .select(`
+      trade_id,
+      tags:tag_id (name)
+    `)
+    .in('trade_id', tradeIds);
+
+  if (error || !data) {
+    return trades.map((trade) => ({ ...trade, tags: trade.tags || [] }));
+  }
+
+  const tagsByTradeId: Record<string, string[]> = {};
+  data.forEach((row: any) => {
+    const tradeId = row.trade_id as string;
+    const tagName = row.tags?.name as string | undefined;
+    if (!tagName) return;
+    if (!tagsByTradeId[tradeId]) tagsByTradeId[tradeId] = [];
+    tagsByTradeId[tradeId].push(tagName);
+  });
+
+  return trades.map((trade) => ({
+    ...trade,
+    tags: tagsByTradeId[trade.id] || []
+  }));
+}
+
 // Function to get recent trades
 export async function getRecentTrades(userId: string, limit: number = 5): Promise<Trade[]> {
   try {
@@ -13,25 +44,45 @@ export async function getRecentTrades(userId: string, limit: number = 5): Promis
 
     if (error) throw error;
     
-    return data as Trade[] || [];
+    const trades = (data as Trade[]) || [];
+    return await attachTagsToTrades(trades);
   } catch (error) {
     
     return [];
   }
 }
 
+interface GetAllTradesOptions {
+  startDate?: string;
+  endDate?: string;
+}
+
 // Function to get all trades
-export async function getAllTrades(userId?: string): Promise<Trade[]> {
+export async function getAllTrades(userId?: string, options?: GetAllTradesOptions): Promise<Trade[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('trades')
       .select('*')
-      // .eq('user_id', userId) // Disabled for testing: show all trades
       .order('entry_time', { ascending: false });
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    if (options?.startDate) {
+      query = query.gte('entry_time', options.startDate);
+    }
+
+    if (options?.endDate) {
+      query = query.lte('entry_time', options.endDate);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     
-    return data as Trade[] || [];
+    const trades = (data as Trade[]) || [];
+    return await attachTagsToTrades(trades);
   } catch (error) {
     
     return [];
@@ -61,6 +112,9 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       screenshot_url: trade.screenshot_url,
       notes: trade.notes,
       emotional_state: trade.emotional_state,
+      mistakes: trade.mistakes || [],
+      lots: trade.lots,
+      pips: trade.pips,
     };
     
     // Only include optional fields if they have values
@@ -167,6 +221,9 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       screenshot_url: trade.screenshot_url,
       notes: trade.notes,
       emotional_state: trade.emotional_state,
+      mistakes: trade.mistakes || [],
+      lots: trade.lots,
+      pips: trade.pips,
     };
     
     if (trade.risk) tradeData.risk = trade.risk;

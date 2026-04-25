@@ -20,6 +20,9 @@ export interface Trade {
   r_multiple?: number;
   emotional_state?: string;
   video_url?: string | null;
+  mistakes?: string[];
+  lots?: number;
+  pips?: number;
 }
 
 export interface TradeMetrics {

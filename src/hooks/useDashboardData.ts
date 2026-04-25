@@ -1,8 +1,44 @@
 import { useState, useEffect } from 'react';
 import type { Trade, TradeMetrics } from '@/lib/types';
 import { DateRange } from '@/components/dashboard/DateRangeSelector';
-import { PerformanceMetrics, calculatePerformanceMetrics } from '@/lib/tradeMetrics';
-import { getRecentTrades, getTradeMetrics, getEquityCurveData } from '@/lib/tradingApi';
+import { PerformanceMetrics, calculatePerformanceMetrics, generateEquityCurveData } from '@/lib/tradeMetrics';
+import { getAllTrades } from '@/lib/tradingApi';
+
+function getDateRangeBounds(dateRange: DateRange): { startDate?: string; endDate?: string } {
+  if (dateRange === 'all') {
+    return {};
+  }
+
+  const endDate = new Date();
+  const startDate = new Date(endDate);
+
+  if (dateRange === '7d') {
+    startDate.setDate(endDate.getDate() - 7);
+  } else if (dateRange === '30d') {
+    startDate.setDate(endDate.getDate() - 30);
+  } else if (dateRange === '90d') {
+    startDate.setDate(endDate.getDate() - 90);
+  } else if (dateRange === '1y') {
+    startDate.setFullYear(endDate.getFullYear() - 1);
+  }
+
+  return {
+    startDate: startDate.toISOString(),
+    endDate: endDate.toISOString()
+  };
+}
+
+function toTradeMetrics(performance: PerformanceMetrics): TradeMetrics {
+  return {
+    total_pnl: performance.totalPnL,
+    win_rate: performance.winRate / 100,
+    avg_win: performance.averageWin,
+    avg_loss: performance.averageLoss,
+    total_trades: performance.totalTrades,
+    winning_trades: performance.winningTrades,
+    losing_trades: performance.losingTrades
+  };
+}
 
 // Custom hook for dashboard data (NO MOCK DATA)
 export function useDashboardData(userId: string | undefined, dateRange: DateRange = '30d') {
@@ -46,17 +82,21 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
       setIsLoading(true);
       setHasError(false);
       try {
-        // Fetch all trades for advanced metrics
-        const [tradesResponse, metricsResponse, equityDataResponse] = await Promise.all([
-          getRecentTrades(userId, 1000), // fetch all or a large number for metrics
-          getTradeMetrics(userId),
-          getEquityCurveData(userId)
-        ]);
+        const bounds = getDateRangeBounds(dateRange);
+        const tradesResponse = await getAllTrades(userId, bounds);
+        const advanced = calculatePerformanceMetrics(tradesResponse);
+        const equityCurve = generateEquityCurveData(tradesResponse).map(point => ({
+          date: point.date,
+          value: point.equity
+        }));
+
         setTrades(tradesResponse);
-        setMetrics(metricsResponse);
-        setEquityData(equityDataResponse);
-        // Calculate advanced metrics from real trades
-        setAdvancedMetrics(calculatePerformanceMetrics(tradesResponse));
+        setAdvancedMetrics(advanced);
+        setMetrics(toTradeMetrics(advanced));
+        setEquityData({
+          labels: equityCurve.map(point => point.date),
+          values: equityCurve.map(point => point.value)
+        });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setHasError(true);

@@ -39,10 +39,10 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+        <h3 className="text-lg font-semibold text-slate-100">Recent Activity</h3>
         <Link 
           href="/trades/new"
-          className="flex items-center gap-1 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
+          className="flex items-center gap-1 text-sm text-slate-300 hover:text-white transition-colors"
         >
           <Plus size={16} />
           <span>Add Trade</span>
@@ -54,11 +54,11 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
           <div className="w-16 h-16 mb-4 bg-indigo-500/10 rounded-full flex items-center justify-center">
             <Plus size={24} className="text-indigo-400" />
           </div>
-          <h4 className="text-lg font-medium text-white mb-2">No trades yet</h4>
-          <p className="text-gray-400 mb-4 max-w-sm">Start tracking your trades to see performance insights and improve your strategy.</p>
+          <h4 className="text-lg font-medium text-slate-100 mb-2">No trades yet</h4>
+          <p className="text-slate-400 mb-4 max-w-sm">Start tracking your trades to see performance insights and improve your strategy.</p>
           <Link 
             href="/trades/new"
-            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-500 hover:to-blue-500 transition-all"
+            className="px-4 py-2 bg-slate-100 text-slate-900 rounded-lg hover:bg-white transition-colors"
           >
             Add Your First Trade
           </Link>
@@ -69,7 +69,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
             {displayTrades.map((trade) => (
               <div 
                 key={trade.id} 
-                className="relative bg-[#1a1e2d] rounded-lg p-4 transition-all duration-200 hover:bg-[#20253a]"
+                className="relative rounded-xl border border-slate-800 bg-slate-900/60 p-4 transition-colors hover:bg-slate-900"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -101,7 +101,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                       }`}>
                         {trade.profit_loss > 0 ? '+' : ''}{trade.profit_loss != null ? trade.profit_loss.toFixed(2) : '--'}
                       </div>
-                      <div className="text-sm text-gray-400">
+                      <div className="text-sm text-slate-400">
                         {((trade.exit_price - trade.entry_price) / trade.entry_price * 100).toFixed(2)}%
                       </div>
                     </div>
@@ -109,7 +109,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                     <div className="flex items-center gap-1">
                       {/* Edit button */}
                       <Link href={`/trades/${trade.id}/edit`}>
-                        <button className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                        <button className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
                           <Edit size={16} />
                         </button>
                       </Link>
@@ -117,7 +117,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                       {/* Delete button */}
                       <button 
                         onClick={() => setDeleteConfirm(trade.id)}
-                        className="p-2 text-gray-400 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -127,10 +127,10 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                 
                 {/* Trade details section */}
                 <div className="mt-3 text-sm grid grid-cols-2 gap-2">
-                  <div className="text-gray-400">
+                  <div className="text-slate-400">
                     Entry: <span className="text-white">${trade.entry_price != null ? trade.entry_price.toFixed(2) : '--'}</span>
                   </div>
-                  <div className="text-gray-400">
+                  <div className="text-slate-400">
                     Exit: <span className="text-white">${trade.exit_price != null ? trade.exit_price.toFixed(2) : '--'}</span>
                   </div>
                   {trade.tags && trade.tags.length > 0 && (
@@ -138,7 +138,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                       {trade.tags.map((tag, index) => (
                         <span 
                           key={index}
-                          className="px-2 py-1 text-xs rounded-full bg-indigo-500/10 text-indigo-400"
+                          className="px-2 py-1 text-xs rounded-full border border-slate-700 bg-slate-800/80 text-slate-300"
                         >
                           {tag}
                         </span>
@@ -154,15 +154,15 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute inset-0 bg-[#1e2235]/95 backdrop-blur-sm rounded-lg flex items-center justify-center p-4 z-10"
+                      className="absolute inset-0 bg-slate-950/95 backdrop-blur-sm rounded-xl flex items-center justify-center p-4 z-10"
                     >
                       <div className="text-center">
                         <h4 className="text-white font-medium mb-2">Delete this trade?</h4>
-                        <p className="text-gray-400 text-sm mb-4">This action cannot be undone.</p>
+                        <p className="text-slate-400 text-sm mb-4">This action cannot be undone.</p>
                         <div className="flex items-center justify-center gap-3">
                           <button
                             onClick={() => setDeleteConfirm(null)}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                            className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
                             disabled={loading}
                           >
                             Cancel
@@ -193,7 +193,7 @@ const DashboardRecentActivity: React.FC<DashboardRecentActivityProps> = ({ trade
           {hasMoreTrades && (
             <button
               onClick={() => setPage(page + 1)}
-              className="w-full mt-4 py-2 text-center text-indigo-400 hover:text-indigo-300 transition-colors flex items-center justify-center gap-1"
+              className="w-full mt-4 py-2 text-center text-slate-300 hover:text-white transition-colors flex items-center justify-center gap-1"
             >
               <span>Load more</span>
               <ChevronRight size={16} />

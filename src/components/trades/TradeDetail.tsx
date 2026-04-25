@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Trade } from '@/lib/types';
 import TradeNotes from './TradeNotes';
 import Image from 'next/image';
+import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -12,6 +13,7 @@ interface TradeDetailProps {
 
 export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
   const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots'>('details');
+  const isForex = isForexPair(trade.symbol);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isDragging, setIsDragging] = useState(false);
@@ -218,9 +220,19 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                       <div className="text-gray-500 text-xs">{formatTime(trade.exit_time)}</div>
                     </div>
                     <div>
-                      <div className="text-gray-400 text-xs">Quantity</div>
-                      <div className="text-white font-mono text-lg">{trade.quantity}</div>
+                      <div className="text-gray-400 text-xs">{isForex ? 'Lots' : 'Quantity'}</div>
+                      <div className="text-white font-mono text-lg">
+                        {isForex ? formatLots(trade.lots) : trade.quantity}
+                      </div>
                     </div>
+                    {isForex && trade.pips !== undefined && (
+                      <div>
+                        <div className="text-gray-400 text-xs">Pips</div>
+                        <div className={`font-mono text-lg ${trade.pips >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                          {formatPips(trade.pips)}
+                        </div>
+                      </div>
+                    )}
                     <div>
                       <div className="text-gray-400 text-xs">Profit/Loss</div>
                       <div className={`font-mono text-lg ${
@@ -277,6 +289,23 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                           className="px-2 py-1 bg-blue-900/30 text-blue-400 rounded text-sm"
                         >
                           {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Mistakes */}
+                {trade.mistakes && trade.mistakes.length > 0 && (
+                  <div className="bg-[#1a1f2c] rounded-lg p-4 border border-red-900/20">
+                    <h3 className="text-red-400/70 text-sm mb-3 font-semibold uppercase tracking-wider">Mistakes Logged</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {trade.mistakes.map((mistake, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs font-medium border border-red-900/40"
+                        >
+                          {mistake}
                         </span>
                       ))}
                     </div>

@@ -130,7 +130,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
   
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -138,8 +138,8 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No data available</p>
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
+        <p className="text-slate-400">No data available</p>
       </div>
     );
   }
@@ -187,13 +187,13 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       const isWin = midPoint >= 0;
       
       return (
-        <div className="bg-[#1f2937] p-3 rounded-lg shadow-lg border border-gray-700 text-xs">
-          <p className="font-bold text-white mb-1">
+        <div className="bg-slate-950/95 p-3 rounded-xl shadow-2xl border border-slate-800 text-xs backdrop-blur-sm">
+          <p className="font-bold text-slate-100 mb-1">
             {isWin ? 'Winning' : 'Losing'} Trades
           </p>
-          <p className="text-gray-300 mb-1">Range: {formatCurrency(values[0])} to {formatCurrency(values[1])}</p>
-          <p className="text-gray-300">Frequency: {item.percentage.toFixed(2)}%</p>
-          <p className="text-gray-300">Count: {item.count} trades</p>
+          <p className="text-slate-300 mb-1">Range: {formatCurrency(values[0])} to {formatCurrency(values[1])}</p>
+          <p className="text-slate-300">Frequency: {item.percentage.toFixed(2)}%</p>
+          <p className="text-slate-300">Count: {item.count} trades</p>
         </div>
       );
     }
@@ -201,14 +201,14 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
   };
 
   return (
-    <div className="w-full bg-[#131825] rounded-lg p-4">
+    <div className="w-full rounded-xl p-2">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-slate-400">
           Win/Loss Distribution
         </div>
         {isClient && (
           <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-1 text-gray-300 text-xs">
+            <label className="flex items-center space-x-1 text-slate-300 text-xs">
               <input
                 type="checkbox"
                 checked={showLabels}
@@ -223,29 +223,29 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       
       {/* Stats summary */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <div className="text-xs text-gray-400 mb-1">Win Rate</div>
-          <div className="text-lg font-semibold text-white">
+        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg">
+          <div className="text-xs text-slate-400 mb-1">Win Rate</div>
+          <div className="text-lg font-semibold text-slate-100">
             {formattedStats.winRate}
-            <span className="text-xs text-gray-500 ml-2">
+            <span className="text-xs text-slate-500 ml-2">
               ({stats.winningTrades}/{stats.winningTrades + stats.losingTrades})
             </span>
           </div>
         </div>
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <div className="text-xs text-gray-400 mb-1">Risk/Reward</div>
+        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg">
+          <div className="text-xs text-slate-400 mb-1">Risk/Reward</div>
           <div className={`text-lg font-semibold ${Number(formattedStats.riskRewardRatio) >= 1 ? 'text-green-400' : 'text-red-400'}`}>
             {formattedStats.riskRewardRatio}
           </div>
         </div>
-        <div className="bg-[#1a1f2c] p-2 rounded-md flex justify-between">
+        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg flex justify-between">
           <div>
             <div className="text-xs text-green-400">Avg Win</div>
-            <div className="text-sm font-semibold text-white">{formattedStats.averageWin}</div>
+            <div className="text-sm font-semibold text-slate-100">{formattedStats.averageWin}</div>
           </div>
           <div>
             <div className="text-xs text-red-400">Avg Loss</div>
-            <div className="text-sm font-semibold text-white">{formattedStats.averageLoss}</div>
+            <div className="text-sm font-semibold text-slate-100">{formattedStats.averageLoss}</div>
           </div>
         </div>
       </div>
@@ -267,43 +267,43 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
               setHighlightLosses(false);
             } : undefined}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#212946" />
+            <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
             <XAxis
               dataKey="range"
-              stroke="#6b7280"
-              tick={{ fontSize: 10 }}
-              tickLine={{ stroke: '#6b7280' }}
+              stroke="#64748b"
+              tick={{ fontSize: 10, fill: '#94a3b8' }}
+              tickLine={{ stroke: '#334155' }}
               angle={-45}
               textAnchor="end"
               interval={0}
               height={50}
             />
             <YAxis
-              stroke="#6b7280"
-              tick={{ fontSize: 10 }}
-              tickLine={{ stroke: '#6b7280' }}
+              stroke="#64748b"
+              tick={{ fontSize: 10, fill: '#94a3b8' }}
+              tickLine={{ stroke: '#334155' }}
               label={{ 
                 value: 'Frequency (%)', 
                 angle: -90, 
                 position: 'insideLeft', 
-                style: { fill: '#9ca3af', fontSize: 12 } 
+                style: { fill: '#94a3b8', fontSize: 11 } 
               }}
             />
             <Tooltip
               content={customTooltip}
-              cursor={{ fill: 'rgba(107, 114, 128, 0.2)' }}
+              cursor={{ fill: 'rgba(148, 163, 184, 0.08)' }}
             />
-            <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 12 }} />
+            <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 11 }} />
             
             {/* Add reference line at zero */}
             <ReferenceLine 
               x={zeroIndex !== -1 ? sortedData[zeroIndex].range : undefined}
-              stroke="#6b7280" 
-              strokeDasharray="3 3"
+              stroke="#64748b" 
+              strokeDasharray="3 4"
               label={{
                 value: 'Break Even',
                 position: 'top',
-                fill: '#9ca3af',
+                fill: '#94a3b8',
                 fontSize: 10
               }}
             />
@@ -326,8 +326,8 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
                     key={`cell-${index}`} 
                     fill={isWin ? COLORS.win : COLORS.loss} 
                     fillOpacity={opacity}
-                    stroke={isWin ? '#059669' : '#dc2626'}
-                    strokeWidth={1}
+                    stroke={isWin ? '#34d399' : '#f87171'}
+                    strokeWidth={0}
                   />
                 );
               })}
@@ -337,7 +337,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       </div>
       
       {/* Insights */}
-      <div className="text-xs text-gray-400 mt-4 bg-[#1a1f2c]/50 p-2 rounded-lg">
+      <div className="text-xs text-slate-400 mt-4 bg-slate-900/50 border border-slate-800 p-2 rounded-lg">
         <p>
           {stats.winPercentage > 50 
             ? "You have a positive win rate. " 

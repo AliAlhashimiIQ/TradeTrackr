@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Trade } from '@/lib/types'
-import { getAllTrades, deleteTrade, addTrade } from '@/lib/tradingApi'
+import { getAllTrades, deleteTrade, addTrade, updateTrade } from '@/lib/tradingApi'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
@@ -14,6 +14,79 @@ import TagModal from '@/components/trades/TagModal'
 import ExportModal from '@/components/trades/ExportModal'
 import TradeAIChatBox from '@/components/trades/TradeAIChatBox'
 import { motion, AnimatePresence } from 'framer-motion'
+import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils'
+
+type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review'
+type TableDensity = 'compact' | 'comfortable'
+
+type ReviewReason = 'fomo' | 'oversized' | 'no-plan' | 'large-loss'
+
+const getTradeReviewReasons = (trade: Trade): ReviewReason[] => {
+  const reasons: ReviewReason[] = []
+  const tags = (trade.tags || []).map(t => t.toLowerCase())
+  const mistakes = (trade.mistakes || []).map(m => m.toLowerCase())
+  const notes = (trade.notes || '').toLowerCase()
+
+  const hasFomo = tags.includes('fomo') || mistakes.some(m => m.includes('fomo')) || notes.includes('fomo')
+  // Avoid over-flagging "No Plan": require explicit signal or low-context trade.
+  const hasNoPlan = mistakes.some(m => m.includes('no plan')) || (!tags.includes('plan') && !notes.includes('plan') && (trade.notes || '').trim().length === 0)
+  const hasOversized = mistakes.some(m => m.includes('too large')) || mistakes.some(m => m.includes('oversized'))
+  const hasLargeLoss = (trade.profit_loss ?? 0) <= -100
+
+  if (hasFomo) reasons.push('fomo')
+  if (hasOversized) reasons.push('oversized')
+  if (hasNoPlan) reasons.push('no-plan')
+  if (hasLargeLoss) reasons.push('large-loss')
+
+  return reasons
+}
+
+const getTradeQualityScore = (trade: Trade): number => {
+  let score = 100
+  const reasons = getTradeReviewReasons(trade)
+  if (reasons.includes('fomo')) score -= 30
+  if (reasons.includes('oversized')) score -= 25
+  if (reasons.includes('no-plan')) score -= 20
+  if (reasons.includes('large-loss')) score -= 15
+  if ((trade.tags || []).length === 0) score -= 10
+  if (!(trade.notes || '').trim()) score -= 8
+  return Math.max(0, score)
+}
+
+const getQualityBadge = (score: number): { label: string; className: string } => {
+  if (score >= 85) return { label: 'A', className: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' }
+  if (score >= 70) return { label: 'B', className: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' }
+  if (score >= 55) return { label: 'C', className: 'bg-amber-500/10 text-amber-400 border border-amber-500/20' }
+  return { label: 'D', className: 'bg-red-500/10 text-red-400 border border-red-500/20' }
+}
+
+const getQualityTone = (score: number): string => {
+  if (score >= 85) return 'text-emerald-400'
+  if (score >= 70) return 'text-blue-400'
+  if (score >= 55) return 'text-amber-400'
+  return 'text-red-400'
+}
+
+const getQualityBreakdown = (trade: Trade): string => {
+  const reasons = getTradeReviewReasons(trade)
+  const penalties: Record<ReviewReason, string> = {
+    'fomo': '-30 FOMO',
+    'oversized': '-25 Oversized',
+    'no-plan': '-20 No Plan',
+    'large-loss': '-15 Large Loss'
+  }
+  const rows = reasons.map(reason => penalties[reason])
+  if ((trade.tags || []).length === 0) rows.push('-10 No Tags')
+  if (!(trade.notes || '').trim()) rows.push('-8 No Notes')
+  return rows.length ? `Quality penalties: ${rows.join(', ')}` : 'No quality penalties'
+}
+
+const getReviewReasonLabel = (reason: ReviewReason): string => {
+  if (reason === 'fomo') return 'FOMO'
+  if (reason === 'oversized') return 'Oversized'
+  if (reason === 'no-plan') return 'No Plan'
+  return 'Large Loss'
+}
 
 const calculateTradesPerWeek = (trades: Trade[]): number => {
   if (!trades.length) return 0;
@@ -56,6 +129,34 @@ export default function Trades() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState<string | null>(null)
+  const [activeView, setActiveView] = useState<SavedView>('all')
+  const [showIntelligence, setShowIntelligence] = useState(true)
+  const [tableDensity, setTableDensity] = useState<TableDensity>('comfortable')
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const savedView = window.localStorage.getItem('trades.activeView') as SavedView | null
+    const savedDensity = window.localStorage.getItem('trades.tableDensity') as TableDensity | null
+    const savedIntelligence = window.localStorage.getItem('trades.showIntelligence')
+    if (savedView) setActiveView(savedView)
+    if (savedDensity) setTableDensity(savedDensity)
+    if (savedIntelligence !== null) setShowIntelligence(savedIntelligence === 'true')
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('trades.activeView', activeView)
+  }, [activeView])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('trades.tableDensity', tableDensity)
+  }, [tableDensity])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('trades.showIntelligence', String(showIntelligence))
+  }, [showIntelligence])
 
   useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
@@ -88,6 +189,11 @@ export default function Trades() {
     }
     if (symbolFilter) result = result.filter(t => t.symbol === symbolFilter);
     if (typeFilter !== 'All') result = result.filter(t => t.type === typeFilter);
+    if (activeView === 'forex') result = result.filter(t => isForexPair(t.symbol));
+    if (activeView === 'mistakes') result = result.filter(t => (t.mistakes?.length || 0) > 0);
+    if (activeView === 'winners') result = result.filter(t => (t.profit_loss ?? 0) > 0);
+    if (activeView === 'losers') result = result.filter(t => (t.profit_loss ?? 0) < 0);
+    if (activeView === 'review') result = result.filter(t => getTradeReviewReasons(t).length > 0);
     if (dateFilter !== 'All') {
       const now = new Date();
       const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter] || 0;
@@ -108,9 +214,24 @@ export default function Trades() {
     }
     const start = (currentPage - 1) * pageSize;
     setFilteredTrades(result.slice(start, start + pageSize));
-  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, currentPage, pageSize]);
+  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, sortField, sortDirection, currentPage, pageSize]);
 
   const uniqueSymbols = Array.from(new Set(trades.map(t => t.symbol)));
+  const reviewQueue = trades
+    .map(trade => ({ trade, reasons: getTradeReviewReasons(trade), quality: getTradeQualityScore(trade) }))
+    .filter(item => item.reasons.length > 0)
+    .sort((a, b) => (a.quality - b.quality) || ((a.trade.profit_loss ?? 0) - (b.trade.profit_loss ?? 0)))
+    .slice(0, 5)
+
+  const mistakeCost = trades.reduce<Record<string, number>>((acc, trade) => {
+    const pnl = trade.profit_loss ?? 0
+    if (pnl >= 0 || !trade.mistakes?.length) return acc
+    trade.mistakes.forEach(mistake => {
+      acc[mistake] = (acc[mistake] || 0) + Math.abs(pnl)
+    })
+    return acc
+  }, {})
+  const topMistakeCost = Object.entries(mistakeCost).sort((a, b) => b[1] - a[1]).slice(0, 3)
 
   const handleDeleteTrade = async (tradeId: string) => {
     if (!window.confirm('Delete this trade?')) return;
@@ -165,8 +286,26 @@ export default function Trades() {
 
   const handleAddTag = async (tag: string) => {
     setIsProcessing(true);
-    setTrades(prev => prev.map(t => selectedTradeIds.includes(t.id) ? { ...t, tags: [...(t.tags || []), tag] } : t));
-    setSelectedTradeIds([]); setShowTagModal(false); setIsProcessing(false);
+    try {
+      const selectedTrades = trades.filter(t => selectedTradeIds.includes(t.id))
+      await Promise.all(
+        selectedTrades.map(trade => {
+          const nextTags = Array.from(new Set([...(trade.tags || []), tag]))
+          return updateTrade({ ...trade, tags: nextTags } as Trade)
+        })
+      )
+      if (user) {
+        const refreshed = await getAllTrades(user.id)
+        setTrades(refreshed)
+        setFilteredTrades(refreshed)
+      }
+      setSelectedTradeIds([])
+      setShowTagModal(false)
+    } catch (error) {
+      console.error('Failed to persist tags:', error)
+    } finally {
+      setIsProcessing(false)
+    }
   };
 
   const handleSort = (field: keyof Trade) => {
@@ -215,6 +354,129 @@ export default function Trades() {
               Log Trade
             </Link>
           </div>
+        </div>
+
+        {/* Saved Views */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-wrap gap-2">
+          {[
+            { id: 'all', label: 'All Trades' },
+            { id: 'forex', label: 'Forex View' },
+            { id: 'mistakes', label: 'Mistake Review' },
+            { id: 'winners', label: 'Winners' },
+            { id: 'losers', label: 'Losers' },
+            { id: 'review', label: 'Review Queue' },
+          ].map(view => (
+            <button
+              key={view.id}
+            onClick={() => { setActiveView(view.id as SavedView); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                activeView === view.id
+                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                  : 'bg-[#0d0e16] text-gray-400 border border-white/[0.06] hover:text-white'
+              }`}
+            >
+              {view.label}
+            </button>
+          ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] uppercase tracking-wider text-gray-500">Density</span>
+            <div className="flex rounded-lg border border-white/[0.06] bg-[#0d0e16] p-1">
+              <button
+                onClick={() => setTableDensity('compact')}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  tableDensity === 'compact' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Compact
+              </button>
+              <button
+                onClick={() => setTableDensity('comfortable')}
+                className={`px-2.5 py-1 text-xs rounded-md transition-colors ${
+                  tableDensity === 'comfortable' ? 'bg-indigo-500/20 text-indigo-300' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Comfortable
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Intelligence Strip */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowIntelligence(prev => !prev)}
+            className="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0d0e16] border border-white/[0.06] text-gray-300 hover:text-white transition-colors inline-flex items-center gap-2"
+          >
+            <span>{showIntelligence ? 'Hide' : 'Show'} Intelligence</span>
+            <svg
+              className={`w-4 h-4 transition-transform ${showIntelligence ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          <AnimatePresence>
+            {showIntelligence && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-white">Top Mistake Cost</h3>
+              <span className="text-[10px] uppercase tracking-wider text-gray-500">Realized Loss Impact</span>
+            </div>
+            {topMistakeCost.length === 0 ? (
+              <div className="text-sm text-gray-500">No mistake-linked losses yet.</div>
+            ) : (
+              <div className="space-y-2">
+                {topMistakeCost.map(([mistake, cost]) => (
+                  <div key={mistake} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-300">{mistake}</span>
+                    <span className="text-red-400 font-semibold">-${cost.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-white">Smart Review Queue</h3>
+              <span className="text-[10px] uppercase tracking-wider text-gray-500">Needs Attention</span>
+            </div>
+            {reviewQueue.length === 0 ? (
+              <div className="text-sm text-gray-500">No high-priority reviews right now.</div>
+            ) : (
+              <div className="space-y-2">
+                {reviewQueue.map(({ trade, reasons, quality }) => (
+                  <button
+                    key={trade.id}
+                    onClick={() => setSelectedDetailTrade(trade)}
+                    className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-white">{trade.symbol}</div>
+                      <div className="text-xs text-gray-400">{reasons.slice(0, 2).map(getReviewReasonLabel).join(' · ')}</div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-md bg-amber-500/10 text-amber-400">Q{quality}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
@@ -302,7 +564,7 @@ export default function Trades() {
         {/* Trade List */}
         <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-hidden">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_1fr_100px_80px] gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
+          <div className="hidden md:grid grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_80px_1fr_100px_90px_80px] gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
             <div className="flex items-center">
               <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
                 onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
@@ -314,13 +576,15 @@ export default function Trades() {
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('type')}>Side</div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_price')}>Entry</div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('exit_price')}>Exit</div>
-            <div>Lots</div>
+            <div>Lots / Qty</div>
+            <div>Pips</div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('profit_loss')}>
               P&L {sortField === 'profit_loss' && (sortDirection === 'asc' ? '↑' : '↓')}
             </div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_time')}>
               Date {sortField === 'entry_time' && (sortDirection === 'asc' ? '↑' : '↓')}
             </div>
+            <div title="Trade quality grade and score (0-100)">Quality (A-D / QS)</div>
             <div className="text-right">Actions</div>
           </div>
 
@@ -340,7 +604,7 @@ export default function Trades() {
           ) : (
             filteredTrades.map((trade, idx) => (
               <div key={trade.id}
-                className={`grid grid-cols-1 md:grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_1fr_100px_80px] gap-2 px-4 py-3.5 items-center hover:bg-white/[0.02] transition-colors ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}>
+                className={`grid grid-cols-1 md:grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_80px_1fr_100px_90px_80px] gap-2 px-4 ${tableDensity === 'compact' ? 'py-2.5' : 'py-3.5'} items-center hover:bg-white/[0.03] transition-colors ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}>
                 {/* Checkbox */}
                 <div className="hidden md:flex items-center">
                   <input type="checkbox" checked={selectedTradeIds.includes(trade.id)}
@@ -350,11 +614,11 @@ export default function Trades() {
                 
                 {/* Symbol */}
                 <div className="flex items-center gap-2.5">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                  <div className={`${tableDensity === 'compact' ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs'} rounded-lg flex items-center justify-center font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
                     {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">{trade.symbol}</div>
+                    <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white`}>{trade.symbol}</div>
                     {trade.tags && trade.tags.length > 0 && (
                       <div className="flex gap-1 mt-0.5">
                         {trade.tags.slice(0, 2).map((tag, i) => (
@@ -374,28 +638,62 @@ export default function Trades() {
                 </div>
 
                 {/* Entry */}
-                <div className="text-sm font-mono text-gray-300">{(trade.entry_price ?? 0).toFixed(2)}</div>
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
 
                 {/* Exit */}
-                <div className="text-sm font-mono text-gray-300">{(trade.exit_price ?? 0).toFixed(2)}</div>
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
 
-                {/* Lots */}
-                <div className="text-sm text-gray-400">{trade.quantity}</div>
+                {/* Lots / Qty */}
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400`}>
+                  {isForexPair(trade.symbol) ? formatLots(trade.lots) : trade.quantity}
+                </div>
+
+                {/* Pips */}
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono ${!isForexPair(trade.symbol) ? 'text-gray-800' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
+                  {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
+                </div>
 
                 {/* P&L */}
-                <div className={`text-sm font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
                   {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
                 </div>
 
                 {/* Date */}
-                <div className="text-sm text-gray-400">
+                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500`}>
                   {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </div>
+
+                {/* Quality / Rule Badges */}
+                <div className="flex flex-col gap-1">
+                  {(() => {
+                    const score = getTradeQualityScore(trade)
+                    const badge = getQualityBadge(score)
+                    const reasons = getTradeReviewReasons(trade)
+                    return (
+                      <>
+                        <div className="flex items-center gap-1">
+                          <span className={`text-[10px] px-2 py-1 rounded-md font-bold ${badge.className}`}>{badge.label}</span>
+                          <span
+                            className={`text-[10px] font-semibold ${getQualityTone(score)}`}
+                            title={`Trade Quality Score: ${score}/100. ${getQualityBreakdown(trade)}`}
+                          >
+                            QS {score}
+                          </span>
+                        </div>
+                        {reasons.slice(0, 1).map(reason => (
+                          <span key={reason} className="text-[10px] px-2 py-1 rounded-md bg-red-500/10 text-red-300 border border-red-500/20 w-fit">
+                            {getReviewReasonLabel(reason)}
+                          </span>
+                        ))}
+                      </>
+                    )
+                  })()}
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-1">
                   {trade.screenshot_url && (
-                    <button onClick={() => setSelectedScreenshotUrl(trade.screenshot_url)}
+                    <button onClick={() => setSelectedScreenshotUrl(trade.screenshot_url ?? null)}
                       className="p-1.5 text-gray-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-white/[0.04]">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </button>
@@ -436,18 +734,18 @@ export default function Trades() {
           {filteredTrades.length > 0 && (
             <div className="px-4 py-3 border-t border-white/[0.04] flex items-center justify-between">
               <span className="text-xs text-gray-600">{trades.length} trades total</span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
                   className="px-2 py-1 bg-[#151823] border border-white/[0.06] rounded-lg text-gray-400 text-xs focus:outline-none [color-scheme:dark]">
                   <option value="10">10</option><option value="25">25</option><option value="50">50</option>
                 </select>
                 <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
+                  className="p-1.5 rounded-lg bg-[#151823] border border-white/[0.06] text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <span className="text-xs text-gray-400 px-2">{currentPage}/{totalPages}</span>
+                <span className="text-xs text-gray-300 px-2 py-1 rounded bg-[#151823] border border-white/[0.06]">{currentPage}/{totalPages}</span>
                 <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
-                  className="p-1.5 rounded-lg text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
+                  className="p-1.5 rounded-lg bg-[#151823] border border-white/[0.06] text-gray-500 hover:text-white disabled:opacity-30 transition-colors">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
                 </button>
               </div>

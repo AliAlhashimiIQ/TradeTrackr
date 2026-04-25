@@ -43,7 +43,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
   
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -51,8 +51,8 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No data available</p>
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
+        <p className="text-slate-400">No data available</p>
       </div>
     );
   }
@@ -90,27 +90,27 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
   };
 
   return (
-    <div className="w-full h-80 bg-[#131825] rounded-lg p-4">
+    <div className="w-full h-80 rounded-xl p-2">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-slate-400">
           Top {sortedData.length} symbols by {metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trade Count'}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-1.5 bg-slate-900 border border-slate-800 rounded-lg p-1">
           <button
             onClick={() => setMetric('pnL')}
-            className={`px-2 py-1 text-xs rounded ${metric === 'pnL' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300'}`}
+            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'pnL' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
           >
             P&L
           </button>
           <button
             onClick={() => setMetric('winRate')}
-            className={`px-2 py-1 text-xs rounded ${metric === 'winRate' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300'}`}
+            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'winRate' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
           >
             Win Rate
           </button>
           <button
             onClick={() => setMetric('trades')}
-            className={`px-2 py-1 text-xs rounded ${metric === 'trades' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300'}`}
+            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'trades' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
           >
             Trades
           </button>
@@ -123,29 +123,30 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
           layout="vertical"
           margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#212946" horizontal={false} />
+          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.35} horizontal={false} />
           <XAxis
             type="number"
-            stroke="#6b7280"
+            stroke="#64748b"
+            tick={{ fill: '#94a3b8', fontSize: 10 }}
             domain={metric === 'winRate' ? [0, 100] : ['auto', 'auto']}
             tickFormatter={metric === 'pnL' ? formatCurrency : metric === 'winRate' ? formatPercent : undefined}
           />
           <YAxis
             type="category"
             dataKey="symbol"
-            stroke="#6b7280"
-            tick={{ fontSize: 12 }}
-            width={50}
+            stroke="#64748b"
+            tick={{ fill: '#cbd5e1', fontSize: 11 }}
+            width={90}
           />
           <Tooltip
             formatter={(value: number) => [formatTooltipValue(value), metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trades']}
-            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+            contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
           />
-          <Bar dataKey={metric} background={{ fill: '#1a1f2c' }}>
+          <Bar dataKey={metric} background={{ fill: '#0f172a' }} barSize={24} radius={[0, 8, 8, 0]}>
             {sortedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
             ))}
-            <LabelList dataKey={metric} position="right" formatter={getLabelFormat()} fill="#e5e7eb" />
+            <LabelList dataKey={metric} position="right" formatter={getLabelFormat()} fill="#cbd5e1" />
           </Bar>
         </BarChart>
       </ResponsiveContainer>

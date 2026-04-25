@@ -1,650 +1,412 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, ChevronDown, Search, X, User as UserIcon, Settings, LogOut } from 'lucide-react'
-import DashboardPerformanceOverview from '@/components/dashboard/DashboardPerformanceOverview'
-import DashboardInsights from '@/components/dashboard/DashboardInsights'
-import DashboardRecentActivity from '@/components/dashboard/DashboardRecentActivity'
-import DashboardPersonalization from '@/components/dashboard/DashboardPersonalization'
-import DashboardAdvancedFeatures from '@/components/dashboard/DashboardAdvancedFeatures'
-import DateRangeSelector, { DateRange } from '@/components/dashboard/DateRangeSelector'
-import { useDashboardData } from '@/hooks/useDashboardData'
-import DashboardHeader from '@/components/dashboard/DashboardHeader'
-import Header from '@/components/layout/Header'
-import { useAuth } from '@/hooks/useAuth'
-import { Trade, TradeMetrics, User } from '@/lib/types'
-import SparkLineChart from '@/components/charts/SparkLineChart'
+import React, { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
+import DateRangeSelector, { DateRange } from '@/components/dashboard/DateRangeSelector'
+import { useDashboardData } from '@/hooks/useDashboardData'
+import { useAuth } from '@/hooks/useAuth'
+import type { Trade } from '@/lib/types'
+import { calculateMaxDrawdown } from '@/lib/tradeMetrics'
+import { detectStreaksAndBehaviors, analyzeTagPerformance } from '@/lib/ai/aiService'
+import { isForexPair, formatPips } from '@/lib/forexUtils'
 import {
-  detectStreaksAndBehaviors,
-  analyzeTagPerformance,
-  analyzeEmotionOutcomes,
-  getMindsetTrends,
-  simulateWhatIf
-} from '@/lib/ai/aiService';
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
+} from 'recharts'
 
-interface ProfileDropdownProps {
-  user: User;
+function fmt(n: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
-const SearchOverlay: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
+function getStreak(trades: Trade[]): { type: 'win' | 'loss' | 'none'; count: number } {
+  if (!trades.length) return { type: 'none', count: 0 }
+  const sorted = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime())
+  const first = sorted[0].profit_loss >= 0 ? 'win' : 'loss'
+  let count = 0
+  for (const t of sorted) {
+    const w = t.profit_loss >= 0 ? 'win' : 'loss'
+    if (w === first) count++
+    else break
+  }
+  return { type: first, count }
+}
+
+function getPsychologyScore(trades: Trade[]): number {
+  if (!trades.length) return 100
+  const withMistakes = trades.filter(t => t.mistakes && t.mistakes.length > 0).length
+  return Math.round(((trades.length - withMistakes) / trades.length) * 100)
+}
+
+function getBestSession(trades: Trade[]): string {
+  if (!trades.length) return 'N/A'
+  const buckets: Record<string, { wins: number; total: number }> = {}
+  trades.forEach(t => {
+    const h = new Date(t.entry_time).getHours()
+    let session = h < 8 ? 'Pre-Market' : h < 12 ? 'Morning' : h < 16 ? 'Afternoon' : 'Evening'
+    if (!buckets[session]) buckets[session] = { wins: 0, total: 0 }
+    buckets[session].total++
+    if (t.profit_loss > 0) buckets[session].wins++
+  })
+  let best = '', bestWR = -1
+  for (const [s, b] of Object.entries(buckets)) {
+    if (b.total < 2) continue
+    const wr = b.wins / b.total
+    if (wr > bestWR) { bestWR = wr; best = `${s} (${(wr * 100).toFixed(0)}% WR)` }
+  }
+  return best || 'N/A'
+}
+
+function EquityAreaChart({ data }: { data: { date: string; equity: number }[] }) {
+  if (!data.length) return (
+    <div className="h-64 flex items-center justify-center text-gray-600 text-sm">No equity data yet</div>
+  )
+  const min = Math.min(...data.map(d => d.equity))
+  const max = Math.max(...data.map(d => d.equity))
+  const isUp = data[data.length - 1].equity >= data[0].equity
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-start justify-center pt-20"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ scale: 0.95 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0.95 }}
-            className="w-full max-w-2xl bg-[#151823] rounded-xl shadow-2xl border border-indigo-900/20 p-4"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3 p-2">
-              <Search className="w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search trades, symbols, or analysis..."
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-400"
-                autoFocus
-              />
-              <button onClick={onClose}>
-                <X className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <ResponsiveContainer width="100%" height={240}>
+      <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="eqGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={isUp ? '#10b981' : '#ef4444'} stopOpacity={0.3} />
+            <stop offset="95%" stopColor={isUp ? '#10b981' : '#ef4444'} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
+        <XAxis dataKey="date" tick={{ fill: '#4b5563', fontSize: 10 }} tickLine={false} axisLine={false}
+          tickFormatter={v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          interval={Math.floor(data.length / 6)} />
+        <YAxis domain={[min * 0.99, max * 1.01]} tick={{ fill: '#4b5563', fontSize: 10 }} tickLine={false}
+          axisLine={false} tickFormatter={v => `$${(v / 1000).toFixed(1)}k`} width={50} />
+        <Tooltip
+          contentStyle={{ background: '#0f1117', border: '1px solid #1f2937', borderRadius: 8, fontSize: 12 }}
+          labelStyle={{ color: '#9ca3af' }}
+          itemStyle={{ color: isUp ? '#10b981' : '#ef4444' }}
+          formatter={(v: number) => [fmt(v), 'Equity']}
+          labelFormatter={v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        />
+        <ReferenceLine y={data[0]?.equity} stroke="#374151" strokeDasharray="4 4" />
+        <Area type="monotone" dataKey="equity" stroke={isUp ? '#10b981' : '#ef4444'}
+          strokeWidth={2} fill="url(#eqGrad)" dot={false} activeDot={{ r: 4 }} />
+      </AreaChart>
+    </ResponsiveContainer>
   )
 }
 
-const NotificationsPanel: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const notifications: { id: number; title: string; message: string; time: string }[] = []
-
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="absolute top-12 right-0 w-80 bg-[#151823] rounded-xl shadow-2xl border border-indigo-900/20 p-4 z-50"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-white font-medium">Notifications</h3>
-            <button onClick={onClose}>
-              <X className="w-5 h-5 text-gray-400 hover:text-white transition-colors" />
-            </button>
-          </div>
-          <div className="space-y-4">
-            {notifications.length === 0 ? (
-              <div className="text-center py-4 text-gray-400 text-sm">No new notifications</div>
-            ) : (
-              notifications.map(notification => (
-              <motion.div
-                key={notification.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-              >
-                <div className="text-sm font-medium text-white mb-1">{notification.title}</div>
-                <div className="text-sm text-gray-400">{notification.message}</div>
-                <div className="text-xs text-gray-500 mt-2">{notification.time}</div>
-              </motion.div>
-              ))
-            )}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
-
-const NotificationBell: React.FC<{ onClick: () => void }> = ({ onClick }) => {
-  return (
-    <motion.button 
-      className="relative p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-      whileHover={{ scale: 1.05 }}
-      onClick={onClick}
-    >
-      <Bell className="w-5 h-5 text-gray-400" />
-
-    </motion.button>
-  )
-}
-
-const QuickActions: React.FC<{ user: User }> = ({ user }) => {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-
-  return (
-    <div className="flex items-center gap-2">
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-gray-400"
-        onClick={() => setIsSearchOpen(true)}
-      >
-        <Search className="w-5 h-5" />
-      </motion.button>
-      <div className="relative">
-        <NotificationBell onClick={() => setIsNotificationsOpen(!isNotificationsOpen)} />
-        <NotificationsPanel isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-      </div>
-      <ProfileDropdown user={user} />
-      <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-    </div>
-  )
-}
-
-const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter();
-  const { signOut } = useAuth();
-  const userInitial = user.email?.[0]?.toUpperCase() || user.user_metadata?.name?.[0]?.toUpperCase() || '?';
-  const displayName = user.email?.split('@')[0] || user.user_metadata?.name || 'User';
-  
-  const handleLogout = async () => {
-    await signOut();
-    router.push('/login');
-  };
-  
-  return (
-    <motion.div 
-      className="relative"
-      whileHover={{ scale: 1.02 }}
-    >
-      <button 
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-all"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium">
-          {userInitial}
-        </div>
-        <span className="text-white">{displayName}</span>
-        <ChevronDown className="w-4 h-4 text-gray-400" />
-      </button>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute right-0 mt-2 w-48 bg-[#151823] rounded-lg shadow-xl border border-indigo-900/20 overflow-hidden z-50"
-          >
-            <div className="p-2 border-b border-indigo-900/20">
-              <div className="px-3 py-2">
-                <div className="font-medium text-white">{displayName}</div>
-                <div className="text-xs text-gray-400">{user.email}</div>
-              </div>
-            </div>
-            
-            <div className="p-1">
-              <Link href="/profile">
-                <button className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5 rounded-md transition-colors">
-                  <UserIcon className="w-4 h-4" />
-                  <span>Profile</span>
-                </button>
-              </Link>
-              
-              <Link href="/settings">
-                <button className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-white/5 rounded-md transition-colors">
-                  <Settings className="w-4 h-4" />
-                  <span>Settings</span>
-                </button>
-              </Link>
-            </div>
-            
-            <div className="p-1 border-t border-indigo-900/20">
-              <button 
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-white/5 rounded-md transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign out</span>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  )
-}
+const card = 'rounded-2xl border border-white/[0.06] bg-[#0d0e16]'
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
-  const [activeView, setActiveView] = useState<'overview' | 'trades' | 'analysis'>('overview')
-  
-  // Redirect to login if not authenticated
+
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login')
-    }
-  }, [user, authLoading, router])
-  
-  const { 
-    trades, 
-    metrics, 
-    equityData,
-    advancedMetrics,
-    isLoading,
-    hasError
-  } = useDashboardData(user?.id, dateRange)
+    if (!authLoading && !user) router.push('/login')
+  }, [authLoading, user, router])
 
-  // Ensure all data has the correct type
-  const typedMetrics = metrics as TradeMetrics
-  const typedEquityData = equityData as { labels: string[]; values: number[] }
-  const typedTrades = trades as Trade[]
+  const { trades, metrics, equityData, advancedMetrics, isLoading } = useDashboardData(user?.id, dateRange)
 
-  const navigationItems = [
-    { id: 'overview', label: 'Overview', icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-    )},
-    { id: 'trades', label: 'Trades', icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    )},
-    { id: 'analysis', label: 'Analysis', icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-      </svg>
-    )}
-  ]
+  const equityChartData = useMemo(() =>
+    equityData.labels.map((d, i) => ({ date: d, equity: equityData.values[i] })),
+    [equityData]
+  )
 
-  // Advanced analytics
-  const streaksAndBehaviors = detectStreaksAndBehaviors(typedTrades);
-  const tagPerf = analyzeTagPerformance(typedTrades);
-  const emotionOutcomes = analyzeEmotionOutcomes(typedTrades);
-  const mindsetTrends = getMindsetTrends(typedTrades);
-  const whatIfNoFomo = simulateWhatIf(typedTrades, 'no-fomo');
-  const whatIfAlwaysPlan = simulateWhatIf(typedTrades, 'always-plan');
+  const sorted = useMemo(() =>
+    [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime()),
+    [trades]
+  )
+  const recent = sorted.slice(0, 8)
+  const streak = useMemo(() => getStreak(trades), [trades])
+  const psychScore = useMemo(() => getPsychologyScore(trades), [trades])
+  const bestSession = useMemo(() => getBestSession(trades), [trades])
+  const drawdown = useMemo(() => calculateMaxDrawdown(trades), [trades])
+  const behaviors = useMemo(() => detectStreaksAndBehaviors(recent), [recent])
+  const tagPerf = useMemo(() => analyzeTagPerformance(recent), [recent])
+  const totalPips = useMemo(() => trades.filter(t => isForexPair(t.symbol)).reduce((s, t) => s + (t.pips || 0), 0), [trades])
+  const forexCount = useMemo(() => trades.filter(t => isForexPair(t.symbol)).length, [trades])
 
-  // Show loading state
+  const todayTrades = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0]
+    return trades.filter(t => t.entry_time.startsWith(today))
+  }, [trades])
+  const todayPnL = todayTrades.reduce((s, t) => s + t.profit_loss, 0)
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#0c0d14] to-[#0f1117]">
-        <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-          <p className="text-indigo-400 animate-pulse">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show error state
-  if (hasError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0c0d14] to-[#0f1117] text-white">
-        <div className="max-w-6xl mx-auto p-6">
-          <Header />
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-20 h-20 mb-6 rounded-full bg-red-500/10 flex items-center justify-center">
-              <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
-            <p className="text-gray-400 mb-6 max-w-lg">
-              We're having trouble loading your dashboard data. We're showing some fallback data for now.
-              Please try refreshing the page or check back later.
-            </p>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.reload()}
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition-all"
-            >
-              Refresh Page
-            </motion.button>
+      <AuthenticatedLayout>
+        <div className="px-4 sm:px-6 lg:px-8 space-y-6 animate-pulse">
+          <div className="h-20 rounded-2xl bg-white/[0.04]" />
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-24 rounded-2xl bg-white/[0.04]" />)}
           </div>
+          <div className="h-72 rounded-2xl bg-white/[0.04]" />
         </div>
-      </div>
+      </AuthenticatedLayout>
     )
   }
 
-  // No trades message
-  const noTradesMessage = (
-    <div className="text-center py-16">
-      <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-indigo-500/10 flex items-center justify-center">
-        <svg className="w-10 h-10 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-      </div>
-      <h2 className="text-xl font-bold text-white mb-2">No trades yet</h2>
-      <p className="text-gray-400 mb-6 max-w-md mx-auto">
-        Start logging your trades to see performance metrics and insights. Your trading journey begins with your first entry.
-      </p>
-      <Link href="/trades/new">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition-all"
-        >
-          Add Your First Trade
-        </motion.button>
-      </Link>
-    </div>
-  )
+  const noTrades = trades.length === 0
 
   return (
     <AuthenticatedLayout>
-      <div className="px-4 sm:px-6 lg:px-8">
-        {/* Dashboard Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+      <div className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
           <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="text-gray-400">Track and analyze your trading performance</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Command Center</h1>
+            <p className="text-gray-500 text-sm mt-0.5">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
           </div>
-          
-          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+          <div className="flex items-center gap-3">
             <DateRangeSelector selectedRange={dateRange} onChange={setDateRange} />
-            
-            <div className="flex gap-2">
-              <Link href="/trades/new">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-medium hover:from-indigo-500 hover:to-blue-500 transition-all duration-200 flex items-center gap-2 w-full lg:w-auto justify-center"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <Link href="/trades/new"
+              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-blue-500 shadow-lg shadow-indigo-500/20 transition-all">
+              + Log Trade
+            </Link>
+          </div>
+        </div>
+
+        {noTrades ? (
+          <div className={`${card} p-12 text-center`}>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
-                  New Trade
-                </motion.button>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">No trades yet</h2>
+            <p className="text-gray-500 mb-6">Log your first trade to unlock your Command Center.</p>
+            <Link href="/trades/new" className="inline-flex px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-500 transition-colors">
+              Add Your First Trade
+            </Link>
+          </div>
+        ) : (
+          <>
+            {/* ── Stat Pills Row ── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {[
+                { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period` },
+                { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L` },
+                { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target' },
+                { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today` },
+                { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}` },
+              ].map((s, i) => (
+                <motion.div key={i} whileHover={{ y: -2 }} className={`${card} p-4`}>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
+                  <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+                  <div className="text-[11px] text-gray-600 mt-1">{s.sub}</div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* ── Equity Curve ── */}
+            <div className={`${card} p-5`}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-white font-semibold">Equity Curve</h2>
+                  <p className="text-gray-500 text-xs mt-0.5">Account growth over time</p>
+                </div>
+                <div className={`text-lg font-bold ${metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {metrics.total_pnl >= 0 ? '+' : ''}{fmt(metrics.total_pnl)}
+                </div>
+              </div>
+              <EquityAreaChart data={equityChartData} />
+            </div>
+
+            {/* ── 4 Intelligence Cards ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Streak Card */}
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Current Streak</div>
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black
+                    ${streak.type === 'win' ? 'bg-emerald-500/15 text-emerald-400' : streak.type === 'loss' ? 'bg-red-500/15 text-red-400' : 'bg-gray-800 text-gray-500'}`}>
+                    {streak.count}
+                  </div>
+                  <div>
+                    <div className={`text-sm font-bold ${streak.type === 'win' ? 'text-emerald-400' : streak.type === 'loss' ? 'text-red-400' : 'text-gray-500'}`}>
+                      {streak.type === 'win' ? 'Win Streak' : streak.type === 'loss' ? 'Loss Streak' : 'No Streak'}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-0.5">Consecutive {streak.type === 'win' ? 'wins' : streak.type === 'loss' ? 'losses' : 'trades'}</div>
+                  </div>
+                </div>
+                {streak.type === 'loss' && streak.count >= 2 && (
+                  <div className="mt-3 px-3 py-2 bg-red-500/10 rounded-lg border border-red-500/20">
+                    <p className="text-red-400 text-xs">Consider taking a break or reducing size.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Drawdown Card */}
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Max Drawdown</div>
+                <div className={`text-3xl font-black ${drawdown.percentage > 10 ? 'text-red-400' : drawdown.percentage > 5 ? 'text-yellow-400' : 'text-emerald-400'}`}>
+                  {drawdown.percentage.toFixed(1)}%
+                </div>
+                <div className="mt-3">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>0%</span><span className="text-yellow-500/70">10% limit</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${drawdown.percentage > 10 ? 'bg-red-500' : drawdown.percentage > 5 ? 'bg-yellow-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${Math.min(100, drawdown.percentage * 10)}%` }} />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-600 mt-2">{drawdown.amount > 0 ? `${fmt(drawdown.amount)} from peak` : 'No drawdown'}</div>
+              </div>
+
+              {/* Psychology Card */}
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Psychology Score</div>
+                <div className={`text-3xl font-black ${psychScore >= 80 ? 'text-emerald-400' : psychScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                  {psychScore}%
+                </div>
+                <div className="mt-3">
+                  <div className="h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${psychScore >= 80 ? 'bg-emerald-500' : psychScore >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                      style={{ width: `${psychScore}%` }} />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-600 mt-2">
+                  {trades.filter(t => t.mistakes?.length).length} of {trades.length} trades had mistakes
+                </div>
+              </div>
+
+              {/* Best Session / Today Card */}
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Today's P&L</div>
+                <div className={`text-3xl font-black ${todayPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
+                </div>
+                <div className="mt-2 text-xs text-gray-500">{todayTrades.length} trades today</div>
+                <div className="mt-3 pt-3 border-t border-white/[0.05]">
+                  <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Best Session</div>
+                  <div className="text-xs text-indigo-400 font-medium">{bestSession}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Forex Pips (if applicable) ── */}
+            {forexCount > 0 && (
+              <div className={`${card} p-4 flex items-center gap-6`}>
+                <div className="p-2.5 rounded-xl bg-indigo-500/10">
+                  <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Pips (Forex)</div>
+                  <div className={`text-xl font-bold ${totalPips >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {formatPips(totalPips)}
+                  </div>
+                </div>
+                <div className="text-gray-600 text-sm ml-2">{forexCount} forex trades tracked</div>
+                <Link href="/analytics" className="ml-auto text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                  View full breakdown →
+                </Link>
+              </div>
+            )}
+
+            {/* ── Recent Trades ── */}
+            <div className={`${card} overflow-hidden`}>
+              <div className="flex items-center justify-between p-5 border-b border-white/[0.05]">
+                <h2 className="text-white font-semibold">Recent Trades</h2>
+                <Link href="/trades" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">View all →</Link>
+              </div>
+              <div className="divide-y divide-white/[0.03]">
+                {recent.length === 0 ? (
+                  <div className="p-8 text-center text-gray-600">No trades in this period</div>
+                ) : recent.map((trade) => (
+                  <div key={trade.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-white/[0.02] transition-colors">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0
+                      ${trade.profit_loss >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                      {trade.type === 'Long' ? 'B' : 'S'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{trade.symbol}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                          {trade.type === 'Long' ? 'BUY' : 'SELL'}
+                        </span>
+                        {trade.mistakes && trade.mistakes.length > 0 && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-red-900/30 text-red-400 border border-red-900/40">
+                            {trade.mistakes.length} mistake{trade.mistakes.length > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-0.5">
+                        {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {isForexPair(trade.symbol) && trade.pips !== undefined && trade.pips !== null && (
+                          <span className={`ml-2 ${trade.pips >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {formatPips(trade.pips)} pips
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className={`text-sm font-bold ${trade.profit_loss >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {trade.profit_loss >= 0 ? '+' : ''}{fmt(trade.profit_loss)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Insights Row ── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Top Behavior Alert</div>
+                <div className="text-sm text-white">
+                  {behaviors.behaviors[0]?.message || 'No reactive behavior spikes detected.'}
+                </div>
+              </div>
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Setup Leak</div>
+                <div className="text-sm text-white">
+                  {tagPerf.worst && tagPerf.worst.count >= 3
+                    ? `"${tagPerf.worst.tag}" has a ${tagPerf.worst.winRate.toFixed(0)}% win rate — investigate this setup.`
+                    : 'No significant setup leak detected yet.'}
+                </div>
+              </div>
+              <div className={`${card} p-5`}>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Avg Win vs Avg Loss</div>
+                <div className="flex gap-4 mt-1">
+                  <div>
+                    <div className="text-xs text-gray-600">Avg Win</div>
+                    <div className="text-sm font-bold text-emerald-400">{fmt(advancedMetrics?.averageWin || 0)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Avg Loss</div>
+                    <div className="text-sm font-bold text-red-400">{fmt(advancedMetrics?.averageLoss || 0)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-600">Sharpe</div>
+                    <div className="text-sm font-bold text-blue-400">{(advancedMetrics?.sharpeRatio || 0).toFixed(2)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Action Footer ── */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link href="/trades/new"
+                className="flex-1 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-bold rounded-xl text-center hover:from-indigo-500 hover:to-blue-500 transition-all shadow-lg shadow-indigo-500/20">
+                Log a Planned Trade
+              </Link>
+              <Link href="/analytics"
+                className="flex-1 py-3 bg-white/[0.05] border border-white/[0.08] text-white text-sm font-bold rounded-xl text-center hover:bg-white/[0.08] transition-all">
+                View Full Analytics
+              </Link>
+              <Link href="/trades"
+                className="flex-1 py-3 bg-white/[0.05] border border-white/[0.08] text-gray-400 text-sm font-bold rounded-xl text-center hover:bg-white/[0.08] transition-all">
+                Review All Trades
               </Link>
             </div>
-          </div>
-        </div>
-        
-        {/* Navigation */}
-        <div className="mb-6">
-          <div className="flex space-x-1 bg-[#151823] p-1 rounded-lg border border-indigo-900/20 shadow-lg">
-            {navigationItems.map((item) => (
-              <motion.button
-                key={item.id}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setActiveView(item.id as 'overview' | 'trades' | 'analysis')}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md transition-all ${
-                  activeView === item.id
-                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Dynamic Content */}
-        <AnimatePresence mode="wait">
-          {activeView === 'overview' && (
-            <motion.div
-              key="overview"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              {typedTrades.length === 0 ? (
-                noTradesMessage
-              ) : (
-                <>
-                  {/* Quick Stats */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-green-500/10 to-emerald-500/10 rounded-xl border border-green-500/20 p-6 relative overflow-hidden"
-                    >
-                      <div className="absolute bottom-0 right-0 w-full h-16 opacity-20">
-                        <SparkLineChart
-                          data={typedEquityData.values.slice(-20)}
-                          categories={["value"]}
-                          colors={["emerald"]}
-                          showAnimation={true}
-                          showGradient={true}
-                          className="h-full w-full"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="text-sm text-green-400 mb-1">Total Profit/Loss</div>
-                        <div className="text-2xl font-bold text-white">{typedMetrics.total_pnl != null ? `$${typedMetrics.total_pnl.toFixed(2)}` : '--'}</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-xs px-2 py-1 rounded-full ${
-                            typedMetrics.total_pnl >= 0 
-                              ? "bg-green-500/20 text-green-400" 
-                              : "bg-red-500/20 text-red-400"
-                          }`}>
-                            {typedMetrics.total_pnl >= 0 ? "+" : ""}{((typedMetrics.total_pnl / 10000) * 100).toFixed(2)}%
-                          </span>
-                        </div>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-xl border border-blue-500/20 p-6 relative overflow-hidden"
-                    >
-                      <div className="absolute bottom-0 right-0 w-full h-16 opacity-20">
-                        <SparkLineChart
-                          data={[typedMetrics.win_rate * 100]}
-                          categories={["value"]}
-                          colors={["blue"]}
-                          showAnimation={true}
-                          showGradient={true}
-                          className="h-full w-full"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="text-sm text-blue-400 mb-1">Win Rate</div>
-                        <div className="text-2xl font-bold text-white">{(typedMetrics.win_rate * 100).toFixed(1)}%</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">{typedMetrics.total_trades} trades</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20 p-6 relative overflow-hidden"
-                    >
-                      <div className="absolute bottom-0 right-0 w-full h-16 opacity-20">
-                        <SparkLineChart
-                          data={[typedMetrics.avg_win]}
-                          categories={["value"]}
-                          colors={["purple"]}
-                          showAnimation={true}
-                          showGradient={true}
-                          className="h-full w-full"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="text-sm text-purple-400 mb-1">Average Win</div>
-                        <div className="text-2xl font-bold text-white">${typedMetrics.avg_win.toFixed(2)}</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">vs ${typedMetrics.avg_loss.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                    
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 rounded-xl border border-amber-500/20 p-6 relative overflow-hidden"
-                    >
-                      <div className="absolute bottom-0 right-0 w-full h-16 opacity-20">
-                        <SparkLineChart
-                          data={[typedMetrics.total_trades]}
-                          categories={["value"]}
-                          colors={["amber"]}
-                          showAnimation={true}
-                          showGradient={true}
-                          className="h-full w-full"
-                        />
-                      </div>
-                      <div className="relative">
-                        <div className="text-sm text-amber-400 mb-1">Total Trades</div>
-                        <div className="text-2xl font-bold text-white">{typedMetrics.total_trades}</div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-amber-500/20 text-amber-400">{typedMetrics.winning_trades}W</span>
-                          <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">{typedMetrics.losing_trades}L</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-
-                  {/* --- Advanced Analytics Section --- */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                    {/* Streaks & Behaviors */}
-                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
-                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Streaks & Behavioral Alerts</h3>
-                      {streaksAndBehaviors.streaks.length === 0 && streaksAndBehaviors.behaviors.length === 0 && (
-                        <div className="text-gray-400">No streaks or behavioral triggers detected.</div>
-                      )}
-                      {streaksAndBehaviors.streaks.map((s, i) => (
-                        <div key={i} className="text-sm text-indigo-200 mb-1">
-                          {s.type === 'win' ? 'Winning' : 'Losing'} streak: {s.count} trades (from #{s.start + 1} to #{s.end + 1})
-                        </div>
-                      ))}
-                      {streaksAndBehaviors.behaviors.map((b, i) => (
-                        <div key={i} className="text-sm text-yellow-300 mb-1">{b.message} (Trade #{b.index + 1})</div>
-                      ))}
-                    </div>
-
-                    {/* Tag/Strategy Performance */}
-                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
-                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Tag/Strategy Performance</h3>
-                      <table className="w-full text-xs text-gray-300 mb-2">
-                        <thead>
-                          <tr>
-                            <th className="text-left">Tag</th><th>Win Rate</th><th>Avg P&L</th><th>Avg Risk</th><th>Count</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {tagPerf.tagPerformance.map(tp => (
-                            <tr key={tp.tag}>
-                              <td>{tp.tag}</td>
-                              <td>{tp.winRate.toFixed(1)}%</td>
-                              <td>{tp.avgPnL.toFixed(2)}</td>
-                              <td>{tp.avgRisk.toFixed(2)}</td>
-                              <td>{tp.count}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      <div className="text-green-400 text-xs mb-1"><b>Best Setup:</b> {tagPerf.best?.tag} ({tagPerf.best?.winRate.toFixed(1)}% win rate)</div>
-                      <div className="text-red-400 text-xs"><b>Worst Setup:</b> {tagPerf.worst?.tag} ({tagPerf.worst?.winRate.toFixed(1)}% win rate)</div>
-                    </div>
-
-                    {/* Emotion-Outcome Correlation */}
-                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
-                      <h3 className="text-lg font-bold text-indigo-300 mb-2">Emotion-Outcome Correlation</h3>
-                      <table className="w-full text-xs text-gray-300">
-                        <thead>
-                          <tr>
-                            <th className="text-left">Emotion</th><th>Win Rate</th><th>Avg P&L</th><th>Count</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {emotionOutcomes.emotionPerformance.map(ep => (
-                            <tr key={ep.emotion}>
-                              <td>{ep.emotion}</td>
-                              <td>{ep.winRate.toFixed(1)}%</td>
-                              <td>{ep.avgPnL.toFixed(2)}</td>
-                              <td>{ep.count}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-
-                    {/* What-If Simulator */}
-                    <div className="bg-[#181e2e] rounded-xl p-6 border border-indigo-900/20">
-                      <h3 className="text-lg font-bold text-indigo-300 mb-2">What-If Analysis</h3>
-                      <div className="text-xs text-gray-300 mb-1">
-                        If you always followed your plan: <span className="text-green-400">P&L = ${whatIfAlwaysPlan.totalPnL.toFixed(2)}</span> ({whatIfAlwaysPlan.tradeCount} trades)
-                      </div>
-                      <div className="text-xs text-gray-300">
-                        If you avoided FOMO trades: <span className="text-green-400">P&L = ${whatIfNoFomo.totalPnL.toFixed(2)}</span> ({whatIfNoFomo.tradeCount} trades)
-                      </div>
-                    </div>
-                  </div>
-                  {/* --- End Advanced Analytics Section --- */}
-
-          {/* Performance Overview */}
-                  <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-            <DashboardPerformanceOverview
-              dateRange={dateRange}
-                      metrics={typedMetrics}
-                      equityData={typedEquityData}
-              advancedMetrics={advancedMetrics}
-            />
-          </div>
-          
-                  {/* Two Column Layout */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-                      <DashboardRecentActivity trades={typedTrades} />
-          </div>
-          
-                    <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-            <DashboardInsights
-              dateRange={dateRange}
-                        trades={typedTrades}
-                        metrics={typedMetrics}
-            />
-          </div>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          )}
-
-          {activeView === 'trades' && (
-            <motion.div
-              key="trades"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-                <DashboardAdvancedFeatures dateRange={dateRange} />
-          </div>
-            </motion.div>
-          )}
-
-          {activeView === 'analysis' && (
-            <motion.div
-              key="analysis"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-6"
-            >
-              <div className="bg-[#151823] rounded-xl border border-indigo-900/20 shadow-xl overflow-hidden">
-            <DashboardPersonalization />
-          </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </>
+        )}
       </div>
     </AuthenticatedLayout>
   )
-} 
+}

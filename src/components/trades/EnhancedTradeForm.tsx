@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
+import { isForexPair, calculatePips } from '@/lib/forexUtils';
 
 interface EnhancedTradeFormProps {
   initialTrade?: Partial<Trade>;
@@ -37,6 +38,18 @@ const EMOTIONS = [
 
 const PRESET_TAGS = ['Breakout', 'Reversal', 'Trend', 'Scalp', 'Swing', 'News', 'Supply/Demand', 'Prop Firm', 'Sniper Entry'];
 
+const PRESET_MISTAKES = [
+  'FOMO Entry',
+  'Revenge Trade',
+  'Moved Stop Loss',
+  'Too Large Size',
+  'Early Exit',
+  'Late Entry',
+  'No Plan',
+  'Overtrading',
+  'Held Through News'
+];
+
 const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   initialTrade,
   onSubmit,
@@ -56,6 +69,9 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
     exit_time: new Date().toISOString().split('T')[0],
     notes: '',
     tags: [],
+    mistakes: [],
+    lots: 0.01,
+    pips: 0,
     ...initialTrade
   });
   
@@ -64,7 +80,29 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(initialTrade?.screenshot_url || null);
   const [customTag, setCustomTag] = useState('');
+  const [customMistake, setCustomMistake] = useState('');
   const [showOptional, setShowOptional] = useState(false);
+  const [isForex, setIsForex] = useState(false);
+
+  useEffect(() => {
+    if (formData.symbol) {
+      setIsForex(isForexPair(formData.symbol));
+    }
+  }, [formData.symbol]);
+
+  useEffect(() => {
+    if (isForex && formData.entry_price && formData.exit_price && formData.type && formData.symbol) {
+      const pips = calculatePips(
+        Number(formData.entry_price),
+        Number(formData.exit_price),
+        formData.type as 'Long' | 'Short',
+        formData.symbol
+      );
+      if (pips !== formData.pips) {
+        handleChange('pips', pips);
+      }
+    }
+  }, [isForex, formData.entry_price, formData.exit_price, formData.type, formData.symbol]);
 
   useEffect(() => {
     if (initialTrade) {
@@ -79,22 +117,33 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
   // P&L calculation
   const pnl = (() => {
-    const { entry_price, exit_price, quantity, type } = formData;
-    if (!entry_price || !exit_price || !quantity) return null;
+    const { entry_price, exit_price, quantity, lots, type } = formData;
+    if (!entry_price || !exit_price) return null;
+    
+    if (isForex) {
+      if (!lots) return null;
+      // Standard Forex PnL calculation: (Exit - Entry) * Lots * 100,000
+      // For simplicity in this app, we'll assume the user might want a direct multiplier or we use 100k
+      // But let's stick to what the user provides. If they want $ per pip, it's usually Lots * 10.
+      return type === 'Long'
+        ? (exit_price - entry_price) * (lots * 100000)
+        : (entry_price - exit_price) * (lots * 100000);
+    }
+    
+    if (!quantity) return null;
     return type === 'Long'
       ? (exit_price - entry_price) * quantity
       : (entry_price - exit_price) * quantity;
   })();
 
-  const pips = (() => {
-    const { entry_price, exit_price, type, symbol } = formData;
-    if (!entry_price || !exit_price) return null;
-    const diff = type === 'Long' ? exit_price - entry_price : entry_price - exit_price;
-    // Forex pairs with JPY have 2 decimal places, others have 4-5
-    if (symbol?.includes('JPY')) return diff * 100;
-    if (symbol?.includes('XAU') || symbol?.includes('US')) return diff * 10;
-    return diff * 10000;
-  })();
+  const displayPips = formData.pips !== undefined ? formData.pips : 0;
+
+  const formatPreviewNumber = (value: unknown, decimals = 2): string => {
+    if (value === undefined || value === null || value === '') return '—';
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '—';
+    return num.toFixed(decimals);
+  };
 
   const handleChange = (field: string, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -112,8 +161,21 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   };
 
   const toggleTag = (tag: string) => {
-    const tags = formData.tags || [];
-    handleChange('tags', tags.includes(tag) ? tags.filter(t => t !== tag) : [...tags, tag]);
+    const currentTags = formData.tags || [];
+    if (currentTags.includes(tag)) {
+      handleChange('tags', currentTags.filter(t => t !== tag));
+    } else {
+      handleChange('tags', [...currentTags, tag]);
+    }
+  };
+
+  const toggleMistake = (mistake: string) => {
+    const currentMistakes = formData.mistakes || [];
+    if (currentMistakes.includes(mistake)) {
+      handleChange('mistakes', currentMistakes.filter(m => m !== mistake));
+    } else {
+      handleChange('mistakes', [...currentMistakes, mistake]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,7 +184,11 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
     if (!formData.symbol?.trim()) newErrors.symbol = 'Required';
     if (!formData.entry_price || formData.entry_price <= 0) newErrors.entry_price = 'Required';
     if (!formData.exit_price || formData.exit_price <= 0) newErrors.exit_price = 'Required';
-    if (!formData.quantity || formData.quantity <= 0) newErrors.quantity = 'Required';
+    if (isForex) {
+      if (!formData.lots || formData.lots <= 0) newErrors.quantity = 'Required';
+    } else {
+      if (!formData.quantity || formData.quantity <= 0) newErrors.quantity = 'Required';
+    }
     if (!formData.entry_time) newErrors.entry_time = 'Required';
     if (!formData.exit_time) newErrors.exit_time = 'Required';
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
@@ -136,9 +202,10 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         const url = await uploadTradeScreenshot(screenshotFile, userId, tradeId);
         if (url) screenshotUrl = url;
       }
+      const effectiveQuantity = isForex ? (formData.lots || 0) * 100000 : (formData.quantity || 0);
       const calculatedPnl = formData.type === 'Long'
-        ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * (formData.quantity || 0)
-        : ((formData.entry_price || 0) - (formData.exit_price || 0)) * (formData.quantity || 0);
+        ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * effectiveQuantity
+        : ((formData.entry_price || 0) - (formData.exit_price || 0)) * effectiveQuantity;
       
       await onSubmit({
         user_id: userId,
@@ -146,7 +213,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         type: formData.type,
         entry_price: Number(formData.entry_price),
         exit_price: Number(formData.exit_price),
-        quantity: Number(formData.quantity),
+        quantity: isForex ? Number(formData.lots || 0) : Number(formData.quantity),
         entry_time: formData.entry_time,
         exit_time: formData.exit_time,
         profit_loss: calculatedPnl,
@@ -154,6 +221,9 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         screenshot_url: screenshotUrl,
         emotional_state: formData.emotional_state,
         tags: formData.tags,
+        mistakes: formData.mistakes,
+        lots: Number(formData.lots),
+        pips: Number(formData.pips),
         ...(initialTrade?.id ? { id: initialTrade.id } : {}),
       });
       toast.success(isEditing ? 'Trade updated!' : 'Trade logged!');
@@ -166,7 +236,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   };
 
   const isWin = pnl !== null && pnl >= 0;
-  const hasRequiredFields = formData.symbol && formData.entry_price && formData.exit_price && formData.quantity;
+  const hasSize = isForex ? !!formData.lots : !!formData.quantity;
+  const hasRequiredFields = formData.symbol && formData.entry_price && formData.exit_price && hasSize;
 
   return (
     <motion.div
@@ -176,31 +247,31 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       className={className}
     >
       {/* Back link */}
-      <div className="flex items-center justify-between mb-6">
-        <Link href="/trades" className="text-sm text-gray-500 hover:text-white transition-colors flex items-center gap-1.5">
+      <div className="flex items-center justify-between mb-7">
+        <Link href="/trades" className="text-base text-gray-400 hover:text-white transition-colors flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
           Back to trades
         </Link>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 lg:items-start gap-8">
           
           {/* ═══════ LEFT: Form Inputs (3 cols) ═══════ */}
-          <div className="lg:col-span-3 space-y-5">
+          <div className="lg:col-span-3 space-y-6">
             
             {/* Instrument Selector */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Instrument</h2>
+                <h2 className="text-base font-bold text-white uppercase tracking-wider">Instrument</h2>
               </div>
               <input
                 type="text"
                 value={formData.symbol || ''}
                 onChange={e => handleChange('symbol', e.target.value.toUpperCase())}
                 placeholder="Search or type symbol..."
-                className={`w-full px-4 py-3 bg-[#0d0e16] border rounded-xl text-white text-lg font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.symbol ? 'border-red-500/50' : 'border-white/[0.06]'}`}
+                className={`w-full px-5 py-4 bg-[#0d0e16] border rounded-xl text-white text-xl font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.symbol ? 'border-red-500/50' : 'border-white/[0.06]'}`}
                 autoComplete="off"
               />
               <div className="flex flex-wrap gap-1.5 mt-3">
@@ -209,7 +280,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     key={s.name}
                     type="button"
                     onClick={() => handleChange('symbol', s.name)}
-                    className={`group relative px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                    className={`group relative px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                       formData.symbol === s.name
                         ? 'bg-indigo-500/20 text-white border border-indigo-500/40 shadow-lg shadow-indigo-500/10 scale-[1.02]'
                         : 'bg-[#0d0e16] text-gray-400 hover:text-white hover:bg-[#151823] border border-white/[0.04] hover:border-white/[0.1]'
@@ -225,7 +296,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Direction</h2>
+                <h2 className="text-base font-bold text-white uppercase tracking-wider">Direction</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
@@ -238,7 +309,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   }`}
                 >
                   {formData.type === 'Long' && <div className="absolute inset-0 bg-emerald-500/10" />}
-                  <span className="relative flex items-center justify-center gap-2">
+                      <span className="relative flex items-center justify-center gap-2.5">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7"/></svg>
                     BUY / LONG
                   </span>
@@ -253,7 +324,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   }`}
                 >
                   {formData.type === 'Short' && <div className="absolute inset-0 bg-red-500/10" />}
-                  <span className="relative flex items-center justify-center gap-2">
+                      <span className="relative flex items-center justify-center gap-2.5">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/></svg>
                     SELL / SHORT
                   </span>
@@ -265,56 +336,83 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-1 h-4 bg-indigo-500 rounded-full" />
-                <h2 className="text-sm font-bold text-white uppercase tracking-wider">Trade Details</h2>
+                <h2 className="text-base font-bold text-white uppercase tracking-wider">Trade Details</h2>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-3">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Entry Price</label>
+                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Entry Price</label>
                   <input
                     type="number" step="any"
                     value={formData.entry_price ?? ''}
                     onChange={e => handleChange('entry_price', e.target.value === '' ? undefined : parseFloat(e.target.value))}
                     placeholder="0.00"
-                    className={`w-full bg-transparent text-white text-lg font-bold placeholder-gray-700 focus:outline-none ${errors.entry_price ? 'text-red-400' : ''}`}
+                    className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.entry_price ? 'text-red-400' : ''}`}
                   />
                 </div>
-                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-3">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Exit Price</label>
+                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Exit Price</label>
                   <input
                     type="number" step="any"
                     value={formData.exit_price ?? ''}
                     onChange={e => handleChange('exit_price', e.target.value === '' ? undefined : parseFloat(e.target.value))}
                     placeholder="0.00"
-                    className={`w-full bg-transparent text-white text-lg font-bold placeholder-gray-700 focus:outline-none ${errors.exit_price ? 'text-red-400' : ''}`}
+                    className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.exit_price ? 'text-red-400' : ''}`}
                   />
                 </div>
-                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-3">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Lot Size</label>
+                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">{isForex ? 'Lots' : 'Quantity'}</label>
                   <input
                     type="number" step="any"
-                    value={formData.quantity ?? ''}
-                    onChange={e => handleChange('quantity', e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                    placeholder="0.01"
-                    className={`w-full bg-transparent text-white text-lg font-bold placeholder-gray-700 focus:outline-none ${errors.quantity ? 'text-red-400' : ''}`}
+                    value={isForex ? (formData.lots ?? '') : (formData.quantity ?? '')}
+                    onChange={e => handleChange(isForex ? 'lots' : 'quantity', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                    placeholder={isForex ? "0.01" : "1.0"}
+                    className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.quantity ? 'text-red-400' : ''}`}
                   />
                 </div>
-                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-3">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1">Date</label>
+                {isForex ? (
+                  <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Pips</label>
+                    <div className="flex items-center">
+                      <input
+                        type="number" step="any"
+                        value={formData.pips ?? ''}
+                        onChange={e => handleChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                        placeholder="0.0"
+                        className="w-full bg-transparent text-indigo-400 text-xl font-bold placeholder-gray-700 focus:outline-none"
+                      />
+                      <span className="text-[10px] font-bold text-indigo-500/50 ml-1 uppercase">Pips</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Date</label>
+                    <input
+                      type="date"
+                      value={formData.entry_time || ''}
+                      onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
+                      className="w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark]"
+                    />
+                  </div>
+                )}
+              </div>
+              {isForex && (
+                <div className="mt-3 bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Date</label>
                   <input
                     type="date"
                     value={formData.entry_time || ''}
                     onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
-                    className="w-full bg-transparent text-white text-sm font-medium focus:outline-none [color-scheme:dark]"
+                    className="w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark]"
                   />
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Optional Sections Toggle */}
             <button
               type="button"
               onClick={() => setShowOptional(!showOptional)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3.5 text-base text-gray-400 hover:text-gray-200 transition-colors"
             >
               <span>{showOptional ? 'Hide' : 'Show'} optional fields</span>
               <svg className={`w-4 h-4 transition-transform ${showOptional ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +434,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-1 h-4 bg-gray-600 rounded-full" />
-                      <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Screenshot</h2>
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Screenshot</h2>
                     </div>
                     {screenshotPreview ? (
                       <div className="relative rounded-xl overflow-hidden border border-white/[0.08]">
@@ -347,7 +445,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     ) : (
                       <label className="flex items-center justify-center gap-3 py-6 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
                         <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <span className="text-sm text-gray-500">Drop chart screenshot or <span className="text-indigo-400">browse</span></span>
+                        <span className="text-base text-gray-500">Drop chart screenshot or <span className="text-indigo-400">browse</span></span>
                         <input type="file" accept="image/*" onChange={handleScreenshot} className="hidden" />
                       </label>
                     )}
@@ -357,7 +455,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-1 h-4 bg-gray-600 rounded-full" />
-                      <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Mood</h2>
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Mood</h2>
                     </div>
                     <div className="flex gap-2">
                       {EMOTIONS.map(e => (
@@ -369,7 +467,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                               : 'bg-[#0d0e16] border border-transparent hover:bg-[#151823]'
                           }`}
                         >
-                          <span className="text-xs font-semibold">{e.label}</span>
+                          <span className="text-sm font-semibold">{e.label}</span>
                         </button>
                       ))}
                     </div>
@@ -379,12 +477,12 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-1 h-4 bg-gray-600 rounded-full" />
-                      <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Strategy Tags</h2>
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Strategy Tags</h2>
                     </div>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {PRESET_TAGS.map(tag => (
                         <button key={tag} type="button" onClick={() => toggleTag(tag)}
-                          className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
                             formData.tags?.includes(tag)
                               ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
                               : 'bg-[#0d0e16] text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/[0.06]'
@@ -397,9 +495,37 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     <div className="flex gap-2">
                       <input type="text" value={customTag} onChange={e => setCustomTag(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (customTag.trim()) { toggleTag(customTag.trim()); setCustomTag(''); } } }}
-                        placeholder="Custom tag..." className="flex-1 px-3 py-2 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50" />
+                        placeholder="Custom tag..." className="flex-1 px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-white text-base placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50" />
                       <button type="button" onClick={() => { if (customTag.trim()) { toggleTag(customTag.trim()); setCustomTag(''); } }}
-                        className="px-3 py-2 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-gray-400 hover:text-white text-sm transition-colors">Add</button>
+                        className="px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-gray-300 hover:text-white text-base transition-colors">Add</button>
+                    </div>
+                  </div>
+
+                  {/* Mistakes */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1 h-4 bg-red-600 rounded-full" />
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Mistakes Logged</h2>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {PRESET_MISTAKES.map(m => (
+                        <button key={m} type="button" onClick={() => toggleMistake(m)}
+                          className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                            formData.mistakes?.includes(m)
+                              ? 'bg-red-500/20 text-red-300 border border-red-500/30'
+                              : 'bg-[#0d0e16] text-gray-500 hover:text-gray-300 border border-transparent hover:border-white/[0.06]'
+                          }`}
+                        >
+                          {formData.mistakes?.includes(m) && '✕ '}{m}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input type="text" value={customMistake} onChange={e => setCustomMistake(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (customMistake.trim()) { toggleMistake(customMistake.trim()); setCustomMistake(''); } } }}
+                        placeholder="Custom mistake..." className="flex-1 px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-white text-base placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-red-500/50" />
+                      <button type="button" onClick={() => { if (customMistake.trim()) { toggleMistake(customMistake.trim()); setCustomMistake(''); } }}
+                        className="px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-gray-300 hover:text-white text-base transition-colors">Add</button>
                     </div>
                   </div>
 
@@ -407,14 +533,14 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-1 h-4 bg-gray-600 rounded-full" />
-                      <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Notes</h2>
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Notes</h2>
                     </div>
                     <textarea
                       value={formData.notes || ''}
                       onChange={e => handleChange('notes', e.target.value)}
                       placeholder="What was the setup? Lessons learned?"
                       rows={3}
-                      className="w-full px-4 py-3 bg-[#0d0e16] border border-white/[0.06] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none"
+                      className="w-full px-4 py-3.5 bg-[#0d0e16] border border-white/[0.06] rounded-xl text-white text-base placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none"
                     />
                   </div>
                 </motion.div>
@@ -423,8 +549,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
           </div>
 
           {/* ═══════ RIGHT: Trade Ticket (2 cols) ═══════ */}
-          <div className="lg:col-span-2">
-            <div className="lg:sticky lg:top-20">
+          <div className="lg:col-span-2 lg:self-start">
+            <div className="lg:sticky lg:top-6 lg:h-fit">
               {/* Trade Ticket Card */}
               <div className="relative rounded-2xl overflow-hidden border border-white/[0.08]"
                 style={{ background: 'linear-gradient(135deg, rgba(15,16,28,0.95) 0%, rgba(13,14,22,0.98) 100%)' }}>
@@ -432,11 +558,11 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                 {/* Top accent line */}
                 <div className={`h-1 ${hasRequiredFields ? (isWin ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-red-400') : 'bg-gradient-to-r from-indigo-500 to-blue-500'}`} />
                 
-                <div className="p-6">
+                <div className="p-7">
                   {/* Header */}
                   <div className="flex items-center justify-between mb-6">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-widest">Trade Ticket</div>
-                    <div className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                    <div className="text-sm font-bold text-gray-500 uppercase tracking-widest">Trade Ticket</div>
+                    <div className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider ${
                       formData.type === 'Long' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'
                     }`}>
                       {formData.type}
@@ -458,21 +584,27 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   {/* Price Details */}
                   <div className="grid grid-cols-2 gap-4 mb-6">
                     <div>
-                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Entry</div>
-                      <div className="text-lg font-bold text-white">{formData.entry_price || '—'}</div>
+                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">Entry</div>
+                      <div className="text-lg font-bold text-white">
+                        {formatPreviewNumber(formData.entry_price, isForex ? 5 : 2)}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Exit</div>
-                      <div className="text-lg font-bold text-white">{formData.exit_price || '—'}</div>
+                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">Exit</div>
+                      <div className="text-lg font-bold text-white">
+                        {formatPreviewNumber(formData.exit_price, isForex ? 5 : 2)}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Lot Size</div>
-                      <div className="text-lg font-bold text-white">{formData.quantity || '—'}</div>
+                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">{isForex ? 'Lot Size' : 'Quantity'}</div>
+                      <div className="text-lg font-bold text-white">
+                        {isForex ? formatPreviewNumber(formData.lots, 2) : formatPreviewNumber(formData.quantity, 2)}
+                      </div>
                     </div>
                     <div>
-                      <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Pips</div>
-                      <div className={`text-lg font-bold ${pips !== null ? (pips >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-white'}`}>
-                        {pips !== null ? `${pips >= 0 ? '+' : ''}${pips.toFixed(1)}` : '—'}
+                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">{isForex ? 'Pips' : 'R-Multiple'}</div>
+                      <div className={`text-lg font-bold ${isForex ? (displayPips >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-white'}`}>
+                        {isForex ? `${displayPips >= 0 ? '+' : ''}${displayPips.toFixed(1)}` : (initialTrade?.r_multiple?.toFixed(2) || '—')}
                       </div>
                     </div>
                   </div>
@@ -483,7 +615,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                       ? (isWin ? 'bg-emerald-500/[0.08] border border-emerald-500/20' : 'bg-red-500/[0.08] border border-red-500/20')
                       : 'bg-white/[0.02] border border-white/[0.04]'
                   }`}>
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                       Profit / Loss
                     </div>
                     <AnimatePresence mode="wait">
@@ -492,7 +624,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className={`text-4xl font-black tracking-tight ${
+                        className={`text-5xl font-black tracking-tight ${
                           pnl !== null ? (isWin ? 'text-emerald-400' : 'text-red-400') : 'text-gray-700'
                         }`}
                         style={pnl !== null && isWin ? { textShadow: '0 0 30px rgba(16,185,129,0.3)' } : pnl !== null ? { textShadow: '0 0 30px rgba(239,68,68,0.3)' } : {}}
@@ -513,9 +645,20 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                   )}
 
+                  {/* Mistakes Preview */}
+                  {formData.mistakes && formData.mistakes.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-6">
+                      {formData.mistakes.map(mistake => (
+                        <span key={mistake} className="px-2 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-300 border border-red-500/20">
+                          {mistake}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Emotion Preview */}
                   {formData.emotional_state && (
-                    <div className="text-center mb-6 text-sm text-gray-400">
+                    <div className="text-center mb-6 text-base text-gray-400">
                       Feeling {formData.emotional_state}
                     </div>
                   )}
@@ -524,7 +667,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full py-4 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm hover:-translate-y-0.5"
+                    className="w-full py-4.5 rounded-xl font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-xl shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-base hover:-translate-y-0.5"
                   >
                     {isSubmitting ? (
                       <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Saving...</>
@@ -535,7 +678,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
                   {onCancel && (
                     <button type="button" onClick={onCancel}
-                      className="w-full mt-2 py-3 rounded-xl text-sm text-gray-500 hover:text-gray-300 transition-colors">
+                      className="w-full mt-2 py-3 rounded-xl text-base text-gray-500 hover:text-gray-300 transition-colors">
                       Cancel
                     </button>
                   )}

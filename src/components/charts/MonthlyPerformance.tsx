@@ -41,7 +41,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -49,8 +49,8 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No data available</p>
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
+        <p className="text-slate-400">No data available</p>
       </div>
     );
   }
@@ -69,15 +69,15 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
   });
 
   return (
-    <div className="w-full h-64 bg-[#131825] rounded-lg p-4">
+    <div className="w-full h-64 rounded-xl p-2">
       <div className="flex justify-end mb-2">
-        <div className="bg-[#1a1f2c] rounded-md overflow-hidden flex text-xs">
+        <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden flex text-xs">
           <button
             onClick={() => setActiveMetric('pnL')}
             className={`px-3 py-1 ${
               activeMetric === 'pnL' 
-                ? 'bg-blue-900/40 text-blue-400' 
-                : 'text-gray-400'
+                ? 'bg-slate-200 text-slate-900' 
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             P&L
@@ -86,8 +86,8 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             onClick={() => setActiveMetric('winRate')}
             className={`px-3 py-1 ${
               activeMetric === 'winRate' 
-                ? 'bg-blue-900/40 text-blue-400' 
-                : 'text-gray-400'
+                ? 'bg-slate-200 text-slate-900' 
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             Win Rate
@@ -100,21 +100,21 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
           data={sortedData}
           margin={{ top: 5, right: 5, left: 5, bottom: 20 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#212946" />
+          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
           <XAxis 
             dataKey="month"
-            stroke="#6b7280"
-            tick={{ fontSize: 10 }}
-            tickLine={{ stroke: '#6b7280' }}
+            stroke="#64748b"
+            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tickLine={{ stroke: '#334155' }}
             angle={-45}
             textAnchor="end"
             height={50}
           />
           <YAxis 
             yAxisId="left"
-            stroke="#6b7280"
-            tick={{ fontSize: 10 }}
-            tickLine={{ stroke: '#6b7280' }}
+            stroke="#64748b"
+            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tickLine={{ stroke: '#334155' }}
             tickFormatter={(value) => formatCurrency(value)}
             domain={['auto', 'auto']}
             hide={activeMetric === 'winRate'}
@@ -122,15 +122,15 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
           <YAxis
             yAxisId="right"
             orientation="right"
-            stroke="#6b7280"
-            tick={{ fontSize: 10 }}
-            tickLine={{ stroke: '#6b7280' }}
+            stroke="#64748b"
+            tick={{ fontSize: 10, fill: '#94a3b8' }}
+            tickLine={{ stroke: '#334155' }}
             tickFormatter={(value) => `${value}%`}
             domain={[0, 100]}
             hide={activeMetric === 'pnL'}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+            contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
             formatter={(value: number, name: string) => {
               if (name === 'P&L') return [formatCurrency(value), name];
               if (name === 'Win Rate') return [`${value.toFixed(1)}%`, name];
@@ -138,7 +138,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
               return [value, name];
             }}
           />
-          <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 11 }} />
           
           {/* P&L Bars */}
           <Bar 
@@ -151,8 +151,8 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             {sortedData.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
-                fill={entry.pnL >= 0 ? '#10b981' : '#ef4444'} 
-                fillOpacity={0.8}
+                fill={entry.pnL >= 0 ? '#34d399' : '#f87171'} 
+                fillOpacity={0.88}
               />
             ))}
           </Bar>
@@ -163,10 +163,10 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             type="monotone"
             dataKey="winRate"
             name="Win Rate"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            dot={{ fill: '#3b82f6', strokeWidth: 2 }}
-            activeDot={{ r: 6, fill: '#3b82f6', stroke: '#1e3a8a', strokeWidth: 2 }}
+            stroke="#60a5fa"
+            strokeWidth={2.5}
+            dot={{ fill: '#60a5fa', strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: '#60a5fa', stroke: '#1e3a8a', strokeWidth: 1 }}
             hide={activeMetric === 'pnL'}
           />
           

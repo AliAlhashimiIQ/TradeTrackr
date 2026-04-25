@@ -130,27 +130,27 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   
   // Helper to get color based on win rate
   const getWinRateColor = (winRate: number): string => {
-    if (winRate >= 60) return 'text-green-400';
-    if (winRate >= 50) return 'text-blue-400';
+    if (winRate >= 60) return 'text-emerald-400';
+    if (winRate >= 50) return 'text-indigo-300';
     return 'text-red-400';
   };
   
   // Render strategy performance tab
   const renderStrategyPerformance = () => {
     if (!insightsData || insightsData.strategyPerformance.length === 0) {
-      return <div className="text-xs text-gray-400">Not enough data for strategy insights.</div>;
+      return <div className="text-xs text-slate-400">Not enough data for strategy insights.</div>;
     }
     const strategies = insightsData.strategyPerformance;
     return (
       <div>
-        <h3 className="text-sm font-medium text-white mb-4">Performance by Strategy</h3>
+        <h3 className="text-sm font-medium text-slate-100 mb-4">Performance by Strategy</h3>
         <div className="space-y-3">
           {strategies.map((strategy, index) => (
-            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+            <div key={index} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
               <div className="flex justify-between mb-2">
                 <div className="flex items-center">
-                  <span className="text-white font-medium">{strategy.name}</span>
-                  <span className="ml-2 text-xs text-gray-400">{strategy.trades} trades</span>
+                  <span className="text-slate-100 font-medium">{strategy.name}</span>
+                  <span className="ml-2 text-xs text-slate-400">{strategy.trades} trades</span>
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(strategy.winRate)}`}>
@@ -158,9 +158,9 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
                   </span>
                 </div>
               </div>
-              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${getWinRateColor(strategy.winRate)}`}
+                  className={`h-full ${strategy.winRate >= 60 ? 'bg-emerald-400' : strategy.winRate >= 50 ? 'bg-indigo-300' : 'bg-red-400'}`}
                   style={{ width: `${strategy.winRate}%` }}
                 ></div>
               </div>
@@ -174,20 +174,20 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   // Render instrument performance tab
   const renderInstrumentPerformance = () => {
     if (!insightsData || insightsData.instrumentPerformance.length === 0) {
-      return <div className="text-xs text-gray-400">Not enough data for instrument insights.</div>;
+      return <div className="text-xs text-slate-400">Not enough data for instrument insights.</div>;
     }
     const instruments = insightsData.instrumentPerformance;
     return (
       <div>
-        <h3 className="text-sm font-medium text-white mb-4">Performance by Instrument</h3>
+        <h3 className="text-sm font-medium text-slate-100 mb-4">Performance by Instrument</h3>
         
         <div className="space-y-3">
           {instruments.map((instrument, index) => (
-            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+            <div key={index} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
               <div className="flex justify-between mb-2">
                 <div className="flex items-center">
-                  <span className="text-white font-medium">{instrument.symbol}</span>
-                  <span className="ml-2 text-xs text-gray-400">{instrument.trades} trades</span>
+                  <span className="text-slate-100 font-medium">{instrument.symbol}</span>
+                  <span className="ml-2 text-xs text-slate-400">{instrument.trades} trades</span>
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(instrument.winRate)}`}>
@@ -197,14 +197,14 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
               </div>
               
               {/* Win rate bar */}
-              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${getWinRateColor(instrument.winRate)}`}
+                  className={`h-full ${instrument.winRate >= 60 ? 'bg-emerald-400' : instrument.winRate >= 50 ? 'bg-indigo-300' : 'bg-red-400'}`}
                   style={{ width: `${instrument.winRate}%` }}
                 ></div>
               </div>
               
-              <div className="mt-2 text-xs text-gray-400">
+              <div className="mt-2 text-xs text-slate-400">
                 Avg. P&L: <span className={getValueColorClass(instrument.avgPnL)}>{formatCurrency(instrument.avgPnL)}</span>
               </div>
             </div>
@@ -217,20 +217,20 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   // Render day performance tab
   const renderDayPerformance = () => {
     if (!insightsData || insightsData.dayPerformance.length === 0) {
-      return <div className="text-xs text-gray-400">Not enough data for day insights.</div>;
+      return <div className="text-xs text-slate-400">Not enough data for day insights.</div>;
     }
     const days = insightsData.dayPerformance;
     return (
       <div>
-        <h3 className="text-sm font-medium text-white mb-4">Performance by Day</h3>
+        <h3 className="text-sm font-medium text-slate-100 mb-4">Performance by Day</h3>
         
         <div className="space-y-3">
           {days.map((day, index) => (
-            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+            <div key={index} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
               <div className="flex justify-between mb-2">
                 <div className="flex items-center">
-                  <span className="text-white font-medium">{day.day}</span>
-                  <span className="ml-2 text-xs text-gray-400">{day.trades} trades</span>
+                  <span className="text-slate-100 font-medium">{day.day}</span>
+                  <span className="ml-2 text-xs text-slate-400">{day.trades} trades</span>
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(day.winRate)}`}>
@@ -240,14 +240,14 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
               </div>
               
               {/* Win rate bar */}
-              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${getWinRateColor(day.winRate)}`}
+                  className={`h-full ${day.winRate >= 60 ? 'bg-emerald-400' : day.winRate >= 50 ? 'bg-indigo-300' : 'bg-red-400'}`}
                   style={{ width: `${day.winRate}%` }}
                 ></div>
               </div>
               
-              <div className="mt-2 text-xs text-gray-400">
+              <div className="mt-2 text-xs text-slate-400">
                 Avg. P&L: <span className={getValueColorClass(day.avgPnL)}>{formatCurrency(day.avgPnL)}</span>
               </div>
             </div>
@@ -260,20 +260,20 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   // Render hour performance tab
   const renderHourPerformance = () => {
     if (!insightsData || insightsData.hourPerformance.length === 0) {
-      return <div className="text-xs text-gray-400">Not enough data for hour insights.</div>;
+      return <div className="text-xs text-slate-400">Not enough data for hour insights.</div>;
     }
     const hours = insightsData.hourPerformance;
     return (
       <div>
-        <h3 className="text-sm font-medium text-white mb-4">Performance by Hour</h3>
+        <h3 className="text-sm font-medium text-slate-100 mb-4">Performance by Hour</h3>
         
         <div className="space-y-3">
           {hours.map((hour, index) => (
-            <div key={index} className="bg-[#1a1f2c] rounded-lg p-3">
+            <div key={index} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
               <div className="flex justify-between mb-2">
                 <div className="flex items-center">
-                  <span className="text-white font-medium">{hour.hour}:00</span>
-                  <span className="ml-2 text-xs text-gray-400">{hour.trades} trades</span>
+                  <span className="text-slate-100 font-medium">{hour.hour}:00</span>
+                  <span className="ml-2 text-xs text-slate-400">{hour.trades} trades</span>
                 </div>
                 <div className="flex items-center">
                   <span className={`text-sm font-medium ${getWinRateColor(hour.winRate)}`}>
@@ -283,14 +283,14 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
               </div>
               
               {/* Win rate bar */}
-              <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full ${getWinRateColor(hour.winRate)}`}
+                  className={`h-full ${hour.winRate >= 60 ? 'bg-emerald-400' : hour.winRate >= 50 ? 'bg-indigo-300' : 'bg-red-400'}`}
                   style={{ width: `${hour.winRate}%` }}
                 ></div>
               </div>
               
-              <div className="mt-2 text-xs text-gray-400">
+              <div className="mt-2 text-xs text-slate-400">
                 Avg. P&L: <span className={getValueColorClass(hour.avgPnL)}>{formatCurrency(hour.avgPnL)}</span>
               </div>
             </div>
@@ -315,23 +315,23 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
   };
   
   return (
-    <div className="bg-[#0d1017] rounded-lg overflow-hidden">
-      <div className="p-4 border-b border-gray-800">
-        <h2 className="text-lg font-semibold text-white">Trading Insights</h2>
-        <div className="text-sm text-gray-400 mt-1">Analysis for {dateRange.toUpperCase()}</div>
+    <div className="rounded-2xl overflow-hidden">
+      <div className="p-5 border-b border-slate-800">
+        <h2 className="text-lg font-semibold text-slate-100">Trading Insights</h2>
+        <div className="text-sm text-slate-400 mt-1">Analysis for {dateRange.toUpperCase()}</div>
       </div>
       
       {/* Tab navigation */}
-      <div className="p-4 border-b border-gray-800">
-        <div className="flex space-x-4">
+      <div className="p-5 border-b border-slate-800">
+        <div className="flex space-x-2">
           {(['Strategy', 'Instrument', 'Timing'] as InsightTab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm rounded-lg ${
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
                 activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-slate-200 text-slate-900'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
               {tab}
@@ -341,7 +341,7 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
       </div>
       
       {/* Tab content */}
-      <div className="p-4">
+      <div className="p-5">
         {renderTabContent()}
       </div>
     </div>

@@ -53,11 +53,11 @@ const formatDate = (dateStr: string) => {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-[#1a1e2d] p-3 rounded-lg border border-indigo-900/20 shadow-lg">
-        <p className="text-xs text-gray-400 mb-1">{label}</p>
-        <p className="text-sm font-medium text-white">${payload[0].value.toFixed(2)}</p>
+      <div className="bg-slate-950/95 p-3 rounded-xl border border-slate-800 shadow-2xl backdrop-blur-sm">
+        <p className="text-xs text-slate-400 mb-1">{label}</p>
+        <p className="text-sm font-semibold text-slate-100">${payload[0].value.toFixed(2)}</p>
         {payload[0].payload.change && (
-          <p className={`text-xs ${payload[0].payload.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          <p className={`text-xs ${payload[0].payload.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
             {payload[0].payload.change >= 0 ? '+' : ''}
             {payload[0].payload.change.toFixed(2)} ({payload[0].payload.changePercent.toFixed(2)}%)
           </p>
@@ -163,36 +163,36 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
           <ComposedChart data={processedData}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                <stop offset="0%" stopColor="#818cf8" stopOpacity={0.45} />
+                <stop offset="100%" stopColor="#22d3ee" stopOpacity={0.05} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e2235" />
+            <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
             <XAxis 
               dataKey="date" 
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={{ stroke: '#1e2235' }}
-              tickLine={{ stroke: '#1e2235' }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
               tickFormatter={(value) => {
                 const date = new Date(value);
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               }}
             />
             <YAxis 
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={{ stroke: '#1e2235' }}
-              tickLine={{ stroke: '#1e2235' }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
               domain={valueDomain}
               tickFormatter={(value) => `$${value.toLocaleString()}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={initialCapital} stroke="#6b7280" strokeDasharray="3 3" />
+            <ReferenceLine y={initialCapital} stroke="#64748b" strokeDasharray="3 4" strokeOpacity={0.65} />
             <Area 
               type="monotone" 
               dataKey="value" 
               fill="url(#colorValue)" 
-              stroke="#3b82f6" 
-              strokeWidth={2}
+              stroke="#60a5fa" 
+              strokeWidth={2.5}
               animationDuration={800}
             />
           </ComposedChart>
@@ -202,25 +202,25 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
       {type === 'bar' && (
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={processedData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1e2235" />
+            <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
             <XAxis 
               dataKey="date" 
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={{ stroke: '#1e2235' }}
-              tickLine={{ stroke: '#1e2235' }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
               tickFormatter={(value) => {
                 const date = new Date(value);
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
               }}
             />
             <YAxis 
-              tick={{ fill: '#9ca3af', fontSize: 12 }}
-              axisLine={{ stroke: '#1e2235' }}
-              tickLine={{ stroke: '#1e2235' }}
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              axisLine={{ stroke: '#334155' }}
+              tickLine={{ stroke: '#334155' }}
               tickFormatter={(value) => `$${value.toLocaleString()}`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={initialCapital} stroke="#6b7280" strokeDasharray="3 3" />
+            <ReferenceLine y={initialCapital} stroke="#64748b" strokeDasharray="3 4" strokeOpacity={0.65} />
             <Bar 
               dataKey="change" 
               animationDuration={800}
@@ -228,7 +228,7 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
               {processedData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.change >= 0 ? '#10b981' : '#ef4444'} 
+                  fill={entry.change >= 0 ? '#34d399' : '#f87171'} 
                 />
               ))}
             </Bar>
@@ -251,9 +251,9 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
               label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
               labelLine={false}
             >
-              <Cell fill="#10b981" /> {/* Profit */}
-              <Cell fill="#ef4444" /> {/* Loss */}
-              <Cell fill="#6b7280" /> {/* Breakeven */}
+              <Cell fill="#34d399" /> {/* Profit */}
+              <Cell fill="#f87171" /> {/* Loss */}
+              <Cell fill="#94a3b8" /> {/* Breakeven */}
             </Pie>
             <Tooltip 
               formatter={(value: number) => [`$${value.toFixed(2)}`, 'Amount']}

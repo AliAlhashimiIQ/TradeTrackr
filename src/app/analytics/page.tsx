@@ -12,10 +12,12 @@ import TradeTypePerformance from '@/components/charts/TradeTypePerformance';
 import TimeOfDayPerformance from '@/components/charts/TimeOfDayPerformance';
 import PerformanceHeatmap from '@/components/charts/PerformanceHeatmap';
 import StrategyPerformance from '@/components/charts/StrategyPerformance';
+import MistakesCostChart from '@/components/charts/MistakesCostChart';
 import AdvancedFilters, { FilterOptions } from '@/components/analytics/AdvancedFilters';
 import ExportData from '@/components/analytics/ExportData';
 import { getAllTrades } from '@/lib/tradingApi';
 import { Trade } from '@/lib/types';
+import { isForexPair, formatPips } from '@/lib/forexUtils';
 import {
   calculatePerformanceMetrics,
   generateEquityCurveData,
@@ -48,7 +50,7 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'breakdown'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'mistakes'>('overview');
   
   // New states for advanced filters and export
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -67,6 +69,9 @@ export default function AnalyticsPage() {
   const [tradeTypeData, setTradeTypeData] = useState<TradeTypePerformanceType[]>([]);
   const [timeOfDayData, setTimeOfDayData] = useState<TimeOfDayPerformanceType[]>([]);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
+  const [totalPips, setTotalPips] = useState(0);
+  const panelClass = 'rounded-2xl border border-slate-800/80 bg-slate-950/65 backdrop-blur-sm';
+  const subPanelClass = 'rounded-xl border border-slate-800 bg-slate-900/60';
   
   // Auth check and redirect
   useEffect(() => {
@@ -130,6 +135,9 @@ export default function AnalyticsPage() {
       
       const heatmapData = generatePerformanceHeatmapData(filteredTrades);
       setHeatmapData(heatmapData);
+      
+      const pips = filteredTrades.reduce((sum, t) => sum + (t.pips || 0), 0);
+      setTotalPips(pips);
     }
   }, [filteredTrades]);
   
@@ -240,6 +248,17 @@ export default function AnalyticsPage() {
       maximumFractionDigits: 0
     })}`;
   };
+
+  const bestStrategy = strategyData.length > 0 ? strategyData[0] : null;
+  const largestLeak = filteredTrades.length > 0
+    ? filteredTrades
+        .filter((trade) => (trade.mistakes || []).length > 0 && trade.profit_loss < 0)
+        .sort((a, b) => a.profit_loss - b.profit_loss)[0]
+    : null;
+  const equityChartData = equityCurveData.map((point) => ({
+    date: point.date,
+    value: point.equity
+  }));
   
   if (authLoading) {
     return (
@@ -259,8 +278,8 @@ export default function AnalyticsPage() {
         {/* Dashboard Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Analytics Dashboard</h1>
-            <p className="text-gray-400 mt-1">Track your trading performance and insights</p>
+            <h1 className="text-3xl font-semibold text-slate-100 tracking-tight">Analytics Dashboard</h1>
+            <p className="text-slate-400 mt-1">Track your performance, leaks, and what to improve next.</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -268,7 +287,7 @@ export default function AnalyticsPage() {
             <div className="relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-4 py-2 bg-[#151823] hover:bg-[#1e2231] border border-[#2d3348] text-white rounded-lg text-sm transition-colors duration-150"
+                className="flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white rounded-lg text-sm transition-colors duration-150"
               >
                 <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -280,7 +299,7 @@ export default function AnalyticsPage() {
               </button>
               
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#151823] border border-[#2d3348] rounded-lg shadow-lg z-20 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
                   {(['7d', '30d', '90d', '1y', 'all'] as TimePeriod[]).map((period) => (
                     <button
                       key={period}
@@ -288,7 +307,7 @@ export default function AnalyticsPage() {
                         setTimePeriod(period);
                         setShowFilters(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-sm text-gray-300 hover:bg-[#1e2231] transition-colors duration-150"
+                      className="block w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 transition-colors duration-150"
                     >
                       {period === 'all' ? 'All Time' : `Last ${period}`}
                     </button>
@@ -300,7 +319,7 @@ export default function AnalyticsPage() {
             {/* Filters Button */}
             <button 
               onClick={() => setShowAdvancedFilters(true)}
-              className="flex items-center px-4 py-2 bg-[#151823] hover:bg-[#1e2231] border border-[#2d3348] text-white rounded-lg text-sm transition-colors duration-150"
+              className="flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white rounded-lg text-sm transition-colors duration-150"
             >
               <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -316,7 +335,7 @@ export default function AnalyticsPage() {
             {/* Export Button */}
             <button 
               onClick={() => setShowExportModal(true)}
-              className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors duration-150"
+              className="flex items-center px-4 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded-lg text-sm font-medium transition-colors duration-150"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -328,8 +347,8 @@ export default function AnalyticsPage() {
         
         {/* Active Filters Display */}
         {activeFilters && (
-          <div className="mb-6 bg-[#1a1f2c]/50 rounded-lg p-3 flex flex-wrap items-center gap-2">
-            <span className="text-sm text-gray-400 mr-2">Active Filters:</span>
+          <div className={`mb-6 ${panelClass} p-3 flex flex-wrap items-center gap-2`}>
+            <span className="text-sm text-slate-400 mr-2">Active Filters:</span>
             
             {activeFilters.symbols.length > 0 && (
               <div className="bg-blue-600/20 text-blue-400 text-xs px-2 py-1 rounded-md flex items-center">
@@ -428,21 +447,55 @@ export default function AnalyticsPage() {
             
             <button 
               onClick={() => setActiveFilters(null)}
-              className="text-xs text-gray-400 hover:text-white ml-auto"
+              className="text-xs text-slate-400 hover:text-white ml-auto"
             >
               Clear All
             </button>
           </div>
         )}
+
+        {/* Analytics Brief */}
+        <div className={`${panelClass} p-5 mb-8`}>
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-100">Analytics Brief</h2>
+              <p className="text-sm text-slate-400 mt-1">
+                {loading
+                  ? 'Preparing your latest performance brief...'
+                  : `Analyzing ${filteredTrades.length} trades for ${timePeriod === 'all' ? 'all time' : `last ${timePeriod}`}.`}
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+              <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Edge</div>
+                <div className="text-sm text-slate-100 mt-1">
+                  {bestStrategy ? `${bestStrategy.strategy} (${bestStrategy.winRate.toFixed(0)}% WR)` : 'No strategy edge yet'}
+                </div>
+              </div>
+              <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Main Leak</div>
+                <div className="text-sm text-slate-100 mt-1">
+                  {largestLeak?.mistakes?.[0] || 'No logged mistake leak yet'}
+                </div>
+              </div>
+              <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
+                <div className="text-xs text-slate-400 uppercase tracking-wider">Focus This Week</div>
+                <div className="text-sm text-slate-100 mt-1">
+                  {metrics ? `Protect DD below ${Math.max(6, Math.round(metrics.maxDrawdownPercent || 0))}%` : 'Add more trades for focus'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         
         {/* Tab Navigation */}
-        <div className="flex border-b border-[#1a1f2c] mb-8">
+        <div className="flex border-b border-slate-800 mb-8">
           <button
             onClick={() => setActiveTab('overview')}
             className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 ${
               activeTab === 'overview'
                 ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+                : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
             }`}
           >
             Overview
@@ -455,15 +508,25 @@ export default function AnalyticsPage() {
                 : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
             }`}
           >
-            Performance Breakdown
+            Detailed Breakdown
+          </button>
+          <button
+            onClick={() => setActiveTab('mistakes')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 ${
+              activeTab === 'mistakes'
+                ? 'border-red-500 text-red-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+            }`}
+          >
+            Cost of Mistakes
           </button>
         </div>
         
         {activeTab === 'overview' && (
           <>
             {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-[#151823] to-[#0f111a] rounded-2xl shadow-md border border-[#1c2033] overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className={`${panelClass} overflow-hidden`}>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Win Rate</h2>
@@ -509,7 +572,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-[#151823] to-[#0f111a] rounded-2xl shadow-md border border-[#1c2033] overflow-hidden">
+              <div className={`${panelClass} overflow-hidden`}>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">R Distribution</h2>
@@ -540,7 +603,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-[#151823] to-[#0f111a] rounded-2xl shadow-md border border-[#1c2033] overflow-hidden">
+              <div className={`${panelClass} overflow-hidden`}>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-2">
                     <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Strategy Usage</h2>
@@ -569,11 +632,59 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Total Pips Card (New for Forex) */}
+              <div className={`${panelClass} overflow-hidden`}>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Total Pips</h2>
+                    <div className="p-2 bg-indigo-500/10 rounded-lg">
+                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-baseline space-x-1">
+                    <div className={`text-4xl font-bold ${totalPips >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {loading ? '-' : formatPips(totalPips)}
+                    </div>
+                    <div className="text-gray-500 text-xl font-medium ml-1">PIPS</div>
+                  </div>
+                </div>
+                
+                <div className="bg-[#0d0f16] px-6 py-3 border-t border-[#1c2033]">
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="text-gray-400">
+                      Forex Performance
+                    </div>
+                    <div className="text-indigo-400 font-medium">
+                      {filteredTrades.filter(t => isForexPair(t.symbol)).length} forex trades
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Advanced Stats Strip */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+              {[
+                { label: 'Sharpe Ratio', value: loading ? '-' : (metrics?.sharpeRatio?.toFixed(2) ?? '—'), desc: 'Risk-adjusted return', color: 'text-blue-400' },
+                { label: 'Sortino Ratio', value: loading ? '-' : (metrics?.sortinoRatio?.toFixed(2) ?? '—'), desc: 'Downside risk only', color: 'text-violet-400' },
+                { label: 'Expected Value', value: loading ? '-' : formatCurrency(metrics?.expectedValue ?? 0), desc: 'Per trade on average', color: (metrics?.expectedValue ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400' },
+                { label: 'Largest Win', value: loading ? '-' : formatCurrency(metrics?.largestWin ?? 0), desc: `Largest loss: ${loading ? '-' : formatCurrency(Math.abs(metrics?.largestLoss ?? 0))}`, color: 'text-emerald-400' },
+              ].map((s, i) => (
+                <div key={i} className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</div>
+                  <div className={`text-xl font-bold mt-1 ${s.color}`}>{s.value}</div>
+                  <div className="text-[11px] text-gray-600 mt-0.5">{s.desc}</div>
+                </div>
+              ))}
             </div>
             
-            {/* Charts - First Row and Second Row as a single grid */}
+            {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
+              <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Equity Curve</h2>
                   <div className="flex items-center space-x-2">
@@ -588,10 +699,10 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                <EquityCurve data={equityCurveData} loading={loading} />
+                <EquityCurve data={equityChartData} loading={loading} />
                 </div>
               </div>
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
+              <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Trade Distribution</h2>
                   <div className="flex items-center space-x-2 text-xs text-gray-400">
@@ -609,7 +720,7 @@ export default function AnalyticsPage() {
                 <WinLossDistribution data={distributionData} loading={loading} />
               </div>
             </div>
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
+              <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Monthly Performance</h2>
                   <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
@@ -620,7 +731,7 @@ export default function AnalyticsPage() {
                 <MonthlyPerformance data={monthlyData} loading={loading} />
                 </div>
               </div>
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm min-h-[400px] flex flex-col">
+              <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Drawdown Analysis</h2>
                   <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
@@ -629,6 +740,22 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="flex-1 overflow-y-auto">
                 <DrawdownChart data={equityCurveData} loading={loading} />
+                </div>
+              </div>
+              
+              {/* Cost of Mistakes - Now in Overview because it's CRITICAL */}
+              <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h2 className="text-white text-base font-medium">Cost of Mistakes</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">Total P&L lost to specific bad habits</p>
+                  </div>
+                  <div className="bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-tighter">
+                    Critical Insights
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <MistakesCostChart trades={filteredTrades} />
                 </div>
               </div>
             </div>
@@ -642,7 +769,7 @@ export default function AnalyticsPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Strategy Performance */}
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-white text-base font-medium">Strategy Performance</h2>
@@ -656,7 +783,7 @@ export default function AnalyticsPage() {
               </div>
               
               {/* Symbol Performance */}
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-white text-base font-medium">Symbol Performance</h2>
@@ -672,7 +799,7 @@ export default function AnalyticsPage() {
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Trade Type Performance */}
-              <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-white text-base font-medium">Long vs Short</h2>
@@ -683,7 +810,7 @@ export default function AnalyticsPage() {
               </div>
               
               {/* Time of Day Performance */}
-              <div className="col-span-1 lg:col-span-2 bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm">
+              <div className={`col-span-1 lg:col-span-2 ${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-white text-base font-medium">Time of Day Analysis</h2>
@@ -695,7 +822,7 @@ export default function AnalyticsPage() {
             </div>
             
             {/* Performance Heatmap */}
-            <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-5 shadow-sm mb-8">
+            <div className={`${panelClass} p-5 mb-8`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-white text-base font-medium">Performance Heatmap</h2>
@@ -716,7 +843,7 @@ export default function AnalyticsPage() {
             </div>
             
             {/* Performance Summary */}
-            <div className="bg-gradient-to-r from-blue-600/10 to-indigo-600/10 rounded-xl border border-blue-500/20 p-6 mb-6">
+            <div className={`${panelClass} p-6 mb-6`}>
               <div className="flex items-start">
                 <div className="flex-shrink-0 p-3 bg-blue-500/20 rounded-lg mr-4">
                   <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -725,18 +852,92 @@ export default function AnalyticsPage() {
                 </div>
                 <div>
                   <h3 className="text-white text-lg font-medium mb-2">Performance Insights</h3>
-                  <p className="text-gray-300 text-sm">
-                    Based on your trading data, consider focusing on your top-performing strategies and symbols.
-                    Your best trading occurs during market hours, especially in the morning session.
-                    Strategy tagging shows clear performance differences - use this data to refine your approach.
-                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p className="text-gray-300 text-sm">
+                      Based on your trading data, consider focusing on your top-performing strategies and symbols.
+                      Your best trading occurs during market hours, especially in the morning session.
+                    </p>
+                    <div className="bg-[#0d0f16]/50 rounded-lg p-3 border border-red-500/20">
+                      <p className="text-red-400 text-xs font-bold mb-1 uppercase">Top Mistake to Fix:</p>
+                      <p className="text-gray-300 text-sm italic">
+                        {filteredTrades.some(t => t.mistakes?.length) 
+                          ? "Check the 'Cost of Mistakes' chart above. Eliminating your #1 mistake could increase your bottom line significantly."
+                          : "Start logging mistakes in your trades to unlock powerful 'Cost of Mistakes' analytics."}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </>
         )}
-        
-        {/* Advanced Filters Modal */}
+
+        {activeTab === 'mistakes' && (
+          <>
+            {/* Summary bar */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {[
+                { label: 'Trades with Mistakes', value: filteredTrades.filter(t => t.mistakes?.length).length.toString(), color: 'text-red-400' },
+                { label: 'Clean Trades', value: filteredTrades.filter(t => !t.mistakes?.length).length.toString(), color: 'text-emerald-400' },
+                { label: 'Psychology Score', value: filteredTrades.length ? `${Math.round((filteredTrades.filter(t => !t.mistakes?.length).length / filteredTrades.length) * 100)}%` : '—', color: 'text-indigo-400' },
+                { label: 'Unique Mistake Types', value: [...new Set(filteredTrades.flatMap(t => t.mistakes || []))].length.toString(), color: 'text-yellow-400' },
+              ].map((s, i) => (
+                <div key={i} className="bg-[#151823] rounded-xl border border-[#1c2033] p-4">
+                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
+                  <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Cost of Mistakes Chart */}
+            <div className="bg-[#151823] rounded-xl border border-red-500/10 p-5 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-white font-medium">Dollar Cost of Each Mistake</h2>
+                  <p className="text-gray-500 text-xs mt-0.5">Total P&L impact when this mistake was present</p>
+                </div>
+                <div className="bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-tighter">TradeZella Killer</div>
+              </div>
+              <MistakesCostChart trades={filteredTrades} />
+            </div>
+
+            {/* Per-Mistake Table */}
+            <div className="bg-[#151823] rounded-xl border border-[#1c2033] overflow-hidden mb-8">
+              <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
+                <div className="col-span-2">Mistake</div>
+                <div>Occurrences</div>
+                <div>Total P&L Impact</div>
+                <div>Win Rate</div>
+              </div>
+              {(() => {
+                const allMistakes = [...new Set(filteredTrades.flatMap(t => t.mistakes || []))];
+                if (!allMistakes.length) return (
+                  <div className="px-5 py-12 text-center text-gray-600">No mistakes logged yet. Tag mistakes in your trades to see them here.</div>
+                );
+                return allMistakes.map(mistake => {
+                  const mTrades = filteredTrades.filter(t => t.mistakes?.includes(mistake));
+                  const totalPnL = mTrades.reduce((s, t) => s + t.profit_loss, 0);
+                  const winRate = mTrades.length ? (mTrades.filter(t => t.profit_loss > 0).length / mTrades.length * 100) : 0;
+                  return (
+                    <div key={mistake} className="grid grid-cols-5 gap-4 px-5 py-3.5 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors">
+                      <div className="col-span-2">
+                        <span className="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs font-medium border border-red-900/40">{mistake}</span>
+                      </div>
+                      <div className="text-sm text-gray-300">{mTrades.length}</div>
+                      <div className={`text-sm font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {totalPnL >= 0 ? '+' : ''}${Math.abs(totalPnL).toFixed(0)}
+                      </div>
+                      <div className={`text-sm font-bold ${winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {winRate.toFixed(0)}%
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </>
+        )}
+
         <AdvancedFilters
           isOpen={showAdvancedFilters}
           onClose={() => setShowAdvancedFilters(false)}

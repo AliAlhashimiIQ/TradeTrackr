@@ -38,7 +38,7 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -46,8 +46,8 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
-        <p className="text-gray-400">No data available</p>
+      <div className="w-full h-64 rounded-xl flex items-center justify-center">
+        <p className="text-slate-400">No data available</p>
       </div>
     );
   }
@@ -59,48 +59,48 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
   const referenceLevels = [5, 10, 20, 30].filter(level => level <= maxDrawdownPercent * 1.5);
   
   return (
-    <div className="w-full h-64 bg-[#131825] rounded-lg p-4">
+    <div className="w-full h-64 rounded-xl p-2">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
           margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#212946" />
+          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
-            stroke="#6b7280"
-            tick={{ fontSize: 12 }}
-            tickLine={{ stroke: '#6b7280' }}
+            stroke="#64748b"
+            tick={{ fontSize: 11, fill: '#94a3b8' }}
+            tickLine={{ stroke: '#334155' }}
           />
           <YAxis
-            stroke="#6b7280"
-            tick={{ fontSize: 12 }}
-            tickLine={{ stroke: '#6b7280' }}
+            stroke="#64748b"
+            tick={{ fontSize: 11, fill: '#94a3b8' }}
+            tickLine={{ stroke: '#334155' }}
             tickFormatter={formatPercentage}
             // Invert Y-axis to show drawdowns going down
             orientation="right"
             domain={[0, Math.ceil(maxDrawdownPercent * 1.2)]}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+            contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
             formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
             labelFormatter={(label) => formatDate(label)}
           />
-          <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 11 }} />
           
           {/* Reference lines for drawdown levels */}
           {referenceLevels.map(level => (
             <ReferenceLine 
               key={`ref-${level}`}
               y={level} 
-              stroke="#ef4444" 
-              strokeDasharray="3 3"
-              strokeOpacity={0.6} 
+              stroke="#f87171" 
+              strokeDasharray="3 4"
+              strokeOpacity={0.55} 
               label={{ 
                 value: `${level}%`, 
                 position: 'right', 
-                fill: '#ef4444', 
+                fill: '#fca5a5', 
                 fontSize: 10 
               }} 
             />
@@ -111,10 +111,10 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
             type="monotone"
             dataKey="drawdownPercent"
             name="Drawdown"
-            fill="#ef4444"
-            fillOpacity={0.4}
-            stroke="#ef4444"
-            strokeWidth={2}
+            fill="#f87171"
+            fillOpacity={0.22}
+            stroke="#f87171"
+            strokeWidth={2.5}
           />
         </AreaChart>
       </ResponsiveContainer>
