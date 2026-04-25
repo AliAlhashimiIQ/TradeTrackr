@@ -445,7 +445,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
             />
             <Scatter
               data={heatmapPoints}
-              shape={(props) => (
+              shape={(props: any) => (
                 <HeatMapCell 
                   {...props} 
                   colorScale={colorScale} 

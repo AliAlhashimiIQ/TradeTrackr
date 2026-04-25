@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { TradingViewAnalysisResult, storeUserCorrection, getTrainingStatistics, TrainingStatistics } from '@/lib/aiService';
+import { TradingViewAnalysisResult, storeUserCorrection, getTrainingStatistics, TrainingStatistics } from '@/lib/ai/aiService';
 
 interface ChartAnalysisPanelProps {
   analysis: TradingViewAnalysisResult;
@@ -34,8 +34,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
   // Load training statistics
   useEffect(() => {
     try {
-      const stats = getTrainingStatistics();
-      setTrainingStats(stats);
+      getTrainingStatistics().then(stats => setTrainingStats(stats));
     } catch (error) {
       console.error('Error loading training statistics:', error);
     }
@@ -113,7 +112,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
       }
       
       // Store the correction
-      storeUserCorrection(analysis, editedAnalysis, screenshotId);
+      storeUserCorrection("analysis", analysis, editedAnalysis);
       
       // Show success message
       setShowSuccessMessage(true);
@@ -121,8 +120,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
       
       // Update local training stats
       try {
-        const updatedStats = getTrainingStatistics();
-        setTrainingStats(updatedStats);
+        getTrainingStatistics().then(updatedStats => setTrainingStats(updatedStats));
       } catch (error) {
         console.error('Error updating training stats:', error);
       }
@@ -366,7 +364,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
               )}
               
               {/* Pattern markers - for demonstration */}
-              {!editMode && analysis.patterns && analysis.patterns.map((pattern, idx) => {
+              {!editMode && analysis.patterns && analysis.patterns?.map((pattern, idx) => {
                 // Position patterns randomly for demo - in production would use actual coordinates
                 const positions = [
                   { left: '20%', top: '30%' },
@@ -641,13 +639,13 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
       </div>
       
       {/* Detected Patterns */}
-      {(analysis.patterns?.length > 0 || editMode) && (
+      {((analysis.patterns?.length ?? 0) > 0 || editMode) && (
         <div className="p-4 border-t border-gray-800">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-300">Detected Chart Patterns</span>
             {!editMode && (
               <button 
-                onClick={() => handleApplyValue('patterns', analysis.patterns.map(p => p.name))}
+                onClick={() => handleApplyValue('patterns', analysis.patterns?.map(p => p.name))}
                 className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-900/30 px-2 py-0.5 rounded"
               >
                 Add All Tags
@@ -753,7 +751,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
       )}
       
       {/* Suggested Tags */}
-      {(analysis.suggestedTags?.length > 0 || editMode) && (
+      {((analysis.suggestedTags?.length ?? 0) > 0 || editMode) && (
         <div className="p-4 border-t border-gray-800">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-300">Suggested Tags</span>

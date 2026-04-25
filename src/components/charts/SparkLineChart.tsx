@@ -42,7 +42,6 @@ const SparkLineChart: React.FC<SparkLineChartProps> = ({
         curveType="monotone"
         minValue={Math.min(...data)}
         maxValue={Math.max(...data)}
-        showGradient={showGradient}
       />
     </div>
   );

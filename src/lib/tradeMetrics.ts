@@ -925,7 +925,7 @@ export function generatePerformanceHeatmapData(trades: Trade[]): HeatmapData[] {
   return heatmapData;
 }
 
-export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
+export const calculateTradeMetrics = (trades: Trade[]): any => {
   if (!trades?.length) {
     return {
       totalTrades: 0,
@@ -935,7 +935,7 @@ export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
       averageWin: 0,
       averageLoss: 0,
       profitFactor: 0,
-      totalProfit: 0,
+      totalPnL: 0,
       maxDrawdown: 0
     };
   }
@@ -943,7 +943,7 @@ export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
   try {
     const profits = trades.map(trade => {
       const profit = (trade.exit_price - trade.entry_price) * trade.quantity;
-      return trade.direction === 'long' ? profit : -profit;
+      return trade.type.toLowerCase() === 'long' ? profit : -profit;
     });
 
     const winningTrades = profits.filter(p => p > 0);
