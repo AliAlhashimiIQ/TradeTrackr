@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { BarChart, LineChart, PieChart } from 'lucide-react';
-import { TradeMetrics, PerformanceMetrics } from '@/lib/types';
+import { TradeMetrics } from '@/lib/types';
 import { DateRange } from '@/components/dashboard/DateRangeSelector';
 import EquityCurve from '@/components/charts/EquityCurve';
 
@@ -11,7 +11,7 @@ interface DashboardPerformanceOverviewProps {
   dateRange: DateRange;
   metrics: TradeMetrics;
   equityData: { labels: string[], values: number[] };
-  advancedMetrics: PerformanceMetrics | null;
+  advancedMetrics: any | null;
 }
 
 type ChartType = 'line' | 'bar' | 'pie';

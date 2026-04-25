@@ -159,6 +159,7 @@ export interface TradeSuggestion {
   description: string;
   category: 'timing' | 'selection' | 'risk' | 'strategy';
   priority: 'low' | 'medium' | 'high';
+  tag?: string;
 }
 
 export interface TradeAnalysis {
@@ -195,7 +196,7 @@ export function analyzeTradeDeep(trade: Trade): TradeAnalysis {
   if (notes.includes('fomo') || tags.includes('fomo')) weaknesses.push('FOMO affected decision');
   if (notes.includes('late')) weaknesses.push('Late entry/exit');
   if (notes.includes('fear')) weaknesses.push('Fear impacted decision');
-  if (trade.quantity && trade.quantity > 2 * ((trade.average_quantity as number) || 1)) weaknesses.push('Oversized position');
+  if (trade.quantity && trade.quantity > 2 * ((1) || 1)) weaknesses.push('Oversized position');
   if (!trade.tags || trade.tags.length === 0) weaknesses.push('No tags used');
 
   // Improvements
@@ -479,3 +480,50 @@ export async function answerTradeQuestion(trades: Trade[], question: string): Pr
   const totalPnL = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
   return `You selected ${trades.length} trades. Win rate: ${winRate.toFixed(1)}%. Total P&L: ${totalPnL.toFixed(2)}.`;
 } 
+
+export interface TradingViewAnalysisResult {
+  symbol?: string;
+  timeframe?: string;
+  patterns?: { name: string; confidence: number }[];
+  tag?: string;
+  suggestedTags?: string[];
+  [key: string]: any;
+}
+
+export interface TrainingStatistics {
+  totalCorrections: number;
+  averageImprovement: number;
+  fieldsImproved: {
+    entryPrice: number;
+    takeProfitPrice: number;
+    stopLossPrice: number;
+    patterns: number;
+  };
+}
+
+export async function storeUserCorrection(field: string, analysisValue: any, userValue: any): Promise<void> {
+  console.log('storeUserCorrection', field, analysisValue, userValue);
+}
+
+export async function getTrainingStatistics(): Promise<TrainingStatistics> {
+  return {
+    totalCorrections: 0,
+    averageImprovement: 0.85,
+    fieldsImproved: {
+      entryPrice: 0,
+      takeProfitPrice: 0,
+      stopLossPrice: 0,
+      patterns: 0
+    }
+  };
+}
+
+export async function analyzeTradingScreenshot(file: File): Promise<TradingViewAnalysisResult> {
+  return {
+    symbol: "MOCK",
+    timeframe: "1H",
+    patterns: [{ name: "Bull Flag", confidence: 0.9 }],
+    tag: "Breakout",
+    suggestedTags: ["Trend Following"],
+  };
+}

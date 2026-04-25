@@ -12,7 +12,7 @@ interface Event {
   Event: string;
   Reference: string;
   Source: string;
-  Actual: string;
+  Actual: string | null;
   Previous: string;
   Forecast: string;
   TEForecast: string;

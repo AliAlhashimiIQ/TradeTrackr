@@ -40,7 +40,7 @@ function getInstrumentCorrelations(trades: Trade[]): { pair: [string, string]; c
   });
   // Only consider symbols with enough trades
   const symbols = Object.keys(symbolMap).filter((s: string) => symbolMap[s].length >= 3);
-  const pairs = [];
+  const pairs: { pair: [string, string]; correlation: number }[] = [];
   for (let i = 0; i < symbols.length; i++) {
     for (let j = i + 1; j < symbols.length; j++) {
       const s1 = symbols[i], s2 = symbols[j];
@@ -62,7 +62,7 @@ function getInstrumentCorrelations(trades: Trade[]): { pair: [string, string]; c
 }
 
 // Helper: Check position size consistency
-function isPositionSizeConsistent(trades: Trade[], window = 5, threshold = 0.2): boolean {
+function isPositionSizeConsistent(trades: Trade[], window = 5, threshold = 0.2): boolean | null {
   if (trades.length < window) return null;
   const recent = trades.slice(-window);
   const sizes = recent.map((t: Trade) => Math.abs(t.quantity));

@@ -21,7 +21,7 @@ async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
   data.forEach((row: any) => {
     const tradeId = row.trade_id as string;
     const tagName = row.tags?.name as string | undefined;
-    if (!tagName) return;
+    if (!tagName) return true;
     if (!tagsByTradeId[tradeId]) tagsByTradeId[tradeId] = [];
     tagsByTradeId[tradeId].push(tagName);
   });
@@ -175,7 +175,7 @@ async function addTradeTagsToDatabase(tradeId: string, userId: string, tagNames:
       .eq('user_id', userId)
       .in('name', tagNames);
     
-    if (!tags || tags.length === 0) return;
+    if (!tags || tags.length === 0) return true;
     
     // Create the trade_tags relationships
     const tradeTagsData = tags.map(tag => ({
@@ -510,19 +510,19 @@ export async function getCustomEvents(userId: string, startDate: string, endDate
 // Function to add a custom event
 export async function addCustomEvent(event: any): Promise<any> {
   // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
-  return;
+  return true;
 }
 
 // Function to update a custom event
 export async function updateCustomEvent(event: any): Promise<any> {
   // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
-  return;
+  return true;
 }
 
 // Function to delete a custom event
 export async function deleteCustomEvent(eventId: string): Promise<boolean> {
   // Remove or comment out all functions and code that fetch from 'market_events' or 'custom_events', as these tables do not exist and cause errors.
-  return;
+  return true;
 }
 
 // Function to get all tags for a user

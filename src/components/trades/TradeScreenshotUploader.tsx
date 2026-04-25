@@ -1,3 +1,4 @@
+import { TradingViewAnalysisResult, analyzeTradingScreenshot } from "@/lib/ai/aiService";
 import React, { useState, useRef, useEffect } from 'react';
 import NextImage from 'next/image';
 
@@ -163,11 +164,11 @@ const TradeScreenshotUploader: React.FC<TradeScreenshotUploaderProps> = ({
     
     if (direction === 'prev') {
       setSelectedPreviewIndex(prev => 
-        prev === 0 ? previews.length - 1 : prev - 1
+        prev === 0 ? previews.length - 1 : (prev ?? 1) - 1
       );
     } else {
       setSelectedPreviewIndex(prev => 
-        prev === previews.length - 1 ? 0 : prev + 1
+        prev === previews.length - 1 ? 0 : (prev ?? -1) + 1
       );
     }
   };
