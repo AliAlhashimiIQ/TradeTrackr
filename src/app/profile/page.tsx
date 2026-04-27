@@ -11,6 +11,7 @@ type ProfileData = {
   full_name: string | null;
   email: string;
   avatar_url: string | null;
+  created_at: string | null;
 };
 
 export default function ProfilePage() {
@@ -22,6 +23,21 @@ export default function ProfilePage() {
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [userStats, setUserStats] = useState({ totalTrades: 0, netPnl: 0 });
+
+  useEffect(() => {
+    if (user?.id) {
+      const fetchStats = async () => {
+        const { data: trades } = await supabase.from('trades').select('profit_loss').eq('user_id', user.id);
+        if (trades) {
+          const totalTrades = trades.length;
+          const netPnl = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+          setUserStats({ totalTrades, netPnl });
+        }
+      };
+      fetchStats();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,68 +49,39 @@ export default function ProfilePage() {
 
   const fetchProfile = async () => {
     if (!user) return;
-    
-
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single();
       
       if (error) {
-        console.error('Error fetching profile data:', error);
-        // Create a minimal profile if one doesn't exist
-        if (error.code === 'PGRST116') { // "No rows returned" error code
-
+        if (error.code === 'PGRST116') {
           const newProfile = {
             username: null,
             full_name: null,
             email: user.email || '',
-            avatar_url: null
+            avatar_url: null,
+            created_at: new Date().toISOString()
           };
           setProfileData(newProfile);
           setFormData(newProfile);
           
-          // Create profile record
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              email: user.email || '',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-            
-          if (insertError) console.error('Error creating profile:', insertError);
-          
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email || '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
         } else {
           throw error;
         }
       } else {
-
-        // Profile exists - ensure avatar_url is properly formatted
         let avatarUrl = data?.avatar_url;
-        
-        // Check if the avatar URL is a valid URL
-        if (avatarUrl) {
-
-          
-          if (!avatarUrl.startsWith('http')) {
-            // Try to get the public URL for the avatar
-            try {
-
-              const { data: publicUrlData } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(avatarUrl);
-                
-              avatarUrl = publicUrlData.publicUrl;
-
-            } catch (urlError) {
-              console.error('Error getting public avatar URL:', urlError);
-              avatarUrl = null;
-            }
+        if (avatarUrl && !avatarUrl.startsWith('http')) {
+          try {
+            const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(avatarUrl);
+            avatarUrl = publicUrlData.publicUrl;
+          } catch (urlError) {
+            avatarUrl = null;
           }
         }
         
@@ -102,21 +89,20 @@ export default function ProfilePage() {
           username: data?.username || null,
           full_name: data?.full_name || null,
           email: user.email || '',
-          avatar_url: avatarUrl
+          avatar_url: avatarUrl,
+          created_at: data?.created_at || user.created_at || new Date().toISOString()
         };
         
-
         setProfileData(profileData);
         setFormData(profileData);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
-      // Fallback to minimal profile
       const fallbackProfile = {
         username: null,
         full_name: null,
         email: user.email || '',
-        avatar_url: null
+        avatar_url: null,
+        created_at: user.created_at || new Date().toISOString()
       };
       setProfileData(fallbackProfile);
       setFormData(fallbackProfile);
@@ -136,63 +122,30 @@ export default function ProfilePage() {
       setAvatarPreview(null);
       return;
     }
-    
     const file = e.target.files[0];
     setAvatarFile(file);
-    
-    // Create a preview
     const reader = new FileReader();
-    reader.onload = (e) => {
-      setAvatarPreview(e.target?.result as string);
-    };
+    reader.onload = (e) => setAvatarPreview(e.target?.result as string);
     reader.readAsDataURL(file);
   };
 
   const uploadAvatar = async (): Promise<string | null> => {
     if (!avatarFile || !user) return null;
-    
-
-    
     const fileExt = avatarFile.name.split('.').pop();
     const fileName = `${user.id}-${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `${user.id}/${fileName}`; // Use user ID as folder for proper RLS
-    
-
+    const filePath = `${user.id}/${fileName}`;
     
     try {
-      // Remove old avatar file if it exists and doesn't start with http
-      // (meaning it's a storage path not a URL)
       if (formData?.avatar_url && !formData.avatar_url.startsWith('http')) {
         try {
-
-          await supabase.storage
-            .from('avatars')
-            .remove([formData.avatar_url]);
-        } catch (removeError) {
-          console.error('Error removing old avatar:', removeError);
-          // Continue with upload even if remove fails
-        }
+          await supabase.storage.from('avatars').remove([formData.avatar_url]);
+        } catch (removeError) {}
       }
-      
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, avatarFile);
-        
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-      
-
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-        
-
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, avatarFile);
+      if (uploadError) throw uploadError;
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
       return data.publicUrl;
     } catch (error) {
-      console.error('Error uploading avatar:', error);
       throw error;
     }
   };
@@ -200,38 +153,25 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !formData) return;
-    
     setIsLoading(true);
     setMessage(null);
-    
     try {
       let avatarUrl = formData.avatar_url;
+      if (avatarFile) avatarUrl = await uploadAvatar();
       
-      // Upload new avatar if selected
-      if (avatarFile) {
-        avatarUrl = await uploadAvatar();
-      }
+      const { error } = await supabase.from('profiles').update({
+        username: formData.username,
+        full_name: formData.full_name,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString()
+      }).eq('id', user.id);
       
-      // Update profile
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          username: formData.username,
-          full_name: formData.full_name,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-        
       if (error) throw error;
       
       setMessage({ text: 'Profile updated successfully!', type: 'success' });
-      // Update profile data
       setProfileData({...formData, avatar_url: avatarUrl});
       setAvatarFile(null);
-      
     } catch (error: any) {
-      console.error('Error updating profile:', error);
       setMessage({ text: error.message || 'Failed to update profile', type: 'error' });
     } finally {
       setIsLoading(false);
@@ -254,135 +194,167 @@ export default function ProfilePage() {
           <p className="text-gray-400 mt-1">Update your personal information</p>
         </div>
             
-        <div className="max-w-2xl bg-[#131825] rounded-lg shadow-lg overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Account Settings</h2>
-            
-            {message && (
-              <div className={`p-4 mb-6 rounded ${
-                message.type === 'success' ? 'bg-green-800' : 'bg-red-800'
-              }`}>
-                {message.text}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* User Stats Sidebar */}
+          <div className="md:col-span-1 space-y-6">
+            <div className="card bg-[#131825] rounded-lg shadow-lg overflow-hidden p-6 border border-gray-800">
+              <h2 className="text-xl font-bold text-white mb-6">Your Stats</h2>
+              
+              <div className="space-y-4">
+                <div className="pb-4 border-b border-gray-800">
+                  <p className="text-sm text-gray-400 mb-1">Joined Date</p>
+                  <p className="text-lg font-medium text-white">
+                    {profileData?.created_at ? new Date(profileData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown'}
+                  </p>
+                </div>
+                
+                <div className="pb-4 border-b border-gray-800">
+                  <p className="text-sm text-gray-400 mb-1">Total Trades</p>
+                  <p className="text-lg font-medium text-blue-400">
+                    {userStats.totalTrades}
+                  </p>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-gray-400 mb-1">Net P&L</p>
+                  <p className={`text-lg font-medium ${userStats.netPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    {userStats.netPnl >= 0 ? '+' : ''}
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userStats.netPnl)}
+                  </p>
+                </div>
               </div>
-            )}
-            
-            {formData && (
-              <form onSubmit={handleSubmit}>
-                <div className="mb-8">
-                  <div className="flex items-center">
-                    <div className="relative">
-                      <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-700">
-                        {(avatarPreview || (formData.avatar_url && formData.avatar_url.length > 0)) ? (
-                          <img 
-                            src={avatarPreview || formData.avatar_url || ''}
-                            alt="Avatar" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              console.error('Error loading avatar image:', e);
-                              e.currentTarget.onerror = null; // Prevent infinite loop
-                              e.currentTarget.src = ''; // Clear src
-                              // Show fallback
-                              if (e.currentTarget.parentElement) {
-                                e.currentTarget.parentElement.innerHTML = `
-                                  <div class="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
-                                    ${formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
-                                  </div>
-                                `;
-                              }
-                            }}
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
-                            {formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
-                          </div>
-                        )}
+            </div>
+          </div>
+
+          {/* Account Settings Form */}
+          <div className="card md:col-span-2 bg-[#131825] rounded-lg shadow-lg overflow-hidden border border-gray-800">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Account Settings</h2>
+              
+              {message && (
+                <div className={`p-4 mb-6 rounded ${
+                  message.type === 'success' ? 'bg-green-800' : 'bg-red-800'
+                }`}>
+                  {message.text}
+                </div>
+              )}
+              
+              {formData && (
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-8">
+                    <div className="flex items-center">
+                      <div className="relative">
+                        <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-700">
+                          {(avatarPreview || (formData.avatar_url && formData.avatar_url.length > 0)) ? (
+                            <img 
+                              src={avatarPreview || formData.avatar_url || ''}
+                              alt="Avatar" 
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = '';
+                                if (e.currentTarget.parentElement) {
+                                  e.currentTarget.parentElement.innerHTML = `
+                                    <div class="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
+                                      ${formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full text-3xl font-bold text-gray-500">
+                              {formData.full_name ? formData.full_name[0].toUpperCase() : '?'}
+                            </div>
+                          )}
+                        </div>
+                        <label 
+                          htmlFor="avatar"
+                          className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          </svg>
+                        </label>
+                        <input 
+                          id="avatar" 
+                          name="avatar" 
+                          type="file" 
+                          onChange={handleAvatarChange}
+                          accept="image/*"
+                          className="hidden"
+                        />
                       </div>
-                      <label 
-                        htmlFor="avatar"
-                        className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full cursor-pointer hover:bg-blue-700"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
+                      <div className="ml-6">
+                        <h3 className="font-medium text-xl text-white">{formData.full_name || 'Set your name'}</h3>
+                        <p className="text-gray-400">{formData.email}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label htmlFor="username" className="block text-sm font-medium mb-2 text-gray-200">
+                        Username
                       </label>
-                      <input 
-                        id="avatar" 
-                        name="avatar" 
-                        type="file" 
-                        onChange={handleAvatarChange}
-                        accept="image/*"
-                        className="hidden"
+                      <input
+                        id="username"
+                        name="username"
+                        type="text"
+                        value={formData.username || ''}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        placeholder="Choose a username"
                       />
                     </div>
-                    <div className="ml-6">
-                      <h3 className="font-medium text-xl text-white">{formData.full_name || 'Set your name'}</h3>
-                      <p className="text-gray-400">{formData.email}</p>
+                    
+                    <div>
+                      <label htmlFor="full_name" className="block text-sm font-medium mb-2 text-gray-200">
+                        Full Name
+                      </label>
+                      <input
+                        id="full_name"
+                        name="full_name"
+                        type="text"
+                        value={formData.full_name || ''}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-200">
+                        Email Address
+                      </label>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formData.email}
+                        disabled
+                        className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md opacity-75 cursor-not-allowed text-gray-400"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                     </div>
                   </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <div>
-                    <label htmlFor="username" className="block text-sm font-medium mb-2 text-gray-200">
-                      Username
-                    </label>
-                    <input
-                      id="username"
-                      name="username"
-                      type="text"
-                      value={formData.username || ''}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      placeholder="Choose a username"
-                    />
-                  </div>
                   
-                  <div>
-                    <label htmlFor="full_name" className="block text-sm font-medium mb-2 text-gray-200">
-                      Full Name
-                    </label>
-                    <input
-                      id="full_name"
-                      name="full_name"
-                      type="text"
-                      value={formData.full_name || ''}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
-                      placeholder="Enter your full name"
-                    />
+                  <div className="mt-8 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-70 text-white"
+                    >
+                      {isLoading ? 'Saving...' : 'Save Changes'}
+                    </button>
                   </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2 text-gray-200">
-                      Email Address
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      disabled
-                      className="w-full px-3 py-2 bg-[#1a202c] border border-gray-600 rounded-md opacity-75 cursor-not-allowed text-gray-400"
-                    />
-                    <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
-                  </div>
-                </div>
-                
-                <div className="mt-8 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-70 text-white"
-                  >
-                    {isLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            )}
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </AuthenticatedLayout>
   );
-} 
+}

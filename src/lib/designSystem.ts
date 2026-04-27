@@ -8,22 +8,22 @@ import COLORS, { TRANSITIONS } from './colorSystem';
 // Card styling
 export const CARDS = {
   // Base card styling
-  base: `bg-[${COLORS.background.dark}] rounded-lg p-4 border border-[${COLORS.border.primary}]`,
+  base: `card bg-[${COLORS.background.dark}] rounded-lg p-4 border border-[${COLORS.border.primary}]`,
   
   // Content panel/section styling
-  panel: `bg-[${COLORS.background.medium}] rounded-xl border border-[${COLORS.border.primary}] p-6 shadow-md`,
+  panel: `card bg-[${COLORS.background.medium}] rounded-xl border border-[${COLORS.border.primary}] p-6 shadow-md`,
   
   // Small cards for stat display
-  stat: `bg-[${COLORS.background.light}] p-2 rounded-md`,
+  stat: `card bg-[${COLORS.background.light}] p-2 rounded-md`,
   
   // Card with lighter background
-  secondary: `bg-[${COLORS.background.light}] rounded-lg p-3`,
+  secondary: `card bg-[${COLORS.background.light}] rounded-lg p-3`,
   
   // Card with gradient
-  gradient: `bg-gradient-to-br from-[${COLORS.background.medium}] to-[${COLORS.background.dark}] rounded-2xl shadow-md border border-[${COLORS.border.primary}] overflow-hidden`,
+  gradient: `card bg-gradient-to-br from-[${COLORS.background.medium}] to-[${COLORS.background.dark}] rounded-2xl shadow-md border border-[${COLORS.border.primary}] overflow-hidden`,
   
   // Card with hover effect
-  interactive: `bg-[${COLORS.background.light}] rounded-lg p-4 hover:bg-[${COLORS.background.lighter}] ${TRANSITIONS.fast} cursor-pointer`,
+  interactive: `card bg-[${COLORS.background.light}] rounded-lg p-4 hover:bg-[${COLORS.background.lighter}] ${TRANSITIONS.fast} cursor-pointer`,
 };
 
 // Button styling

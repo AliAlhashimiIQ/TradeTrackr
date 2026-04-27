@@ -12,6 +12,12 @@ import type { Trade } from '@/lib/types'
 import { calculateMaxDrawdown } from '@/lib/tradeMetrics'
 import { detectStreaksAndBehaviors, analyzeTagPerformance } from '@/lib/ai/aiService'
 import { isForexPair, formatPips } from '@/lib/forexUtils'
+import ErrorBoundary from '@/components/common/ErrorBoundary'
+import { DashboardSkeleton } from '@/components/ui/SkeletonLoader'
+import EmptyState from '@/components/ui/EmptyState'
+import ChallengeDashboardWidget from '@/components/dashboard/ChallengeDashboardWidget'
+import { PROP_FIRMS, computeChallengeStatus, ChallengeStatus } from '@/lib/propFirms'
+import { supabase } from '@/lib/supabaseClient'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts'
@@ -74,14 +80,14 @@ function EquityAreaChart({ data }: { data: { date: string; equity: number }[] })
             <stop offset="95%" stopColor={isUp ? '#10b981' : '#ef4444'} stopOpacity={0} />
           </linearGradient>
         </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" />
-        <XAxis dataKey="date" tick={{ fill: '#4b5563', fontSize: 10 }} tickLine={false} axisLine={false}
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" className="dark:stroke-white/5" />
+        <XAxis dataKey="date" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={false}
           tickFormatter={v => new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           interval={Math.floor(data.length / 6)} />
-        <YAxis domain={[min * 0.99, max * 1.01]} tick={{ fill: '#4b5563', fontSize: 10 }} tickLine={false}
+        <YAxis domain={[min * 0.99, max * 1.01]} tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false}
           axisLine={false} tickFormatter={v => `$${(v / 1000).toFixed(1)}k`} width={50} />
         <Tooltip
-          contentStyle={{ background: '#0f1117', border: '1px solid #1f2937', borderRadius: 8, fontSize: 12 }}
+          contentStyle={{ background: 'var(--tooltip-bg, #0f1117)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 8, fontSize: 12 }}
           labelStyle={{ color: '#9ca3af' }}
           itemStyle={{ color: isUp ? '#10b981' : '#ef4444' }}
           formatter={(v: number) => [fmt(v), 'Equity']}
@@ -95,16 +101,46 @@ function EquityAreaChart({ data }: { data: { date: string; equity: number }[] })
   )
 }
 
-const card = 'rounded-2xl border border-white/[0.06] bg-[#0d0e16]'
+const card = 'card rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]'
+
+// Stagger animation variants
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.07 }
+  }
+}
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } }
+}
 
 export default function Dashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
+  const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null)
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
+
+  // Load prop firm challenge config from Supabase
+  useEffect(() => {
+    const loadChallenge = async () => {
+      if (!user) return;
+      const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
+      const s = data?.settings || {};
+      if (!s.propFirmId) return;
+      const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
+      const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);
+      if (!firm || !tier) return;
+      // We don't have current balance here without all-time trades; will compute after trades load
+    };
+    loadChallenge();
+  }, [user]);
 
   const { trades, metrics, equityData, advancedMetrics, isLoading } = useDashboardData(user?.id, dateRange)
 
@@ -133,22 +169,41 @@ export default function Dashboard() {
   }, [trades])
   const todayPnL = todayTrades.reduce((s, t) => s + t.profit_loss, 0)
 
+  // Compute challenge status after trades are loaded
+  useEffect(() => {
+    const loadChallenge = async () => {
+      if (!user || !trades.length) return;
+      const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
+      const s = data?.settings || {};
+      if (!s.propFirmId || !s.propFirmTier) return;
+      const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
+      const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);
+      if (!firm || !tier) return;
+      const startBalance = Number(s.challengeStartBalance) || tier.accountSize;
+      const startDate = s.challengeStartDate || new Date().toISOString().slice(0, 10);
+      // All-time P&L since challenge start
+      const challengeTrades = trades.filter(t => t.entry_time >= startDate);
+      const totalPnL = challengeTrades.reduce((sum, t) => sum + t.profit_loss, 0);
+      const currentBalance = startBalance + totalPnL;
+      const todayChallengePnL = challengeTrades
+        .filter(t => t.entry_time.startsWith(new Date().toISOString().slice(0, 10)))
+        .reduce((sum, t) => sum + t.profit_loss, 0);
+      const status = computeChallengeStatus(firm, tier, startDate, startBalance, currentBalance, todayChallengePnL);
+      setChallengeStatus(status);
+    };
+    loadChallenge();
+  }, [user, trades]);
+
   if (isLoading) {
     return (
       <AuthenticatedLayout>
-        <div className="px-4 sm:px-6 lg:px-8 space-y-6 animate-pulse">
-          <div className="h-20 rounded-2xl bg-white/[0.04]" />
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[...Array(5)].map((_, i) => <div key={i} className="h-24 rounded-2xl bg-white/[0.04]" />)}
-          </div>
-          <div className="h-72 rounded-2xl bg-white/[0.04]" />
-        </div>
+        <DashboardSkeleton />
       </AuthenticatedLayout>
     )
   }
 
-  const noTrades = trades.length === 0
-
+  const noTrades = trades.length === 0;
+  
   return (
     <AuthenticatedLayout>
       <div className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
@@ -170,56 +225,94 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {noTrades ? (
-          <div className={`${card} p-12 text-center`}>
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-              <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
+        {/* ── Violation Alert Banner (4.4) ── */}
+        {challengeStatus?.isViolated && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-5 py-3 bg-red-500/15 border border-red-500/40 rounded-xl"
+          >
+            <svg className="w-5 h-5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <span className="text-red-300 font-bold text-sm">🚨 Challenge Violation — </span>
+              <span className="text-red-300 text-sm">{challengeStatus.violationReason}</span>
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">No trades yet</h2>
-            <p className="text-gray-500 mb-6">Log your first trade to unlock your Command Center.</p>
-            <Link href="/trades/new" className="inline-flex px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-500 transition-colors">
-              Add Your First Trade
-            </Link>
-          </div>
+          </motion.div>
+        )}
+
+        {/* ── Daily Drawdown Warning (near limit) ── */}
+        {challengeStatus && !challengeStatus.isViolated && challengeStatus.dailyDrawdownPercent >= 70 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3 px-5 py-3 bg-amber-500/10 border border-amber-500/30 rounded-xl"
+          >
+            <svg className="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span className="text-amber-300 text-sm font-medium">
+              ⚠️ You are at <strong>{challengeStatus.dailyDrawdownPercent.toFixed(0)}%</strong> of your daily loss limit — consider stopping for the day.
+            </span>
+          </motion.div>
+        )}
+
+        {noTrades ? (
+          <EmptyState
+            variant="trades"
+            title="No trades yet"
+            subtitle="Log your first trade to unlock your Command Center — equity curves, streaks, psychology scores, and AI-powered insights."
+            ctaLabel="Add Your First Trade"
+            ctaHref="/trades/new"
+          />
         ) : (
           <>
             {/* ── Stat Pills Row ── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-              {[
-                { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period` },
-                { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L` },
-                { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target' },
-                { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today` },
-                { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}` },
-              ].map((s, i) => (
-                <motion.div key={i} whileHover={{ y: -2 }} className={`${card} p-4`}>
-                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
-                  <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-                  <div className="text-[11px] text-gray-600 mt-1">{s.sub}</div>
-                </motion.div>
-              ))}
-            </div>
+            <ErrorBoundary>
+              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                {[
+                  { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period` },
+                  { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L` },
+                  { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target' },
+                  { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today` },
+                  { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}` },
+                ].map((s, i) => (
+                  <motion.div key={i} variants={item} whileHover={{ y: -2 }} className={`${card} p-4`}>
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
+                    <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+                    <div className="text-[11px] text-gray-600 mt-1">{s.sub}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </ErrorBoundary>
 
-            {/* ── Equity Curve ── */}
-            <div className={`${card} p-5`}>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-white font-semibold">Equity Curve</h2>
-                  <p className="text-gray-500 text-xs mt-0.5">Account growth over time</p>
-                </div>
-                <div className={`text-lg font-bold ${metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {metrics.total_pnl >= 0 ? '+' : ''}{fmt(metrics.total_pnl)}
-                </div>
+            {/* ── Equity Curve + Challenge Widget ── */}
+            <ErrorBoundary>
+              <div className={`grid gap-4 ${challengeStatus ? 'lg:grid-cols-[1fr_340px]' : ''}`}>
+                <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} className={`${card} p-5`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-white font-semibold">Equity Curve</h2>
+                      <p className="text-gray-500 text-xs mt-0.5">Account growth over time</p>
+                    </div>
+                    <div className={`text-lg font-bold ${metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {metrics.total_pnl >= 0 ? '+' : ''}{fmt(metrics.total_pnl)}
+                    </div>
+                  </div>
+                  <EquityAreaChart data={equityChartData} />
+                </motion.div>
+                {challengeStatus && <ChallengeDashboardWidget status={challengeStatus} />}
               </div>
-              <EquityAreaChart data={equityChartData} />
-            </div>
+            </ErrorBoundary>
 
             {/* ── 4 Intelligence Cards ── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <ErrorBoundary>
+              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Streak Card */}
+                {/* ... existing cards ... */}
               {/* Streak Card */}
-              <div className={`${card} p-5`}>
+              <motion.div variants={item} className={`${card} p-5`}>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Current Streak</div>
                 <div className="flex items-center gap-3">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black
@@ -238,10 +331,10 @@ export default function Dashboard() {
                     <p className="text-red-400 text-xs">Consider taking a break or reducing size.</p>
                   </div>
                 )}
-              </div>
+              </motion.div>
 
               {/* Drawdown Card */}
-              <div className={`${card} p-5`}>
+              <motion.div variants={item} className={`${card} p-5`}>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Max Drawdown</div>
                 <div className={`text-3xl font-black ${drawdown.percentage > 10 ? 'text-red-400' : drawdown.percentage > 5 ? 'text-yellow-400' : 'text-emerald-400'}`}>
                   {drawdown.percentage.toFixed(1)}%
@@ -256,10 +349,10 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-600 mt-2">{drawdown.amount > 0 ? `${fmt(drawdown.amount)} from peak` : 'No drawdown'}</div>
-              </div>
+              </motion.div>
 
               {/* Psychology Card */}
-              <div className={`${card} p-5`}>
+              <motion.div variants={item} className={`${card} p-5`}>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Psychology Score</div>
                 <div className={`text-3xl font-black ${psychScore >= 80 ? 'text-emerald-400' : psychScore >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
                   {psychScore}%
@@ -273,10 +366,10 @@ export default function Dashboard() {
                 <div className="text-xs text-gray-600 mt-2">
                   {trades.filter(t => t.mistakes?.length).length} of {trades.length} trades had mistakes
                 </div>
-              </div>
+              </motion.div>
 
               {/* Best Session / Today Card */}
-              <div className={`${card} p-5`}>
+              <motion.div variants={item} className={`${card} p-5`}>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Today's P&L</div>
                 <div className={`text-3xl font-black ${todayPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                   {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
@@ -286,8 +379,9 @@ export default function Dashboard() {
                   <div className="text-[10px] font-bold text-gray-600 uppercase tracking-widest mb-1">Best Session</div>
                   <div className="text-xs text-indigo-400 font-medium">{bestSession}</div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+              </motion.div>
+            </ErrorBoundary>
 
             {/* ── Forex Pips (if applicable) ── */}
             {forexCount > 0 && (

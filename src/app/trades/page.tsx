@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Trade } from '@/lib/types'
-import { getAllTrades, deleteTrade, addTrade, updateTrade } from '@/lib/tradingApi'
+import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade } from '@/lib/tradingApi'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
@@ -15,6 +15,9 @@ import ExportModal from '@/components/trades/ExportModal'
 import TradeAIChatBox from '@/components/trades/TradeAIChatBox'
 import { motion, AnimatePresence } from 'framer-motion'
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils'
+import { TradesListSkeleton } from '@/components/ui/SkeletonLoader'
+import EmptyState from '@/components/ui/EmptyState'
+import toast from 'react-hot-toast'
 
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review'
 type TableDensity = 'compact' | 'comfortable'
@@ -132,6 +135,13 @@ export default function Trades() {
   const [activeView, setActiveView] = useState<SavedView>('all')
   const [showIntelligence, setShowIntelligence] = useState(true)
   const [tableDensity, setTableDensity] = useState<TableDensity>('comfortable')
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    pips: true,
+    lots: true,
+    quality: true,
+    tags: true,
+  })
+  const [showColumnMenu, setShowColumnMenu] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -141,6 +151,8 @@ export default function Trades() {
     if (savedView) setActiveView(savedView)
     if (savedDensity) setTableDensity(savedDensity)
     if (savedIntelligence !== null) setShowIntelligence(savedIntelligence === 'true')
+    const savedCols = window.localStorage.getItem('trades.visibleColumns')
+    if (savedCols) try { setVisibleColumns(JSON.parse(savedCols)) } catch {}
   }, [])
 
   useEffect(() => {
@@ -158,80 +170,83 @@ export default function Trades() {
     window.localStorage.setItem('trades.showIntelligence', String(showIntelligence))
   }, [showIntelligence])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('trades.visibleColumns', JSON.stringify(visibleColumns))
+  }, [visibleColumns])
+
   useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
-  useEffect(() => {
-    async function fetchTrades() {
-      if (user) {
-        setIsLoading(true)
-        try {
-          const tradesData = await getAllTrades(user.id)
-          setTrades(tradesData)
-          setFilteredTrades(tradesData)
-          if (tradesData.length > 0) {
-            const metrics = calculatePerformanceMetrics(tradesData);
-            setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(tradesData) });
-          }
-        } catch (error) { console.error('Error fetching trades:', error) }
-        finally { setIsLoading(false) }
+  // ── Server-side paginated fetch (6.1 / 6.2) ──────────────────────────────
+  // Fetches only one page of trades from Supabase at a time.
+  // Runs whenever filters, sort, or page changes.
+  const fetchPagedTrades = useCallback(async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const { trades: page, total } = await getPagedTrades({
+        userId: user.id,
+        page: currentPage,
+        pageSize,
+        search: searchTerm || undefined,
+        symbol: symbolFilter || undefined,
+        type: typeFilter,
+        dateFilter,
+        sortField: String(sortField),
+        sortDirection,
+      });
+      setTrades(page);          // current page only
+      setFilteredTrades(page);  // same slice — view filters applied below
+      setTotalPages(Math.ceil(total / pageSize));
+      if (page.length > 0) {
+        // For quick metrics we still compute from the page, analytics page uses getAllTrades
+        const metrics = calculatePerformanceMetrics(page);
+        setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(page) });
+      } else {
+        setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
       }
-    }
-    if (user) fetchTrades()
-  }, [user])
+    } catch (err) { console.error(err); }
+    finally { setIsLoading(false); }
+  }, [user, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection]);
+
+  useEffect(() => { if (user) fetchPagedTrades(); }, [fetchPagedTrades, user]);
   
-  // Apply filters
+  // Apply activeView-only client filter on the already-fetched page (6.1)
+  // All other filters are handled server-side by fetchPagedTrades.
   useEffect(() => {
-    if (!trades.length) return;
+    if (!trades.length) { setFilteredTrades([]); return; }
     let result = [...trades];
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(t => t.symbol.toLowerCase().includes(term) || t.notes?.toLowerCase().includes(term) || t.tags?.some(tag => tag.toLowerCase().includes(term)));
-    }
-    if (symbolFilter) result = result.filter(t => t.symbol === symbolFilter);
-    if (typeFilter !== 'All') result = result.filter(t => t.type === typeFilter);
     if (activeView === 'forex') result = result.filter(t => isForexPair(t.symbol));
     if (activeView === 'mistakes') result = result.filter(t => (t.mistakes?.length || 0) > 0);
     if (activeView === 'winners') result = result.filter(t => (t.profit_loss ?? 0) > 0);
     if (activeView === 'losers') result = result.filter(t => (t.profit_loss ?? 0) < 0);
     if (activeView === 'review') result = result.filter(t => getTradeReviewReasons(t).length > 0);
-    if (dateFilter !== 'All') {
-      const now = new Date();
-      const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter] || 0;
-      const cutoff = new Date(now.getTime() - days * 86400000);
-      result = result.filter(t => new Date(t.entry_time) >= cutoff);
-    }
-    result.sort((a, b) => {
-      const fA = a[sortField], fB = b[sortField];
-      if (typeof fA === 'string' && typeof fB === 'string') return sortDirection === 'asc' ? fA.localeCompare(fB) : fB.localeCompare(fA);
-      return sortDirection === 'asc' ? (fA as number) - (fB as number) : (fB as number) - (fA as number);
-    });
-    setTotalPages(Math.ceil(result.length / pageSize));
-    if (result.length > 0) {
-      const metrics = calculatePerformanceMetrics(result);
-      setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(result) });
-    } else {
-      setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
-    }
-    const start = (currentPage - 1) * pageSize;
-    setFilteredTrades(result.slice(start, start + pageSize));
-  }, [trades, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, sortField, sortDirection, currentPage, pageSize]);
+    setFilteredTrades(result);
+  }, [trades, activeView]);
 
-  const uniqueSymbols = Array.from(new Set(trades.map(t => t.symbol)));
-  const reviewQueue = trades
-    .map(trade => ({ trade, reasons: getTradeReviewReasons(trade), quality: getTradeQualityScore(trade) }))
-    .filter(item => item.reasons.length > 0)
-    .sort((a, b) => (a.quality - b.quality) || ((a.trade.profit_loss ?? 0) - (b.trade.profit_loss ?? 0)))
-    .slice(0, 5)
+  // ── 6.3 Memoized heavy derivations ───────────────────────────────────────
+  const uniqueSymbols = useMemo(() => Array.from(new Set(trades.map(t => t.symbol))), [trades]);
 
-  const mistakeCost = trades.reduce<Record<string, number>>((acc, trade) => {
-    const pnl = trade.profit_loss ?? 0
-    if (pnl >= 0 || !trade.mistakes?.length) return acc
-    trade.mistakes.forEach(mistake => {
-      acc[mistake] = (acc[mistake] || 0) + Math.abs(pnl)
-    })
-    return acc
-  }, {})
-  const topMistakeCost = Object.entries(mistakeCost).sort((a, b) => b[1] - a[1]).slice(0, 3)
+  const reviewQueue = useMemo(() =>
+    trades
+      .map(trade => ({ trade, reasons: getTradeReviewReasons(trade), quality: getTradeQualityScore(trade) }))
+      .filter(item => item.reasons.length > 0)
+      .sort((a, b) => (a.quality - b.quality) || ((a.trade.profit_loss ?? 0) - (b.trade.profit_loss ?? 0)))
+      .slice(0, 5),
+    [trades]
+  );
+
+  const topMistakeCost = useMemo(() => {
+    const mistakeCost = trades.reduce<Record<string, number>>((acc, trade) => {
+      const pnl = trade.profit_loss ?? 0
+      if (pnl >= 0 || !trade.mistakes?.length) return acc
+      trade.mistakes.forEach(mistake => {
+        acc[mistake] = (acc[mistake] || 0) + Math.abs(pnl)
+      })
+      return acc
+    }, {});
+    return Object.entries(mistakeCost).sort((a, b) => b[1] - a[1]).slice(0, 3);
+  }, [trades]);
 
   const handleDeleteTrade = async (tradeId: string) => {
     if (!window.confirm('Delete this trade?')) return;
@@ -239,7 +254,8 @@ export default function Trades() {
     try {
       await deleteTrade(tradeId);
       if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
-    } catch (e) { console.error(e); } finally { setIsDeleting(null); }
+      toast.success('Trade deleted successfully');
+    } catch (e) { console.error(e); toast.error('Failed to delete trade'); } finally { setIsDeleting(null); }
   };
 
   const handleTradeFormSubmit = async (tradeData: Partial<Trade>) => {
@@ -248,11 +264,13 @@ export default function Trades() {
       setTrades(updated);
       if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
       setShowForm(false); setSelectedTrade(null);
+      toast.success(selectedTrade ? 'Trade updated' : 'Trade saved');
     } else {
       if (!user) return;
       await addTrade({ ...tradeData, user_id: user.id } as Trade);
       const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d);
       setShowForm(false); setSelectedTrade(null);
+      toast.success('Trade saved successfully');
     }
   };
 
@@ -264,6 +282,7 @@ export default function Trades() {
       await Promise.all(selectedTradeIds.map(id => deleteTrade(id)));
       if (user) { const d = await getAllTrades(user.id); setTrades(d); setFilteredTrades(d); }
       setSelectedTradeIds([]); setIsLoading(false);
+      toast.success(`${selectedTradeIds.length} trades deleted`);
     } else if (action === 'export') setShowExportModal(true);
     else if (action === 'tag') setShowTagModal(true);
   };
@@ -282,6 +301,7 @@ export default function Trades() {
       const a = document.createElement('a'); a.href = url; a.download = 'trades.json'; a.click(); URL.revokeObjectURL(url);
     }
     setShowExportModal(false); setIsProcessing(false);
+    toast.success(`Exported ${selected.length} trades as ${format.toUpperCase()}`);
   };
 
   const handleAddTag = async (tag: string) => {
@@ -301,8 +321,10 @@ export default function Trades() {
       }
       setSelectedTradeIds([])
       setShowTagModal(false)
+      toast.success(`Tag "${tag}" added to ${selectedTrades.length} trades`)
     } catch (error) {
       console.error('Failed to persist tags:', error)
+      toast.error('Failed to add tag')
     } finally {
       setIsProcessing(false)
     }
@@ -318,9 +340,7 @@ export default function Trades() {
   if (loading || isLoading) {
     return (
       <AuthenticatedLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
-        </div>
+        <TradesListSkeleton />
       </AuthenticatedLayout>
     )
   }
@@ -399,6 +419,44 @@ export default function Trades() {
               >
                 Comfortable
               </button>
+            </div>
+            {/* Column Visibility */}
+            <div className="relative">
+              <button
+                onClick={() => setShowColumnMenu(!showColumnMenu)}
+                className={`px-2.5 py-1.5 text-xs rounded-lg border transition-colors ${
+                  showColumnMenu ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30' : 'bg-[#0d0e16] text-gray-400 border-white/[0.06] hover:text-white'
+                }`}
+              >
+                Columns
+              </button>
+              {showColumnMenu && (
+                <div className="absolute right-0 top-full mt-1 z-20 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 min-w-[140px]">
+                  {[
+                    { key: 'lots', label: 'Lots / Qty' },
+                    { key: 'pips', label: 'Pips' },
+                    { key: 'quality', label: 'Quality' },
+                    { key: 'tags', label: 'Tags' },
+                  ].map(col => (
+                    <button
+                      key={col.key}
+                      onClick={() => setVisibleColumns(prev => ({ ...prev, [col.key]: !prev[col.key] }))}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-300 hover:bg-white/[0.04] rounded-lg transition-colors"
+                    >
+                      <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center ${
+                        visibleColumns[col.key] ? 'bg-indigo-500 border-indigo-500' : 'border-gray-600'
+                      }`}>
+                        {visibleColumns[col.key] && (
+                          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      {col.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -564,7 +622,8 @@ export default function Trades() {
         {/* Trade List */}
         <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-hidden">
           {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_80px_1fr_100px_90px_80px] gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
+          <div className={`hidden md:grid gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]`}
+            style={{ gridTemplateColumns: `40px 1.5fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 100px${visibleColumns.quality ? ' 90px' : ''} 80px` }}>
             <div className="flex items-center">
               <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
                 onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
@@ -576,35 +635,26 @@ export default function Trades() {
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('type')}>Side</div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_price')}>Entry</div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('exit_price')}>Exit</div>
-            <div>Lots / Qty</div>
-            <div>Pips</div>
+            {visibleColumns.lots && <div>Lots / Qty</div>}
+            {visibleColumns.pips && <div>Pips</div>}
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('profit_loss')}>
               P&L {sortField === 'profit_loss' && (sortDirection === 'asc' ? '↑' : '↓')}
             </div>
             <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_time')}>
               Date {sortField === 'entry_time' && (sortDirection === 'asc' ? '↑' : '↓')}
             </div>
-            <div title="Trade quality grade and score (0-100)">Quality (A-D / QS)</div>
+            {visibleColumns.quality && <div title="Trade quality grade and score (0-100)">Quality</div>}
             <div className="text-right">Actions</div>
           </div>
 
           {/* Rows */}
           {filteredTrades.length === 0 ? (
-            <div className="px-6 py-20 text-center">
-              <div className="text-gray-600 mb-3">
-                <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-              </div>
-              <p className="text-gray-400 font-medium mb-1">No trades found</p>
-              <p className="text-gray-600 text-sm mb-4">Start by logging your first trade</p>
-              <Link href="/trades/new" className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-500/10 text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-colors text-sm font-medium">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                Log Trade
-              </Link>
-            </div>
+            <EmptyState variant="trades" />
           ) : (
             filteredTrades.map((trade, idx) => (
               <div key={trade.id}
-                className={`grid grid-cols-1 md:grid-cols-[40px_1.5fr_80px_1fr_1fr_80px_80px_1fr_100px_90px_80px] gap-2 px-4 ${tableDensity === 'compact' ? 'py-2.5' : 'py-3.5'} items-center hover:bg-white/[0.03] transition-colors ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}>
+                className={`grid grid-cols-1 gap-2 px-4 ${tableDensity === 'compact' ? 'py-2.5' : 'py-3.5'} items-center hover:bg-white/[0.03] transition-colors ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}
+                style={{ gridTemplateColumns: `40px 1.5fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 100px${visibleColumns.quality ? ' 90px' : ''} 80px` }}>
                 {/* Checkbox */}
                 <div className="hidden md:flex items-center">
                   <input type="checkbox" checked={selectedTradeIds.includes(trade.id)}
@@ -619,7 +669,7 @@ export default function Trades() {
                   </div>
                   <div>
                     <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white`}>{trade.symbol}</div>
-                    {trade.tags && trade.tags.length > 0 && (
+                    {visibleColumns.tags && trade.tags && trade.tags.length > 0 && (
                       <div className="flex gap-1 mt-0.5">
                         {trade.tags.slice(0, 2).map((tag, i) => (
                           <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400">{tag}</span>
@@ -644,14 +694,18 @@ export default function Trades() {
                 <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
 
                 {/* Lots / Qty */}
+                {visibleColumns.lots && (
                 <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400`}>
                   {isForexPair(trade.symbol) ? formatLots(trade.lots) : trade.quantity}
                 </div>
+                )}
 
                 {/* Pips */}
+                {visibleColumns.pips && (
                 <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono ${!isForexPair(trade.symbol) ? 'text-gray-800' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
                   {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
                 </div>
+                )}
 
                 {/* P&L */}
                 <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
@@ -664,6 +718,7 @@ export default function Trades() {
                 </div>
 
                 {/* Quality / Rule Badges */}
+                {visibleColumns.quality && (
                 <div className="flex flex-col gap-1">
                   {(() => {
                     const score = getTradeQualityScore(trade)
@@ -689,6 +744,7 @@ export default function Trades() {
                     )
                   })()}
                 </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-1">

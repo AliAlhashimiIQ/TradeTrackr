@@ -57,7 +57,7 @@ interface GetAllTradesOptions {
   endDate?: string;
 }
 
-// Function to get all trades
+// Function to get all trades (used for analytics, dashboard — full dataset needed)
 export async function getAllTrades(userId?: string, options?: GetAllTradesOptions): Promise<Trade[]> {
   try {
     let query = supabase
@@ -86,6 +86,81 @@ export async function getAllTrades(userId?: string, options?: GetAllTradesOption
   } catch (error) {
     
     return [];
+  }
+}
+
+// ─── 6.2 Server-side Paginated Trades ──────────────────────────────────────
+// Returns one page of trades + the total count in a single round-trip.
+// Use this on the /trades list page to avoid loading 500+ rows at once.
+export interface PagedTradesResult {
+  trades: Trade[];
+  total: number;
+}
+
+export interface PagedTradesOptions {
+  userId: string;
+  page?: number;        // 1-indexed
+  pageSize?: number;    // default 25
+  search?: string;
+  symbol?: string | null;
+  type?: 'All' | 'Long' | 'Short';
+  dateFilter?: 'All' | '7d' | '30d' | '90d' | '1y';
+  sortField?: string;
+  sortDirection?: 'asc' | 'desc';
+}
+
+export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTradesResult> {
+  const {
+    userId,
+    page = 1,
+    pageSize = 25,
+    search,
+    symbol,
+    type,
+    dateFilter,
+    sortField = 'entry_time',
+    sortDirection = 'desc',
+  } = opts;
+
+  try {
+    // Use count: 'exact' to get total without a second query
+    let query = supabase
+      .from('trades')
+      .select('*', { count: 'exact' })
+      .eq('user_id', userId)
+      .order(sortField, { ascending: sortDirection === 'asc' });
+
+    // Filters
+    if (symbol) query = query.eq('symbol', symbol);
+    if (type && type !== 'All') query = query.eq('type', type);
+
+    if (dateFilter && dateFilter !== 'All') {
+      const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter];
+      const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+      query = query.gte('entry_time', cutoff);
+    }
+
+    if (search) {
+      // Supabase full-text search is unavailable without a ts_vector column,
+      // so we filter symbol + notes via ilike
+      query = query.or(`symbol.ilike.%${search}%,notes.ilike.%${search}%`);
+    }
+
+    // Server-side pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+    if (error) throw error;
+
+    const trades = (data as Trade[]) || [];
+    const withTags = await attachTagsToTrades(trades);
+
+    return { trades: withTags, total: count ?? 0 };
+  } catch (err) {
+    console.error('getPagedTrades error:', err);
+    return { trades: [], total: 0 };
   }
 }
 

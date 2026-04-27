@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 
@@ -12,16 +12,14 @@ export default function PageTransitionProvider({ children }: PageTransitionProvi
   const pathname = usePathname()
 
   return (
-    <AnimatePresence mode="popLayout">
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.15, ease: 'easeOut' }}
-        className="min-h-screen flex flex-col flex-grow"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="min-h-screen flex flex-col flex-grow"
+    >
+      {children}
+    </motion.div>
   )
 }

@@ -925,7 +925,7 @@ export function generatePerformanceHeatmapData(trades: Trade[]): HeatmapData[] {
   return heatmapData;
 }
 
-export const calculateTradeMetrics = (trades: Trade[]): any => {
+export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
   if (!trades?.length) {
     return {
       totalTrades: 0,

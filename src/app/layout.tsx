@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google'
 import ClientNetworkWrapper from '@/components/common/ClientNetworkWrapper'
 import PageTransitionProvider from '@/providers/PageTransitionProvider'
 import { Providers } from '@/providers/Providers'
+import ToastProvider from '@/components/ui/ToastProvider'
 
 // Modern sans-serif font
 const jakarta = Plus_Jakarta_Sans({ 
@@ -14,8 +15,8 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Trade Journal | Advanced Analytics',
-  description: 'Track, analyze, and improve your trading performance',
+  title: 'TradeTrackr | Trading Journal & Analytics',
+  description: 'The professional trading journal that helps you track, analyze, and master your trading performance with AI-powered insights.',
 }
 
 export default function RootLayout({
@@ -31,6 +32,7 @@ export default function RootLayout({
             {children}
           </PageTransitionProvider>
           <ClientNetworkWrapper />
+          <ToastProvider />
         </Providers>
       </body>
     </html>

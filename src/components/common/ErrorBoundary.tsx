@@ -1,58 +1,57 @@
-import React, { Component, ReactNode, ErrorInfo } from 'react';
+'use client';
 
-interface ErrorBoundaryProps {
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+
+interface Props {
   children: ReactNode;
   fallback?: ReactNode;
 }
 
-interface ErrorBoundaryState {
+interface State {
   hasError: boolean;
   error: Error | null;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null
-    };
+class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return {
-      hasError: true,
-      error
-    };
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    // Here you could send the error to an error reporting service
-  }
+  private handleRetry = () => {
+    this.setState({ hasError: false, error: null });
+  };
 
-  render(): ReactNode {
+  public render() {
     if (this.state.hasError) {
-      // You can render any custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
-      
+
       return (
-        <div className="p-4 border border-red-300 rounded-md bg-red-50 text-red-700">
-          <h2 className="text-lg font-semibold mb-2">Something went wrong</h2>
-          <p className="mb-2">We've encountered an error. Please try refreshing the page.</p>
-          <details className="text-sm">
-            <summary className="cursor-pointer">Error details</summary>
-            <pre className="mt-2 p-2 bg-red-100 rounded overflow-auto text-xs">
-              {this.state.error?.toString()}
-            </pre>
-          </details>
-          <button 
-            className="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-            onClick={() => window.location.reload()}
+        <div className="flex flex-col items-center justify-center p-8 bg-red-500/5 border border-red-500/20 rounded-xl min-h-[200px] text-center">
+          <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-red-500" />
+          </div>
+          <h3 className="text-lg font-semibold text-white mb-2">Something went wrong</h3>
+          <p className="text-sm text-gray-400 max-w-xs mb-6">
+            We encountered an error while rendering this component. Our team has been notified.
+          </p>
+          <button
+            onClick={this.handleRetry}
+            className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
           >
-            Refresh Page
+            <RotateCcw className="w-4 h-4" />
+            Try Again
           </button>
         </div>
       );
@@ -62,4 +61,4 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
-export default ErrorBoundary; 
+export default ErrorBoundary;

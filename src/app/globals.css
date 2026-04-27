@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #06070b;
-  --foreground: #f1f5f9;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --primary: #6366f1;
   --primary-dark: #4f46e5;
   --primary-light: #818cf8;
@@ -13,6 +13,13 @@
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  --background: #06070b;
+  --foreground: #f1f5f9;
   --card-bg: #0d0e16;
   --card-border: rgba(255, 255, 255, 0.06);
 }
@@ -48,10 +55,10 @@
 }
 
 @layer components {
-  /* Scrollbar */
+  /* ─── Scrollbar ─────────────────────────────────── */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -59,70 +66,280 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 100px;
+    transition: background 0.2s;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.12);
   }
 
-  /* Card styles */
+  /* ─── Liquid Card ───────────────────────────────── */
+  /*
+   * Base .card class — used by components that already reference it.
+   * Universal dark-card rules below catch every inline Tailwind dark bg.
+   */
   .card {
-    @apply bg-[#0d0e16] border border-white/[0.06] rounded-xl;
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.035) 0%,
+      rgba(255, 255, 255, 0.01) 100%
+    ),
+    var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-top-color: rgba(255, 255, 255, 0.11);
+    border-radius: 16px;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+      0 24px 48px -12px rgba(0, 0, 0, 0.55),
+      0 4px 16px -4px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(2px);
+  }
+
+  /* light mode card stays clean */
+  :root:not(.dark) .card {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-top-color: rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.06),
+      0 8px 24px -4px rgba(0, 0, 0, 0.08);
+    backdrop-filter: none;
   }
 
   .card-hover {
-    @apply card hover:border-white/[0.1] hover:bg-[#10111a] transition-all duration-200;
+    @apply card transition-all duration-300;
+    &:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow:
+        0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+        0 32px 64px -12px rgba(0, 0, 0, 0.6),
+        0 4px 24px -4px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(99, 102, 241, 0.06);
+      transform: translateY(-1px);
+    }
   }
 
-  /* Glass effect */
+  /* ─────────────────────────────────────────────────
+   * UNIVERSAL LIQUID CARD SURFACE
+   * Targets every dark background variant used as a
+   * card across the whole app — dashboard, analytics,
+   * trades, calendar, settings, components — without
+   * touching any individual component file.
+   * ───────────────────────────────────────────────── */
+
+  /* Shared mixin — applied to all targets below */
+  .dark .rounded-2xl,
+  .dark .rounded-xl {
+    /* Only style elements that already carry a dark bg */
+  }
+
+  /* Core dark card bg colours used app-wide */
+  .dark [class*="bg-[#0d0e16]"],
+  .dark [class*="bg-[#0D0E16]"],
+  .dark [class*="bg-[#151823]"],
+  .dark [class*="bg-[#131825]"],
+  .dark [class*="bg-[#0f1117]"],
+  .dark [class*="bg-[#0a0b12]"],
+  .dark [class*="bg-[#0a0a10]"],
+  .dark [class*="bg-[#1a1f2c]"],
+  .dark [class*="bg-slate-950"],
+  .dark [class*="bg-slate-900"] {
+    /* ── liquid surface ─────────────────────────────── */
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.032) 0%,
+      rgba(255, 255, 255, 0.008) 100%
+    ), #0d0e16 !important;
+
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    border-top-color: rgba(255, 255, 255, 0.11) !important;
+
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.055) inset,
+      0 20px 48px -12px rgba(0, 0, 0, 0.52),
+      0 4px 16px -4px rgba(0, 0, 0, 0.32) !important;
+
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  /* Slightly lighter sub-panels (settings rows, table cells) */
+  .dark [class*="bg-white/[0.03]"],
+  .dark [class*="bg-white/[0.04]"],
+  .dark [class*="bg-white/[0.05]"] {
+    background: rgba(255, 255, 255, 0.038) !important;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.05) inset,
+      0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  /* Stat pill cards in dashboard — 5-column grid */
+  .dark [class*="bg-white dark:bg-[#0d0e16]"],
+  .dark [class*="dark:bg-[#0d0e16]"] {
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.032) 0%,
+      rgba(255, 255, 255, 0.008) 100%
+    ), #0d0e16 !important;
+    border-color: rgba(255, 255, 255, 0.07) !important;
+    border-top-color: rgba(255, 255, 255, 0.11) !important;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.055) inset,
+      0 20px 48px -12px rgba(0, 0, 0, 0.52),
+      0 4px 16px -4px rgba(0, 0, 0, 0.32) !important;
+  }
+
+  /* Analytics panelClass (slate-950) */
+  .dark [class*="dark:bg-slate-950"] {
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.028) 0%,
+      rgba(255, 255, 255, 0.006) 100%
+    ), #080b12 !important;
+    border-color: rgba(255, 255, 255, 0.065) !important;
+    border-top-color: rgba(255, 255, 255, 0.10) !important;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.05) inset,
+      0 20px 48px -12px rgba(0, 0, 0, 0.55),
+      0 4px 16px -4px rgba(0, 0, 0, 0.35) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+  }
+
+  /* Analytics subPanelClass (slate-900) */
+  .dark [class*="dark:bg-slate-900"] {
+    background: rgba(255, 255, 255, 0.028) !important;
+    border-color: rgba(255, 255, 255, 0.055) !important;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.045) inset,
+      0 8px 24px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Danger / red-tint panels */
+  .dark [class*="border-red-900"],
+  .dark [class*="border-red-500/"] {
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      0 12px 32px -8px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(239, 68, 68, 0.06) !important;
+  }
+
+  /* ─── Hover lift for any rounded dark element ─────── */
+  .dark [class*="bg-[#0d0e16]"]:hover,
+  .dark [class*="bg-[#151823]"]:hover,
+  .dark [class*="dark:bg-slate-950"]:hover {
+    border-color: rgba(255, 255, 255, 0.11) !important;
+    border-top-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.08) inset,
+      0 28px 56px -12px rgba(0, 0, 0, 0.6),
+      0 8px 24px -4px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(99, 102, 241, 0.05) !important;
+  }
+
+  /* ─── Glass ─────────────────────────────────────── */
   .glass {
-    background: rgba(13, 14, 22, 0.7);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(13, 14, 22, 0.72);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-top-color: rgba(255, 255, 255, 0.13);
+    border-radius: 16px;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.07) inset,
+      0 20px 40px -8px rgba(0, 0, 0, 0.5);
   }
 
-  /* Gradient text */
+  /* ─── Gradient text ─────────────────────────────── */
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400;
   }
 
-  /* Button styles */
+  /* ─── Liquid Buttons ────────────────────────────── */
   .btn-primary {
-    @apply px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-medium 
-    hover:from-indigo-500 hover:to-blue-500 transition-all duration-200 
-    shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30;
+    @apply px-4 py-2.5 text-white rounded-xl font-semibold transition-all duration-200;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #3b82f6 100%);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.18) inset,
+      0 8px 24px -4px rgba(99, 102, 241, 0.4),
+      0 2px 8px rgba(0, 0, 0, 0.3);
+    &:hover {
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.22) inset,
+        0 12px 32px -4px rgba(99, 102, 241, 0.5),
+        0 2px 12px rgba(0, 0, 0, 0.35);
+      transform: translateY(-1px);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.12) inset,
+        0 4px 12px -2px rgba(99, 102, 241, 0.3);
+    }
   }
 
   .btn-secondary {
-    @apply px-4 py-2.5 bg-white/[0.06] text-gray-300 rounded-lg font-medium 
-    hover:bg-white/[0.1] hover:text-white transition-all duration-200 
-    border border-white/[0.06];
+    @apply px-4 py-2.5 text-gray-300 rounded-xl font-medium transition-all duration-200;
+    background: rgba(255, 255, 255, 0.055);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.06) inset,
+      0 4px 12px rgba(0, 0, 0, 0.2);
+    &:hover {
+      background: rgba(255, 255, 255, 0.085);
+      color: white;
+      border-color: rgba(255, 255, 255, 0.13);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.09) inset,
+        0 6px 16px rgba(0, 0, 0, 0.25);
+    }
   }
 
   .btn-ghost {
-    @apply px-4 py-2.5 text-gray-400 rounded-lg font-medium 
-    hover:bg-white/[0.06] hover:text-white transition-all duration-200;
+    @apply px-4 py-2.5 text-gray-400 rounded-xl font-medium transition-all duration-200;
+    &:hover {
+      background: rgba(255, 255, 255, 0.055);
+      color: white;
+    }
   }
 
   .btn-danger {
-    @apply px-4 py-2.5 bg-red-500/10 text-red-400 rounded-lg font-medium 
-    hover:bg-red-500/20 transition-all duration-200 border border-red-500/20;
+    @apply px-4 py-2.5 text-red-400 rounded-xl font-medium transition-all duration-200;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.18);
+    &:hover {
+      background: rgba(239, 68, 68, 0.14);
+    }
   }
 
-  /* Input styles */
+  /* ─── Liquid Input ──────────────────────────────── */
   .input {
-    @apply w-full px-3 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-white text-sm
-    placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50
-    transition-all duration-200;
+    @apply w-full px-3 py-2.5 rounded-xl text-white text-sm
+    placeholder-gray-600 focus:outline-none transition-all duration-200;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) inset;
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(99, 102, 241, 0.5);
+      box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.2) inset,
+        0 0 0 3px rgba(99, 102, 241, 0.12);
+    }
   }
 
-  /* Stat card */
+  /* ─── Stat Card ─────────────────────────────────── */
   .stat-card {
     @apply card p-5 relative overflow-hidden;
   }
 
+  /* liquid shimmer line across the top */
   .stat-card::before {
     content: '';
     position: absolute;
@@ -130,38 +347,213 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(99, 102, 241, 0.5) 40%,
+      rgba(59, 130, 246, 0.4) 60%,
+      transparent 100%
+    );
+    opacity: 0.7;
+  }
+
+  /* faint indigo puddle glow at bottom */
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 60px;
+    background: radial-gradient(ellipse, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ─── Liquid Progress Bar ───────────────────────── */
+  .liquid-progress {
+    position: relative;
+    border-radius: 100px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) inset;
+  }
+
+  .liquid-progress-bar {
+    height: 100%;
+    border-radius: 100px;
+    position: relative;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.25) inset,
+      0 2px 8px rgba(99, 102, 241, 0.35);
+  }
+
+  /* shiny ripple on progress bar */
+  .liquid-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
+    border-radius: 100px;
+  }
+
+  /* ─── Nav pill ──────────────────────────────────── */
+  .nav-pill-active {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    box-shadow:
+      0 0 16px rgba(99, 102, 241, 0.15),
+      0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  }
+
+  /* ─── Liquid Sidebar ────────────────────────────── */
+  .sidebar-liquid {
+    background: linear-gradient(
+      180deg,
+      rgba(13, 14, 22, 0.98) 0%,
+      rgba(10, 11, 18, 0.99) 100%
+    );
+    border-right: 1px solid rgba(255, 255, 255, 0.055);
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+  }
+
+  /* ─── Topbar ────────────────────────────────────── */
+  .topbar-liquid {
+    background: rgba(6, 7, 11, 0.88);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* ─── Badge / chip ──────────────────────────────── */
+  .liquid-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    background: rgba(99, 102, 241, 0.12);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #818cf8;
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.15);
+  }
+
+  /* ─── Glow ring on hover (utility) ─────────────── */
+  .glow-indigo:hover {
+    box-shadow:
+      0 0 0 1px rgba(99, 102, 241, 0.2),
+      0 8px 24px -4px rgba(99, 102, 241, 0.25);
+  }
+
+  /* ─── Liquid divider ────────────────────────────── */
+  .liquid-divider {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.07) 30%,
+      rgba(255, 255, 255, 0.07) 70%,
+      transparent 100%
+    );
+  }
+
+  /* ─── Tooltip ───────────────────────────────────── */
+  .liquid-tooltip {
+    background: rgba(13, 14, 22, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.16);
+    border-radius: 10px;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.07) inset,
+      0 16px 40px rgba(0, 0, 0, 0.5);
   }
 }
 
 @layer utilities {
-  /* Animations */
+  /* ─── Animations ────────────────────────────────── */
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes slideIn {
     from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 
   @keyframes shimmer {
-    0% { background-position: -200% 0; }
-    100% { background-position: 200% 0; }
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
   }
 
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out forwards;
+  /* liquid blob pulse — very subtle, background layer only */
+  @keyframes liquidPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50%       { opacity: 0.7; transform: scale(1.04); }
   }
 
-  .animate-slideIn {
-    animation: slideIn 0.3s ease-out forwards;
+  /* ripple on card entry */
+  @keyframes liquidRipple {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
   }
 
+  .animate-fadeIn     { animation: fadeIn        0.35s ease-out  forwards; }
+  .animate-slideIn    { animation: slideIn       0.35s ease-out  forwards; }
+  .animate-liquid     { animation: liquidRipple  0.45s cubic-bezier(0.34, 1.3, 0.64, 1) forwards; }
+
+  /* Skeleton shimmer */
   .animate-shimmer {
-    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 25%,
+      rgba(255, 255, 255, 0.07) 50%,
+      rgba(255, 255, 255, 0.03) 75%
+    );
     background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Background ambient blobs — attach to page wrapper only */
+  .liquid-bg::before {
+    content: '';
+    position: fixed;
+    top: -20vh;
+    left: -10vw;
+    width: 60vw;
+    height: 60vh;
+    background: radial-gradient(ellipse, rgba(99, 102, 241, 0.055) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+    animation: liquidPulse 8s ease-in-out infinite;
+  }
+
+  .liquid-bg::after {
+    content: '';
+    position: fixed;
+    bottom: -15vh;
+    right: -8vw;
+    width: 50vw;
+    height: 50vh;
+    background: radial-gradient(ellipse, rgba(59, 130, 246, 0.04) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+    animation: liquidPulse 10s ease-in-out infinite reverse;
   }
 }

@@ -12,6 +12,8 @@ import { TEXT, BUTTONS, CARDS, LAYOUT } from '@/lib/designSystem'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { analyzeTradePatterns, analyzeTrade } from '@/lib/ai/aiService'
 import { TradeAnalysis } from '@/lib/ai/aiService'
+import { CalendarSkeleton } from '@/components/ui/SkeletonLoader'
+import EmptyState from '@/components/ui/EmptyState'
 
 // Helper to generate dates for the calendar
 const generateCalendarDates = (year: number, month: number) => {
@@ -160,6 +162,7 @@ export default function CalendarPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [trades, setTrades] = useState<Trade[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Week')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -200,9 +203,15 @@ export default function CalendarPage() {
   
   useEffect(() => {
     const fetchTrades = async () => {
-      if (user) {
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+      try {
         const allTrades = await getAllTrades(user.id)
         setTrades(allTrades)
+      } finally {
+        setIsLoading(false)
       }
     }
     
@@ -415,11 +424,11 @@ export default function CalendarPage() {
     }, 0)
   }
   
-  if (loading) {
+  if (loading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <AuthenticatedLayout>
+        <CalendarSkeleton />
+      </AuthenticatedLayout>
     )
   }
   
@@ -634,6 +643,9 @@ export default function CalendarPage() {
               </div>
               
         {/* Calendar */}
+        {trades.length === 0 ? (
+          <EmptyState variant="calendar" />
+        ) : (
         <AnimatePresence mode="wait">
           <motion.div
             key={viewMode}
@@ -645,6 +657,7 @@ export default function CalendarPage() {
             {viewMode === 'Week' ? renderWeekView() : renderMonthView()}
           </motion.div>
         </AnimatePresence>
+        )}
         
         {/* Selected Day Details with AI Analysis */}
             {selectedDate && (

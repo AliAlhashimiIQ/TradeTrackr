@@ -1,18 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import EquityCurve from '@/components/charts/EquityCurve';
-import WinLossDistribution from '@/components/charts/WinLossDistribution';
-import MonthlyPerformance from '@/components/charts/MonthlyPerformance';
-import DrawdownChart from '@/components/charts/DrawdownChart';
-import SymbolPerformance from '@/components/charts/SymbolPerformance';
-import TradeTypePerformance from '@/components/charts/TradeTypePerformance';
-import TimeOfDayPerformance from '@/components/charts/TimeOfDayPerformance';
-import PerformanceHeatmap from '@/components/charts/PerformanceHeatmap';
-import StrategyPerformance from '@/components/charts/StrategyPerformance';
-import MistakesCostChart from '@/components/charts/MistakesCostChart';
+import dynamic from 'next/dynamic';
+
+// ─── 6.5 Dynamic (code-split) imports for heavy chart components ──────────────
+// Each chart is a separate JS chunk — only loaded when the analytics tab is opened.
+const EquityCurve = dynamic(() => import('@/components/charts/EquityCurve'), { ssr: false });
+const WinLossDistribution = dynamic(() => import('@/components/charts/WinLossDistribution'), { ssr: false });
+const MonthlyPerformance = dynamic(() => import('@/components/charts/MonthlyPerformance'), { ssr: false });
+const DrawdownChart = dynamic(() => import('@/components/charts/DrawdownChart'), { ssr: false });
+const SymbolPerformance = dynamic(() => import('@/components/charts/SymbolPerformance'), { ssr: false });
+const TradeTypePerformance = dynamic(() => import('@/components/charts/TradeTypePerformance'), { ssr: false });
+const TimeOfDayPerformance = dynamic(() => import('@/components/charts/TimeOfDayPerformance'), { ssr: false });
+const PerformanceHeatmap = dynamic(() => import('@/components/charts/PerformanceHeatmap'), { ssr: false });
+const StrategyPerformance = dynamic(() => import('@/components/charts/StrategyPerformance'), { ssr: false });
+const MistakesCostChart = dynamic(() => import('@/components/charts/MistakesCostChart'), { ssr: false });
+
 import AdvancedFilters, { FilterOptions } from '@/components/analytics/AdvancedFilters';
 import ExportData from '@/components/analytics/ExportData';
 import { getAllTrades } from '@/lib/tradingApi';
@@ -40,6 +45,11 @@ import {
 } from '@/lib/tradeMetrics';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import AIInsights from '@/components/dashboard/AIInsights';
+import { AnalyticsSkeleton } from '@/components/ui/SkeletonLoader';
+import EmptyState from '@/components/ui/EmptyState';
+import PropFirmAnalyticsTab from '@/components/analytics/PropFirmAnalyticsTab';
+import { PROP_FIRMS, computeChallengeStatus, ChallengeStatus } from '@/lib/propFirms';
+import { supabase } from '@/lib/supabaseClient';
 
 // Time period options for filtering
 type TimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
@@ -50,7 +60,8 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [showFilters, setShowFilters] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'mistakes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'mistakes' | 'propfirm'>('overview');
+  const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null);
   
   // New states for advanced filters and export
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -70,8 +81,8 @@ export default function AnalyticsPage() {
   const [timeOfDayData, setTimeOfDayData] = useState<TimeOfDayPerformanceType[]>([]);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [totalPips, setTotalPips] = useState(0);
-  const panelClass = 'rounded-2xl border border-slate-800/80 bg-slate-950/65 backdrop-blur-sm';
-  const subPanelClass = 'rounded-xl border border-slate-800 bg-slate-900/60';
+  const panelClass = 'card rounded-2xl border border-gray-200 dark:border-slate-800/80 bg-white dark:bg-slate-950/65 backdrop-blur-sm';
+  const subPanelClass = 'card rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/60';
   
   // Auth check and redirect
   useEffect(() => {
@@ -94,6 +105,24 @@ export default function AnalyticsPage() {
         // Apply time period filter
         const filtered = filterTradesByTimePeriod(trades, timePeriod);
         setFilteredTrades(filtered);
+
+        // Load challenge status
+        const { data: profileData } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
+        const s = profileData?.settings || {};
+        if (s.propFirmId && s.propFirmTier) {
+          const firm = PROP_FIRMS.find((f: any) => f.id === s.propFirmId);
+          const tier = firm?.tiers.find((t: any) => t.tierName === s.propFirmTier);
+          if (firm && tier) {
+            const startBalance = Number(s.challengeStartBalance) || tier.accountSize;
+            const startDate = s.challengeStartDate || new Date().toISOString().slice(0, 10);
+            const challengeTrades = trades.filter((t: any) => t.entry_time >= startDate);
+            const totalPnL = challengeTrades.reduce((sum: number, t: any) => sum + t.profit_loss, 0);
+            const currentBalance = startBalance + totalPnL;
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayPnL = challengeTrades.filter((t: any) => t.entry_time.startsWith(todayStr)).reduce((sum: number, t: any) => sum + t.profit_loss, 0);
+            setChallengeStatus(computeChallengeStatus(firm, tier, startDate, startBalance, currentBalance, todayPnL));
+          }
+        }
       } catch (error) {
         console.error('Error fetching trades:', error);
       } finally {
@@ -104,42 +133,39 @@ export default function AnalyticsPage() {
     fetchTrades();
   }, [user]);
   
-  // Calculate metrics when filtered trades change
-  useEffect(() => {
-    if (filteredTrades.length > 0) {
-      // Calculate all metrics and data for charts
-      const metrics = calculatePerformanceMetrics(filteredTrades);
-      setMetrics(metrics);
-      
-      const equityCurveData = generateEquityCurveData(filteredTrades);
-      setEquityCurveData(equityCurveData);
-      
-      const distributionData = generatePnLDistributionData(filteredTrades, 10);
-      setDistributionData(distributionData);
-      
-      const monthlyData = generateMonthlyPerformanceData(filteredTrades);
-      setMonthlyData(monthlyData);
-      
-      const strategyData = generateStrategyPerformanceData(filteredTrades);
-      setStrategyData(strategyData);
-      
-      // New data for additional charts
-      const symbolData = generateSymbolPerformanceData(filteredTrades);
-      setSymbolData(symbolData);
-      
-      const tradeTypeData = generateTradeTypePerformanceData(filteredTrades);
-      setTradeTypeData(tradeTypeData);
-      
-      const timeOfDayData = generateTimeOfDayPerformanceData(filteredTrades);
-      setTimeOfDayData(timeOfDayData);
-      
-      const heatmapData = generatePerformanceHeatmapData(filteredTrades);
-      setHeatmapData(heatmapData);
-      
-      const pips = filteredTrades.reduce((sum, t) => sum + (t.pips || 0), 0);
-      setTotalPips(pips);
-    }
+  // ── 6.3 Memoize ALL heavy chart data in one pass ─────────────────────────
+  // Replaces 9 separate setState calls with a single memoised computation.
+  // Only re-runs when filteredTrades reference changes.
+  const computedMetrics = useMemo(() => {
+    if (!filteredTrades.length) return null;
+    return {
+      metrics:      calculatePerformanceMetrics(filteredTrades),
+      equityCurve:  generateEquityCurveData(filteredTrades),
+      distribution: generatePnLDistributionData(filteredTrades, 10),
+      monthly:      generateMonthlyPerformanceData(filteredTrades),
+      strategy:     generateStrategyPerformanceData(filteredTrades),
+      symbol:       generateSymbolPerformanceData(filteredTrades),
+      tradeType:    generateTradeTypePerformanceData(filteredTrades),
+      timeOfDay:    generateTimeOfDayPerformanceData(filteredTrades),
+      heatmap:      generatePerformanceHeatmapData(filteredTrades),
+      totalPips:    filteredTrades.reduce((s, t) => s + (t.pips || 0), 0),
+    };
   }, [filteredTrades]);
+
+  // Sync memoised values back into state for components that read from state
+  useEffect(() => {
+    if (!computedMetrics) return;
+    setMetrics(computedMetrics.metrics);
+    setEquityCurveData(computedMetrics.equityCurve);
+    setDistributionData(computedMetrics.distribution);
+    setMonthlyData(computedMetrics.monthly);
+    setStrategyData(computedMetrics.strategy);
+    setSymbolData(computedMetrics.symbol);
+    setTradeTypeData(computedMetrics.tradeType);
+    setTimeOfDayData(computedMetrics.timeOfDay);
+    setHeatmapData(computedMetrics.heatmap);
+    setTotalPips(computedMetrics.totalPips);
+  }, [computedMetrics]);
   
   // Apply time period filter
   useEffect(() => {
@@ -260,11 +286,11 @@ export default function AnalyticsPage() {
     value: point.equity
   }));
   
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0a0a10]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <AuthenticatedLayout>
+        <AnalyticsSkeleton />
+      </AuthenticatedLayout>
     );
   }
   
@@ -278,8 +304,8 @@ export default function AnalyticsPage() {
         {/* Dashboard Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-100 tracking-tight">Analytics Dashboard</h1>
-            <p className="text-slate-400 mt-1">Track your performance, leaks, and what to improve next.</p>
+            <h1 className="text-3xl font-semibold text-gray-900 dark:text-slate-100 tracking-tight">Analytics Dashboard</h1>
+            <p className="text-gray-500 dark:text-slate-400 mt-1">Track your performance, leaks, and what to improve next.</p>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -520,10 +546,30 @@ export default function AnalyticsPage() {
           >
             Cost of Mistakes
           </button>
+          <button
+            onClick={() => setActiveTab('propfirm')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
+              activeTab === 'propfirm'
+                ? 'border-indigo-500 text-indigo-400'
+                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+            }`}
+          >
+            🏆 Prop Firm
+            {challengeStatus && !challengeStatus.isViolated && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+            )}
+            {challengeStatus?.isViolated && (
+              <span className="w-2 h-2 rounded-full bg-red-400"></span>
+            )}
+          </button>
         </div>
         
         {activeTab === 'overview' && (
           <>
+            {filteredTrades.length === 0 && !loading ? (
+              <EmptyState variant="analytics" />
+            ) : (
+            <>
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className={`${panelClass} overflow-hidden`}>
@@ -762,6 +808,8 @@ export default function AnalyticsPage() {
             
             {/* Key Insights */}
             <AIInsights trades={filteredTrades} isLoading={loading} />
+            </>
+            )}
           </>
         )}
         
@@ -945,6 +993,11 @@ export default function AnalyticsPage() {
           trades={allTrades}
         />
         
+        {/* Prop Firm Tab */}
+        {activeTab === 'propfirm' && (
+          <PropFirmAnalyticsTab trades={allTrades} challengeStatus={challengeStatus} />
+        )}
+
         {/* Export Data Modal */}
         <ExportData
           isOpen={showExportModal}

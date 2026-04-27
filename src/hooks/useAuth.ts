@@ -14,17 +14,9 @@ export const useAuth = () => {
     // Get session from Supabase
     const fetchSession = async () => {
       try {
-        console.log('Fetching initial session')
         const { data: { session } } = await supabase.auth.getSession()
-        console.log('Initial session:', session ? 'Found' : 'Not found')
         setSession(session)
         setUser(session?.user ?? null)
-        
-        // If user is already logged in and on login page, redirect to dashboard
-        if (session?.user && window.location.pathname === '/login') {
-          console.log('User already logged in, redirecting to dashboard')
-          window.location.href = '/dashboard'
-        }
         setLoading(false)
       } catch (error) {
         console.error('Error fetching session:', error)
@@ -34,27 +26,13 @@ export const useAuth = () => {
 
     fetchSession()
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state changed:', event, session ? 'Session exists' : 'No session')
         setSession(session)
         setUser(session?.user ?? null)
         
-        // Handle auth events
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in:', session?.user?.email)
-          if (window.location.pathname === '/login' || window.location.pathname === '/auth/callback') {
-            console.log('Redirecting to dashboard after sign in')
-            window.location.href = '/dashboard'
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out')
-          window.location.href = '/login'
-        } else if (event === 'USER_UPDATED') {
-          console.log('User updated')
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed')
+        if (event === 'SIGNED_OUT') {
+          router.push('/login')
         }
         
         setLoading(false)
@@ -108,16 +86,23 @@ export const useAuth = () => {
   const signOut = async () => {
     setAuthError(null)
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
+      // Use 'local' scope so Supabase won't throw if the server session is
+      // already gone (e.g. expired token / tab restored after a long sleep).
+      const { error } = await supabase.auth.signOut({ scope: 'local' })
+      if (error && error.message !== 'Auth session missing!') {
         setAuthError(error)
         throw error
       }
-      // Navigation will be handled by onAuthStateChange
-      console.log('Signed out')
-    } catch (error) {
-      console.error('Error signing out:', error)
-      throw error
+    } catch (error: any) {
+      // Ignore "Auth session missing" — the user is already effectively signed out
+      if (error?.message !== 'Auth session missing!') {
+        console.error('Error signing out:', error)
+      }
+    } finally {
+      // Always clear local state and redirect regardless of Supabase response
+      setUser(null)
+      setSession(null)
+      router.push('/login')
     }
   }
 

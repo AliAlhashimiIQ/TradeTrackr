@@ -113,7 +113,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0f1117] rounded-lg shadow-2xl border border-gray-800 w-full max-w-6xl max-h-[90vh] flex flex-col">
+      <div className="card bg-[#0f1117] rounded-lg shadow-2xl border border-gray-800 w-full max-w-6xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <div>
@@ -225,10 +225,10 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                         {isForex ? formatLots(trade.lots) : trade.quantity}
                       </div>
                     </div>
-                    {isForex && trade.pips !== undefined && (
+                    {isForex && trade.pips !== undefined && trade.pips !== null && (
                       <div>
                         <div className="text-gray-400 text-xs">Pips</div>
-                        <div className={`font-mono text-lg ${trade.pips >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <div className={`font-mono text-lg ${(trade.pips ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {formatPips(trade.pips)}
                         </div>
                       </div>

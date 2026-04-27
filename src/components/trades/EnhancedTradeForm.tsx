@@ -180,6 +180,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // prevent double-submit
     const newErrors: Record<string, string> = {};
     if (!formData.symbol?.trim()) newErrors.symbol = 'Required';
     if (!formData.entry_price || formData.entry_price <= 0) newErrors.entry_price = 'Required';
@@ -274,6 +275,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                 className={`w-full px-5 py-4 bg-[#0d0e16] border rounded-xl text-white text-xl font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.symbol ? 'border-red-500/50' : 'border-white/[0.06]'}`}
                 autoComplete="off"
               />
+              {errors.symbol && <p className="text-xs text-red-500 mt-2 ml-1">{errors.symbol}</p>}
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {INSTRUMENTS.map(s => (
                   <button
@@ -348,6 +350,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     placeholder="0.00"
                     className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.entry_price ? 'text-red-400' : ''}`}
                   />
+                  {errors.entry_price && <p className="text-xs text-red-500 mt-1">{errors.entry_price}</p>}
                 </div>
                 <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Exit Price</label>
@@ -358,6 +361,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     placeholder="0.00"
                     className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.exit_price ? 'text-red-400' : ''}`}
                   />
+                  {errors.exit_price && <p className="text-xs text-red-500 mt-1">{errors.exit_price}</p>}
                 </div>
                 <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
                   <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">{isForex ? 'Lots' : 'Quantity'}</label>
@@ -368,6 +372,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     placeholder={isForex ? "0.01" : "1.0"}
                     className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.quantity ? 'text-red-400' : ''}`}
                   />
+                  {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
                 </div>
                 {isForex ? (
                   <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
@@ -390,8 +395,9 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                       type="date"
                       value={formData.entry_time || ''}
                       onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
-                      className="w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark]"
+                      className={`w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark] ${errors.entry_time ? 'text-red-400' : ''}`}
                     />
+                    {errors.entry_time && <p className="text-xs text-red-500 mt-1">{errors.entry_time}</p>}
                   </div>
                 )}
               </div>
@@ -402,8 +408,9 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     type="date"
                     value={formData.entry_time || ''}
                     onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
-                    className="w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark]"
+                    className={`w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark] ${errors.entry_time ? 'text-red-400' : ''}`}
                   />
+                  {errors.entry_time && <p className="text-xs text-red-500 mt-1">{errors.entry_time}</p>}
                 </div>
               )}
             </div>

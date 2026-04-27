@@ -218,8 +218,16 @@ export function analyzeTradeDeep(trade: Trade): TradeAnalysis {
   return { strengths, weaknesses, improvementAreas, sentiment, score };
 }
 
+export interface AggregatedAnalysis {
+  topStrengths: string[];
+  topWeaknesses: string[];
+  topImprovements: string[];
+  overallSentiment: 'positive' | 'negative' | 'neutral';
+  avgScore: number;
+}
+
 // Aggregate deep analysis for dashboard-level feedback
-export function aggregateDeepAnalysis(trades: Trade[]) {
+export function aggregateDeepAnalysis(trades: Trade[]): AggregatedAnalysis {
   const allStrengths: string[] = [];
   const allWeaknesses: string[] = [];
   const allImprovements: string[] = [];
@@ -501,7 +509,7 @@ export interface TrainingStatistics {
   };
 }
 
-export async function storeUserCorrection(field: string, analysisValue: any, userValue: any): Promise<void> {
+export async function storeUserCorrection(field: string, analysisValue: unknown, userValue: unknown): Promise<void> {
   console.log('storeUserCorrection', field, analysisValue, userValue);
 }
 
