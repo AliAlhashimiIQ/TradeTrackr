@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote } from './types';
+import { sanitizeTradeInput } from './sanitize';
 
 async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
   if (!trades.length) return trades;
@@ -164,37 +165,80 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
   }
 }
 
+export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'page' | 'pageSize' | 'sortField' | 'sortDirection'>): Promise<Trade[]> {
+  const {
+    userId,
+    search,
+    symbol,
+    type,
+    dateFilter,
+  } = opts;
+
+  try {
+    let query = supabase
+      .from('trades')
+      .select('profit_loss, entry_time')
+      .eq('user_id', userId);
+
+    if (symbol) query = query.eq('symbol', symbol);
+    if (type && type !== 'All') query = query.eq('type', type);
+
+    if (dateFilter && dateFilter !== 'All') {
+      const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter as string];
+      if (days) {
+        const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+        query = query.gte('entry_time', cutoff);
+      }
+    }
+
+    if (search) {
+      query = query.or(`symbol.ilike.%${search}%,notes.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    return (data as Trade[]) || [];
+  } catch (err) {
+    console.error('getFilteredTradeMetrics error:', err);
+    return [];
+  }
+}
+
 // Function to add a new trade
 export async function addTrade(trade: Trade): Promise<Trade> {
   try {
+    // Sanitize user-editable fields before saving
+    const sanitized = sanitizeTradeInput(trade) as Trade;
+
     // Generate a UUID if not provided
-    if (!trade.id) {
-      trade.id = crypto.randomUUID();
+    if (!sanitized.id) {
+      sanitized.id = crypto.randomUUID();
     }
     
     // Use the database fields directly - only include columns that exist in the table
     const tradeData: Record<string, unknown> = {
-      id: trade.id,
-      user_id: trade.user_id,
-      symbol: trade.symbol,
-      type: trade.type,
-      entry_price: trade.entry_price,
-      exit_price: trade.exit_price,
-      entry_time: trade.entry_time,
-      exit_time: trade.exit_time,
-      quantity: trade.quantity,
-      profit_loss: trade.profit_loss,
-      screenshot_url: trade.screenshot_url,
-      notes: trade.notes,
-      emotional_state: trade.emotional_state,
-      mistakes: trade.mistakes || [],
-      lots: trade.lots,
-      pips: trade.pips,
+      id: sanitized.id,
+      user_id: sanitized.user_id,
+      symbol: sanitized.symbol,
+      type: sanitized.type,
+      entry_price: sanitized.entry_price,
+      exit_price: sanitized.exit_price,
+      entry_time: sanitized.entry_time,
+      exit_time: sanitized.exit_time,
+      quantity: sanitized.quantity,
+      profit_loss: sanitized.profit_loss,
+      screenshot_url: sanitized.screenshot_url,
+      notes: sanitized.notes,
+      emotional_state: sanitized.emotional_state,
+      mistakes: sanitized.mistakes || [],
+      lots: sanitized.lots,
+      pips: sanitized.pips,
     };
     
     // Only include optional fields if they have values
-    if (trade.risk) tradeData.risk = trade.risk;
-    if (trade.r_multiple) tradeData.r_multiple = trade.r_multiple;
+    if (sanitized.risk) tradeData.risk = sanitized.risk;
+    if (sanitized.r_multiple) tradeData.r_multiple = sanitized.r_multiple;
     
     // Insert the trade
     const { data, error } = await supabase
@@ -209,11 +253,11 @@ export async function addTrade(trade: Trade): Promise<Trade> {
     }
     
     // Handle tags separately if they exist
-    if (trade.tags && trade.tags.length > 0) {
-      await addTradeTagsToDatabase(trade.id, trade.user_id, trade.tags);
+    if (sanitized.tags && sanitized.tags.length > 0) {
+      await addTradeTagsToDatabase(sanitized.id, sanitized.user_id, sanitized.tags);
     }
     
-    return { ...trade, ...data } as Trade;
+    return { ...sanitized, ...data } as Trade;
   } catch (error) {
     
     throw error;
@@ -281,28 +325,31 @@ function getRandomColor() {
 // Function to update a trade
 export async function updateTrade(trade: Trade): Promise<Trade> {
   try {
+    // Sanitize user-editable fields before saving
+    const sanitized = sanitizeTradeInput(trade) as Trade;
+
     // Use the database fields directly
     const tradeData: Record<string, unknown> = {
-      id: trade.id,
-      user_id: trade.user_id,
-      symbol: trade.symbol,
-      type: trade.type,
-      entry_price: trade.entry_price,
-      exit_price: trade.exit_price,
-      entry_time: trade.entry_time,
-      exit_time: trade.exit_time,
-      quantity: trade.quantity,
-      profit_loss: trade.profit_loss,
-      screenshot_url: trade.screenshot_url,
-      notes: trade.notes,
-      emotional_state: trade.emotional_state,
-      mistakes: trade.mistakes || [],
-      lots: trade.lots,
-      pips: trade.pips,
+      id: sanitized.id,
+      user_id: sanitized.user_id,
+      symbol: sanitized.symbol,
+      type: sanitized.type,
+      entry_price: sanitized.entry_price,
+      exit_price: sanitized.exit_price,
+      entry_time: sanitized.entry_time,
+      exit_time: sanitized.exit_time,
+      quantity: sanitized.quantity,
+      profit_loss: sanitized.profit_loss,
+      screenshot_url: sanitized.screenshot_url,
+      notes: sanitized.notes,
+      emotional_state: sanitized.emotional_state,
+      mistakes: sanitized.mistakes || [],
+      lots: sanitized.lots,
+      pips: sanitized.pips,
     };
     
-    if (trade.risk) tradeData.risk = trade.risk;
-    if (trade.r_multiple) tradeData.r_multiple = trade.r_multiple;
+    if (sanitized.risk) tradeData.risk = sanitized.risk;
+    if (sanitized.r_multiple) tradeData.r_multiple = sanitized.r_multiple;
     
     const { data, error } = await supabase
       .from('trades')
@@ -631,7 +678,172 @@ export async function getTradeTagsById(tradeId: string): Promise<any[]> {
     if (error) throw error;
     return data?.map(item => item.tags) || [];
   } catch (error) {
-    
     return [];
   }
-} 
+}
+
+// ─── Phase 5: Bulk Import ───────────────────────────────────────────────────
+
+export interface ImportRecord {
+  id: string
+  user_id: string
+  file_name: string
+  source: 'mt5' | 'csv'
+  total_parsed: number
+  trades_imported: number
+  duplicates_skipped: number
+  errors: string[]
+  created_at: string
+}
+
+export interface BulkImportResult {
+  imported: number
+  skipped: number
+  errors: string[]
+  importId: string
+}
+
+/**
+ * Checks existing trades for duplicates using symbol + entry_time + lots as key.
+ * Returns a Set of keys that already exist in the database.
+ */
+export async function getExistingTradeKeys(userId: string): Promise<Set<string>> {
+  try {
+    const { data, error } = await supabase
+      .from('trades')
+      .select('symbol, entry_time, lots')
+      .eq('user_id', userId);
+
+    if (error) throw error;
+
+    const keys = new Set<string>();
+    (data || []).forEach((t: any) => {
+      keys.add(`${t.symbol}|${t.entry_time}|${t.lots ?? 0}`);
+    });
+    return keys;
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Bulk inserts a list of parsed trades. Skips duplicates.
+ * Records an import_history entry when done.
+ */
+export async function bulkInsertTrades(
+  userId: string,
+  parsedTrades: Array<{
+    symbol: string; type: 'Long' | 'Short'; entry_time: string; exit_time: string
+    entry_price: number; exit_price: number; quantity: number; lots: number
+    profit_loss: number; commission?: number; swap?: number; notes?: string
+    _key: string
+  }>,
+  source: 'mt5' | 'csv',
+  fileName: string,
+): Promise<BulkImportResult> {
+  const errors: string[] = [];
+  let imported = 0;
+  let skipped = 0;
+
+  try {
+    const existingKeys = await getExistingTradeKeys(userId);
+
+    const toInsert = parsedTrades.filter((t) => {
+      if (existingKeys.has(t._key)) {
+        skipped++;
+        return false;
+      }
+      return true;
+    });
+
+    if (toInsert.length > 0) {
+      const rows = toInsert.map((t) => ({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        symbol: t.symbol,
+        type: t.type,
+        entry_time: t.entry_time,
+        exit_time: t.exit_time,
+        entry_price: t.entry_price,
+        exit_price: t.exit_price,
+        quantity: t.quantity,
+        lots: t.lots,
+        profit_loss: t.profit_loss,
+        notes: [
+          t.notes,
+          t.commission ? `Commission: ${t.commission}` : null,
+          t.swap ? `Swap: ${t.swap}` : null,
+        ].filter(Boolean).join(' | ') || null,
+        mistakes: [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }));
+
+      // Insert in batches of 100 to avoid payload limits
+      const BATCH = 100;
+      for (let i = 0; i < rows.length; i += BATCH) {
+        const batch = rows.slice(i, i + BATCH);
+        const { error } = await supabase.from('trades').insert(batch);
+        if (error) {
+          errors.push(`Batch ${Math.ceil(i / BATCH) + 1} failed: ${error.message}`);
+        } else {
+          imported += batch.length;
+        }
+      }
+    }
+  } catch (e: unknown) {
+    errors.push(`Import failed: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // Record import history (best-effort — don't fail if table doesn't exist)
+  let importId = crypto.randomUUID();
+  try {
+    const { data } = await supabase
+      .from('import_history')
+      .insert({
+        id: importId,
+        user_id: userId,
+        file_name: fileName,
+        source,
+        total_parsed: parsedTrades.length,
+        trades_imported: imported,
+        duplicates_skipped: skipped,
+        errors,
+        created_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    if (data?.id) importId = data.id;
+  } catch {
+    // import_history table may not exist yet — silently ignore
+  }
+
+  return { imported, skipped, errors, importId };
+}
+
+/**
+ * Fetches the import history for a user.
+ */
+export async function getImportHistory(userId: string): Promise<ImportRecord[]> {
+  try {
+    const { data, error } = await supabase
+      .from('import_history')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) throw error;
+    return (data as ImportRecord[]) || [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Deletes an import history record.
+ */
+export async function deleteImportRecord(id: string): Promise<void> {
+  await supabase.from('import_history').delete().eq('id', id);
+}
+

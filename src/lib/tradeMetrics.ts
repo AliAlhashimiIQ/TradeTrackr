@@ -931,12 +931,24 @@ export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
       totalTrades: 0,
       winningTrades: 0,
       losingTrades: 0,
+      breakEvenTrades: 0,
       winRate: 0,
       averageWin: 0,
       averageLoss: 0,
       profitFactor: 0,
       totalPnL: 0,
-      maxDrawdown: 0
+      grossProfit: 0,
+      grossLoss: 0,
+      largestWin: 0,
+      largestLoss: 0,
+      riskRewardRatio: 0,
+      maxDrawdown: 0,
+      maxDrawdownPercent: 0,
+      maxDrawdownDuration: 0,
+      currentDrawdown: 0,
+      sharpeRatio: 0,
+      sortinoRatio: 0,
+      expectedValue: 0
     };
   }
 
@@ -946,12 +958,14 @@ export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
       return trade.type.toLowerCase() === 'long' ? profit : -profit;
     });
 
-    const winningTrades = profits.filter(p => p > 0);
-    const losingTrades = profits.filter(p => p < 0);
+    const winningTradesArr = profits.filter(p => p > 0);
+    const losingTradesArr = profits.filter(p => p < 0);
+    const breakEvenTradesArr = profits.filter(p => p === 0);
 
-    const totalProfit = profits.reduce((sum, p) => sum + p, 0);
-    const totalWins = winningTrades.reduce((sum, p) => sum + p, 0);
-    const totalLosses = Math.abs(losingTrades.reduce((sum, p) => sum + p, 0));
+    const totalPnL = profits.reduce((sum, p) => sum + p, 0);
+    const grossProfit = winningTradesArr.reduce((sum, p) => sum + p, 0);
+    const grossLoss = losingTradesArr.reduce((sum, p) => sum + p, 0);
+    const totalLosses = Math.abs(grossLoss);
 
     // Calculate max drawdown
     let peak = 0;
@@ -971,14 +985,28 @@ export const calculateTradeMetrics = (trades: Trade[]): PerformanceMetrics => {
 
     return {
       totalTrades: trades.length,
-      winningTrades: winningTrades.length,
-      losingTrades: losingTrades.length,
-      winRate: winningTrades.length / trades.length,
-      averageWin: winningTrades.length ? totalWins / winningTrades.length : 0,
-      averageLoss: losingTrades.length ? totalLosses / losingTrades.length : 0,
-      profitFactor: totalLosses ? totalWins / totalLosses : 0,
-      totalProfit,
-      maxDrawdown
+      winningTrades: winningTradesArr.length,
+      losingTrades: losingTradesArr.length,
+      breakEvenTrades: breakEvenTradesArr.length,
+      winRate: winningTradesArr.length / trades.length,
+      averageWin: winningTradesArr.length ? grossProfit / winningTradesArr.length : 0,
+      averageLoss: losingTradesArr.length ? totalLosses / losingTradesArr.length : 0,
+      profitFactor: totalLosses ? grossProfit / totalLosses : 0,
+      totalPnL,
+      grossProfit,
+      grossLoss,
+      largestWin: winningTradesArr.length ? Math.max(...winningTradesArr) : 0,
+      largestLoss: losingTradesArr.length ? Math.min(...losingTradesArr) : 0,
+      riskRewardRatio: losingTradesArr.length && winningTradesArr.length
+        ? (grossProfit / winningTradesArr.length) / (totalLosses / losingTradesArr.length)
+        : 0,
+      maxDrawdown,
+      maxDrawdownPercent: 0,
+      maxDrawdownDuration: 0,
+      currentDrawdown: 0,
+      sharpeRatio: 0,
+      sortinoRatio: 0,
+      expectedValue: 0
     };
   } catch (error) {
     console.error('Error calculating trade metrics:', error);

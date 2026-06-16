@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<'general' | 'notifications' | 'data' | 'danger' | 'account'>(
-    (searchParams.get('tab') as any) || 'general'
+    (searchParams?.get('tab') as any) || 'general'
   );
   const [isSaving, setIsSaving] = useState(false);
 

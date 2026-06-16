@@ -137,7 +137,7 @@ function LoginContent() {
                 <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-2xl font-bold text-white tracking-tight">TradeJournal</span>
+            <span className="text-2xl font-bold text-white tracking-tight">TradeTrackr</span>
           </div>
           
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
@@ -186,7 +186,7 @@ function LoginContent() {
                 <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-white">TradeJournal</span>
+            <span className="text-xl font-bold text-white">TradeTrackr</span>
           </div>
 
           <div className="mb-8">

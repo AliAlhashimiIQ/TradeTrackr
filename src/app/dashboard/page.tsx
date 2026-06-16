@@ -18,6 +18,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import ChallengeDashboardWidget from '@/components/dashboard/ChallengeDashboardWidget'
 import { PROP_FIRMS, computeChallengeStatus, ChallengeStatus } from '@/lib/propFirms'
 import { supabase } from '@/lib/supabaseClient'
+import MiniSparkline from '@/components/ui/MiniSparkline'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts'
@@ -163,6 +164,25 @@ export default function Dashboard() {
   const totalPips = useMemo(() => trades.filter(t => isForexPair(t.symbol)).reduce((s, t) => s + (t.pips || 0), 0), [trades])
   const forexCount = useMemo(() => trades.filter(t => isForexPair(t.symbol)).length, [trades])
 
+  // Generate sparkline data series from equity curve for stat pills
+  const sparklineData = useMemo(() => {
+    if (!equityData.values.length) return { equity: [], winRate: [], pf: [] }
+    const equity = equityData.values
+    // Build a running win-rate sparkline (last N trades)
+    const winRateSeries: number[] = []
+    const pfSeries: number[] = []
+    const window = Math.min(10, sorted.length)
+    for (let i = 0; i < Math.min(20, sorted.length); i++) {
+      const slice = sorted.slice(i, i + window)
+      const wins = slice.filter(t => t.profit_loss > 0).length
+      winRateSeries.push(wins / (slice.length || 1) * 100)
+      const grossWin = slice.filter(t => t.profit_loss > 0).reduce((s, t) => s + t.profit_loss, 0)
+      const grossLoss = Math.abs(slice.filter(t => t.profit_loss < 0).reduce((s, t) => s + t.profit_loss, 0))
+      pfSeries.push(grossLoss ? grossWin / grossLoss : grossWin > 0 ? 2 : 0)
+    }
+    return { equity: equity.slice(-20), winRate: winRateSeries.reverse(), pf: pfSeries.reverse() }
+  }, [equityData.values, sorted])
+
   const todayTrades = useMemo(() => {
     const today = new Date().toISOString().split('T')[0]
     return trades.filter(t => t.entry_time.startsWith(today))
@@ -271,15 +291,20 @@ export default function Dashboard() {
             {/* ── Stat Pills Row ── */}
             <ErrorBoundary>
               <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-                {[
-                  { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period` },
-                  { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L` },
-                  { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target' },
-                  { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today` },
-                  { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}` },
+              {[
+                  { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period`, spark: sparklineData.equity, sparkColor: metrics.total_pnl >= 0 ? '#10b981' : '#ef4444' },
+                  { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L`, spark: sparklineData.winRate, sparkColor: metrics.win_rate >= 0.5 ? '#10b981' : '#eab308' },
+                  { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target', spark: sparklineData.pf, sparkColor: '#6366f1' },
+                  { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today`, spark: [], sparkColor: '#a855f7' },
+                  { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}`, spark: [], sparkColor: '#6366f1' },
                 ].map((s, i) => (
                   <motion.div key={i} variants={item} whileHover={{ y: -2 }} className={`${card} p-4`}>
-                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</div>
+                      {s.spark.length >= 2 && (
+                        <MiniSparkline data={s.spark} width={64} height={24} color={s.sparkColor} />
+                      )}
+                    </div>
                     <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
                     <div className="text-[11px] text-gray-600 mt-1">{s.sub}</div>
                   </motion.div>

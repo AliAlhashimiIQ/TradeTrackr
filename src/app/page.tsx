@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
+import { useRef } from 'react'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -79,11 +80,43 @@ const features = [
 ]
 
 const stats = [
-  { value: '10+', label: 'Chart Types' },
-  { value: 'AI', label: 'Powered Analysis' },
-  { value: '100%', label: 'Free to Use' },
-  { value: '∞', label: 'Trades Tracked' },
+  { value: 15, suffix: '+', label: 'Chart Types' },
+  { value: 24, suffix: '/7', label: 'AI Analysis' },
+  { value: 100, suffix: '%', label: 'Free to Use' },
+  { value: 6, suffix: '', label: 'Prop Firms Supported' },
 ]
+
+const propFirms = ['FTMO', 'Funded Next', 'The 5%ers', 'E8 Funding', 'True Forex Funds', 'My Forex Funds']
+
+function AnimatedStat({ value, suffix, label }: { value: number; suffix: string; label: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const isInView = useInView(ref, { once: true, margin: '-50px' })
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    if (!isInView) return
+    let start = 0
+    const increment = value / (1.5 * 60)
+    let frame: number
+    const animate = () => {
+      start += increment
+      if (start >= value) { setCount(value); return }
+      setCount(Math.floor(start))
+      frame = requestAnimationFrame(animate)
+    }
+    frame = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(frame)
+  }, [isInView, value])
+
+  return (
+    <div ref={ref} className="text-center group">
+      <div className="text-3xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400 mb-1 tabular-nums">
+        {isInView ? count : 0}{suffix}
+      </div>
+      <div className="text-sm text-gray-500 font-medium group-hover:text-gray-400 transition-colors">{label}</div>
+    </div>
+  )
+}
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -129,7 +162,7 @@ export default function Home() {
                 <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-xl font-bold tracking-tight">TradeJournal</span>
+            <span className="text-xl font-bold tracking-tight">TradeTrackr</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -218,16 +251,11 @@ export default function Home() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.6 }}
-        className="relative z-10 py-10 border-y border-white/5"
+        className="relative z-10 py-12 border-y border-white/5"
       >
         <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat) => (
-            <div key={stat.label} className="text-center">
-              <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-blue-400 mb-1">
-                {stat.value}
-              </div>
-              <div className="text-sm text-gray-500 font-medium">{stat.label}</div>
-            </div>
+            <AnimatedStat key={stat.label} value={stat.value} suffix={stat.suffix} label={stat.label} />
           ))}
         </div>
       </motion.section>
@@ -316,6 +344,68 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Prop Firm Compatibility */}
+      <section className="relative z-10 py-20 px-6 border-t border-white/5">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-sm font-medium">
+              <span className="text-base">🏆</span>
+              Built for Prop Firm Traders
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">
+              Track your{' '}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-400">
+                challenge progress
+              </span>
+            </h2>
+            <p className="text-gray-400 text-lg max-w-xl mx-auto">
+              Real-time drawdown tracking, profit target monitoring, and consistency rule checks — never miss a rule violation again.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-w-lg mx-auto mb-10">
+            {propFirms.map((firm, i) => (
+              <motion.div
+                key={firm}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+                className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.06] text-center text-sm font-medium text-gray-300 hover:border-amber-500/30 hover:bg-amber-500/[0.04] transition-all duration-300"
+              >
+                {firm}
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              { icon: '📉', title: 'Daily DD Tracking', desc: 'Know exactly where you stand on your daily loss limit' },
+              { icon: '📊', title: 'Consistency Rules', desc: 'Auto-checks if any single day exceeds 40% of total profit' },
+              { icon: '🎯', title: 'Profit Targets', desc: 'Real-time progress bar towards your challenge profit target' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-amber-500/20 transition-all duration-300"
+              >
+                <div className="text-2xl mb-3">{item.icon}</div>
+                <h3 className="text-sm font-semibold text-white mb-1">{item.title}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 py-24 px-6">
         <div className="max-w-3xl mx-auto">
@@ -328,14 +418,28 @@ export default function Home() {
             {/* CTA Background */}
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-blue-600/20 backdrop-blur-sm" />
             <div className="absolute inset-0 border border-indigo-500/20 rounded-3xl" />
+            {/* Animated glow */}
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-[80px] animate-pulse" />
+            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: '1s' }} />
 
             <div className="relative p-12 text-center">
               <h2 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">
                 Ready to transform your trading?
               </h2>
-              <p className="text-gray-300 text-lg mb-8 max-w-lg mx-auto">
+              <p className="text-gray-300 text-lg mb-4 max-w-lg mx-auto">
                 Join traders who use data and discipline to consistently improve their results.
               </p>
+              {/* Social Proof */}
+              <div className="flex items-center justify-center gap-2 mb-8">
+                <div className="flex -space-x-2">
+                  {['bg-indigo-500', 'bg-blue-500', 'bg-cyan-500', 'bg-emerald-500'].map((bg, i) => (
+                    <div key={i} className={`w-7 h-7 rounded-full ${bg} border-2 border-[#06070b] flex items-center justify-center text-[10px] font-bold text-white`}>
+                      {String.fromCharCode(65 + i)}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-sm text-gray-400">Trusted by traders worldwide</span>
+              </div>
               <Link
                 href="/signup"
                 className="inline-flex px-8 py-3.5 text-base font-semibold bg-white text-gray-900 rounded-xl hover:bg-gray-100 transition-all duration-200 shadow-xl hover:shadow-2xl hover:-translate-y-0.5"
@@ -357,10 +461,10 @@ export default function Home() {
                 <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <span className="text-sm font-semibold text-gray-400">TradeJournal</span>
+            <span className="text-sm font-semibold text-gray-400">TradeTrackr</span>
           </div>
           <p className="text-sm text-gray-600">
-            © {new Date().getFullYear()} TradeJournal. All rights reserved.
+            © {new Date().getFullYear()} TradeTrackr. All rights reserved.
           </p>
         </div>
       </footer>

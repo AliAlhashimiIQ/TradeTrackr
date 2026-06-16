@@ -1,13 +1,13 @@
-# Supabase Setup Guide for TradeJournal
+# Supabase Setup Guide for TradeTrackr
 
-This guide will walk you through setting up your Supabase project for the TradeJournal application.
+This guide will walk you through setting up your Supabase project for the TradeTrackr application.
 
 ## 1. Create a Supabase Project
 
 1. Go to [https://supabase.com](https://supabase.com) and sign in or create a new account
 2. Click "New Project" and fill in the details:
    - Organization: Create a new organization or select an existing one
-   - Name: TradeJournal
+   - Name: TradeTrackr
    - Database Password: Create a strong password and save it securely
    - Region: Choose the region closest to your users
    - Pricing Plan: Free tier to start

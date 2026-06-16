@@ -15,6 +15,7 @@
   --danger: #ef4444;
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.08);
+  --tooltip-bg: #ffffff;
 }
 
 .dark {
@@ -22,6 +23,7 @@
   --foreground: #f1f5f9;
   --card-bg: #0d0e16;
   --card-border: rgba(255, 255, 255, 0.06);
+  --tooltip-bg: #0f1117;
 }
 
 @layer base {

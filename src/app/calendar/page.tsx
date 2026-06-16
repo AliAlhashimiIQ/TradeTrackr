@@ -141,7 +141,8 @@ const getDaysInMonth = (year: number, month: number) => {
 }
 
 const getFirstDayOfMonth = (year: number, month: number) => {
-  return new Date(year, month, 1).getDay()
+  const day = new Date(year, month, 1).getDay()
+  return day === 0 ? 6 : day - 1
 }
 
 const calculateDayPnL = (trades: Trade[]) => {
@@ -532,7 +533,7 @@ export default function CalendarPage() {
           `}
         >
           <div className="flex justify-between items-center mb-2">
-            <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>{dayNumber}</span>
+            <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>{isValidDay ? dayNumber : ''}</span>
                       {dayTrades.length > 0 && (
               <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 font-semibold">
                     {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}

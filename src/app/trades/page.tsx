@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Trade } from '@/lib/types'
-import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade } from '@/lib/tradingApi'
+import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics } from '@/lib/tradingApi'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
@@ -198,18 +198,48 @@ export default function Trades() {
       setTrades(page);          // current page only
       setFilteredTrades(page);  // same slice — view filters applied below
       setTotalPages(Math.ceil(total / pageSize));
-      if (page.length > 0) {
-        // For quick metrics we still compute from the page, analytics page uses getAllTrades
-        const metrics = calculatePerformanceMetrics(page);
-        setQuickMetrics({ winRate: metrics.winRate, profitFactor: metrics.profitFactor, totalPnL: metrics.totalPnL, avgWin: metrics.averageWin, avgLoss: metrics.averageLoss, tradesPerWeek: calculateTradesPerWeek(page) });
-      } else {
-        setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
-      }
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
   }, [user, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection]);
 
+  // ── Fetch global metrics for the current filter set ──────────────────────
+  const fetchGlobalMetrics = useCallback(async () => {
+    if (!user) return;
+    try {
+      const fullTrades = await getFilteredTradeMetrics({
+        userId: user.id,
+        search: searchTerm || undefined,
+        symbol: symbolFilter || undefined,
+        type: typeFilter,
+        dateFilter,
+      });
+      
+      let result = [...fullTrades];
+      // Apply activeView-only client filter to the global metrics as well
+      if (activeView === 'forex') result = result.filter(t => isForexPair(t.symbol));
+      if (activeView === 'mistakes') result = result.filter(t => (t.mistakes?.length || 0) > 0);
+      if (activeView === 'winners') result = result.filter(t => (t.profit_loss ?? 0) > 0);
+      if (activeView === 'losers') result = result.filter(t => (t.profit_loss ?? 0) < 0);
+      if (activeView === 'review') result = result.filter(t => getTradeReviewReasons(t).length > 0);
+
+      if (result.length > 0) {
+        const metrics = calculatePerformanceMetrics(result);
+        setQuickMetrics({ 
+          winRate: metrics.winRate, 
+          profitFactor: metrics.profitFactor, 
+          totalPnL: metrics.totalPnL, 
+          avgWin: metrics.averageWin, 
+          avgLoss: metrics.averageLoss, 
+          tradesPerWeek: calculateTradesPerWeek(result) 
+        });
+      } else {
+        setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
+      }
+    } catch (err) { console.error(err); }
+  }, [user, searchTerm, symbolFilter, typeFilter, dateFilter, activeView]);
+
   useEffect(() => { if (user) fetchPagedTrades(); }, [fetchPagedTrades, user]);
+  useEffect(() => { if (user) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user]);
   
   // Apply activeView-only client filter on the already-fetched page (6.1)
   // All other filters are handled server-side by fetchPagedTrades.

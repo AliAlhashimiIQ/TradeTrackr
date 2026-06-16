@@ -77,7 +77,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
         {children}
       </main>
       <footer className="py-4 px-6 text-center border-t border-white/[0.04] relative z-10">
-        <p className="text-xs text-gray-600">© {new Date().getFullYear()} TradeJournal. All rights reserved.</p>
+        <p className="text-xs text-gray-600">© {new Date().getFullYear()} TradeTrackr. All rights reserved.</p>
       </footer>
     </div>
   );

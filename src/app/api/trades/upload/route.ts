@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { authenticateRequest } from '@/lib/apiAuth';
+import { createClient } from '@supabase/supabase-js';
+
+// Allowed MIME types for video uploads
+const ALLOWED_VIDEO_TYPES = [
+  'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo',
+  'video/x-matroska', 'video/ogg',
+];
+
+// Max file size: 50 MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  // 1. Authenticate — reject unauthenticated requests
+  const auth = await authenticateRequest(request);
+  if ('error' in auth && auth.error) return auth.error;
+
+  const userId = auth.user!.id;
+
   try {
-    // Parse the multipart form data
+    // 2. Parse the multipart form data
     const formData = await request.formData();
     
     // Extract the video file and trade data
@@ -17,17 +33,44 @@ export async function POST(request: NextRequest) {
     if (!tradeData) {
       return NextResponse.json({ error: 'No trade data provided' }, { status: 400 });
     }
+
+    // 3. Validate file type
+    if (!ALLOWED_VIDEO_TYPES.includes(videoFile.type)) {
+      return NextResponse.json(
+        { error: `Invalid file type: ${videoFile.type}. Allowed: ${ALLOWED_VIDEO_TYPES.join(', ')}` },
+        { status: 400 }
+      );
+    }
+
+    // 4. Validate file size
+    if (videoFile.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB` },
+        { status: 400 }
+      );
+    }
     
-    // Parse the trade data
-    const trade = JSON.parse(tradeData);
+    // 5. Parse and validate trade data
+    let trade;
+    try {
+      trade = JSON.parse(tradeData);
+    } catch {
+      return NextResponse.json({ error: 'Invalid trade data JSON' }, { status: 400 });
+    }
+
+    // Ensure the trade belongs to the authenticated user
+    trade.user_id = userId;
     
-    // Generate a unique filename for the video
+    // 6. Upload to Supabase Storage using the service role client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     const timestamp = Date.now();
-    const fileName = `trade-video-${timestamp}-${videoFile.name}`;
+    const fileName = `${userId}/trade-video-${timestamp}-${videoFile.name}`;
     
-    // Upload the video to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('trade-videos') // Make sure this bucket exists in your Supabase
+      .from('trade-videos')
       .upload(fileName, videoFile, {
         contentType: videoFile.type,
         cacheControl: '3600',
@@ -52,7 +95,7 @@ export async function POST(request: NextRequest) {
       video_url: videoUrl
     };
     
-    // Save the trade to the database
+    // 7. Save the trade to the database
     const { data: tradeResult, error: tradeError } = await supabase
       .from('trades')
       .insert([tradeWithVideo])

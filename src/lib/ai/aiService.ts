@@ -112,33 +112,30 @@ function shouldUseMockData(): boolean {
   return false;
 }
 
-// Helper to call OpenAI for analytics
+// Helper to call AI analytics via server-side API route.
+// SECURITY: The OpenAI API key is now kept server-side only — never exposed to the client.
 async function callOpenAIForAnalytics(prompt: string, max_tokens = 600): Promise<any> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error('OpenAI API key not set');
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  // Get the current user's session token for authenticated API calls
+  const { supabase } = await import('../supabaseClient');
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+
+  const response = await fetch('/api/ai/analyze', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a professional trading coach AI. Respond in JSON.' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens,
-      temperature: 0.7
-    })
+    body: JSON.stringify({ prompt, max_tokens }),
   });
-  if (!response.ok) throw new Error('OpenAI API error');
-  const data = await response.json();
-  try {
-    return JSON.parse(data.choices?.[0]?.message?.content || '{}');
-  } catch {
-    return data.choices?.[0]?.message?.content || '';
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err?.error || 'AI analysis failed');
   }
+
+  const data = await response.json();
+  return data.result;
 }
 
 // Type definitions
@@ -423,9 +420,17 @@ export function simulateWhatIf(trades: Trade[], scenario: 'no-fomo' | 'always-pl
 export async function answerTradeQuestion(trades: Trade[], question: string): Promise<string> {
   if (!trades.length) return 'No trades selected.';
   try {
+    // Get the current user's session token for authenticated API calls
+    const { supabase } = await import('../supabaseClient');
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     const res = await fetch('/api/ai/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({ trades, question })
     });
     if (res.ok) {
