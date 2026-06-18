@@ -478,7 +478,7 @@ export default function CalendarPage() {
       const weekWinRate = calcWinRate(weekTrades)
 
       weekRows.push(
-        <div key={row} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_80px]">
+        <div key={row} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_1fr]">
           {weekCells}
           {/* Week total — custom summary cell */}
           <div
@@ -533,7 +533,7 @@ export default function CalendarPage() {
       >
         {/* Day headers */}
         <div
-          className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_80px]"
+          className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_1fr]"
           style={{
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}

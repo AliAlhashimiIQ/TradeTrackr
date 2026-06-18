@@ -23,6 +23,33 @@ import toast from 'react-hot-toast'
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review'
 type TableDensity = 'compact' | 'comfortable'
 
+const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
+  checkbox: 52,
+  screenshot: 55,
+  symbol: 110,
+  side: 80,
+  entry: 100,
+  exit: 100,
+  lots: 90,
+  pips: 80,
+  pnl: 110,
+  percentGain: 90,
+  commission: 95,
+  netProfit: 110,
+  date: 95,
+  openTime: 140,
+  closeTime: 140,
+  holdTime: 90,
+  stopLoss: 100,
+  takeProfit: 100,
+  account: 110,
+  mindset: 120,
+  tags: 180,
+  mistakes: 180,
+  notes: 240,
+  actions: 100,
+}
+
 const EMOTIONS = [
   { value: 'confident', label: 'Confident', bg: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
   { value: 'calm', label: 'Calm', bg: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
@@ -277,6 +304,85 @@ export default function Trades() {
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
 
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.columnWidths')
+      if (saved) {
+        try {
+          return { ...DEFAULT_COLUMN_WIDTHS, ...JSON.parse(saved) }
+        } catch {}
+      }
+    }
+    return DEFAULT_COLUMN_WIDTHS
+  })
+
+  const [wrapTags, setWrapTags] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.wrapTags')
+      return saved !== null ? saved === 'true' : true
+    }
+    return true
+  })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('trades.columnWidths', JSON.stringify(columnWidths))
+    }
+  }, [columnWidths])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('trades.wrapTags', String(wrapTags))
+    }
+  }, [wrapTags])
+
+  // Mouse drag-to-resize columns
+  const handleMouseDown = (e: React.MouseEvent, colKey: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const startX = e.clientX
+    const startWidth = columnWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey]
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX
+      const newWidth = Math.max(40, startWidth + deltaX) // Min width of 40px
+      setColumnWidths(prev => ({
+        ...prev,
+        [colKey]: newWidth
+      }))
+    }
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  const resetColumnWidth = (colKey: string) => {
+    setColumnWidths(prev => ({
+      ...prev,
+      [colKey]: DEFAULT_COLUMN_WIDTHS[colKey]
+    }))
+  }
+
+  const renderResizeHandle = (colKey: string) => {
+    return (
+      <div
+        onMouseDown={(e) => handleMouseDown(e, colKey)}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          resetColumnWidth(colKey);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-indigo-500/80 active:bg-indigo-500 z-20 group-hover/header:bg-white/[0.08] transition-colors"
+        title="Drag to resize, double-click to reset"
+      />
+    );
+  }
+
   // Notion-Style Inline Editing States
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null)
   const [searchTag, setSearchTag] = useState('')
@@ -300,6 +406,184 @@ export default function Trades() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
   const [noteText, setNoteText] = useState('')
   const [uploadingTradeId, setUploadingTradeId] = useState<string | null>(null)
+
+  const totals = useMemo(() => {
+    if (filteredTrades.length === 0) return null;
+    
+    let totalPnL = 0;
+    let totalLots = 0;
+    let totalPips = 0;
+    let forexCount = 0;
+    let totalPctGain = 0;
+    let totalCommission = 0;
+    let totalHoldTimeMs = 0;
+    let holdTimeCount = 0;
+    
+    filteredTrades.forEach(t => {
+      totalPnL += (t.profit_loss ?? 0);
+      totalLots += (t.lots !== undefined && t.lots !== null ? Number(t.lots) : Number(t.quantity || 0));
+      
+      if (isForexPair(t.symbol) && t.pips !== undefined && t.pips !== null) {
+        totalPips += Number(t.pips);
+        forexCount++;
+      }
+      
+      if (t.entry_price && t.quantity) {
+        totalPctGain += ((t.profit_loss ?? 0) / (t.entry_price * t.quantity)) * 100;
+      }
+      
+      totalCommission += Number((t as any).commission ?? 0);
+      
+      if (t.entry_time && t.exit_time) {
+        totalHoldTimeMs += (new Date(t.exit_time).getTime() - new Date(t.entry_time).getTime());
+        holdTimeCount++;
+      }
+    });
+    
+    const avgPips = forexCount > 0 ? totalPips / forexCount : 0;
+    const avgPctGain = filteredTrades.length > 0 ? totalPctGain / filteredTrades.length : 0;
+    
+    let avgHoldTimeStr = '--';
+    if (holdTimeCount > 0) {
+      const avgMins = Math.round((totalHoldTimeMs / holdTimeCount) / 60000);
+      avgHoldTimeStr = avgMins >= 60 ? `${Math.floor(avgMins / 60)}h ${avgMins % 60}m` : `${avgMins}m`;
+    }
+    
+    return {
+      totalPnL,
+      totalLots,
+      avgPips,
+      avgPctGain,
+      totalCommission,
+      totalNetProfit: totalPnL - totalCommission,
+      avgHoldTimeStr,
+    };
+  }, [filteredTrades]);
+
+  const renderTotalsRow = () => {
+    if (!totals) return null;
+    return (
+      <div
+        className="grid gap-2 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 backdrop-blur-md items-center min-w-full"
+        style={{ gridTemplateColumns: getGridTemplateColumns() }}
+      >
+        {/* Checkbox Col */}
+        <div />
+
+        {/* Screenshot Col */}
+        <div />
+
+        {/* Symbol Col */}
+        <div className="font-bold text-white text-[10px]">TOTALS ({filteredTrades.length})</div>
+
+        {/* Side Col */}
+        {visibleColumns.side && <div />}
+
+        {/* Entry Price Col */}
+        {visibleColumns.entry && <div />}
+
+        {/* Exit Price Col */}
+        {visibleColumns.exit && <div />}
+
+        {/* Lots Col */}
+        {visibleColumns.lots && (
+          <div className="text-right font-mono text-gray-300 tabular-nums">
+            {formatLots(totals.totalLots)}
+          </div>
+        )}
+
+        {/* Pips Col */}
+        {visibleColumns.pips && (
+          <div className="text-right font-mono text-gray-300 tabular-nums">
+            {totals.avgPips !== 0 ? `${totals.avgPips.toFixed(1)} avg` : '--'}
+          </div>
+        )}
+
+        {/* P&L Col */}
+        {visibleColumns.pnl && (
+          <div
+            className="text-right font-bold tabular-nums"
+            style={{
+              color: totals.totalPnL > 0 ? '#34d399' : totals.totalPnL < 0 ? '#f87171' : '#9ca3af',
+              textShadow: totals.totalPnL !== 0 ? `0 0 10px ${totals.totalPnL > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)'}` : 'none'
+            }}
+          >
+            {totals.totalPnL > 0 ? '+' : ''}{formatCurrency(totals.totalPnL)}
+          </div>
+        )}
+
+        {/* % Gain Col */}
+        {visibleColumns.percentGain && (
+          <div
+            className="text-right font-mono tabular-nums"
+            style={{ color: totals.avgPctGain > 0 ? '#34d399' : totals.avgPctGain < 0 ? '#f87171' : '#9ca3af' }}
+          >
+            {totals.avgPctGain !== 0 ? `${totals.avgPctGain.toFixed(2)}% avg` : '--'}
+          </div>
+        )}
+
+        {/* Commission Col */}
+        {visibleColumns.commission && (
+          <div className="text-right font-mono text-gray-400 tabular-nums">
+            {formatCurrency(totals.totalCommission)}
+          </div>
+        )}
+
+        {/* Net Profit Col */}
+        {visibleColumns.netProfit && (
+          <div
+            className="text-right font-mono font-bold tabular-nums"
+            style={{
+              color: totals.totalNetProfit > 0 ? '#34d399' : totals.totalNetProfit < 0 ? '#f87171' : '#9ca3af',
+              textShadow: totals.totalNetProfit !== 0 ? `0 0 10px ${totals.totalNetProfit > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)'}` : 'none'
+            }}
+          >
+            {totals.totalNetProfit > 0 ? '+' : ''}{formatCurrency(totals.totalNetProfit)}
+          </div>
+        )}
+
+        {/* Date Col */}
+        {visibleColumns.date && <div />}
+
+        {/* Open Time Col */}
+        {visibleColumns.openTime && <div />}
+
+        {/* Close Time Col */}
+        {visibleColumns.closeTime && <div />}
+
+        {/* Hold Time Col */}
+        {visibleColumns.holdTime && (
+          <div className="text-right font-mono text-gray-300 tabular-nums">
+            {totals.avgHoldTimeStr}
+          </div>
+        )}
+
+        {/* Stop Loss Col */}
+        {visibleColumns.stopLoss && <div />}
+
+        {/* Take Profit Col */}
+        {visibleColumns.takeProfit && <div />}
+
+        {/* Account Col */}
+        {visibleColumns.account && <div />}
+
+        {/* Mindset Col */}
+        {visibleColumns.mindset && <div />}
+
+        {/* Strategy Tags Col */}
+        {visibleColumns.tags && <div />}
+
+        {/* Mistake Tags Col */}
+        {visibleColumns.mistakes && <div />}
+
+        {/* Learnings Col */}
+        {visibleColumns.notes && <div />}
+
+        {/* Actions Col */}
+        <div />
+      </div>
+    );
+  };
 
   const [deletedPresets, setDeletedPresets] = useState<string[]>([]);
   const [deletedMistakePresets, setDeletedMistakePresets] = useState<string[]>([]);
@@ -495,31 +779,35 @@ export default function Trades() {
   };
 
   const getGridTemplateColumns = () => {
+    const getWidth = (key: string, def: string) => {
+      const w = columnWidths[key];
+      return w ? `${w}px` : def;
+    };
     const cols = [
-      '52px',  // Checkbox/actions col
-      '55px',  // Screenshot
-      '110px', // Symbol
-      visibleColumns.side ? '80px' : '',
-      visibleColumns.entry ? '100px' : '',
-      visibleColumns.exit ? '100px' : '',
-      visibleColumns.lots ? '90px' : '',
-      visibleColumns.pips ? '80px' : '',
-      visibleColumns.pnl ? '110px' : '',
-      visibleColumns.percentGain ? '90px' : '',
-      visibleColumns.commission ? '95px' : '',
-      visibleColumns.netProfit ? '110px' : '',
-      visibleColumns.date ? '95px' : '',
-      visibleColumns.openTime ? '140px' : '',
-      visibleColumns.closeTime ? '140px' : '',
-      visibleColumns.holdTime ? '90px' : '',
-      visibleColumns.stopLoss ? '100px' : '',
-      visibleColumns.takeProfit ? '100px' : '',
-      visibleColumns.account ? '110px' : '',
-      visibleColumns.mindset ? '120px' : '',
-      visibleColumns.tags ? 'minmax(150px, 1.2fr)' : '',
-      visibleColumns.mistakes ? 'minmax(150px, 1.2fr)' : '',
-      visibleColumns.notes ? 'minmax(220px, 1.6fr)' : '',
-      '100px', // Actions
+      getWidth('checkbox', '52px'),  // Checkbox/actions col
+      getWidth('screenshot', '55px'),  // Screenshot
+      getWidth('symbol', '110px'), // Symbol
+      visibleColumns.side ? getWidth('side', '80px') : '',
+      visibleColumns.entry ? getWidth('entry', '100px') : '',
+      visibleColumns.exit ? getWidth('exit', '100px') : '',
+      visibleColumns.lots ? getWidth('lots', '90px') : '',
+      visibleColumns.pips ? getWidth('pips', '80px') : '',
+      visibleColumns.pnl ? getWidth('pnl', '110px') : '',
+      visibleColumns.percentGain ? getWidth('percentGain', '90px') : '',
+      visibleColumns.commission ? getWidth('commission', '95px') : '',
+      visibleColumns.netProfit ? getWidth('netProfit', '110px') : '',
+      visibleColumns.date ? getWidth('date', '95px') : '',
+      visibleColumns.openTime ? getWidth('openTime', '140px') : '',
+      visibleColumns.closeTime ? getWidth('closeTime', '140px') : '',
+      visibleColumns.holdTime ? getWidth('holdTime', '90px') : '',
+      visibleColumns.stopLoss ? getWidth('stopLoss', '100px') : '',
+      visibleColumns.takeProfit ? getWidth('takeProfit', '100px') : '',
+      visibleColumns.account ? getWidth('account', '110px') : '',
+      visibleColumns.mindset ? getWidth('mindset', '120px') : '',
+      visibleColumns.tags ? getWidth('tags', '180px') : '',
+      visibleColumns.mistakes ? getWidth('mistakes', '180px') : '',
+      visibleColumns.notes ? getWidth('notes', '240px') : '',
+      getWidth('actions', '100px'), // Actions
     ];
     return cols.filter(Boolean).join(' ');
   };
@@ -1284,11 +1572,11 @@ export default function Trades() {
 
         {/* Strategy Tags */}
         {visibleColumns.tags && (
-          <div className="relative flex items-center flex-wrap gap-1 pr-4 min-w-0">
+          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
             {inlineRowData.tags && inlineRowData.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill"
+                className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
               >
                 {tag}
                 <button
@@ -1303,7 +1591,7 @@ export default function Trades() {
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' ? null : { tradeId: 'new-row', type: 'tags' })}
-              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] shrink-0"
             >
               +
             </button>
@@ -1314,11 +1602,11 @@ export default function Trades() {
 
         {/* Mistake Tags */}
         {visibleColumns.mistakes && (
-          <div className="relative flex items-center flex-wrap gap-1 pr-4 min-w-0">
+          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
             {inlineRowData.mistakes && inlineRowData.mistakes.map((mistake) => (
               <span
                 key={mistake}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill"
+                className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
               >
                 {mistake}
                 <button
@@ -1333,7 +1621,7 @@ export default function Trades() {
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' ? null : { tradeId: 'new-row', type: 'mistakes' })}
-              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/40 text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/40 text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] shrink-0"
             >
               +
             </button>
@@ -1576,6 +1864,31 @@ export default function Trades() {
                       </div>
                     ))}
                   </div>
+                  {/* Wrap Tags & Cells Toggle */}
+                  <div className="px-3 py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                    <button
+                      onClick={() => setWrapTags(!wrapTags)}
+                      className="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:bg-white/[0.04] transition-colors"
+                    >
+                      <span>Wrap Tags & Cells</span>
+                      <div
+                        className="w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0"
+                        style={{
+                          background: wrapTags ? '#4f46e5' : 'rgba(255,255,255,0.1)',
+                          border: '1px solid rgba(255,255,255,0.08)'
+                        }}
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full bg-white absolute top-[1px] transition-transform duration-200"
+                          style={{
+                            left: '1px',
+                            transform: wrapTags ? 'translateX(16px)' : 'translateX(0px)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
+                          }}
+                        />
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1764,44 +2077,143 @@ export default function Trades() {
                 background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.9)',
                 backdropFilter: 'blur(8px)',
               }}>
-              <div className="flex items-center justify-center">
+              <div className="relative group/header flex items-center justify-center h-full">
                 <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
                   onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
                   className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer" />
+                {renderResizeHandle('checkbox')}
               </div>
-              <div className="text-center">Trade</div>
-              <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left" onClick={() => handleSort('symbol')}>
-                Symbol {sortField === 'symbol' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+              <div className="relative group/header text-center flex items-center justify-center h-full">
+                <span className="truncate">Trade</span>
+                {renderResizeHandle('screenshot')}
               </div>
-              {visibleColumns.side && <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left" onClick={() => handleSort('type')}>Side</div>}
-              {visibleColumns.entry && <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right" onClick={() => handleSort('entry_price')}>
-                Entry {sortField === 'entry_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-              </div>}
-              {visibleColumns.exit && <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right" onClick={() => handleSort('exit_price')}>
-                Exit {sortField === 'exit_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-              </div>}
-              {visibleColumns.lots && <div className="text-right">Lots / Qty</div>}
-              {visibleColumns.pips && <div className="text-right">Pips</div>}
-              {visibleColumns.pnl && <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right" onClick={() => handleSort('profit_loss')}>
-                P&L {sortField === 'profit_loss' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-              </div>}
-              {visibleColumns.percentGain && <div className="text-right">% Gain</div>}
-              {visibleColumns.commission && <div className="text-right">Commission</div>}
-              {visibleColumns.netProfit && <div className="text-right">Net Profit</div>}
-              {visibleColumns.date && <div className="cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left" onClick={() => handleSort('entry_time')}>
-                Date {sortField === 'entry_time' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-              </div>}
-              {visibleColumns.openTime && <div className="text-left">Open Time</div>}
-              {visibleColumns.closeTime && <div className="text-left">Close Time</div>}
-              {visibleColumns.holdTime && <div className="text-right">Hold Time</div>}
-              {visibleColumns.stopLoss && <div className="text-right">Stop Loss</div>}
-              {visibleColumns.takeProfit && <div className="text-right">Take Profit</div>}
-              {visibleColumns.account && <div className="text-left">Account</div>}
-              {visibleColumns.mindset && <div className="text-left">Mindset</div>}
-              {visibleColumns.tags && <div>Strategy Tags</div>}
-              {visibleColumns.mistakes && <div>Mistake Tags</div>}
-              {visibleColumns.notes && <div>Learnings</div>}
-              <div className="text-right">Actions</div>
+              <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full" onClick={() => handleSort('symbol')}>
+                <span className="truncate">Symbol {sortField === 'symbol' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                {renderResizeHandle('symbol')}
+              </div>
+              {visibleColumns.side && (
+                <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full" onClick={() => handleSort('type')}>
+                  <span className="truncate">Side</span>
+                  {renderResizeHandle('side')}
+                </div>
+              )}
+              {visibleColumns.entry && (
+                <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full" onClick={() => handleSort('entry_price')}>
+                  <span className="truncate">Entry {sortField === 'entry_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                  {renderResizeHandle('entry')}
+                </div>
+              )}
+              {visibleColumns.exit && (
+                <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full" onClick={() => handleSort('exit_price')}>
+                  <span className="truncate">Exit {sortField === 'exit_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                  {renderResizeHandle('exit')}
+                </div>
+              )}
+              {visibleColumns.lots && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Lots / Qty</span>
+                  {renderResizeHandle('lots')}
+                </div>
+              )}
+              {visibleColumns.pips && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Pips</span>
+                  {renderResizeHandle('pips')}
+                </div>
+              )}
+              {visibleColumns.pnl && (
+                <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full" onClick={() => handleSort('profit_loss')}>
+                  <span className="truncate">P&L {sortField === 'profit_loss' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                  {renderResizeHandle('pnl')}
+                </div>
+              )}
+              {visibleColumns.percentGain && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">% Gain</span>
+                  {renderResizeHandle('percentGain')}
+                </div>
+              )}
+              {visibleColumns.commission && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Commission</span>
+                  {renderResizeHandle('commission')}
+                </div>
+              )}
+              {visibleColumns.netProfit && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Net Profit</span>
+                  {renderResizeHandle('netProfit')}
+                </div>
+              )}
+              {visibleColumns.date && (
+                <div className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full" onClick={() => handleSort('entry_time')}>
+                  <span className="truncate">Date {sortField === 'entry_time' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                  {renderResizeHandle('date')}
+                </div>
+              )}
+              {visibleColumns.openTime && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Open Time</span>
+                  {renderResizeHandle('openTime')}
+                </div>
+              )}
+              {visibleColumns.closeTime && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Close Time</span>
+                  {renderResizeHandle('closeTime')}
+                </div>
+              )}
+              {visibleColumns.holdTime && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Hold Time</span>
+                  {renderResizeHandle('holdTime')}
+                </div>
+              )}
+              {visibleColumns.stopLoss && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Stop Loss</span>
+                  {renderResizeHandle('stopLoss')}
+                </div>
+              )}
+              {visibleColumns.takeProfit && (
+                <div className="relative group/header text-right flex items-center justify-end h-full w-full">
+                  <span className="truncate">Take Profit</span>
+                  {renderResizeHandle('takeProfit')}
+                </div>
+              )}
+              {visibleColumns.account && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Account</span>
+                  {renderResizeHandle('account')}
+                </div>
+              )}
+              {visibleColumns.mindset && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Mindset</span>
+                  {renderResizeHandle('mindset')}
+                </div>
+              )}
+              {visibleColumns.tags && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Strategy Tags</span>
+                  {renderResizeHandle('tags')}
+                </div>
+              )}
+              {visibleColumns.mistakes && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Mistake Tags</span>
+                  {renderResizeHandle('mistakes')}
+                </div>
+              )}
+              {visibleColumns.notes && (
+                <div className="relative group/header text-left flex items-center h-full">
+                  <span className="truncate">Learnings</span>
+                  {renderResizeHandle('notes')}
+                </div>
+              )}
+              <div className="relative group/header text-right flex items-center justify-end h-full">
+                <span>Actions</span>
+              </div>
             </div>
 
             {/* Rows */}
@@ -2113,11 +2525,11 @@ export default function Trades() {
 
                   {/* Strategy Tags (Inline Selection) */}
                   {visibleColumns.tags && (
-                    <div className="relative flex items-center flex-wrap gap-1 pr-4 min-w-0">
+                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
                       {trade.tags && trade.tags.map((tag) => (
                         <span
                           key={tag}
-                          className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill"
+                          className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                         >
                           {tag}
                           <button
@@ -2130,7 +2542,7 @@ export default function Trades() {
                       ))}
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
-                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
+                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
                       >
                         +
                       </button>
@@ -2141,11 +2553,11 @@ export default function Trades() {
 
                   {/* Mistake Tags (Inline Selection) */}
                   {visibleColumns.mistakes && (
-                    <div className="relative flex items-center flex-wrap gap-1 pr-4 min-w-0">
+                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
                       {trade.mistakes && trade.mistakes.map((mistake) => (
                         <span
                           key={mistake}
-                          className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill"
+                          className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                         >
                           {mistake}
                           <button
@@ -2158,7 +2570,7 @@ export default function Trades() {
                       ))}
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
-                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
+                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
                       >
                         +
                       </button>
@@ -2224,6 +2636,9 @@ export default function Trades() {
               ))
               }
               {inlineNewRowIndex === filteredTrades.length && filteredTrades.length > 0 && renderInlineEditorRow()}
+
+              {/* Totals Summary Row */}
+              {renderTotalsRow()}
 
               {/* Notion-style add row button at bottom */}
               <button
