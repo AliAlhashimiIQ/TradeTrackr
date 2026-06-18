@@ -247,6 +247,186 @@ const serializeMetadata = (
   return cleanNotes;
 };
 
+interface TagPopoverContentProps {
+  trade: Trade;
+  isMistake: boolean;
+  onClose: () => void;
+  onToggleTag: (trade: Trade, tag: string, isMistake: boolean) => void;
+  presetsList: string[];
+  onDeleteTagGlobally: (tag: string, isMistake: boolean) => void;
+  renderUp?: boolean;
+}
+
+const TagPopoverContent = ({
+  trade,
+  isMistake,
+  onClose,
+  onToggleTag,
+  presetsList,
+  onDeleteTagGlobally,
+  renderUp = false,
+}: TagPopoverContentProps) => {
+  const [searchTag, setSearchTag] = useState('')
+  const [isAddingCustomTag, setIsAddingCustomTag] = useState(false);
+  const [newTagNameInput, setNewTagNameInput] = useState('');
+
+  const tagColorClass = isMistake
+    ? 'bg-red-500/10 text-red-300 border-red-500/20'
+    : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20';
+
+  const currentList = isMistake ? (trade.mistakes || []) : (trade.tags || []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      className={`popover-container absolute left-0 z-40 rounded-2xl p-4 text-left ${
+        renderUp ? 'bottom-full mb-2.5' : 'top-full mt-2.5'
+      }`}
+      style={{
+        background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderTopColor: 'rgba(255,255,255,0.12)',
+        boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 48px -12px rgba(0,0,0,0.6), 0 4px 16px -4px rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(12px)',
+        width: '280px',
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
+        <button 
+          type="button"
+          onClick={onClose}
+          className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
+          title="Close"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Current Tags */}
+      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Current {isMistake ? 'Mistakes' : 'Tags'}</div>
+      <div className="flex flex-wrap gap-1.5 mb-3 items-center">
+        {currentList.map((tag) => (
+          <span
+            key={tag}
+            className={`text-[11px] px-2.5 py-1 rounded-full ${tagColorClass} border flex items-center gap-1.5 font-medium`}
+          >
+            {tag}
+            <button
+              type="button"
+              onClick={() => onToggleTag(trade, tag, isMistake)}
+              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+
+        {isAddingCustomTag ? (
+          <input
+            type="text"
+            placeholder="New tag..."
+            value={newTagNameInput}
+            onChange={e => setNewTagNameInput(e.target.value)}
+            onBlur={() => {
+              if (!newTagNameInput.trim()) setIsAddingCustomTag(false);
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (newTagNameInput.trim()) {
+                  onToggleTag(trade, newTagNameInput.trim(), isMistake);
+                  setNewTagNameInput('');
+                  setIsAddingCustomTag(false);
+                }
+              } else if (e.key === 'Escape') {
+                setIsAddingCustomTag(false);
+              }
+            }}
+            className="px-2.5 py-1 bg-[#0d0e16] border border-white/[0.08] rounded-full text-xs text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-700 font-sans"
+            autoFocus
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsAddingCustomTag(true)}
+            className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-white border border-dashed border-white/[0.1] transition-all flex items-center gap-1"
+          >
+            <span>+ Create Tag</span>
+          </button>
+        )}
+      </div>
+
+      {/* Divider */}
+      <div className="border-t border-white/[0.06] my-2.5" />
+
+      {/* Select a Tag */}
+      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Select a {isMistake ? 'Mistake' : 'Tag'}</div>
+      <input
+        type="text"
+        placeholder={`Search ${isMistake ? 'mistakes' : 'tags'}...`}
+        value={searchTag}
+        onChange={e => setSearchTag(e.target.value)}
+        className="w-full px-2.5 py-1.5 mb-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+      />
+
+      <div className="max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin pr-1">
+        {presetsList
+          .filter(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
+          .map(tag => {
+            const isSelected = currentList.includes(tag);
+            return (
+              <div
+                key={tag}
+                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group/item cursor-pointer"
+                onClick={() => onToggleTag(trade, tag, isMistake)}
+              >
+                <span className={`text-[11px] px-2.5 py-0.5 rounded-full ${tagColorClass} border font-medium`}>
+                  {tag}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {isSelected && <span className="text-indigo-400 font-bold text-xs">✓</span>}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteTagGlobally(tag, isMistake);
+                    }}
+                    className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
+                    title="Delete globally"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        
+        {searchTag.trim() && !presetsList.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
+          <button
+            type="button"
+            onClick={() => {
+              onToggleTag(trade, searchTag.trim(), isMistake);
+              setSearchTag('');
+            }}
+            className="w-full text-left px-2 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 font-semibold transition-colors"
+          >
+            + Create "{searchTag.trim()}"
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+};
+
 export default function Trades() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -414,12 +594,15 @@ export default function Trades() {
 
   // Notion-Style Inline Editing States
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null)
-  const [searchTag, setSearchTag] = useState('')
 
   // Close active popovers when clicking outside popover-container and popover-trigger
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as HTMLElement;
+      // If the target element is no longer in the document, it was probably deleted/detached
+      if (!document.body.contains(target)) {
+        return;
+      }
       if (target.closest('.popover-container') || target.closest('.popover-trigger')) {
         return;
       }
@@ -428,7 +611,7 @@ export default function Trades() {
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [activePopover, showColumnMenu]);
+  }, []);
 
   const [inlineNewRowIndex, setInlineNewRowIndex] = useState<number | null>(null)
   const [inlineRowData, setInlineRowData] = useState<Partial<Trade> | null>(null)
@@ -616,8 +799,6 @@ export default function Trades() {
 
   const [deletedPresets, setDeletedPresets] = useState<string[]>([]);
   const [deletedMistakePresets, setDeletedMistakePresets] = useState<string[]>([]);
-  const [isAddingCustomTag, setIsAddingCustomTag] = useState(false);
-  const [newTagNameInput, setNewTagNameInput] = useState('');
   const [notesModalTrade, setNotesModalTrade] = useState<Trade | null>(null);
   const [notesModalText, setNotesModalText] = useState('');
 
@@ -655,155 +836,18 @@ export default function Trades() {
     }
   };
 
-  const renderTagsPopover = (trade: Trade, isMistake: boolean) => {
-    const currentList = isMistake ? (trade.mistakes || []) : (trade.tags || []);
-    const presetsList = isMistake ? allExistingMistakes : allExistingTags;
-    const tagColorClass = isMistake
-      ? 'bg-red-500/10 text-red-300 border-red-500/20'
-      : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20';
-
+  const renderTagsPopover = (trade: Trade, isMistake: boolean, renderUp = false) => {
+    if (!trade) return null;
     return (
-      <div 
-        className="popover-container absolute left-0 top-full mt-2.5 z-40 rounded-2xl overflow-hidden p-4 text-left animate-fade-in"
-        style={{
-          background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderTopColor: 'rgba(255,255,255,0.12)',
-          boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 48px -12px rgba(0,0,0,0.6), 0 4px 16px -4px rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(12px)',
-          width: '280px',
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
-          <button 
-            type="button"
-            onClick={() => setActivePopover(null)}
-            className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
-            title="Close"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Current Tags */}
-        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Current {isMistake ? 'Mistakes' : 'Tags'}</div>
-        <div className="flex flex-wrap gap-1.5 mb-3 items-center">
-          {currentList.map((tag) => (
-            <span
-              key={tag}
-              className={`text-[11px] px-2.5 py-1 rounded-full ${tagColorClass} border flex items-center gap-1.5 font-medium`}
-            >
-              {tag}
-              <button
-                type="button"
-                onClick={() => handleToggleTag(trade, tag, isMistake)}
-                className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-
-          {isAddingCustomTag ? (
-            <input
-              type="text"
-              placeholder="New tag..."
-              value={newTagNameInput}
-              onChange={e => setNewTagNameInput(e.target.value)}
-              onBlur={() => {
-                if (!newTagNameInput.trim()) setIsAddingCustomTag(false);
-              }}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (newTagNameInput.trim()) {
-                    handleToggleTag(trade, newTagNameInput.trim(), isMistake);
-                    setNewTagNameInput('');
-                    setIsAddingCustomTag(false);
-                  }
-                } else if (e.key === 'Escape') {
-                  setIsAddingCustomTag(false);
-                }
-              }}
-              className="px-2.5 py-1 bg-[#0d0e16] border border-white/[0.08] rounded-full text-xs text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-700 font-sans"
-              autoFocus
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsAddingCustomTag(true)}
-              className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-white border border-dashed border-white/[0.1] transition-all flex items-center gap-1"
-            >
-              <span>+ Create Tag</span>
-            </button>
-          )}
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-white/[0.06] my-2.5" />
-
-        {/* Select a Tag */}
-        <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Select a {isMistake ? 'Mistake' : 'Tag'}</div>
-        <input
-          type="text"
-          placeholder={`Search ${isMistake ? 'mistakes' : 'tags'}...`}
-          value={searchTag}
-          onChange={e => setSearchTag(e.target.value)}
-          className="w-full px-2.5 py-1.5 mb-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-        />
-
-        <div className="max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin pr-1">
-          {presetsList
-            .filter(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
-            .map(tag => {
-              const isSelected = currentList.includes(tag);
-              return (
-                <div
-                  key={tag}
-                  className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group/item cursor-pointer"
-                  onClick={() => handleToggleTag(trade, tag, isMistake)}
-                >
-                  <span className={`text-[11px] px-2.5 py-0.5 rounded-full ${tagColorClass} border font-medium`}>
-                    {tag}
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    {isSelected && <span className="text-indigo-400 font-bold text-xs">✓</span>}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteTagGlobally(tag, isMistake);
-                      }}
-                      className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
-                      title="Delete globally"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          
-          {searchTag.trim() && !presetsList.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
-            <button
-              type="button"
-              onClick={() => {
-                handleToggleTag(trade, searchTag.trim(), isMistake);
-                setSearchTag('');
-              }}
-              className="w-full text-left px-2 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 font-semibold transition-colors"
-            >
-              + Create "{searchTag.trim()}"
-            </button>
-          )}
-        </div>
-      </div>
+      <TagPopoverContent
+        trade={trade}
+        isMistake={isMistake}
+        onClose={() => setActivePopover(null)}
+        onToggleTag={handleToggleTag}
+        presetsList={isMistake ? allExistingMistakes : allExistingTags}
+        onDeleteTagGlobally={handleDeleteTagGlobally}
+        renderUp={renderUp}
+      />
     );
   };
 
@@ -841,16 +885,7 @@ export default function Trades() {
     return cols.filter(Boolean).join(' ');
   };
 
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.relative')) {
-        setActivePopover(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+
 
   const handleToggleTag = async (trade: Trade, tag: string, isMistake = false) => {
     if (trade.id === 'new-row') {
@@ -1570,53 +1605,63 @@ export default function Trades() {
               </button>
             )}
 
-            {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mindset' && (
-              <div className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
-                <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
-                <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                  {EMOTIONS.map(emotion => {
-                    const isSelected = inlineRowData.emotional_state === emotion.value;
-                    return (
-                      <button
-                        key={emotion.value}
-                        type="button"
-                        onClick={() => {
-                          setActivePopover(null);
-                          handleInlineChange('emotional_state', emotion.value);
-                        }}
-                        className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                          isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
-                        }`}
-                      >
-                        <span className="capitalize">{emotion.label}</span>
-                        {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <AnimatePresence>
+              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mindset' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1"
+                >
+                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
+                  <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                    {EMOTIONS.map(emotion => {
+                      const isSelected = inlineRowData.emotional_state === emotion.value;
+                      return (
+                        <button
+                          key={emotion.value}
+                          type="button"
+                          onClick={() => {
+                            setActivePopover(null);
+                            handleInlineChange('emotional_state', emotion.value);
+                          }}
+                          className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <span className="capitalize">{emotion.label}</span>
+                          {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
         {/* Strategy Tags */}
         {visibleColumns.tags && (
-          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
-            {inlineRowData.tags && inlineRowData.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-              >
-                {tag}
-                <button
-                  type="button"
-                  onClick={() => handleToggleTag(inlineRowData as Trade, tag, false)}
-                  className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+          <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+            <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-28px)] overflow-hidden`}>
+              {inlineRowData.tags && inlineRowData.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                 >
-                  ✕
-                </button>
-              </span>
-            ))}
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleTag(inlineRowData as Trade, tag, false)}
+                    className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' ? null : { tradeId: 'new-row', type: 'tags' })}
@@ -1625,28 +1670,32 @@ export default function Trades() {
               +
             </button>
             
-            {activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' && renderTagsPopover(inlineRowData as Trade, false)}
+            <AnimatePresence>
+              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' && renderTagsPopover(inlineRowData as Trade, false, true)}
+            </AnimatePresence>
           </div>
         )}
 
         {/* Mistake Tags */}
         {visibleColumns.mistakes && (
-          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
-            {inlineRowData.mistakes && inlineRowData.mistakes.map((mistake) => (
-              <span
-                key={mistake}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-              >
-                {mistake}
-                <button
-                  type="button"
-                  onClick={() => handleToggleTag(inlineRowData as Trade, mistake, true)}
-                  className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+          <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+            <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-28px)] overflow-hidden`}>
+              {inlineRowData.mistakes && inlineRowData.mistakes.map((mistake) => (
+                <span
+                  key={mistake}
+                  className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                 >
-                  ✕
-                </button>
-              </span>
-            ))}
+                  {mistake}
+                  <button
+                    type="button"
+                    onClick={() => handleToggleTag(inlineRowData as Trade, mistake, true)}
+                    className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' ? null : { tradeId: 'new-row', type: 'mistakes' })}
@@ -1655,7 +1704,9 @@ export default function Trades() {
               +
             </button>
             
-            {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' && renderTagsPopover(inlineRowData as Trade, true)}
+            <AnimatePresence>
+              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' && renderTagsPopover(inlineRowData as Trade, true, true)}
+            </AnimatePresence>
           </div>
         )}
 
@@ -2616,35 +2667,43 @@ export default function Trades() {
                         </button>
                       )}
 
-                      {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
-                        <div className="popover-container absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
-                          <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
-                          <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                            {EMOTIONS.map(emotion => {
-                              const isSelected = trade.emotional_state === emotion.value;
-                              return (
-                                <button
-                                  key={emotion.value}
-                                  onClick={async () => {
-                                    setActivePopover(null);
-                                    setTrades(prevTrades => prevTrades.map(t => t.id === trade.id ? { ...t, emotional_state: emotion.value } : t));
-                                    try {
-                                      await updateTrade({ ...trade, emotional_state: emotion.value });
-                                      toast.success(`Mindset set to ${emotion.label}`);
-                                    } catch (e) {
-                                      console.error(e);
-                                      toast.error('Failed to update mindset');
-                                    }
-                                  }}
-                                  className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                    isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
-                                  }`}
-                                >
-                                  <span className="capitalize">{emotion.label}</span>
-                                  {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
-                                </button>
-                              );
-                            })}
+                      <AnimatePresence>
+                        {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                            className="popover-container absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1"
+                          >
+                            <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
+                            <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                              {EMOTIONS.map(emotion => {
+                                const isSelected = trade.emotional_state === emotion.value;
+                                return (
+                                  <button
+                                    key={emotion.value}
+                                    onClick={async () => {
+                                      setActivePopover(null);
+                                      setTrades(prevTrades => prevTrades.map(t => t.id === trade.id ? { ...t, emotional_state: emotion.value } : t));
+                                      try {
+                                        await updateTrade({ ...trade, emotional_state: emotion.value });
+                                        toast.success(`Mindset set to ${emotion.label}`);
+                                      } catch (e) {
+                                        console.error(e);
+                                        toast.error('Failed to update mindset');
+                                      }
+                                    }}
+                                    className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                      isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
+                                    }`}
+                                  >
+                                    <span className="capitalize">{emotion.label}</span>
+                                    {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
                             {trade.emotional_state && (
                               <button
                                 onClick={async () => {
@@ -2663,29 +2722,31 @@ export default function Trades() {
                                 Clear Mindset
                               </button>
                             )}
-                          </div>
-                        </div>
-                      )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
                   )}
 
                   {/* Strategy Tags (Inline Selection) */}
                   {visibleColumns.tags && (
-                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
-                      {trade.tags && trade.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                        >
-                          {tag}
-                          <button
-                            onClick={() => handleToggleTag(trade, tag, false)}
-                            className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                    <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+                      <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
+                        {trade.tags && trade.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                           >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
+                            {tag}
+                            <button
+                              onClick={() => handleToggleTag(trade, tag, false)}
+                              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
                         className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
@@ -2693,27 +2754,31 @@ export default function Trades() {
                         +
                       </button>
                       
-                      {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false)}
+                      <AnimatePresence>
+                        {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false, idx >= filteredTrades.length - 2)}
+                      </AnimatePresence>
                     </div>
                   )}
 
                   {/* Mistake Tags (Inline Selection) */}
                   {visibleColumns.mistakes && (
-                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
-                      {trade.mistakes && trade.mistakes.map((mistake) => (
-                        <span
-                          key={mistake}
-                          className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                        >
-                          {mistake}
-                          <button
-                            onClick={() => handleToggleTag(trade, mistake, true)}
-                            className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                    <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+                      <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
+                        {trade.mistakes && trade.mistakes.map((mistake) => (
+                          <span
+                            key={mistake}
+                            className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                           >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
+                            {mistake}
+                            <button
+                              onClick={() => handleToggleTag(trade, mistake, true)}
+                              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                      </div>
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
                         className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
@@ -2721,7 +2786,9 @@ export default function Trades() {
                         +
                       </button>
                       
-                      {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true)}
+                      <AnimatePresence>
+                        {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}
+                      </AnimatePresence>
                     </div>
                   )}
 
