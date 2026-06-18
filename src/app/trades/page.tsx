@@ -50,6 +50,34 @@ const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   actions: 100,
 }
 
+const MIN_COLUMN_WIDTHS: Record<string, number> = {
+  checkbox: 40,
+  screenshot: 45,
+  symbol: 80,
+  side: 70,
+  entry: 80,
+  exit: 80,
+  lots: 75,
+  pips: 60,
+  pnl: 85,
+  percentGain: 80,
+  commission: 80,
+  netProfit: 85,
+  date: 75,
+  openTime: 100,
+  closeTime: 100,
+  holdTime: 75,
+  stopLoss: 80,
+  takeProfit: 80,
+  account: 80,
+  mindset: 95,
+  tags: 120,
+  mistakes: 120,
+  notes: 150,
+  actions: 80,
+}
+
+
 const EMOTIONS = [
   { value: 'confident', label: 'Confident', bg: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' },
   { value: 'calm', label: 'Calm', bg: 'bg-blue-500/10 text-blue-400 border border-blue-500/20' },
@@ -345,7 +373,8 @@ export default function Trades() {
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX
-      const newWidth = Math.max(40, startWidth + deltaX) // Min width of 40px
+      const minW = MIN_COLUMN_WIDTHS[colKey] || 50
+      const newWidth = Math.max(minW, startWidth + deltaX)
       setColumnWidths(prev => ({
         ...prev,
         [colKey]: newWidth
@@ -1572,7 +1601,7 @@ export default function Trades() {
 
         {/* Strategy Tags */}
         {visibleColumns.tags && (
-          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
+          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
             {inlineRowData.tags && inlineRowData.tags.map((tag) => (
               <span
                 key={tag}
@@ -1602,7 +1631,7 @@ export default function Trades() {
 
         {/* Mistake Tags */}
         {visibleColumns.mistakes && (
-          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
+          <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
             {inlineRowData.mistakes && inlineRowData.mistakes.map((mistake) => (
               <span
                 key={mistake}
@@ -2525,7 +2554,7 @@ export default function Trades() {
 
                   {/* Strategy Tags (Inline Selection) */}
                   {visibleColumns.tags && (
-                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
+                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
                       {trade.tags && trade.tags.map((tag) => (
                         <span
                           key={tag}
@@ -2553,7 +2582,7 @@ export default function Trades() {
 
                   {/* Mistake Tags (Inline Selection) */}
                   {visibleColumns.mistakes && (
-                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0`}>
+                    <div className={`relative flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 pr-4 min-w-0 w-full overflow-hidden`}>
                       {trade.mistakes && trade.mistakes.map((mistake) => (
                         <span
                           key={mistake}
