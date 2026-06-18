@@ -252,6 +252,21 @@ export default function Trades() {
   // Notion-Style Inline Editing States
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null)
   const [searchTag, setSearchTag] = useState('')
+
+  // Close active popovers when clicking outside popover-container and popover-trigger
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (target.closest('.popover-container') || target.closest('.popover-trigger')) {
+        return;
+      }
+      setActivePopover(null);
+      setShowColumnMenu(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [activePopover, showColumnMenu]);
+
   const [inlineNewRowIndex, setInlineNewRowIndex] = useState<number | null>(null)
   const [inlineRowData, setInlineRowData] = useState<Partial<Trade> | null>(null)
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
@@ -308,7 +323,7 @@ export default function Trades() {
 
     return (
       <div 
-        className="absolute left-0 top-full mt-2.5 z-40 rounded-2xl overflow-hidden p-4 text-left animate-fade-in"
+        className="popover-container absolute left-0 top-full mt-2.5 z-40 rounded-2xl overflow-hidden p-4 text-left animate-fade-in"
         style={{
           background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
           border: '1px solid rgba(255,255,255,0.08)',
@@ -321,9 +336,16 @@ export default function Trades() {
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
-          <svg className="w-4 h-4 text-gray-500 hover:text-gray-300 transition-colors" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8.5 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zM15.5 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 7.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-          </svg>
+          <button 
+            type="button"
+            onClick={() => setActivePopover(null)}
+            className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
+            title="Close"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
 
         {/* Current Tags */}
@@ -1198,7 +1220,7 @@ export default function Trades() {
               <button
                 type="button"
                 onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mindset' ? null : { tradeId: 'new-row', type: 'mindset' })}
-                className={`text-[11px] px-3 py-1.5 rounded-xl border font-bold capitalize tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] ${
+                className={`popover-trigger text-[11px] px-3 py-1.5 rounded-xl border font-bold capitalize tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98] ${
                   EMOTIONS.find(e => e.value === inlineRowData.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                 }`}
               >
@@ -1208,14 +1230,14 @@ export default function Trades() {
               <button
                 type="button"
                 onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mindset' ? null : { tradeId: 'new-row', type: 'mindset' })}
-                className="w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+                className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
               >
                 +
               </button>
             )}
 
             {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mindset' && (
-              <div className="absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
+              <div className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
                 <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
                 <div className="max-h-[200px] overflow-y-auto space-y-0.5">
                   {EMOTIONS.map(emotion => {
@@ -1264,7 +1286,7 @@ export default function Trades() {
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' ? null : { tradeId: 'new-row', type: 'tags' })}
-              className="w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
             >
               +
             </button>
@@ -1294,7 +1316,7 @@ export default function Trades() {
             <button
               type="button"
               onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' ? null : { tradeId: 'new-row', type: 'mistakes' })}
-              className="w-6 h-6 rounded-full bg-white/[0.03] hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/40 text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+              className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/40 text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
             >
               +
             </button>
@@ -1451,7 +1473,7 @@ export default function Trades() {
             <div className="relative">
               <button
                 onClick={() => setShowColumnMenu(!showColumnMenu)}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5"
+                className="popover-trigger px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5"
                 style={showColumnMenu
                   ? { background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(99,102,241,0.06))', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.3)', boxShadow: '0 0 12px rgba(99,102,241,0.1)' }
                   : { background: 'rgba(255,255,255,0.03)', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }
@@ -1462,7 +1484,7 @@ export default function Trades() {
               </button>
               {showColumnMenu && (
                 <div
-                  className="absolute right-0 top-full mt-2 z-30 rounded-2xl overflow-hidden"
+                  className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl overflow-hidden"
                   style={{
                     background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
                     border: '1px solid rgba(255,255,255,0.08)',
@@ -2003,7 +2025,7 @@ export default function Trades() {
                       {trade.emotional_state ? (
                         <button
                           onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
-                          className={`text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${
+                          className={`popover-trigger text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${
                             EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                           }`}
                         >
@@ -2012,7 +2034,7 @@ export default function Trades() {
                       ) : (
                         <button
                           onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
-                          className="w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
+                          className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
                           title="Set mindset"
                         >
                           +
@@ -2020,7 +2042,7 @@ export default function Trades() {
                       )}
 
                       {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
-                        <div className="absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
+                        <div className="popover-container absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1">
                           <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
                           <div className="max-h-[200px] overflow-y-auto space-y-0.5">
                             {EMOTIONS.map(emotion => {
@@ -2091,7 +2113,7 @@ export default function Trades() {
                       ))}
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
-                        className="w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
+                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
                       >
                         +
                       </button>
@@ -2119,7 +2141,7 @@ export default function Trades() {
                       ))}
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
-                        className="w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
+                        className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
                       >
                         +
                       </button>
