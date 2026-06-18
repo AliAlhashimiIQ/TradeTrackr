@@ -1715,7 +1715,7 @@ export default function Trades() {
         </AnimatePresence>
 
         {/* Trade List */}
-        <div className="card rounded-2xl overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent">
+        <div className="hidden md:block card rounded-2xl overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent">
           <div style={{ minWidth: '1100px' }} className="min-w-full w-max">
             {/* Table Header */}
             <div className={`hidden md:grid gap-2 px-5 py-3.5 text-[10px] font-bold text-gray-500 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full`}
@@ -2232,6 +2232,223 @@ export default function Trades() {
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Mobile Trades List */}
+        <div className="md:hidden space-y-4">
+          {filteredTrades.length === 0 ? (
+            <EmptyState variant="trades" />
+          ) : (
+            <>
+              {filteredTrades.map((trade) => {
+                const isLong = trade.type === 'Long';
+                const pnlValue = trade.profit_loss ?? 0;
+                const isProfit = pnlValue > 0;
+                const isLoss = pnlValue < 0;
+                const duration = Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / 60000);
+                const durationStr = duration >= 60 ? `${Math.floor(duration / 60)}h ${duration % 60}m` : `${duration}m`;
+                
+                return (
+                  <div
+                    key={trade.id}
+                    className="card p-4 rounded-2xl relative overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
+                      borderColor: 'rgba(255,255,255,0.08)',
+                      borderWidth: '1px',
+                    }}
+                  >
+                    {/* Colored Glow at the bottom of the card */}
+                    {pnlValue !== 0 && (
+                      <div
+                        className="absolute bottom-[-20px] right-[-20px] w-24 h-24 rounded-full pointer-events-none blur-[40px]"
+                        style={{
+                          background: isProfit ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                        }}
+                      />
+                    )}
+
+                    {/* Card Header: Symbol, Type, P&L */}
+                    <div className="flex items-center justify-between mb-3 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white tracking-tight">{trade.symbol}</span>
+                        <span
+                          className="text-[9px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider"
+                          style={
+                            isLong
+                              ? { background: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }
+                              : { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
+                          }
+                        >
+                          {isLong ? 'BUY' : 'SELL'}
+                        </span>
+                        {trade.account_id && accountsMap.has(trade.account_id) && (
+                          <span className="text-[8px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase tracking-wider">
+                            {accountsMap.get(trade.account_id)}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className="text-sm font-bold tabular-nums px-2.5 py-0.5 rounded-lg"
+                        style={{
+                          color: isProfit ? '#34d399' : isLoss ? '#f87171' : '#9ca3af',
+                          background: isProfit ? 'rgba(16,185,129,0.06)' : isLoss ? 'rgba(239,68,68,0.06)' : 'transparent',
+                        }}
+                      >
+                        {pnlValue > 0 ? '+' : ''}{formatCurrency(pnlValue)}
+                      </span>
+                    </div>
+
+                    {/* Details Grid: Date, Price, Lots, Pips */}
+                    <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs mb-3 border-y border-white/[0.04] py-2 relative z-10">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Date</span>
+                        <span className="text-gray-300 font-medium">
+                          {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Lots / Qty</span>
+                        <span className="text-gray-300 font-mono font-medium">
+                          {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Execution</span>
+                        <span className="text-gray-300 font-mono">
+                          {trade.entry_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)} → {trade.exit_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Pips / Duration</span>
+                        <span className="text-gray-300">
+                          {isForexPair(trade.symbol) ? `${formatPips(trade.pips)} pips` : durationStr}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Badges: Tags, Mindset, Mistakes */}
+                    <div className="flex flex-wrap items-center gap-1.5 mb-3 relative z-10">
+                      {trade.emotional_state && (
+                        <span className={`text-[9px] px-2.5 py-0.5 rounded-lg border font-semibold capitalize tracking-wide ${
+                          EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                        }`}>
+                          {trade.emotional_state}
+                        </span>
+                      )}
+                      {trade.tags && trade.tags.map((tag) => (
+                        <span key={tag} className="text-[9px] px-2.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
+                          {tag}
+                        </span>
+                      ))}
+                      {trade.mistakes && trade.mistakes.map((mistake) => (
+                        <span key={mistake} className="text-[9px] px-2.5 py-0.5 rounded-lg bg-red-500/10 text-red-300 border border-red-500/20 font-medium">
+                          {mistake}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Actions Row */}
+                    <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] relative z-10">
+                      {/* Notes / Learnings Summary */}
+                      <div className="flex-1 mr-4 min-w-0">
+                        <p
+                          onClick={() => {
+                            setNotesModalTrade(trade);
+                            setNotesModalText(trade.notes || '');
+                          }}
+                          className="text-[10px] text-gray-500 hover:text-white cursor-pointer select-none truncate font-medium italic"
+                          title="Click to view or edit learnings notes"
+                        >
+                          {trade.notes ? `Learnings: "${trade.notes}"` : '+ Add learning note...'}
+                        </p>
+                      </div>
+
+                      {/* Quick Action Icons */}
+                      <div className="flex items-center gap-1">
+                        {trade.screenshot_url && (
+                          <button
+                            onClick={() => setSelectedScreenshotUrl(trade.screenshot_url ?? null)}
+                            className="p-1.5 text-gray-500 hover:text-indigo-400 hover:bg-white/5 rounded-lg transition-colors"
+                            title="View screenshot"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => {
+                            setSelectedDetailTrade(trade);
+                          }}
+                          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                          title="View details"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedTrade(trade);
+                            setShowForm(true);
+                          }}
+                          className="p-1.5 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                          title="Edit trade"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTrade(trade.id)}
+                          disabled={isDeleting === trade.id}
+                          className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors disabled:opacity-50"
+                          title="Delete trade"
+                        >
+                          {isDeleting === trade.id ? (
+                            <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Mobile Pagination */}
+              <div className="card p-4 flex flex-col items-center gap-3 bg-[#0a0b12]/50 rounded-2xl border border-white/[0.06] mt-4">
+                <span className="text-xs text-gray-500">
+                  Showing <span className="text-gray-300 font-medium">{((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, trades.length)}</span> of <span className="text-gray-300 font-medium">{trades.length}</span> trades
+                </span>
+                <div className="flex items-center gap-3 w-full justify-between">
+                  <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                    className="px-2.5 py-1.5 bg-[#151823] border border-white/[0.06] rounded-lg text-gray-400 text-xs focus:outline-none hover:border-white/[0.12] transition-colors [color-scheme:dark]">
+                    <option value="10">10 / page</option><option value="25">25 / page</option><option value="50">50 / page</option>
+                  </select>
+                  
+                  <div className="flex items-center gap-1 bg-[#151823] rounded-lg border border-white/[0.06] p-0.5">
+                    <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+                      className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <span className="text-xs text-gray-300 px-3 py-1 font-medium tabular-nums">
+                      {currentPage} <span className="text-gray-600">of</span> {totalPages}
+                    </span>
+                    <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+                      className="p-1.5 rounded-md text-gray-500 hover:text-white hover:bg-white/[0.06] disabled:opacity-30 disabled:hover:bg-transparent transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       </div>

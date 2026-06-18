@@ -114,6 +114,12 @@ export default function Header() {
           
           {/* Mobile Menu Button */}
           <div className="flex lg:hidden items-center gap-2">
+            {user && !isLoadingStreak && (
+              <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-semibold select-none shadow-sm shadow-amber-500/5" title={`${streak.currentStreak} day streak`}>
+                <span>🔥</span>
+                <span>{streak.currentStreak || 0}d</span>
+              </div>
+            )}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"

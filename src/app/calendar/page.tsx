@@ -313,7 +313,7 @@ export default function CalendarPage() {
         whileTap={{ scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={`
-          relative ${large ? 'min-h-[140px]' : 'min-h-[110px]'} p-3 cursor-pointer
+          relative ${large ? 'min-h-[90px] md:min-h-[140px]' : 'min-h-[55px] md:min-h-[110px]'} p-2 md:p-3 cursor-pointer
           transition-all duration-300 group
           ${isOutsideMonth ? 'opacity-20 pointer-events-none' : ''}
         `}
@@ -363,7 +363,7 @@ export default function CalendarPage() {
 
           {hasTrades && (
             <span
-              className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full"
+              className="hidden md:inline-block text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full"
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 color: 'rgba(255,255,255,0.4)',
@@ -375,9 +375,16 @@ export default function CalendarPage() {
           )}
         </div>
 
+        {/* Mobile Dot Indicator */}
+        {hasTrades && (
+          <div className="md:hidden flex justify-center mt-1 relative z-10">
+            <span className={`w-1.5 h-1.5 rounded-full ${isProfit ? 'bg-emerald-400 animate-pulse' : isLoss ? 'bg-red-400' : 'bg-gray-400'}`} />
+          </div>
+        )}
+
         {/* P&L */}
         {hasTrades && (
-          <div className="mt-auto pt-1">
+          <div className="hidden md:block mt-auto pt-1">
             <div
               className={`text-base font-bold tabular-nums tracking-tight leading-tight ${
                 isProfit ? 'text-emerald-400' : isLoss ? 'text-red-400' : 'text-gray-400'
@@ -466,11 +473,11 @@ export default function CalendarPage() {
       }
 
       weekRows.push(
-        <div key={row} className="grid grid-cols-[repeat(7,1fr)_80px]">
+        <div key={row} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_80px]">
           {weekCells}
           {/* Week total — liquid glass cell */}
           <div
-            className="min-h-[110px] flex flex-col items-center justify-center px-2"
+            className="hidden md:flex min-h-[110px] flex-col items-center justify-center px-2"
             style={{
               background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
               borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -507,7 +514,7 @@ export default function CalendarPage() {
       >
         {/* Day headers */}
         <div
-          className="grid grid-cols-[repeat(7,1fr)_80px]"
+          className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_80px]"
           style={{
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
@@ -524,7 +531,7 @@ export default function CalendarPage() {
             </div>
           ))}
           <div
-            className="px-3 py-3 text-center text-[11px] font-semibold text-gray-600 uppercase tracking-wider"
+            className="hidden md:block px-3 py-3 text-center text-[11px] font-semibold text-gray-600 uppercase tracking-wider"
             style={{
               background: 'rgba(255,255,255,0.015)',
               borderLeft: '1px solid rgba(255,255,255,0.06)',
