@@ -24,6 +24,10 @@ export interface Trade {
   lots?: number;
   pips?: number;
   account_id?: string | null;
+  stop_loss?: number;
+  take_profit?: number;
+  commission?: number;
+  swap?: number;
 }
 
 

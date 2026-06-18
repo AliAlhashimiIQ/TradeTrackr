@@ -9,6 +9,59 @@ import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { isForexPair, calculatePips } from '@/lib/forexUtils';
 
+const parseMetadata = (notes: string | undefined) => {
+  if (!notes) return { notes: '', stop_loss: undefined, take_profit: undefined, commission: undefined };
+  let parsedSL: number | undefined;
+  let parsedTP: number | undefined;
+  let parsedComm: number | undefined;
+
+  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
+  const match = notes.match(blockRegex);
+  let cleanNotes = notes;
+  if (match) {
+    if (match[1]) parsedSL = parseFloat(match[1]);
+    if (match[2]) parsedTP = parseFloat(match[2]);
+    if (match[3]) parsedComm = parseFloat(match[3]);
+    cleanNotes = notes.replace(blockRegex, '').trim();
+  }
+  
+  if (parsedComm === undefined) {
+    const commMatch = notes.match(/Commission:\s*([\d.-]+)/i);
+    if (commMatch) parsedComm = parseFloat(commMatch[1]);
+  }
+  if (parsedSL === undefined) {
+    const slMatch = notes.match(/(?:S\/L|Stop\s*Loss):\s*([\d.-]+)/i);
+    if (slMatch) parsedSL = parseFloat(slMatch[1]);
+  }
+  if (parsedTP === undefined) {
+    const tpMatch = notes.match(/(?:T\/P|Take\s*Profit):\s*([\d.-]+)/i);
+    if (tpMatch) parsedTP = parseFloat(tpMatch[1]);
+  }
+
+  return {
+    notes: cleanNotes,
+    stop_loss: parsedSL,
+    take_profit: parsedTP,
+    commission: parsedComm,
+  };
+};
+
+const serializeMetadata = (notes: string, stop_loss?: number, take_profit?: number, commission?: number) => {
+  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
+  let cleanNotes = notes.replace(blockRegex, '').trim();
+
+  const hasSL = stop_loss !== undefined && stop_loss !== null && !isNaN(stop_loss);
+  const hasTP = take_profit !== undefined && take_profit !== null && !isNaN(take_profit);
+  const hasComm = commission !== undefined && commission !== null && !isNaN(commission);
+
+  if (hasSL || hasTP || hasComm) {
+    const formatVal = (val?: number) => (val !== undefined && val !== null && !isNaN(val) ? val : '');
+    const block = `[SL=${formatVal(stop_loss)};TP=${formatVal(take_profit)};Comm=${formatVal(commission)};Swap=]`;
+    cleanNotes = cleanNotes ? `${cleanNotes} ${block}` : block;
+  }
+  return cleanNotes;
+};
+
 interface EnhancedTradeFormProps {
   initialTrade?: Partial<Trade>;
   onSubmit: (trade: Partial<Trade>) => void;
@@ -34,6 +87,8 @@ const EMOTIONS = [
   { value: 'anxious', label: 'Anxious', color: 'amber' },
   { value: 'fomo', label: 'FOMO', color: 'orange' },
   { value: 'revenge', label: 'Revenge', color: 'red' },
+  { value: 'fear', label: 'Fear', color: 'purple' },
+  { value: 'greed', label: 'Greed', color: 'yellow' },
 ];
 
 const PRESET_TAGS = ['Breakout', 'Reversal', 'Trend', 'Scalp', 'Swing', 'News', 'Supply/Demand', 'Prop Firm', 'Sniper Entry'];
@@ -109,6 +164,13 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       const formatted = { ...initialTrade };
       if (initialTrade.entry_time) formatted.entry_time = new Date(initialTrade.entry_time).toISOString().split('T')[0];
       if (initialTrade.exit_time) formatted.exit_time = new Date(initialTrade.exit_time).toISOString().split('T')[0];
+      
+      const parsed = parseMetadata(initialTrade.notes);
+      formatted.notes = parsed.notes;
+      formatted.stop_loss = parsed.stop_loss;
+      formatted.take_profit = parsed.take_profit;
+      formatted.commission = parsed.commission;
+      
       setFormData(formatted);
     } else if (user) {
       setFormData(prev => ({ ...prev, user_id: user.id }));
@@ -208,6 +270,13 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * effectiveQuantity
         : ((formData.entry_price || 0) - (formData.exit_price || 0)) * effectiveQuantity;
       
+      const serializedNotes = serializeMetadata(
+        formData.notes || '',
+        formData.stop_loss,
+        formData.take_profit,
+        formData.commission
+      );
+
       await onSubmit({
         user_id: userId,
         symbol: formData.symbol?.toUpperCase(),
@@ -218,7 +287,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         entry_time: formData.entry_time,
         exit_time: formData.exit_time,
         profit_loss: calculatedPnl,
-        notes: formData.notes || '',
+        notes: serializedNotes,
         screenshot_url: screenshotUrl,
         emotional_state: formData.emotional_state,
         tags: formData.tags,
@@ -533,6 +602,49 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         placeholder="Custom mistake..." className="flex-1 px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-white text-base placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-red-500/50" />
                       <button type="button" onClick={() => { if (customMistake.trim()) { toggleMistake(customMistake.trim()); setCustomMistake(''); } }}
                         className="px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-gray-300 hover:text-white text-base transition-colors">Add</button>
+                    </div>
+                  </div>
+
+                  {/* Parameters */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1 h-4 bg-gray-600 rounded-full" />
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Parameters</h2>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Stop Loss</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={formData.stop_loss ?? ''}
+                          onChange={e => handleChange('stop_loss', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          placeholder="0.00"
+                          className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
+                        />
+                      </div>
+                      <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Take Profit</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={formData.take_profit ?? ''}
+                          onChange={e => handleChange('take_profit', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          placeholder="0.00"
+                          className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
+                        />
+                      </div>
+                      <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Commission</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={formData.commission ?? ''}
+                          onChange={e => handleChange('commission', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          placeholder="0.00"
+                          className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
 

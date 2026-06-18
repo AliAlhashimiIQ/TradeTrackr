@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useStreak } from '@/hooks/useStreak'
 
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut, user } = useAuth()
+  const { streak, isLoading: isLoadingStreak } = useStreak()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
@@ -126,6 +128,48 @@ export default function Header() {
 
           {/* Profile Section */}
           <div className="hidden sm:flex items-center gap-4 ml-4 pl-4 border-l border-white/[0.06]" ref={profileRef}>
+            {/* Streak Counter */}
+            {user && !isLoadingStreak && (
+              streak.currentStreak > 0 ? (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-semibold cursor-default select-none shadow-sm shadow-amber-500/5 group relative">
+                  <span className="text-base group-hover:scale-125 transition-transform duration-200">🔥</span>
+                  <span>{streak.currentStreak} Day Streak</span>
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-[#0f1117] border border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-white">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>
+                    <div className="flex justify-between text-xs py-1 border-b border-white/[0.03]">
+                      <span className="text-gray-400">Current Streak:</span>
+                      <span className="font-semibold text-amber-400 font-mono">{streak.currentStreak} days</span>
+                    </div>
+                    <div className="flex justify-between text-xs py-1 mt-1">
+                      <span className="text-gray-400">Longest Streak:</span>
+                      <span className="font-semibold text-white font-mono">{streak.longestStreak} days</span>
+                    </div>
+                    <div className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                      Log at least one trade daily to keep your consistency streak burning!
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white rounded-xl text-xs font-semibold cursor-default select-none group relative">
+                  <span className="text-base grayscale group-hover:grayscale-0 transition-all duration-200">🔥</span>
+                  <span>0 Day Streak</span>
+                  <div className="absolute top-full right-0 mt-2 z-50 bg-[#0f1117] border border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-white">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>
+                    <div className="flex justify-between text-xs py-1 border-b border-white/[0.03]">
+                      <span className="text-gray-400">Current Streak:</span>
+                      <span className="font-semibold text-gray-400 font-mono">0 days</span>
+                    </div>
+                    <div className="flex justify-between text-xs py-1 mt-1">
+                      <span className="text-gray-400">Longest Streak:</span>
+                      <span className="font-semibold text-white font-mono">{streak.longestStreak} days</span>
+                    </div>
+                    <div className="text-[10px] text-gray-500 mt-2 leading-relaxed">
+                      Log a trade today to start your journaling streak!
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
             <button 
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-white/5 transition-colors group"

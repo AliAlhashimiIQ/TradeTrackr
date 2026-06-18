@@ -1,430 +1,223 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { getAllTrades, getEconomicEvents, addCustomEvent, updateCustomEvent, deleteCustomEvent } from '@/lib/tradingApi'
-import { Trade, MarketEvent, EconomicEvent, CustomEvent } from '@/lib/types'
-import Link from 'next/link'
-import COLORS, { TRANSITIONS } from '@/lib/colorSystem'
-import { TEXT, BUTTONS, CARDS, LAYOUT } from '@/lib/designSystem'
+import { getAllTrades } from '@/lib/tradingApi'
+import { Trade } from '@/lib/types'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
-import { analyzeTradePatterns, analyzeTrade } from '@/lib/ai/aiService'
-import { TradeAnalysis } from '@/lib/ai/aiService'
 import { CalendarSkeleton } from '@/components/ui/SkeletonLoader'
 import EmptyState from '@/components/ui/EmptyState'
+import { LAYOUT } from '@/lib/designSystem'
 
-// Helper to generate dates for the calendar
-const generateCalendarDates = (year: number, month: number) => {
-  const firstDayOfMonth = new Date(year, month, 1)
-  const lastDayOfMonth = new Date(year, month + 1, 0)
-  const daysInMonth = lastDayOfMonth.getDate()
-  
-  const dates = []
-  
-  for (let day = 1; day <= daysInMonth; day++) {
-    dates.push(new Date(year, month, day))
-  }
-  
-  return dates
-}
-
-// Helper to generate dates for a week
-const generateWeekDates = (date: Date) => {
-  const day = date.getDay() // 0 is Sunday, 6 is Saturday
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
-  
-  const monday = new Date(date)
-  monday.setDate(diff)
-  
-  const week = []
-  for (let i = 0; i < 7; i++) {
-    const nextDay = new Date(monday)
-    nextDay.setDate(monday.getDate() + i)
-    week.push(nextDay)
-  }
-  
-  return week
-}
-
-// Group trades by date
-const groupTradesByDate = (trades: Trade[]) => {
-  const grouped: Record<string, Trade[]> = {}
-  
-  trades.forEach(trade => {
-    const date = new Date(trade.entry_time).toISOString().slice(0, 10)
-    if (!grouped[date]) {
-      grouped[date] = []
-    }
-    grouped[date].push(trade)
-  })
-  
-  return grouped
-}
-
-// Calculate total P&L for a group of trades
-const calculateTotalPnL = (trades: Trade[]) => {
-  return trades.reduce((sum, trade) => sum + trade.profit_loss, 0)
-}
-
-// Format currency
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+/* ─── helpers ─── */
+const fmt = (n: number) =>
+  new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount)
+  }).format(n)
+
+const fmtDecimal = (n: number) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n)
+
+const groupTradesByDate = (trades: Trade[]) => {
+  const grouped: Record<string, Trade[]> = {}
+  trades.forEach((trade) => {
+    const date = new Date(trade.entry_time).toISOString().slice(0, 10)
+    if (!grouped[date]) grouped[date] = []
+    grouped[date].push(trade)
+  })
+  return grouped
 }
 
-// Custom styles for calendar
-const calendarStyles = {
-  // Base styles
-  dayBase: `relative aspect-square p-3 transition-all duration-300 cursor-pointer border-[0.5px] border-[#1c2033]`,
-  dayNormal: `bg-[#151823] hover:bg-[#1a1e2d]`,
-  daySelected: `bg-[#1a1e2d] border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)]`,
-  dayToday: `bg-[#151823] border-blue-400/20`,
-  dayProfit: `bg-[#1b3a29] hover:bg-[#1f4431]`,
-  dayLoss: `bg-[#3a1b1b] hover:bg-[#441f1f]`,
-  dayContent: `h-full flex flex-col`,
-  dayHeader: `flex items-center justify-between mb-2`,
-  dayNumber: `text-sm font-medium`,
-  dayNumberToday: `text-blue-400 font-bold`,
-  
-  // PnL Display
-  pnlAmount: `text-xl font-bold tracking-tight`,
-  pnlProfit: `text-green-400`,
-  pnlLoss: `text-red-400`,
-  tradeCount: `text-xs text-gray-400 bg-[#0d0f16] px-2 py-0.5 rounded-full`,
-  
-  // Week total
-  weekTotal: `bg-[#151823] p-4 border-t border-[#1c2033]`,
-  weekTotalLabel: `text-sm text-gray-400 mb-1`,
-  weekTotalAmount: `text-xl font-bold`,
-  
-  // Grid layouts
-  weekGrid: `grid grid-cols-8 bg-transparent divide-x divide-[#1c2033]`,
-  monthGrid: `grid grid-cols-7 bg-transparent divide-x divide-[#1c2033]`,
-  
-  // Calendar container
-  calendarContainer: `rounded-xl overflow-hidden border border-[#1c2033] divide-y divide-[#1c2033] bg-[#151823]`,
-  
-  // Controls and buttons
-  controlButton: `p-2 rounded-xl bg-[#151823] hover:bg-[#1a1e2d] text-gray-400 hover:text-white transition-all duration-300 border border-[#1c2033]`,
-  viewButton: `px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300`,
-  
-  // Headers and sections
-  monthHeader: `text-3xl font-bold text-white`,
-  dayLabel: `p-3 text-center text-sm font-medium text-gray-400 bg-[#151823] border-b border-[#1c2033]`,
-  
-  // Trade details section
-  tradeDetails: {
-    container: `mt-8 bg-[#151823] rounded-xl overflow-hidden border border-[#1c2033] shadow-lg transition-all duration-300`,
-    header: `p-6 border-b border-[#1c2033]`,
-    content: `p-6`,
-    tradeCard: `bg-gradient-to-br from-[#1a1e2d] to-[#151823] rounded-xl p-5 hover:shadow-md transition-all duration-300 hover:scale-[1.01] border border-[#1c2033]`,
-    tradeType: {
-      long: `text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap`,
-      short: `text-red-400 bg-red-400/10 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 whitespace-nowrap`,
-    },
-    stats: `grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 p-5 bg-[#1a1e2d] rounded-xl border border-[#1c2033]`,
-    statItem: `flex flex-col space-y-2`,
-    statLabel: `text-sm text-gray-400`,
-    statValue: `text-lg font-bold text-white`,
-  },
-};
+const calcPnL = (trades: Trade[]) =>
+  trades.reduce((s, t) => s + t.profit_loss, 0)
 
-// Helper functions
-const getDaysInMonth = (year: number, month: number) => {
-  return new Date(year, month + 1, 0).getDate()
+const calcWinRate = (trades: Trade[]) => {
+  if (!trades.length) return 0
+  return Math.round(
+    (trades.filter((t) => t.profit_loss > 0).length / trades.length) * 100
+  )
 }
 
-const getFirstDayOfMonth = (year: number, month: number) => {
-  const day = new Date(year, month, 1).getDay()
-  return day === 0 ? 6 : day - 1
+const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate()
+
+const getFirstDayOfMonth = (y: number, m: number) => {
+  const d = new Date(y, m, 1).getDay()
+  return d === 0 ? 6 : d - 1
 }
 
-const calculateDayPnL = (trades: Trade[]) => {
-  return trades.reduce((sum, trade) => sum + trade.profit_loss, 0)
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate()
+
+const getWeekDates = (date: Date) => {
+  const d = new Date(date)
+  const day = d.getDay()
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
+  const monday = new Date(d)
+  monday.setDate(diff)
+  return Array.from({ length: 7 }, (_, i) => {
+    const dd = new Date(monday)
+    dd.setDate(monday.getDate() + i)
+    return dd
+  })
 }
 
-// Add new interface for AI notes
-interface DayAnalysis {
-  strengths: string[];
-  weaknesses: string[];
-  improvementAreas: string[];
-  score: number;
-  patterns: string[];
-  emotionalState?: string;
-}
+/* ─── icons ─── */
+const ChevronLeft = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+  </svg>
+)
+const ChevronRight = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+  </svg>
+)
+const CalendarIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+)
+const TrendUp = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
+)
+const TrendDown = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+  </svg>
+)
 
+/* ─────────────────── COMPONENT ─────────────────── */
 export default function CalendarPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [trades, setTrades] = useState<Trade[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Week')
+  const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Month')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [selectedDayTrades, setSelectedDayTrades] = useState<Trade[]>([])
-  
-  // New state variables for calendar integration
-  const [economicEvents, setEconomicEvents] = useState<EconomicEvent[]>([])
-  const [customEvents, setCustomEvents] = useState<CustomEvent[]>([])
-  const [showEventModal, setShowEventModal] = useState(false)
-  const [showEconomicCalendar, setShowEconomicCalendar] = useState(false)
-  const [showMarketEvents, setShowMarketEvents] = useState(true)
-  const [selectedEvent, setSelectedEvent] = useState<CustomEvent | null>(null)
-  const [filterCountries, setFilterCountries] = useState<string[]>(['US'])
-  const [filterEventImpact, setFilterEventImpact] = useState<('low' | 'medium' | 'high')[]>(['medium', 'high'])
-  const [selectedDayAnalysis, setSelectedDayAnalysis] = useState<DayAnalysis | null>(null)
-  
-  // Calculate current month's dates
+
   const currentMonth = currentDate.getMonth()
   const currentYear = currentDate.getFullYear()
-  const daysInMonth = getDaysInMonth(currentYear, currentMonth)
-  const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth)
-  
-  // Get month name
   const monthName = currentDate.toLocaleString('default', { month: 'long' })
-  
-  // Generate dates for the current month or week
-  const monthDates = generateCalendarDates(currentYear, currentMonth)
-  const weekDates = generateWeekDates(currentDate)
-  
-  // Use appropriate dates based on view mode
-  const dates = viewMode === 'Month' ? monthDates : weekDates
-  
+  const today = new Date()
+
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    }
+    if (!loading && !user) router.push('/login')
   }, [user, loading, router])
-  
+
   useEffect(() => {
-    const fetchTrades = async () => {
-      if (!user) {
-        setIsLoading(false)
-        return
-      }
+    const fetch = async () => {
+      if (!user) { setIsLoading(false); return }
       try {
-        const allTrades = await getAllTrades(user.id)
-        setTrades(allTrades)
+        const all = await getAllTrades(user.id)
+        setTrades(all)
       } finally {
         setIsLoading(false)
       }
     }
-    
-    fetchTrades()
+    fetch()
   }, [user])
-  
-  // New useEffect to fetch market events, economic events, and custom events
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (!user) return
-      
-      // Format dates for API calls
-      const startDate = viewMode === 'Month' 
-        ? new Date(currentYear, currentMonth, 1).toISOString().slice(0, 10)
-        : weekDates[0].toISOString().slice(0, 10)
-        
-      const endDate = viewMode === 'Month'
-        ? new Date(currentYear, currentMonth + 1, 0).toISOString().slice(0, 10)
-        : weekDates[6].toISOString().slice(0, 10)
-      
-      // Fetch market events if enabled
-      if (showMarketEvents) {
-        // Fetch market events if enabled
-      }
-      
-      // Fetch economic events if enabled
-      if (showEconomicCalendar) {
-        const events = await getEconomicEvents(startDate, endDate, filterCountries)
-        setEconomicEvents(events.filter(event => filterEventImpact.includes(event.impact)))
-      }
-      
-      // Fetch custom events
-      // const events = await getCustomEvents(user.id, startDate, endDate)
-      // setCustomEvents(events)
-    }
-    
-    fetchEvents()
-  }, [
-    user, 
-    currentDate, 
-    viewMode, 
-    showMarketEvents, 
-    showEconomicCalendar, 
-    filterCountries, 
-    filterEventImpact
-  ])
-  
-  // Group trades by date
-  const tradesByDate = groupTradesByDate(trades)
-  
-  // Set selected date and fetch trades for that day
-  const handleDateClick = (date: Date) => {
-    setSelectedDate(date)
-    const dateString = date.toISOString().slice(0, 10)
-    const dayTrades = tradesByDate[dateString] || []
-    setSelectedDayTrades(dayTrades)
-    analyzeDayTrades(dayTrades)
-  }
-  
-  // Navigation for month and week views
+
+  const tradesByDate = useMemo(() => groupTradesByDate(trades), [trades])
+
+  /* ─── computed month stats ─── */
+  const monthStats = useMemo(() => {
+    const monthTrades = trades.filter((t) => {
+      const d = new Date(t.entry_time)
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear
+    })
+    const pnl = calcPnL(monthTrades)
+    const wins = monthTrades.filter((t) => t.profit_loss > 0).length
+    const losses = monthTrades.filter((t) => t.profit_loss < 0).length
+    const winRate = monthTrades.length
+      ? Math.round((wins / monthTrades.length) * 100)
+      : 0
+    const tradingDays = new Set(
+      monthTrades.map((t) => new Date(t.entry_time).toISOString().slice(0, 10))
+    ).size
+    const bestDay = Object.entries(tradesByDate).reduce(
+      (best, [dateStr, dayTrades]) => {
+        const d = new Date(dateStr)
+        if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return best
+        const dp = calcPnL(dayTrades)
+        return dp > best ? dp : best
+      },
+      0
+    )
+    const worstDay = Object.entries(tradesByDate).reduce(
+      (worst, [dateStr, dayTrades]) => {
+        const d = new Date(dateStr)
+        if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return worst
+        const dp = calcPnL(dayTrades)
+        return dp < worst ? dp : worst
+      },
+      0
+    )
+    return { pnl, wins, losses, winRate, tradingDays, totalTrades: monthTrades.length, bestDay, worstDay }
+  }, [trades, currentMonth, currentYear, tradesByDate])
+
+  const selectedDayTrades = useMemo(() => {
+    if (!selectedDate) return []
+    const key = selectedDate.toISOString().slice(0, 10)
+    return tradesByDate[key] || []
+  }, [selectedDate, tradesByDate])
+
+  const selectedDayPnL = calcPnL(selectedDayTrades)
+
+  /* ─── navigation ─── */
   const goToPrevious = () => {
     if (viewMode === 'Month') {
       setCurrentDate(new Date(currentYear, currentMonth - 1, 1))
     } else {
-      const newDate = new Date(currentDate)
-      newDate.setDate(currentDate.getDate() - 7)
-      setCurrentDate(newDate)
+      const nd = new Date(currentDate)
+      nd.setDate(currentDate.getDate() - 7)
+      setCurrentDate(nd)
     }
+    setSelectedDate(null)
   }
-  
   const goToNext = () => {
     if (viewMode === 'Month') {
       setCurrentDate(new Date(currentYear, currentMonth + 1, 1))
     } else {
-      const newDate = new Date(currentDate)
-      newDate.setDate(currentDate.getDate() + 7)
-      setCurrentDate(newDate)
+      const nd = new Date(currentDate)
+      nd.setDate(currentDate.getDate() + 7)
+      setCurrentDate(nd)
     }
+    setSelectedDate(null)
   }
-  
-  // Calculate win rate for selected day
-  const calculateWinRate = (trades: Trade[]) => {
-    if (trades.length === 0) return 0
-    const winningTrades = trades.filter(trade => trade.profit_loss > 0).length
-    return Math.round((winningTrades / trades.length) * 100)
-  }
-  
-  // Calculate trading streak
-  const calculateTradingStreak = () => {
-    if (trades.length === 0) return 0;
-    const sorted = [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime());
-    let streak = 0;
-    for (const trade of sorted) {
-      if (trade.profit_loss > 0) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-    return streak;
-  }
-  
-  // New functions for handling custom events
-  const handleAddEvent = async (event: Omit<CustomEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
-    if (!user) return
-    
-    const newEvent = {
-      ...event,
-      user_id: user.id,
-    }
-    
-    try {
-      const addedEvent = await addCustomEvent(newEvent)
-      setCustomEvents([...customEvents, addedEvent])
-      setShowEventModal(false)
-      setSelectedEvent(null)
-    } catch (error) {
-      console.error('Error adding custom event:', error)
-    }
-  }
-  
-  const handleUpdateEvent = async (event: CustomEvent) => {
-    try {
-      const updatedEvent = await updateCustomEvent(event)
-      setCustomEvents(customEvents.map(e => e.id === updatedEvent.id ? updatedEvent : e))
-      setShowEventModal(false)
-      setSelectedEvent(null)
-    } catch (error) {
-      console.error('Error updating custom event:', error)
-    }
-  }
-  
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await deleteCustomEvent(eventId)
-      setCustomEvents(customEvents.filter(e => e.id !== eventId))
-      setShowEventModal(false)
-      setSelectedEvent(null)
-    } catch (error) {
-      console.error('Error deleting custom event:', error)
-    }
-  }
-  
-  const openEventModal = (date: Date, event?: CustomEvent) => {
-    if (event) {
-      setSelectedEvent(event)
-    } else {
-      setSelectedEvent(null)
-    }
-    
-    setSelectedDate(date)
-    setShowEventModal(true)
-  }
-  
-  // Default to the first day with trades if no day is selected
-  useEffect(() => {
-    if (trades.length > 0 && !selectedDate) {
-      // Find the first day in the current view with trades
-      const firstDayWithTrades = dates.find(date => tradesByDate[date.toISOString().slice(0, 10)])
-      if (firstDayWithTrades) {
-        handleDateClick(firstDayWithTrades)
-      }
-    }
-  }, [trades, dates])
-  
-  // When switching view modes, try to keep the selected date visible
-  useEffect(() => {
-    if (selectedDate) {
-      if (viewMode === 'Week') {
-        // Set current date to a date in the same week as the selected date
-        setCurrentDate(selectedDate)
-      }
-    }
-  }, [viewMode])
-  
-  // Add function to analyze selected day's trades
-  const analyzeDayTrades = async (trades: Trade[]) => {
-    if (trades.length === 0) {
-      setSelectedDayAnalysis(null)
-      return
-    }
-
-    try {
-      // Get analysis for each trade
-      const analyses = await Promise.all(trades.map(trade => analyzeTrade(trade)))
-      
-      // Combine analyses into a single day analysis
-      const dayAnalysis: DayAnalysis = {
-        strengths: [...new Set(analyses.flatMap(a => a.strengths))],
-        weaknesses: [...new Set(analyses.flatMap(a => a.weaknesses))],
-        improvementAreas: [...new Set(analyses.flatMap(a => a.improvementAreas))],
-        score: Math.round(analyses.reduce((sum, a) => sum + a.score, 0) / analyses.length),
-        patterns: [],
-        emotionalState: trades[0]?.emotional_state
-      }
-      
-      setSelectedDayAnalysis(dayAnalysis)
-    } catch (error) {
-      console.error('Error analyzing day trades:', error)
-      setSelectedDayAnalysis(null)
-    }
+  const goToToday = () => {
+    const t = new Date()
+    setCurrentDate(t)
+    setSelectedDate(t)
   }
 
-  // Add function to calculate week's total P&L
-  const calculateWeekTotal = (dates: Date[]) => {
-    return dates.reduce((total, date) => {
-      const dateString = date.toISOString().slice(0, 10)
-      const dayTrades = tradesByDate[dateString] || []
-      return total + calculateTotalPnL(dayTrades)
-    }, 0)
-  }
-  
+  const weekDates = useMemo(() => getWeekDates(currentDate), [currentDate])
+
+  const weekLabel = useMemo(() => {
+    const s = weekDates[0]
+    const e = weekDates[6]
+    const sMonth = s.toLocaleString('default', { month: 'short' })
+    const eMonth = e.toLocaleString('default', { month: 'short' })
+    if (sMonth === eMonth) {
+      return `${sMonth} ${s.getDate()} – ${e.getDate()}, ${e.getFullYear()}`
+    }
+    return `${sMonth} ${s.getDate()} – ${eMonth} ${e.getDate()}, ${e.getFullYear()}`
+  }, [weekDates])
+
   if (loading || isLoading) {
     return (
       <AuthenticatedLayout>
@@ -432,426 +225,810 @@ export default function CalendarPage() {
       </AuthenticatedLayout>
     )
   }
-  
-  if (!user) {
-    return null // This prevents the page from flashing before redirect
-  }
-  
-  const weekStart = weekDates[0]
-  const weekEnd = weekDates[6]
-  
-  const renderWeekView = () => {
-    const weekTotal = calculateWeekTotal(weekDates)
-    
-    return (
-      <div className="bg-[#151823] rounded-xl overflow-hidden border border-indigo-900/20">
-        <div className="grid grid-cols-7 border-b border-indigo-900/20">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-4 text-center text-sm font-medium text-gray-400">
-              {day}
-            </div>
-          ))}
-          </div>
-        <div className="grid grid-cols-7">
-          {weekDates.map((date) => {
-            const dateStr = date.toISOString().slice(0, 10)
-            const dayTrades = tradesByDate[dateStr] || []
-            const pnl = calculateDayPnL(dayTrades)
-            const isToday = date.toDateString() === new Date().toDateString()
-            const isSelected = selectedDate?.toDateString() === date.toDateString()
+  if (!user) return null
 
-            return (
-              <motion.div
-                key={dateStr}
-                onClick={() => handleDateClick(date)}
-                className={`
-                  min-h-[120px] p-4 border transition-all duration-200
-                  ${!isSelected ? 'bg-[#0f1117]/50' : pnl > 0 ? 'bg-green-100 border-green-300 hover:bg-green-200' : pnl < 0 ? 'bg-red-100 border-red-300 hover:bg-red-200' : 'bg-[#151823] border-[#1c2033] hover:bg-[#23263a]'}
-                  ${isToday ? 'ring-2 ring-blue-400 bg-blue-50' : ''}
-                  rounded-lg shadow-sm relative hover:scale-[1.03]
-                `}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>
-                    {date.getDate()}
-                  </span>
-                  {dayTrades.length > 0 && (
-                    <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 font-semibold">
-                      {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-            </div>
-                {pnl !== 0 && (
-                  <div className={`text-lg font-semibold ${pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl > 0 ? '+' : ''}{formatCurrency(pnl)}</div>
-                )}
-                {dayTrades.length > 0 && (
-                  <div className="mt-1 text-xs text-gray-500">
-                    Win Rate: {calculateWinRate(dayTrades)}%
-            </div>
-                )}
-              </motion.div>
-            )
-          })}
-              </div>
-        {/* Add Week Total Section */}
-        <div className="p-4 border-t border-indigo-900/20 bg-[#1a1e2d]">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-400">Week Total:</span>
-            <span className={`text-xl font-bold ${weekTotal >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {formatCurrency(weekTotal)}
+  /* ═══════════════════════ DAY CELL ═══════════════════════ */
+  const DayCell = ({
+    date,
+    isOutsideMonth = false,
+    large = false,
+  }: {
+    date: Date | null
+    isOutsideMonth?: boolean
+    large?: boolean
+  }) => {
+    if (!date) {
+      return (
+        <div
+          className={`${large ? 'min-h-[140px]' : 'min-h-[110px]'}`}
+          style={{
+            background: 'rgba(10, 11, 18, 0.5)',
+            borderRight: '1px solid rgba(255,255,255,0.04)',
+            borderBottom: '1px solid rgba(255,255,255,0.04)',
+          }}
+        />
+      )
+    }
+
+    const dateStr = date.toISOString().slice(0, 10)
+    const dayTrades = tradesByDate[dateStr] || []
+    const pnl = calcPnL(dayTrades)
+    const isToday = isSameDay(date, today)
+    const isSelected = selectedDate ? isSameDay(date, selectedDate) : false
+    const hasTrades = dayTrades.length > 0
+    const isProfit = pnl > 0
+    const isLoss = pnl < 0
+
+    // Liquid glass cell styles with P&L tinting
+    const cellStyle: React.CSSProperties = isSelected
+      ? {
+          background: `linear-gradient(160deg, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.04) 100%), rgba(13,14,22,0.9)`,
+          borderRight: '1px solid rgba(99,102,241,0.25)',
+          borderBottom: '1px solid rgba(99,102,241,0.25)',
+          borderTop: '1px solid rgba(99,102,241,0.15)',
+          borderLeft: '1px solid rgba(99,102,241,0.15)',
+          boxShadow: `
+            0 1px 0 0 rgba(99,102,241,0.15) inset,
+            0 0 24px rgba(99,102,241,0.08),
+            0 8px 32px -8px rgba(0,0,0,0.4)
+          `,
+        }
+      : isProfit
+        ? {
+            background: `linear-gradient(160deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%), rgba(13,14,22,0.85)`,
+            borderRight: '1px solid rgba(16,185,129,0.12)',
+            borderBottom: '1px solid rgba(16,185,129,0.12)',
+            borderTop: '1px solid rgba(16,185,129,0.08)',
+            borderLeft: '1px solid rgba(16,185,129,0.08)',
+            boxShadow: `
+              0 1px 0 0 rgba(16,185,129,0.08) inset,
+              0 4px 16px -4px rgba(0,0,0,0.3)
+            `,
+          }
+        : isLoss
+          ? {
+              background: `linear-gradient(160deg, rgba(239,68,68,0.07) 0%, rgba(239,68,68,0.02) 100%), rgba(13,14,22,0.85)`,
+              borderRight: '1px solid rgba(239,68,68,0.12)',
+              borderBottom: '1px solid rgba(239,68,68,0.12)',
+              borderTop: '1px solid rgba(239,68,68,0.08)',
+              borderLeft: '1px solid rgba(239,68,68,0.08)',
+              boxShadow: `
+                0 1px 0 0 rgba(239,68,68,0.07) inset,
+                0 4px 16px -4px rgba(0,0,0,0.3)
+              `,
+            }
+          : {
+              background: `linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.008) 100%), rgba(13,14,22,0.8)`,
+              borderRight: '1px solid rgba(255,255,255,0.05)',
+              borderBottom: '1px solid rgba(255,255,255,0.05)',
+              borderTop: '1px solid rgba(255,255,255,0.035)',
+              borderLeft: '1px solid rgba(255,255,255,0.035)',
+              boxShadow: `0 1px 0 0 rgba(255,255,255,0.04) inset`,
+            }
+
+    return (
+      <motion.div
+        onClick={() => setSelectedDate(date)}
+        whileHover={{ scale: 1.015, y: -1 }}
+        whileTap={{ scale: 0.99 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+        className={`
+          relative ${large ? 'min-h-[140px]' : 'min-h-[110px]'} p-3 cursor-pointer
+          transition-all duration-300 group
+          ${isOutsideMonth ? 'opacity-20 pointer-events-none' : ''}
+        `}
+        style={{
+          ...cellStyle,
+          backdropFilter: 'blur(2px)',
+        }}
+      >
+        {/* Subtle top shimmer line for profit/loss cells */}
+        {hasTrades && (
+          <div
+            className="absolute top-0 left-[10%] right-[10%] h-[1px]"
+            style={{
+              background: isProfit
+                ? 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)'
+                : isLoss
+                  ? 'linear-gradient(90deg, transparent, rgba(239,68,68,0.35), transparent)'
+                  : 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
+              opacity: 0.8,
+            }}
+          />
+        )}
+
+        {/* Day number */}
+        <div className="flex items-center justify-between mb-1">
+          <span
+            className={`text-xs font-medium leading-none ${
+              isToday
+                ? 'text-white w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold'
+                : isSelected
+                  ? 'text-indigo-300'
+                  : hasTrades
+                    ? 'text-gray-300'
+                    : 'text-gray-600'
+            }`}
+            style={
+              isToday
+                ? {
+                    background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                    boxShadow: '0 0 12px rgba(99,102,241,0.35), 0 2px 6px rgba(0,0,0,0.3)',
+                  }
+                : undefined
+            }
+          >
+            {date.getDate()}
+          </span>
+
+          {hasTrades && (
+            <span
+              className="text-[10px] font-semibold tabular-nums px-1.5 py-0.5 rounded-full"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                color: 'rgba(255,255,255,0.4)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              {dayTrades.length}
             </span>
+          )}
+        </div>
+
+        {/* P&L */}
+        {hasTrades && (
+          <div className="mt-auto pt-1">
+            <div
+              className={`text-base font-bold tabular-nums tracking-tight leading-tight ${
+                isProfit ? 'text-emerald-400' : isLoss ? 'text-red-400' : 'text-gray-400'
+              }`}
+              style={{
+                textShadow: isProfit
+                  ? '0 0 20px rgba(16,185,129,0.25)'
+                  : isLoss
+                    ? '0 0 20px rgba(239,68,68,0.2)'
+                    : 'none',
+              }}
+            >
+              {pnl > 0 ? '+' : ''}{fmt(pnl)}
+            </div>
+
+            {/* Win rate liquid progress bar */}
+            <div className="mt-2 flex items-center gap-1.5">
+              <div
+                className="flex-1 h-[3px] rounded-full overflow-hidden"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.3) inset',
+                }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${calcWinRate(dayTrades)}%`,
+                    background: isProfit
+                      ? 'linear-gradient(90deg, rgba(16,185,129,0.5), rgba(16,185,129,0.8))'
+                      : 'linear-gradient(90deg, rgba(239,68,68,0.4), rgba(239,68,68,0.7))',
+                    boxShadow: isProfit
+                      ? '0 0 6px rgba(16,185,129,0.3), 0 1px 0 rgba(255,255,255,0.15) inset'
+                      : '0 0 6px rgba(239,68,68,0.25), 0 1px 0 rgba(255,255,255,0.12) inset',
+                  }}
+                />
               </div>
+              <span className="text-[9px] text-gray-500 tabular-nums font-medium">
+                {calcWinRate(dayTrades)}%
+              </span>
             </div>
           </div>
+        )}
+
+        {/* Bottom glow puddle for selected */}
+        {isSelected && (
+          <div
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[60%] h-[20px] pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse, rgba(99,102,241,0.2) 0%, transparent 70%)',
+            }}
+          />
+        )}
+      </motion.div>
     )
   }
 
+  /* ═══════════════════ MONTH VIEW ═══════════════════ */
   const renderMonthView = () => {
-    const days = []
-    const totalDays = daysInMonth + firstDayOfMonth
-    const rows = Math.ceil(totalDays / 7)
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth)
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth)
+    const totalCells = Math.ceil((daysInMonth + firstDay) / 7) * 7
 
-    for (let i = 0; i < rows * 7; i++) {
-      const dayNumber = i - firstDayOfMonth + 1
-      const isValidDay = dayNumber > 0 && dayNumber <= daysInMonth
-      const date = isValidDay ? new Date(currentYear, currentMonth, dayNumber) : null
-      const dateStr = date?.toISOString().slice(0, 10)
-      const dayTrades = dateStr ? (tradesByDate[dateStr] || []) : []
-      const pnl = dateStr ? calculateDayPnL(dayTrades) : 0
-      const isToday = date?.toDateString() === new Date().toDateString()
-      const isSelected = date && selectedDate?.toDateString() === date.toDateString()
+    const cells = []
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - firstDay + 1
+      const isValid = dayNum > 0 && dayNum <= daysInMonth
+      const date = isValid ? new Date(currentYear, currentMonth, dayNum) : null
+      cells.push(
+        <DayCell key={i} date={date} isOutsideMonth={!isValid} />
+      )
+    }
 
-      days.push(
-        <motion.div
-          key={i}
-          onClick={() => date && handleDateClick(date)}
-          className={`
-            min-h-[120px] p-4 border transition-all duration-200
-            ${!isValidDay ? 'bg-[#0f1117]/50' : isSelected ? 'ring-2 ring-blue-400 bg-blue-50' : pnl > 0 ? 'bg-green-100 border-green-300 hover:bg-green-200' : pnl < 0 ? 'bg-red-100 border-red-300 hover:bg-red-200' : 'bg-[#151823] border-[#1c2033] hover:bg-[#23263a]'}
-            ${isValidDay ? 'cursor-pointer' : ''}
-            rounded-lg shadow-sm relative hover:scale-[1.03]
-          `}
-        >
-          <div className="flex justify-between items-center mb-2">
-            <span className={`text-base font-medium ${isToday ? 'text-blue-500' : 'text-gray-500'}`}>{isValidDay ? dayNumber : ''}</span>
-                      {dayTrades.length > 0 && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-200 text-gray-700 font-semibold">
-                    {dayTrades.length} trade{dayTrades.length !== 1 ? 's' : ''}
-                  </span>
-                )}
-                        </div>
-              {pnl !== 0 && (
-            <div className={`text-lg font-semibold ${pnl > 0 ? 'text-green-600' : 'text-red-600'}`}>{pnl > 0 ? '+' : ''}{formatCurrency(pnl)}</div>
-          )}
-          {dayTrades.length > 0 && (
-            <div className="mt-1 text-xs text-gray-500">
-              Win Rate: {calculateWinRate(dayTrades)}%
-                        </div>
-          )}
-        </motion.div>
+    const weekRows: React.ReactNode[] = []
+    for (let row = 0; row < cells.length / 7; row++) {
+      const weekCells = cells.slice(row * 7, row * 7 + 7)
+      let weekPnl = 0
+      for (let d = 0; d < 7; d++) {
+        const dayNum = row * 7 + d - firstDay + 1
+        if (dayNum > 0 && dayNum <= daysInMonth) {
+          const date = new Date(currentYear, currentMonth, dayNum)
+          const dateStr = date.toISOString().slice(0, 10)
+          const dayTrades = tradesByDate[dateStr] || []
+          weekPnl += calcPnL(dayTrades)
+        }
+      }
+
+      weekRows.push(
+        <div key={row} className="grid grid-cols-[repeat(7,1fr)_80px]">
+          {weekCells}
+          {/* Week total — liquid glass cell */}
+          <div
+            className="min-h-[110px] flex flex-col items-center justify-center px-2"
+            style={{
+              background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
+              borderBottom: '1px solid rgba(255,255,255,0.04)',
+              borderLeft: '1px solid rgba(255,255,255,0.06)',
+              boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset',
+            }}
+          >
+            <span className="text-[9px] text-gray-600 uppercase tracking-[0.1em] font-semibold mb-1.5">Total</span>
+            <span
+              className={`text-sm font-bold tabular-nums ${
+                weekPnl > 0 ? 'text-emerald-400' : weekPnl < 0 ? 'text-red-400' : 'text-gray-600'
+              }`}
+              style={{
+                textShadow: weekPnl > 0
+                  ? '0 0 16px rgba(16,185,129,0.2)'
+                  : weekPnl < 0
+                    ? '0 0 16px rgba(239,68,68,0.18)'
+                    : 'none',
+              }}
+            >
+              {weekPnl !== 0 ? (weekPnl > 0 ? '+' : '') + fmt(weekPnl) : '—'}
+            </span>
+          </div>
+        </div>
       )
     }
 
     return (
-      <div className="bg-[#151823] rounded-xl overflow-hidden border border-indigo-900/20">
-        <div className="grid grid-cols-7 border-b border-indigo-900/20">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-4 text-center text-sm font-medium text-gray-400">
-              {day}
-                        </div>
-                      ))}
-                        </div>
-        <div className="grid grid-cols-7">
-          {days}
-                    </div>
+      <div
+        className="card rounded-2xl overflow-hidden"
+        style={{
+          background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
+        }}
+      >
+        {/* Day headers */}
+        <div
+          className="grid grid-cols-[repeat(7,1fr)_80px]"
+          style={{
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+            <div
+              key={d}
+              className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
+              style={{
+                background: 'rgba(255,255,255,0.015)',
+              }}
+            >
+              {d}
             </div>
+          ))}
+          <div
+            className="px-3 py-3 text-center text-[11px] font-semibold text-gray-600 uppercase tracking-wider"
+            style={{
+              background: 'rgba(255,255,255,0.015)',
+              borderLeft: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            Week
+          </div>
+        </div>
+
+        {weekRows}
+      </div>
     )
   }
-                  
-                  return (
+
+  /* ═══════════════════ WEEK VIEW ═══════════════════ */
+  const renderWeekView = () => {
+    const weekPnl = weekDates.reduce((s, d) => {
+      const k = d.toISOString().slice(0, 10)
+      return s + calcPnL(tradesByDate[k] || [])
+    }, 0)
+
+    return (
+      <div
+        className="card rounded-2xl overflow-hidden"
+        style={{
+          background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
+        }}
+      >
+        {/* Day headers */}
+        <div
+          className="grid grid-cols-7"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+            <div
+              key={d}
+              className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
+              style={{ background: 'rgba(255,255,255,0.015)' }}
+            >
+              {d}
+            </div>
+          ))}
+        </div>
+
+        {/* Day cells */}
+        <div className="grid grid-cols-7">
+          {weekDates.map((date) => (
+            <DayCell key={date.toISOString()} date={date} large />
+          ))}
+        </div>
+
+        {/* Week total bar — liquid glass */}
+        <div
+          className="flex items-center justify-between px-5 py-3.5"
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            background: `linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.008) 100%), rgba(10,11,18,0.6)`,
+            boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+          }}
+        >
+          <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-[0.1em]">Week Total</span>
+          <span
+            className={`text-base font-bold tabular-nums ${
+              weekPnl > 0 ? 'text-emerald-400' : weekPnl < 0 ? 'text-red-400' : 'text-gray-500'
+            }`}
+            style={{
+              textShadow: weekPnl > 0
+                ? '0 0 16px rgba(16,185,129,0.25)'
+                : weekPnl < 0
+                  ? '0 0 16px rgba(239,68,68,0.2)'
+                  : 'none',
+            }}
+          >
+            {weekPnl > 0 ? '+' : ''}{fmt(weekPnl)}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  /* ═══════════════════ MAIN RENDER ═══════════════════ */
+  return (
     <AuthenticatedLayout>
       <div className={`${LAYOUT.container} py-8`}>
-        {/* Page Header */}
-        <div className="mb-8">
-          <div className={LAYOUT.flexBetween}>
-            <div>
-              <h1 className={`${calendarStyles.monthHeader} bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400`}>
-                {monthName} {currentYear}
-              </h1>
-              <p className="text-gray-400 mt-2">
-                Monthly P&L: <span className={calculateTotalPnL(trades) > 0 ? 'text-green-400' : calculateTotalPnL(trades) < 0 ? 'text-red-400' : 'text-gray-300'}>{calculateTotalPnL(trades) > 0 ? '+' : ''}{formatCurrency(calculateTotalPnL(trades))}</span>
-              </p>
-                      </div>
-                      
-            <div className="flex items-center space-x-3">
-              <div className="flex bg-[#151823] rounded-xl p-1 border border-indigo-900/20">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setViewMode('Week')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    viewMode === 'Week'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  Week
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setViewMode('Month')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    viewMode === 'Month'
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  Month
-                </motion.button>
-                        </div>
-                        </div>
-                    </div>
-        </div>
-        
-        {/* Calendar Controls */}
-        <div className="mb-8 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-            <button onClick={goToPrevious} className={calendarStyles.controlButton}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-            <button onClick={goToNext} className={calendarStyles.controlButton}>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-            
-                  <button 
-              onClick={() => {
-                const today = new Date()
-                setCurrentDate(today)
-                setSelectedDate(today)
-                const dateString = today.toISOString().slice(0, 10)
-                setSelectedDayTrades(tradesByDate[dateString] || [])
-              }}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300"
-            >
-              Today
-                  </button>
-                </div>
+
+        {/* ─── Header ─── */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <div
+                className="p-2.5 rounded-xl"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(99,102,241,0.06))',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                  boxShadow: '0 0 16px rgba(99,102,241,0.1), 0 1px 0 rgba(255,255,255,0.08) inset',
+                  color: '#818cf8',
+                }}
+              >
+                <CalendarIcon />
               </div>
-              
-        {/* Calendar */}
+              <h1 className="text-2xl font-bold tracking-tight gradient-text">
+                {viewMode === 'Month' ? `${monthName} ${currentYear}` : weekLabel}
+              </h1>
+            </div>
+            <p className="text-sm text-gray-500 ml-[48px]">
+              {monthStats.totalTrades} trades across {monthStats.tradingDays} trading days
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* View toggle — liquid glass pill */}
+            <div
+              className="flex rounded-xl p-0.5"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.25) inset, 0 1px 0 rgba(255,255,255,0.04)',
+              }}
+            >
+              {(['Week', 'Month'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
+                  style={
+                    viewMode === mode
+                      ? {
+                          background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.08))',
+                          color: '#c7d2fe',
+                          border: '1px solid rgba(99,102,241,0.25)',
+                          boxShadow: '0 0 10px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.1) inset',
+                        }
+                      : {
+                          color: '#6b7280',
+                          border: '1px solid transparent',
+                        }
+                  }
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+
+            {/* Navigation — liquid glass buttons */}
+            <div className="flex items-center gap-1 ml-2">
+              <button
+                onClick={goToPrevious}
+                className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+                style={{
+                  color: '#9ca3af',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+                }}
+              >
+                <ChevronLeft />
+              </button>
+              <button
+                onClick={goToToday}
+                className="btn-secondary px-3 py-1.5 text-xs rounded-lg"
+              >
+                Today
+              </button>
+              <button
+                onClick={goToNext}
+                className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
+                style={{
+                  color: '#9ca3af',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+                }}
+              >
+                <ChevronRight />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ─── Month Stats Strip — stat-card liquid glass ─── */}
+        <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+          {[
+            {
+              label: 'Net P&L',
+              value: (monthStats.pnl > 0 ? '+' : '') + fmt(monthStats.pnl),
+              color: monthStats.pnl > 0 ? '#34d399' : monthStats.pnl < 0 ? '#f87171' : '#9ca3af',
+              icon: monthStats.pnl >= 0 ? <TrendUp /> : <TrendDown />,
+              iconColor: monthStats.pnl >= 0 ? '#10b981' : '#ef4444',
+              glow: monthStats.pnl > 0 ? 'rgba(16,185,129,0.06)' : monthStats.pnl < 0 ? 'rgba(239,68,68,0.05)' : undefined,
+            },
+            {
+              label: 'Win Rate',
+              value: `${monthStats.winRate}%`,
+              color: monthStats.winRate >= 50 ? '#34d399' : '#f87171',
+              glow: monthStats.winRate >= 50 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+            },
+            {
+              label: 'Wins',
+              value: monthStats.wins.toString(),
+              color: '#34d399',
+            },
+            {
+              label: 'Losses',
+              value: monthStats.losses.toString(),
+              color: '#f87171',
+            },
+            {
+              label: 'Total Trades',
+              value: monthStats.totalTrades.toString(),
+              color: '#e5e7eb',
+            },
+            {
+              label: 'Best Day',
+              value: monthStats.bestDay > 0 ? '+' + fmt(monthStats.bestDay) : '—',
+              color: '#34d399',
+              glow: monthStats.bestDay > 0 ? 'rgba(16,185,129,0.06)' : undefined,
+            },
+            {
+              label: 'Worst Day',
+              value: monthStats.worstDay < 0 ? fmt(monthStats.worstDay) : '—',
+              color: '#f87171',
+              glow: monthStats.worstDay < 0 ? 'rgba(239,68,68,0.05)' : undefined,
+            },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="stat-card px-4 py-3 flex flex-col gap-1 relative overflow-hidden"
+            >
+              {/* Faint colored puddle at bottom */}
+              {stat.glow && (
+                <div
+                  className="absolute bottom-[-20px] left-1/2 -translate-x-1/2 w-[80%] h-[40px] pointer-events-none"
+                  style={{
+                    background: `radial-gradient(ellipse, ${stat.glow} 0%, transparent 70%)`,
+                  }}
+                />
+              )}
+              <div className="flex items-center justify-between relative z-10">
+                <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
+                  {stat.label}
+                </span>
+                {stat.icon && (
+                  <span style={{ color: stat.iconColor }}>{stat.icon}</span>
+                )}
+              </div>
+              <span
+                className="text-lg font-bold tabular-nums relative z-10"
+                style={{
+                  color: stat.color,
+                  textShadow: `0 0 20px ${stat.color}33`,
+                }}
+              >
+                {stat.value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* ─── Calendar Grid ─── */}
         {trades.length === 0 ? (
           <EmptyState variant="calendar" />
         ) : (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={viewMode}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-          >
-            {viewMode === 'Week' ? renderWeekView() : renderMonthView()}
-          </motion.div>
-        </AnimatePresence>
-        )}
-        
-        {/* Selected Day Details with AI Analysis */}
-            {selectedDate && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 space-y-6"
-          >
-            {/* Day Overview */}
-            <div className="bg-[#151823] rounded-xl border border-indigo-900/20 p-6">
-              <h2 className="text-xl font-bold text-white mb-4">
-                {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </h2>
-              
-              {selectedDayTrades.length > 0 && (
-                <div className={calendarStyles.tradeDetails.stats}>
-                  <div className={calendarStyles.tradeDetails.statItem}>
-                    <span className={calendarStyles.tradeDetails.statLabel}>Win Rate</span>
-                    <span className={calendarStyles.tradeDetails.statValue}>
-                      {Math.round((selectedDayTrades.filter(t => t.profit_loss > 0).length / selectedDayTrades.length) * 100)}%
-                    </span>
-                            </div>
-                  <div className={calendarStyles.tradeDetails.statItem}>
-                    <span className={calendarStyles.tradeDetails.statLabel}>Avg. Win</span>
-                    <span className={`${calendarStyles.tradeDetails.statValue} text-green-400`}>
-                      {formatCurrency(
-                        selectedDayTrades.filter(t => t.profit_loss > 0).reduce((sum, t) => sum + t.profit_loss, 0) / 
-                        selectedDayTrades.filter(t => t.profit_loss > 0).length || 0
-                      )}
-                                </span>
-                            </div>
-                  <div className={calendarStyles.tradeDetails.statItem}>
-                    <span className={calendarStyles.tradeDetails.statLabel}>Avg. Loss</span>
-                    <span className={`${calendarStyles.tradeDetails.statValue} text-red-400`}>
-                      {formatCurrency(
-                        selectedDayTrades.filter(t => t.profit_loss < 0).reduce((sum, t) => sum + t.profit_loss, 0) / 
-                        selectedDayTrades.filter(t => t.profit_loss < 0).length || 0
-                      )}
-                    </span>
-                        </div>
-                  <div className={calendarStyles.tradeDetails.statItem}>
-                    <span className={calendarStyles.tradeDetails.statLabel}>Largest Trade</span>
-                    <span className={`${calendarStyles.tradeDetails.statValue} ${
-                      Math.max(...selectedDayTrades.map(t => t.profit_loss)) >= 0 ? 'text-green-400' : 'text-red-400'
-                    }`}>
-                      {formatCurrency(Math.max(...selectedDayTrades.map(t => Math.abs(t.profit_loss))))}
-                    </span>
-                              </div>
-                            </div>
-                            )}
-                          </div>
-
-            {/* AI Analysis Section */}
-            {selectedDayAnalysis && (
-              <div className="bg-[#151823] rounded-xl border border-indigo-900/20 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-white">AI Analysis</h3>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-400">Trading Score</span>
-                    <span className={`text-lg font-bold ${
-                      selectedDayAnalysis.score >= 70 ? 'text-green-400' : 
-                      selectedDayAnalysis.score >= 50 ? 'text-yellow-400' : 'text-red-400'
-                    }`}>
-                      {selectedDayAnalysis.score}/100
-                                </span>
-                            </div>
-                        </div>
-
-                {selectedDayAnalysis.emotionalState && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium text-gray-400 mb-2">Emotional State</h4>
-                    <div className="inline-block px-3 py-1 rounded-full bg-indigo-900/20 text-indigo-400">
-                      {selectedDayAnalysis.emotionalState}
-                </div>
-              </div>
-            )}
-            
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Strengths */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-400 mb-3">Strengths</h4>
-                    <ul className="space-y-2">
-                      {selectedDayAnalysis.strengths.map((strength, index) => (
-                        <li key={index} className="flex items-start space-x-2 text-green-400">
-                          <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                          </svg>
-                          <span>{strength}</span>
-                        </li>
-                      ))}
-                    </ul>
-            </div>
-            
-                  {/* Areas for Improvement */}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-400 mb-3">Areas for Improvement</h4>
-                    <ul className="space-y-2">
-                      {selectedDayAnalysis.improvementAreas.map((area, index) => (
-                        <li key={index} className="flex items-start space-x-2 text-blue-400">
-                          <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                          </svg>
-                          <span>{area}</span>
-                        </li>
-                      ))}
-                    </ul>
-                </div>
-              </div>
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${viewMode}-${currentDate.toISOString()}`}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {viewMode === 'Month' ? renderMonthView() : renderWeekView()}
+            </motion.div>
+          </AnimatePresence>
         )}
 
-            {/* Trades List */}
-            <div className="space-y-4">
-              {selectedDayTrades.map((trade) => (
+        {/* ─── Selected Day Detail ─── */}
+        <AnimatePresence>
+          {selectedDate && (
+            <motion.div
+              key={selectedDate.toISOString()}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 16 }}
+              transition={{ duration: 0.25 }}
+              className="mt-6"
+            >
+              <div className="card rounded-2xl overflow-hidden">
+                {/* Day header */}
                 <div
-                  key={trade.id}
-                  className={calendarStyles.tradeDetails.tradeCard}
+                  className="px-6 py-5 flex items-center justify-between"
+                  style={{
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, transparent 100%)',
+                  }}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-4">
-                      <span className={calendarStyles.tradeDetails.tradeType[trade.type.toLowerCase() as 'long' | 'short']}>
-                        {trade.type === 'Long' ? (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-              </svg>
-                        ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-              </svg>
-                        )}
-                        {trade.type}
-                      </span>
-                      <span className="text-lg font-medium text-white">{trade.symbol}</span>
-          </div>
-                    <span className={`text-xl font-bold ${trade.profit_loss >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {formatCurrency(trade.profit_loss)}
-                    </span>
-        </div>
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                <div>
-                      <span className="text-gray-400">Entry</span>
-                      <div className="font-medium text-white">{formatCurrency(trade.entry_price)}</div>
-                </div>
-                <div>
-                      <span className="text-gray-400">Exit</span>
-                      <div className="font-medium text-white">{formatCurrency(trade.exit_price)}</div>
-                </div>
                   <div>
-                      <span className="text-gray-400">Time</span>
-                      <div className="font-medium text-white">
-                        {new Date(trade.entry_time).toLocaleTimeString()}
+                    <h2 className="text-base font-semibold text-white">
+                      {selectedDate.toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {selectedDayTrades.length} trade{selectedDayTrades.length !== 1 ? 's' : ''}
+                      {selectedDayTrades.length > 0 && ` · ${calcWinRate(selectedDayTrades)}% win rate`}
+                    </p>
+                  </div>
+                  {selectedDayTrades.length > 0 && (
+                    <div
+                      className="text-xl font-bold tabular-nums"
+                      style={{
+                        color: selectedDayPnL > 0 ? '#34d399' : selectedDayPnL < 0 ? '#f87171' : '#9ca3af',
+                        textShadow: selectedDayPnL > 0
+                          ? '0 0 24px rgba(16,185,129,0.3)'
+                          : selectedDayPnL < 0
+                            ? '0 0 24px rgba(239,68,68,0.25)'
+                            : 'none',
+                      }}
+                    >
+                      {selectedDayPnL > 0 ? '+' : ''}{fmt(selectedDayPnL)}
                     </div>
-                  </div>
-                  <div>
-                      <span className="text-gray-400">Duration</span>
-                      <div className="font-medium text-white">
-                        {Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / (1000 * 60))}m
-                  </div>
-                  </div>
-                </div>
-                
-                  {trade.notes && (
-                    <div className="mt-4 pt-4 border-t border-indigo-900/20">
-                      <p className="text-gray-400">{trade.notes}</p>
-                </div>
                   )}
                 </div>
-              ))}
+
+                {/* Day stats */}
+                {selectedDayTrades.length > 0 && (
+                  <div
+                    className="grid grid-cols-2 sm:grid-cols-4"
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    {[
+                      {
+                        label: 'Win Rate',
+                        value: `${calcWinRate(selectedDayTrades)}%`,
+                        color: calcWinRate(selectedDayTrades) >= 50 ? '#34d399' : '#f87171',
+                      },
+                      {
+                        label: 'Avg Win',
+                        value: (() => {
+                          const wins = selectedDayTrades.filter((t) => t.profit_loss > 0)
+                          return wins.length ? '+' + fmt(calcPnL(wins) / wins.length) : '—'
+                        })(),
+                        color: '#34d399',
+                      },
+                      {
+                        label: 'Avg Loss',
+                        value: (() => {
+                          const losses = selectedDayTrades.filter((t) => t.profit_loss < 0)
+                          return losses.length ? fmt(calcPnL(losses) / losses.length) : '—'
+                        })(),
+                        color: '#f87171',
+                      },
+                      {
+                        label: 'Largest',
+                        value: (() => {
+                          const max = selectedDayTrades.reduce(
+                            (m, t) => (Math.abs(t.profit_loss) > Math.abs(m) ? t.profit_loss : m),
+                            0
+                          )
+                          return (max > 0 ? '+' : '') + fmt(max)
+                        })(),
+                        color: '#e5e7eb',
+                      },
+                    ].map((s, i) => (
+                      <div
+                        key={i}
+                        className="px-6 py-4 flex flex-col gap-1"
+                        style={{
+                          borderRight: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                          background: 'rgba(255,255,255,0.01)',
+                        }}
+                      >
+                        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
+                          {s.label}
+                        </span>
+                        <span
+                          className="text-base font-bold tabular-nums"
+                          style={{ color: s.color }}
+                        >
+                          {s.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Trades list */}
+                {selectedDayTrades.length > 0 ? (
+                  <div>
+                    {selectedDayTrades.map((trade, idx) => {
+                      const isLong = trade.type?.toLowerCase() === 'long'
+                      const duration = Math.round(
+                        (new Date(trade.exit_time).getTime() -
+                          new Date(trade.entry_time).getTime()) /
+                          (1000 * 60)
+                      )
+                      const durationStr =
+                        duration >= 60
+                          ? `${Math.floor(duration / 60)}h ${duration % 60}m`
+                          : `${duration}m`
+
+                      return (
+                        <div
+                          key={trade.id}
+                          className="px-6 py-4 flex items-center gap-4 transition-all duration-200 group"
+                          style={{
+                            borderBottom:
+                              idx < selectedDayTrades.length - 1
+                                ? '1px solid rgba(255,255,255,0.04)'
+                                : 'none',
+                            background: 'transparent',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent'
+                          }}
+                        >
+                          {/* Side badge — liquid style */}
+                          <span
+                            className="shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
+                            style={{
+                              background: isLong
+                                ? 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(99,102,241,0.06))'
+                                : 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(239,68,68,0.06))',
+                              border: isLong
+                                ? '1px solid rgba(99,102,241,0.2)'
+                                : '1px solid rgba(239,68,68,0.2)',
+                              color: isLong ? '#818cf8' : '#f87171',
+                              boxShadow: isLong
+                                ? '0 0 8px rgba(99,102,241,0.1)'
+                                : '0 0 8px rgba(239,68,68,0.08)',
+                            }}
+                          >
+                            {trade.type}
+                          </span>
+
+                          {/* Symbol */}
+                          <span className="text-sm font-semibold text-white min-w-[70px]">
+                            {trade.symbol}
+                          </span>
+
+                          {/* Entry / Exit */}
+                          <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 min-w-[180px]">
+                            <span>
+                              <span className="text-gray-600 mr-1">Entry</span>
+                              <span className="text-gray-300 tabular-nums">{fmtDecimal(trade.entry_price)}</span>
+                            </span>
+                            <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                            <span>
+                              <span className="text-gray-600 mr-1">Exit</span>
+                              <span className="text-gray-300 tabular-nums">{fmtDecimal(trade.exit_price)}</span>
+                            </span>
+                          </div>
+
+                          {/* Time */}
+                          <span className="hidden md:block text-xs text-gray-500 tabular-nums min-w-[60px]">
+                            {new Date(trade.entry_time).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+
+                          {/* Duration */}
+                          <span className="hidden md:block text-xs text-gray-500 tabular-nums min-w-[50px]">
+                            {durationStr}
+                          </span>
+
+                          <div className="flex-1" />
+
+                          {/* P&L */}
+                          <span
+                            className="text-sm font-bold tabular-nums"
+                            style={{
+                              color: trade.profit_loss > 0 ? '#34d399' : trade.profit_loss < 0 ? '#f87171' : '#6b7280',
+                              textShadow: trade.profit_loss > 0
+                                ? '0 0 16px rgba(16,185,129,0.2)'
+                                : trade.profit_loss < 0
+                                  ? '0 0 16px rgba(239,68,68,0.18)'
+                                  : 'none',
+                            }}
+                          >
+                            {trade.profit_loss > 0 ? '+' : ''}
+                            {fmtDecimal(trade.profit_loss)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="px-6 py-12 text-center">
+                    <p className="text-gray-600 text-sm">No trades on this day</p>
+                  </div>
+                )}
               </div>
-          </motion.div>
-      )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AuthenticatedLayout>
   )
-} 
-
-// Helper function to check if a date is today
-function isCurrentDate(date: Date) {
-  const today = new Date()
-  return date.getDate() === today.getDate() && 
-         date.getMonth() === today.getMonth() && 
-         date.getFullYear() === today.getFullYear()
 }
-
-// Add these animations to your global CSS file
-const globalStyles = `
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s ease-out forwards;
-}
-`; 

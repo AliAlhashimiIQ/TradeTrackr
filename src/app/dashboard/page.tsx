@@ -9,6 +9,7 @@ import DateRangeSelector, { DateRange } from '@/components/dashboard/DateRangeSe
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useAuth } from '@/hooks/useAuth'
 import type { Trade } from '@/lib/types'
+import { useStreak } from '@/hooks/useStreak'
 import { calculateMaxDrawdown } from '@/lib/tradeMetrics'
 import { detectStreaksAndBehaviors, analyzeTagPerformance } from '@/lib/ai/aiService'
 import { isForexPair, formatPips } from '@/lib/forexUtils'
@@ -123,6 +124,7 @@ export default function Dashboard() {
   const { user, loading: authLoading } = useAuth()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null)
+  const { streak: journalStreak } = useStreak()
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login')
@@ -333,11 +335,31 @@ export default function Dashboard() {
 
             {/* ── 4 Intelligence Cards ── */}
             <ErrorBoundary>
-              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                {/* Journaling Streak Card */}
+                <motion.div variants={item} className={`${card} p-5 flex flex-col justify-between`}>
+                  <div>
+                    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Journaling Streak</div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black ${journalStreak.currentStreak > 0 ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.04] text-gray-500'}`}>
+                        {journalStreak.currentStreak > 0 ? '🔥' : '💤'}
+                      </div>
+                      <div>
+                        <div className="text-3xl font-black text-white font-mono">
+                          {journalStreak.currentStreak}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-0.5">Consecutive active days</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-white/[0.04] flex justify-between text-xs text-gray-500">
+                    <span>Longest Streak:</span>
+                    <span className="font-semibold text-white font-mono">{journalStreak.longestStreak} days</span>
+                  </div>
+                </motion.div>
+
                 {/* Streak Card */}
-                {/* ... existing cards ... */}
-              {/* Streak Card */}
-              <motion.div variants={item} className={`${card} p-5`}>
+                <motion.div variants={item} className={`${card} p-5`}>
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Current Streak</div>
                 <div className="flex items-center gap-3">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black
