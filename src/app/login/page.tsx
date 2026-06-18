@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
+import Logo from "@/components/ui/Logo";
 
 import { Suspense } from 'react';
 
@@ -114,7 +115,19 @@ function LoginContent() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#06070b]">
-        <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-9 h-9 text-white animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -132,10 +145,7 @@ function LoginContent() {
         <div className="relative z-10 max-w-md">
           <div className="flex items-center gap-3 mb-10">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Logo className="w-5 h-5 text-white" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">TradeTrackr</span>
           </div>
@@ -181,10 +191,7 @@ function LoginContent() {
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Logo className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold text-white">TradeTrackr</span>
           </div>

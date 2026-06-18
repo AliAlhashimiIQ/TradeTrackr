@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
+import Logo from '@/components/ui/Logo'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -136,7 +137,20 @@ export default function Home() {
   if (loading || !mounted) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#06070b]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            {/* Pulsing ring background */}
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-9 h-9 text-white animate-pulse" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+          </div>
+        </div>
       </div>
     )
   }
@@ -157,10 +171,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-                <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Logo className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold tracking-tight">TradeTrackr</span>
           </div>
@@ -456,10 +467,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-md flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none">
-                <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Logo className="w-4 h-4 text-white" />
             </div>
             <span className="text-sm font-semibold text-gray-400">TradeTrackr</span>
           </div>

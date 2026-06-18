@@ -12,6 +12,7 @@ interface AuthenticatedLayoutProps {
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { usePathname } from 'next/navigation';
+import Logo from '@/components/ui/Logo';
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const { user, loading } = useAuth();
@@ -53,14 +54,18 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   if (loading || (user && checkingOnboard)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#06070b]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center animate-pulse">
-            <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none">
-              <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-9 h-9 text-white animate-pulse" />
+            </div>
           </div>
-          <div className="w-6 h-6 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
+          </div>
         </div>
       </div>
     );

@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStreak } from '@/hooks/useStreak'
 
+import Logo from '@/components/ui/Logo'
+
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
@@ -61,10 +63,7 @@ export default function Header() {
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/30 transition-shadow">
-                <svg className="w-4.5 h-4.5 text-white" viewBox="0 0 24 24" fill="none">
-                  <path d="M21 21H3V3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M21 9L15 3L9 9L3 15" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <Logo className="w-4.5 h-4.5 text-white" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
             </Link>
