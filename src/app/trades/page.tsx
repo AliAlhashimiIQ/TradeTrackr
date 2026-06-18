@@ -2028,12 +2028,12 @@ export default function Trades() {
 
               {/* Inspiring Custom Visual Charts */}
               {m.label === 'Total P&L' && (
-                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-1.5 relative z-10">
-                  <div className="flex justify-between text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                  <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
                     <span>Avg Win</span>
                     <span>Avg Loss</span>
                   </div>
-                  <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                  <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
                     <div
                       style={{
                         width: `${(quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss)) > 0 ? (quickMetrics.avgWin / (quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss))) * 100 : 50}%`,
@@ -2049,23 +2049,23 @@ export default function Trades() {
                       className="h-full"
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] font-mono tabular-nums">
-                    <span className="text-emerald-400 font-medium">{formatCurrency(quickMetrics.avgWin)}</span>
-                    <span className="text-red-400 font-medium">-{formatCurrency(Math.abs(quickMetrics.avgLoss))}</span>
+                  <div className="flex justify-between text-xs font-semibold font-mono tabular-nums">
+                    <span className="text-emerald-400">{formatCurrency(quickMetrics.avgWin)}</span>
+                    <span className="text-red-400">-{formatCurrency(Math.abs(quickMetrics.avgLoss))}</span>
                   </div>
                 </div>
               )}
 
               {m.label === 'Win Rate' && (
-                <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10">
-                  <div className="flex justify-center mb-1">
-                    <svg className="w-[110px] h-[40px]" viewBox="0 0 100 50">
-                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="7" strokeLinecap="round" />
+                <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
+                  <div className="flex justify-center">
+                    <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
+                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
                       <path
                         d="M 10 45 A 35 35 0 0 1 90 45"
                         fill="none"
                         stroke="url(#winRateGrad)"
-                        strokeWidth="7"
+                        strokeWidth="9.5"
                         strokeLinecap="round"
                         strokeDasharray="110"
                         strokeDashoffset={110 - (110 * quickMetrics.winRate) / 100}
@@ -2080,13 +2080,13 @@ export default function Trades() {
                       </defs>
                     </svg>
                   </div>
-                  <div className="flex justify-between items-center text-[9px] text-gray-500 font-semibold tracking-wider">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-1.5 h-1.5 text-emerald-400 fill-current" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" /></svg>
+                  <div className="flex justify-between items-center text-xs text-gray-400 font-semibold tracking-wide px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
                       <span>{Math.round((quickMetrics.winRate / 100) * filteredTrades.length)} Wins</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-1.5 h-1.5 text-red-400 fill-current" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" /></svg>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-400 block" />
                       <span>{filteredTrades.length - Math.round((quickMetrics.winRate / 100) * filteredTrades.length)} Losses</span>
                     </div>
                   </div>
@@ -2097,18 +2097,18 @@ export default function Trades() {
                 const gpRatio = quickMetrics.profitFactor > 0 ? (quickMetrics.profitFactor / (quickMetrics.profitFactor + 1)) * 100 : 50;
                 return (
                   <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
-                    <div className="text-[9px] text-gray-500 leading-normal font-semibold">
+                    <div className="text-xs text-gray-400 leading-normal font-medium max-w-[65%]">
                       <span>Proportion of gross profit vs gross loss</span>
                     </div>
-                    <svg className="w-8 h-8 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
-                      <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="4.5" className="opacity-95" />
+                    <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="5.5" className="opacity-95" />
                       <circle
                         cx="18"
                         cy="18"
                         r="15.915"
                         fill="none"
                         stroke="#10b981"
-                        strokeWidth="4.5"
+                        strokeWidth="5.5"
                         strokeDasharray={`${gpRatio} 100`}
                         className="transition-all duration-500"
                       />
@@ -2123,16 +2123,16 @@ export default function Trades() {
                 const total = longCount + shortCount;
                 const longPct = total > 0 ? (longCount / total) * 100 : 50;
                 return (
-                  <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-1.5 relative z-10">
-                    <div className="flex justify-between text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                    <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
                       <span>Buy ({longCount})</span>
                       <span>Sell ({shortCount})</span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                    <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
                       <div style={{ width: `${longPct}%` }} className="h-full bg-emerald-500" />
                       <div style={{ width: `${100 - longPct}%` }} className="h-full bg-red-500" />
                     </div>
-                    <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                    <div className="flex justify-between text-xs text-gray-400 font-bold px-0.5">
                       <span>{total > 0 ? `${longPct.toFixed(0)}%` : '--'}</span>
                       <span>{total > 0 ? `${(100 - longPct).toFixed(0)}%` : '--'}</span>
                     </div>

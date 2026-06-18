@@ -25,7 +25,7 @@ import {
 } from 'recharts'
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
 }
 
 function getStreak(trades: Trade[]): { type: 'win' | 'loss' | 'none'; count: number } {
@@ -292,23 +292,202 @@ export default function Dashboard() {
           <>
             {/* ── Stat Pills Row ── */}
             <ErrorBoundary>
-              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-              {[
-                  { label: 'Net P&L', value: fmt(metrics.total_pnl), color: metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-red-400', sub: `${dateRange.toUpperCase()} period`, spark: sparklineData.equity, sparkColor: metrics.total_pnl >= 0 ? '#10b981' : '#ef4444' },
-                  { label: 'Win Rate', value: `${(metrics.win_rate * 100).toFixed(1)}%`, color: metrics.win_rate >= 0.5 ? 'text-emerald-400' : 'text-yellow-400', sub: `${metrics.winning_trades}W / ${metrics.losing_trades}L`, spark: sparklineData.winRate, sparkColor: metrics.win_rate >= 0.5 ? '#10b981' : '#eab308' },
-                  { label: 'Profit Factor', value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—', color: 'text-blue-400', sub: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'Profitable system' : 'Below target', spark: sparklineData.pf, sparkColor: '#6366f1' },
-                  { label: 'Total Trades', value: metrics.total_trades.toString(), color: 'text-purple-400', sub: `${todayTrades.length} today`, spark: [], sparkColor: '#a855f7' },
-                  { label: 'Avg R:R', value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—', color: 'text-indigo-400', sub: `EV: ${advancedMetrics ? fmt(advancedMetrics.expectedValue) : '—'}`, spark: [], sparkColor: '#6366f1' },
+              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                {[
+                  {
+                    label: 'Net P&L',
+                    value: fmt(metrics.total_pnl),
+                    color: metrics.total_pnl >= 0 ? '#34d399' : '#f87171',
+                    glow: metrics.total_pnl >= 0 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  },
+                  {
+                    label: 'Win Rate',
+                    value: `${(metrics.win_rate * 100).toFixed(1)}%`,
+                    color: metrics.win_rate >= 0.5 ? '#34d399' : '#f87171',
+                    glow: metrics.win_rate >= 0.5 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  },
+                  {
+                    label: 'Profit Factor',
+                    value: advancedMetrics ? (advancedMetrics.profitFactor === Infinity ? '∞' : advancedMetrics.profitFactor.toFixed(2)) : '—',
+                    color: advancedMetrics && advancedMetrics.profitFactor >= 1 ? '#34d399' : '#f87171',
+                    glow: advancedMetrics && advancedMetrics.profitFactor >= 1 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                  },
+                  {
+                    label: 'Total Trades',
+                    value: metrics.total_trades.toString(),
+                    color: '#818cf8',
+                    glow: 'rgba(99,102,241,0.05)',
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                  },
+                  {
+                    label: 'Avg R:R',
+                    value: advancedMetrics ? advancedMetrics.riskRewardRatio.toFixed(2) : '—',
+                    color: '#a78bfa',
+                    glow: 'rgba(139,92,246,0.05)',
+                    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                  }
                 ].map((s, i) => (
-                  <motion.div key={i} variants={item} whileHover={{ y: -2 }} className={`${card} p-4`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</div>
-                      {s.spark.length >= 2 && (
-                        <MiniSparkline data={s.spark} width={64} height={24} color={s.sparkColor} />
-                      )}
+                  <motion.div
+                    key={i}
+                    variants={item}
+                    className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-3 relative z-10">
+                        <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">{s.label}</span>
+                        <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${s.color}12`, color: `${s.color}99` }}>{s.icon}</div>
+                      </div>
+                      <div className="text-2xl font-bold tracking-tight relative z-10" style={{ color: s.color, textShadow: `0 0 20px ${s.color}33` }}>
+                        {s.value}
+                      </div>
                     </div>
-                    <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-                    <div className="text-[11px] text-gray-600 mt-1">{s.sub}</div>
+
+                    {/* Inspiring Custom Visual Charts inside Dashboard Cards */}
+                    {s.label === 'Net P&L' && (
+                      <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                        <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                          <span>Avg Win</span>
+                          <span>Avg Loss</span>
+                        </div>
+                        <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                          <div
+                            style={{
+                              width: `${(metrics.avg_win + Math.abs(metrics.avg_loss)) > 0 ? (metrics.avg_win / (metrics.avg_win + Math.abs(metrics.avg_loss))) * 100 : 50}%`,
+                              background: 'linear-gradient(90deg, #10b981, #34d399)'
+                            }}
+                            className="h-full"
+                          />
+                          <div
+                            style={{
+                              width: `${(metrics.avg_win + Math.abs(metrics.avg_loss)) > 0 ? (Math.abs(metrics.avg_loss) / (metrics.avg_win + Math.abs(metrics.avg_loss))) * 100 : 50}%`,
+                              background: 'linear-gradient(90deg, #f87171, #ef4444)'
+                            }}
+                            className="h-full"
+                          />
+                        </div>
+                        <div className="flex justify-between text-xs font-semibold font-mono tabular-nums">
+                          <span className="text-emerald-400">{fmt(metrics.avg_win)}</span>
+                          <span className="text-red-400">-{fmt(Math.abs(metrics.avg_loss))}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {s.label === 'Win Rate' && (
+                      <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
+                        <div className="flex justify-center">
+                          <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
+                            <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
+                            <path
+                              d="M 10 45 A 35 35 0 0 1 90 45"
+                              fill="none"
+                              stroke="url(#winRateGradDash)"
+                              strokeWidth="9.5"
+                              strokeLinecap="round"
+                              strokeDasharray="110"
+                              strokeDashoffset={110 - (110 * metrics.win_rate * 100) / 100}
+                              style={{ transition: 'stroke-dashoffset 0.8s ease-in-out' }}
+                            />
+                            <defs>
+                              <linearGradient id="winRateGradDash" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="#ef4444" />
+                                <stop offset="50%" stopColor="#f59e0b" />
+                                <stop offset="100%" stopColor="#10b981" />
+                              </linearGradient>
+                            </defs>
+                          </svg>
+                        </div>
+                        <div className="flex justify-between items-center text-xs text-gray-400 font-semibold tracking-wide px-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
+                            <span>{metrics.winning_trades} Wins</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-red-400 block" />
+                            <span>{metrics.losing_trades} Losses</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {s.label === 'Profit Factor' && (() => {
+                      const pfVal = advancedMetrics?.profitFactor ?? 0;
+                      const gpRatio = pfVal > 0 ? (pfVal / (pfVal + 1)) * 100 : 50;
+                      return (
+                        <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
+                          <div className="text-xs text-gray-400 leading-normal font-medium max-w-[65%]">
+                            <span>Proportion of gross profit vs gross loss</span>
+                          </div>
+                          <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="5.5" className="opacity-95" />
+                            <circle
+                              cx="18"
+                              cy="18"
+                              r="15.915"
+                              fill="none"
+                              stroke="#10b981"
+                              strokeWidth="5.5"
+                              strokeDasharray={`${gpRatio} 100`}
+                              className="transition-all duration-500"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    })()}
+
+                    {s.label === 'Total Trades' && (() => {
+                      const longCount = trades.filter(t => t.type === 'Long').length;
+                      const shortCount = trades.filter(t => t.type === 'Short').length;
+                      const total = longCount + shortCount;
+                      const longPct = total > 0 ? (longCount / total) * 100 : 50;
+                      return (
+                        <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                          <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                            <span>Buy ({longCount})</span>
+                            <span>Sell ({shortCount})</span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                            <div style={{ width: `${longPct}%` }} className="h-full bg-emerald-500" />
+                            <div style={{ width: `${100 - longPct}%` }} className="h-full bg-red-500" />
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-400 font-bold px-0.5">
+                            <span>{total > 0 ? `${longPct.toFixed(0)}%` : '--'}</span>
+                            <span>{total > 0 ? `${(100 - longPct).toFixed(0)}%` : '--'}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {s.label === 'Avg R:R' && (() => {
+                      const rrVal = advancedMetrics?.riskRewardRatio ?? 0;
+                      const targetRR = 2.0;
+                      const fillPct = Math.min(100, Math.max(0, (rrVal / targetRR) * 100));
+                      return (
+                        <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                          <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                            <span>Current R:R</span>
+                            <span>Target R:R</span>
+                          </div>
+                          <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                            <div 
+                              style={{ 
+                                width: `${fillPct}%`,
+                                background: 'linear-gradient(90deg, #6366f1, #818cf8)'
+                              }} 
+                              className="h-full" 
+                            />
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-400 font-bold px-0.5">
+                            <span>{rrVal.toFixed(2)}:1</span>
+                            <span>{targetRR.toFixed(2)}:1</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {s.glow && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: `radial-gradient(ellipse, ${s.glow} 0%, transparent 70%)` }} />}
                   </motion.div>
                 ))}
               </motion.div>
