@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
@@ -11,7 +11,7 @@ import { Sun, Moon, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PROP_FIRMS } from '@/lib/propFirms';
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, loading, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
@@ -670,3 +670,16 @@ export default function SettingsPage() {
     </AuthenticatedLayout>
   );
 }
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-[#0a0a10]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+

@@ -23,7 +23,9 @@ export interface Trade {
   mistakes?: string[];
   lots?: number;
   pips?: number;
+  account_id?: string | null;
 }
+
 
 export interface TradeMetrics {
   total_pnl: number;
@@ -110,3 +112,21 @@ export interface User {
     avatar_url?: string;
   };
 } 
+
+export interface TradingAccount {
+  id: string;
+  user_id: string;
+  name: string;
+  account_number: string;
+  server_name: string;
+  password?: string;
+  type: 'LIVE' | 'DEMO';
+  platform: string; // e.g. 'MT5', 'MT4', 'cTrader'
+  balance: number;
+  connection_status: 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
+  connection_type: 'API' | 'EA';
+  last_sync: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

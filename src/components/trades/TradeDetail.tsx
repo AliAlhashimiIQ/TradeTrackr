@@ -220,9 +220,9 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                       <div className="text-gray-500 text-xs">{formatTime(trade.exit_time)}</div>
                     </div>
                     <div>
-                      <div className="text-gray-400 text-xs">{isForex ? 'Lots' : 'Quantity'}</div>
+                      <div className="text-gray-400 text-xs">{trade.lots !== undefined && trade.lots !== null ? 'Lots' : 'Quantity'}</div>
                       <div className="text-white font-mono text-lg">
-                        {isForex ? formatLots(trade.lots) : trade.quantity}
+                        {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </div>
                     </div>
                     {isForex && trade.pips !== undefined && trade.pips !== null && (

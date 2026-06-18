@@ -57,6 +57,7 @@ export interface Database {
           created_at: string
           updated_at: string
           video_url?: string
+          account_id: string | null
         }
         Insert: {
           id?: string
@@ -76,6 +77,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           video_url?: string
+          account_id?: string | null
         }
         Update: {
           id?: string
@@ -95,6 +97,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           video_url?: string
+          account_id?: string | null
         }
       }
       open_positions: {
@@ -160,6 +163,56 @@ export interface Database {
           trade_id?: string
           user_id?: string
           content?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      trading_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          account_number: string
+          server_name: string
+          password: string | null
+          type: 'LIVE' | 'DEMO'
+          platform: string
+          balance: number
+          connection_status: 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
+          connection_type: 'API' | 'EA'
+          last_sync: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          account_number: string
+          server_name: string
+          password?: string | null
+          type?: 'LIVE' | 'DEMO'
+          platform?: string
+          balance?: number
+          connection_status?: 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
+          connection_type?: 'API' | 'EA'
+          last_sync?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          account_number?: string
+          server_name?: string
+          password?: string | null
+          type?: 'LIVE' | 'DEMO'
+          platform?: string
+          balance?: number
+          connection_status?: 'CONNECTED' | 'DISCONNECTED' | 'ERROR'
+          connection_type?: 'API' | 'EA'
+          last_sync?: string | null
           created_at?: string
           updated_at?: string
         }

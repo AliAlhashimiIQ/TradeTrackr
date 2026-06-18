@@ -36,8 +36,13 @@ function extractTables(html: string): string[][][] {
     const rows: string[][] = []
     for (const rowM of tableM[0].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
       const cells: string[] = []
-      for (const cellM of rowM[0].matchAll(/<t[dh]\b[^>]*>([\s\S]*?)<\/t[dh]>/gi)) {
-        cells.push(stripTags(cellM[1]))
+      for (const cellM of rowM[0].matchAll(/<t[dh]\b([^>]*?)>([\s\S]*?)<\/t[dh]>/gi)) {
+        const tagAttrs = cellM[1]
+        const content = cellM[2]
+        if (/\bclass=["']?hidden\b/i.test(tagAttrs)) {
+          continue // skip hidden columns/cells to keep layout aligned
+        }
+        cells.push(stripTags(content))
       }
       if (cells.length > 0) rows.push(cells)
     }
@@ -125,6 +130,13 @@ function parsePositions(rows: string[][]): ParsedTrade[] {
   const results: ParsedTrade[] = []
   for (let i = hdrIdx + 1; i < rows.length; i++) {
     const r = rows[i]
+    if (!r || r.length === 0) continue
+
+    const firstCell = (r[0] ?? '').trim()
+    if (r.length <= 2 && /^(Positions|Orders|Deals|Results|Equity|Summary|Working|Trades)/i.test(firstCell)) {
+      break
+    }
+
     const sym = (r[idx.sym] ?? '').toUpperCase().trim()
     if (isJunk(sym)) continue
 
@@ -191,6 +203,13 @@ function parseDeals(rows: string[][]): ParsedTrade[] {
 
   for (let i = hdrIdx + 1; i < rows.length; i++) {
     const r = rows[i]
+    if (!r || r.length === 0) continue
+
+    const firstCell = (r[0] ?? '').trim()
+    if (r.length <= 2 && /^(Positions|Orders|Deals|Results|Equity|Summary|Working|Trades)/i.test(firstCell)) {
+      break
+    }
+
     const sym = (r[idx.sym] ?? '').toUpperCase().trim()
     if (isJunk(sym)) continue
 

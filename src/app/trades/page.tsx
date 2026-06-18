@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { Trade } from '@/lib/types'
-import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics } from '@/lib/tradingApi'
+import { Trade, TradingAccount } from '@/lib/types'
+import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts } from '@/lib/tradingApi'
+import { uploadTradeScreenshot } from '@/lib/supabaseClient'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
@@ -120,6 +121,8 @@ export default function Trades() {
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'All' | 'Long' | 'Short'>('All')
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
+  const [accountFilter, setAccountFilter] = useState<string | null>(null)
+  const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
   const [sortField, setSortField] = useState<keyof Trade>('entry_time')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   
@@ -142,6 +145,110 @@ export default function Trades() {
     tags: true,
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
+
+  // Notion-Style Inline Editing States
+  const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' } | null>(null)
+  const [searchTag, setSearchTag] = useState('')
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
+  const [uploadingTradeId, setUploadingTradeId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.relative')) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleToggleTag = async (trade: Trade, tag: string, isMistake = false) => {
+    const current = isMistake ? (trade.mistakes || []) : (trade.tags || []);
+    const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
+    
+    // Snappy local UI update
+    const updated = trades.map(t => t.id === trade.id ? { ...t, [isMistake ? 'mistakes' : 'tags']: next } : t);
+    setTrades(updated);
+    
+    try {
+      await updateTrade({
+        ...trade,
+        [isMistake ? 'mistakes' : 'tags']: next
+      });
+      toast.success(isMistake ? 'Mistake tag updated' : 'Strategy tag updated');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update tags');
+    }
+  };
+
+  const handleSaveNote = async (trade: Trade) => {
+    setEditingNoteId(null);
+    if (noteText.trim() === (trade.notes || '').trim()) return;
+    
+    const updated = trades.map(t => t.id === trade.id ? { ...t, notes: noteText } : t);
+    setTrades(updated);
+    
+    try {
+      await updateTrade({ ...trade, notes: noteText });
+      toast.success('Notes saved');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save notes');
+    }
+  };
+
+  const handleUploadScreenshot = async (trade: Trade, file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB');
+      return;
+    }
+    setUploadingTradeId(trade.id);
+    try {
+      const url = await uploadTradeScreenshot(file, user?.id || '', trade.id);
+      if (url) {
+        const updated = trades.map(t => t.id === trade.id ? { ...t, screenshot_url: url } : t);
+        setTrades(updated);
+        await updateTrade({ ...trade, screenshot_url: url });
+        toast.success('Screenshot uploaded successfully!');
+      } else {
+        toast.error('Upload failed');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to upload screenshot');
+    } finally {
+      setUploadingTradeId(null);
+    }
+  };
+
+  const handleUpdateScreenshot = async (trade: Trade, url: string) => {
+    const updated = trades.map(t => t.id === trade.id ? { ...t, screenshot_url: url } : t);
+    setTrades(updated);
+    try {
+      await updateTrade({ ...trade, screenshot_url: url });
+      toast.success('Screenshot updated');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update screenshot');
+    }
+  };
+
+  const allExistingTags = useMemo(() => {
+    const set = new Set<string>();
+    trades.forEach(t => (t.tags || []).forEach(tag => set.add(tag)));
+    ['Breakout', 'Reversal', 'Trend', 'Scalp', 'Swing', 'News', 'Supply/Demand', 'Prop Firm', 'Sniper Entry'].forEach(tag => set.add(tag));
+    return Array.from(set);
+  }, [trades]);
+
+  const allExistingMistakes = useMemo(() => {
+    const set = new Set<string>();
+    trades.forEach(t => (t.mistakes || []).forEach(m => set.add(m)));
+    ['FOMO Entry', 'Revenge Trade', 'Moved Stop Loss', 'Too Large Size', 'Early Exit', 'Late Entry', 'No Plan', 'Overtrading', 'Held Through News'].forEach(m => set.add(m));
+    return Array.from(set);
+  }, [trades]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -177,6 +284,12 @@ export default function Trades() {
 
   useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
+  useEffect(() => {
+    if (user) {
+      getTradingAccounts(user.id).then(setUserAccounts)
+    }
+  }, [user])
+
   // ── Server-side paginated fetch (6.1 / 6.2) ──────────────────────────────
   // Fetches only one page of trades from Supabase at a time.
   // Runs whenever filters, sort, or page changes.
@@ -194,13 +307,14 @@ export default function Trades() {
         dateFilter,
         sortField: String(sortField),
         sortDirection,
+        accountId: accountFilter || undefined,
       });
       setTrades(page);          // current page only
       setFilteredTrades(page);  // same slice — view filters applied below
       setTotalPages(Math.ceil(total / pageSize));
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
-  }, [user, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection]);
+  }, [user, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, accountFilter]);
 
   // ── Fetch global metrics for the current filter set ──────────────────────
   const fetchGlobalMetrics = useCallback(async () => {
@@ -212,6 +326,7 @@ export default function Trades() {
         symbol: symbolFilter || undefined,
         type: typeFilter,
         dateFilter,
+        accountId: accountFilter || undefined,
       });
       
       let result = [...fullTrades];
@@ -236,7 +351,7 @@ export default function Trades() {
         setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
       }
     } catch (err) { console.error(err); }
-  }, [user, searchTerm, symbolFilter, typeFilter, dateFilter, activeView]);
+  }, [user, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, accountFilter]);
 
   useEffect(() => { if (user) fetchPagedTrades(); }, [fetchPagedTrades, user]);
   useEffect(() => { if (user) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user]);
@@ -256,6 +371,8 @@ export default function Trades() {
 
   // ── 6.3 Memoized heavy derivations ───────────────────────────────────────
   const uniqueSymbols = useMemo(() => Array.from(new Set(trades.map(t => t.symbol))), [trades]);
+
+  const accountsMap = useMemo(() => new Map(userAccounts.map(a => [a.id, a.name])), [userAccounts]);
 
   const reviewQueue = useMemo(() =>
     trades
@@ -596,7 +713,7 @@ export default function Trades() {
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
               className="mb-6 overflow-hidden">
               <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                   <div>
                     <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Symbol</label>
                     <select value={symbolFilter || ''} onChange={e => setSymbolFilter(e.target.value || null)}
@@ -619,8 +736,16 @@ export default function Trades() {
                       <option value="All">All Time</option><option value="7d">7 Days</option><option value="30d">30 Days</option><option value="90d">90 Days</option><option value="1y">1 Year</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Account</label>
+                    <select value={accountFilter || ''} onChange={e => setAccountFilter(e.target.value || null)}
+                      className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                      <option value="">All Accounts</option>
+                      {userAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} ({acc.account_number})</option>)}
+                    </select>
+                  </div>
                   <div className="flex items-end">
-                    <button onClick={() => { setSearchTerm(''); setSymbolFilter(null); setTypeFilter('All'); setDateFilter('All'); }}
+                    <button onClick={() => { setSearchTerm(''); setSymbolFilter(null); setTypeFilter('All'); setDateFilter('All'); setAccountFilter(null); }}
                       className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white bg-[#151823] border border-white/[0.06] rounded-lg transition-colors">
                       Reset
                     </button>
@@ -650,171 +775,380 @@ export default function Trades() {
         </AnimatePresence>
 
         {/* Trade List */}
-        <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-hidden">
-          {/* Table Header */}
-          <div className={`hidden md:grid gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]`}
-            style={{ gridTemplateColumns: `40px 1.5fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 100px${visibleColumns.quality ? ' 90px' : ''} 80px` }}>
-            <div className="flex items-center">
-              <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
-                onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
-                className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
+        <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent">
+          <div className="min-w-[1300px]">
+            {/* Table Header */}
+            <div className={`hidden md:grid gap-2 px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]`}
+              style={{ gridTemplateColumns: `40px 60px 1.2fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 90px${visibleColumns.quality ? ' 80px' : ''} 1.5fr 1.5fr 1.8fr 80px` }}>
+              <div className="flex items-center">
+                <input type="checkbox" checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
+                  onChange={e => setSelectedTradeIds(e.target.checked ? filteredTrades.map(t => t.id) : [])}
+                  className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
+              </div>
+              <div>Trade</div>
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('symbol')}>
+                Symbol {sortField === 'symbol' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('type')}>Side</div>
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_price')}>Entry</div>
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('exit_price')}>Exit</div>
+              {visibleColumns.lots && <div>Lots / Qty</div>}
+              {visibleColumns.pips && <div>Pips</div>}
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('profit_loss')}>
+                P&L {sortField === 'profit_loss' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </div>
+              <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_time')}>
+                Date {sortField === 'entry_time' && (sortDirection === 'asc' ? '↑' : '↓')}
+              </div>
+              {visibleColumns.quality && <div title="Trade quality grade and score (0-100)">Quality</div>}
+              <div>Mindset</div>
+              <div>Mistake Tags</div>
+              <div>Learnings</div>
+              <div className="text-right">Actions</div>
             </div>
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('symbol')}>
-              Symbol {sortField === 'symbol' && (sortDirection === 'asc' ? '↑' : '↓')}
-            </div>
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('type')}>Side</div>
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_price')}>Entry</div>
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('exit_price')}>Exit</div>
-            {visibleColumns.lots && <div>Lots / Qty</div>}
-            {visibleColumns.pips && <div>Pips</div>}
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('profit_loss')}>
-              P&L {sortField === 'profit_loss' && (sortDirection === 'asc' ? '↑' : '↓')}
-            </div>
-            <div className="cursor-pointer hover:text-gray-300 transition-colors" onClick={() => handleSort('entry_time')}>
-              Date {sortField === 'entry_time' && (sortDirection === 'asc' ? '↑' : '↓')}
-            </div>
-            {visibleColumns.quality && <div title="Trade quality grade and score (0-100)">Quality</div>}
-            <div className="text-right">Actions</div>
-          </div>
 
-          {/* Rows */}
-          {filteredTrades.length === 0 ? (
-            <EmptyState variant="trades" />
-          ) : (
-            filteredTrades.map((trade, idx) => (
-              <div key={trade.id}
-                className={`grid grid-cols-1 gap-2 px-4 ${tableDensity === 'compact' ? 'py-2.5' : 'py-3.5'} items-center hover:bg-white/[0.03] transition-colors ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}
-                style={{ gridTemplateColumns: `40px 1.5fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 100px${visibleColumns.quality ? ' 90px' : ''} 80px` }}>
-                {/* Checkbox */}
-                <div className="hidden md:flex items-center">
-                  <input type="checkbox" checked={selectedTradeIds.includes(trade.id)}
-                    onChange={e => setSelectedTradeIds(e.target.checked ? [...selectedTradeIds, trade.id] : selectedTradeIds.filter(id => id !== trade.id))}
-                    className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
-                </div>
-                
-                {/* Symbol */}
-                <div className="flex items-center gap-2.5">
-                  <div className={`${tableDensity === 'compact' ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs'} rounded-lg flex items-center justify-center font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                    {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
+            {/* Rows */}
+            {filteredTrades.length === 0 ? (
+              <EmptyState variant="trades" />
+            ) : (
+              filteredTrades.map((trade, idx) => (
+                <div key={trade.id}
+                  className={`grid gap-2 px-4 ${tableDensity === 'compact' ? 'py-2.5' : 'py-3.5'} items-center hover:bg-white/[0.03] transition-colors ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.01]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.03]' : ''}`}
+                  style={{ gridTemplateColumns: `40px 60px 1.2fr 80px 1fr 1fr${visibleColumns.lots ? ' 80px' : ''}${visibleColumns.pips ? ' 80px' : ''} 1fr 90px${visibleColumns.quality ? ' 80px' : ''} 1.5fr 1.5fr 1.8fr 80px` }}>
+                  {/* Checkbox */}
+                  <div className="hidden md:flex items-center">
+                    <input type="checkbox" checked={selectedTradeIds.includes(trade.id)}
+                      onChange={e => setSelectedTradeIds(e.target.checked ? [...selectedTradeIds, trade.id] : selectedTradeIds.filter(id => id !== trade.id))}
+                      className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-3.5 h-3.5" />
                   </div>
+
+                  {/* Trade / Screenshot Upload */}
+                  <div className="relative group flex items-center justify-center">
+                    {uploadingTradeId === trade.id ? (
+                      <div className="w-10 h-7 rounded bg-white/[0.02] flex items-center justify-center border border-white/[0.06]">
+                        <div className="w-3.5 h-3.5 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : trade.screenshot_url ? (
+                      <div className="relative w-10 h-7 rounded border border-white/[0.1] overflow-hidden cursor-pointer hover:scale-105 transition-all">
+                        <img
+                          src={trade.screenshot_url}
+                          alt="trade chart"
+                          className="w-full h-full object-cover"
+                          onClick={() => setSelectedScreenshotUrl(trade.screenshot_url || null)}
+                        />
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Remove screenshot?")) {
+                              await handleUpdateScreenshot(trade, "");
+                            }
+                          }}
+                          className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 hover:text-red-500 transition-opacity text-[8px] font-bold"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="w-10 h-7 rounded border border-dashed border-white/[0.2] hover:border-indigo-500/50 hover:bg-indigo-500/[0.05] transition-all flex items-center justify-center cursor-pointer text-gray-500 hover:text-indigo-400">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (file) await handleUploadScreenshot(trade, file);
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  
+                  {/* Symbol */}
+                  <div className="flex items-center gap-2.5">
+                    <div className={`${tableDensity === 'compact' ? 'w-7 h-7 text-[10px]' : 'w-8 h-8 text-xs'} rounded-lg flex items-center justify-center font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                      {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white`}>{trade.symbol}</span>
+                        {trade.account_id && accountsMap.has(trade.account_id) && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase tracking-wider">
+                            {accountsMap.get(trade.account_id)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Side */}
                   <div>
-                    <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white`}>{trade.symbol}</div>
-                    {visibleColumns.tags && trade.tags && trade.tags.length > 0 && (
-                      <div className="flex gap-1 mt-0.5">
-                        {trade.tags.slice(0, 2).map((tag, i) => (
-                          <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400">{tag}</span>
-                        ))}
-                        {trade.tags.length > 2 && <span className="text-[9px] text-gray-600">+{trade.tags.length - 2}</span>}
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                      {trade.type === 'Long' ? 'BUY' : 'SELL'}
+                    </span>
+                  </div>
+
+                  {/* Entry */}
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
+
+                  {/* Exit */}
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
+
+                  {/* Lots / Qty */}
+                  {visibleColumns.lots && (
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400`}>
+                    {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
+                  </div>
+                  )}
+
+                  {/* Pips */}
+                  {visibleColumns.pips && (
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono ${!isForexPair(trade.symbol) ? 'text-gray-800' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
+                    {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
+                  </div>
+                  )}
+
+                  {/* P&L */}
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                    {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                  </div>
+
+                  {/* Date */}
+                  <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500`}>
+                    {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </div>
+
+                  {/* Quality / Rule Badges */}
+                  {visibleColumns.quality && (
+                  <div className="flex flex-col gap-1">
+                    {(() => {
+                      const score = getTradeQualityScore(trade)
+                      const badge = getQualityBadge(score)
+                      const reasons = getTradeReviewReasons(trade)
+                      return (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <span className={`text-[10px] px-2 py-1 rounded-md font-bold ${badge.className}`}>{badge.label}</span>
+                            <span
+                              className={`text-[10px] font-semibold ${getQualityTone(score)}`}
+                              title={`Trade Quality Score: ${score}/100. ${getQualityBreakdown(trade)}`}
+                            >
+                              QS {score}
+                            </span>
+                          </div>
+                          {reasons.slice(0, 1).map(reason => (
+                            <span key={reason} className="text-[10px] px-2 py-1 rounded-md bg-red-500/10 text-red-300 border border-red-500/20 w-fit">
+                              {getReviewReasonLabel(reason)}
+                            </span>
+                          ))}
+                        </>
+                      )
+                    })()}
+                  </div>
+                  )}
+
+                  {/* Mindset Tags (Inline Selection) */}
+                  <div className="relative flex items-center flex-wrap gap-1 pr-4">
+                    {trade.tags && trade.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 flex items-center gap-1 group/pill"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => handleToggleTag(trade, tag, false)}
+                          className="opacity-0 group-hover/pill:opacity-100 hover:text-red-400 text-[8px] ml-0.5 font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
+                      className="w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/20 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-colors text-xs font-bold"
+                    >
+                      +
+                    </button>
+                    
+                    {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && (
+                      <div className="absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[220px]">
+                        <input
+                          type="text"
+                          placeholder="Search or add tag..."
+                          value={searchTag}
+                          onChange={e => setSearchTag(e.target.value)}
+                          className="w-full px-2.5 py-1.5 mb-2 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none"
+                          autoFocus
+                        />
+                        <div className="max-h-[160px] overflow-y-auto space-y-1">
+                          {allExistingTags
+                            .filter(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
+                            .map(tag => {
+                              const isSelected = (trade.tags || []).includes(tag);
+                              return (
+                                <button
+                                  key={tag}
+                                  onClick={() => handleToggleTag(trade, tag, false)}
+                                  className="w-full flex items-center justify-between text-left px-2 py-1 rounded-md text-xs text-gray-300 hover:bg-white/[0.04] transition-colors"
+                                >
+                                  <span>{tag}</span>
+                                  {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                                </button>
+                              );
+                            })}
+                          {searchTag.trim() && !allExistingTags.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
+                            <button
+                              onClick={() => {
+                                handleToggleTag(trade, searchTag.trim(), false);
+                                setSearchTag('');
+                              }}
+                              className="w-full text-left px-2 py-1.5 rounded-md text-xs text-indigo-400 hover:bg-indigo-500/10 font-medium transition-colors"
+                            >
+                              + Create "{searchTag.trim()}"
+                            </button>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {/* Side */}
-                <div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
-                    {trade.type === 'Long' ? 'BUY' : 'SELL'}
-                  </span>
-                </div>
-
-                {/* Entry */}
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
-
-                {/* Exit */}
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>
-
-                {/* Lots / Qty */}
-                {visibleColumns.lots && (
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400`}>
-                  {isForexPair(trade.symbol) ? formatLots(trade.lots) : trade.quantity}
-                </div>
-                )}
-
-                {/* Pips */}
-                {visibleColumns.pips && (
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono ${!isForexPair(trade.symbol) ? 'text-gray-800' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
-                  {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
-                </div>
-                )}
-
-                {/* P&L */}
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
-                  {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
-                </div>
-
-                {/* Date */}
-                <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500`}>
-                  {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </div>
-
-                {/* Quality / Rule Badges */}
-                {visibleColumns.quality && (
-                <div className="flex flex-col gap-1">
-                  {(() => {
-                    const score = getTradeQualityScore(trade)
-                    const badge = getQualityBadge(score)
-                    const reasons = getTradeReviewReasons(trade)
-                    return (
-                      <>
-                        <div className="flex items-center gap-1">
-                          <span className={`text-[10px] px-2 py-1 rounded-md font-bold ${badge.className}`}>{badge.label}</span>
-                          <span
-                            className={`text-[10px] font-semibold ${getQualityTone(score)}`}
-                            title={`Trade Quality Score: ${score}/100. ${getQualityBreakdown(trade)}`}
-                          >
-                            QS {score}
-                          </span>
-                        </div>
-                        {reasons.slice(0, 1).map(reason => (
-                          <span key={reason} className="text-[10px] px-2 py-1 rounded-md bg-red-500/10 text-red-300 border border-red-500/20 w-fit">
-                            {getReviewReasonLabel(reason)}
-                          </span>
-                        ))}
-                      </>
-                    )
-                  })()}
-                </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center justify-end gap-1">
-                  {trade.screenshot_url && (
-                    <button onClick={() => setSelectedScreenshotUrl(trade.screenshot_url ?? null)}
-                      className="p-1.5 text-gray-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-white/[0.04]">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  {/* Mistake Tags (Inline Selection) */}
+                  <div className="relative flex items-center flex-wrap gap-1 pr-4">
+                    {trade.mistakes && trade.mistakes.map((mistake) => (
+                      <span
+                        key={mistake}
+                        className="text-[9px] px-1.5 py-0.5 rounded bg-red-500/10 text-red-300 border border-red-500/20 flex items-center gap-1 group/pill"
+                      >
+                        {mistake}
+                        <button
+                          onClick={() => handleToggleTag(trade, mistake, true)}
+                          className="opacity-0 group-hover/pill:opacity-100 hover:text-red-400 text-[8px] ml-0.5 font-bold"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <button
+                      onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
+                      className="w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/20 text-gray-400 hover:text-red-300 flex items-center justify-center transition-colors text-xs font-bold"
+                    >
+                      +
                     </button>
-                  )}
-                  <button onClick={() => setSelectedDetailTrade(trade)}
-                    className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                  </button>
-                  <button onClick={() => { setSelectedTrade(trade); setShowForm(true); }}
-                    className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                  </button>
-                  <button onClick={() => handleDeleteTrade(trade.id)} disabled={isDeleting === trade.id}
-                    className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/[0.04] disabled:opacity-50">
-                    {isDeleting === trade.id ? (
-                      <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    
+                    {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && (
+                      <div className="absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[220px]">
+                        <input
+                          type="text"
+                          placeholder="Search or add mistake..."
+                          value={searchTag}
+                          onChange={e => setSearchTag(e.target.value)}
+                          className="w-full px-2.5 py-1.5 mb-2 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none"
+                          autoFocus
+                        />
+                        <div className="max-h-[160px] overflow-y-auto space-y-1">
+                          {allExistingMistakes
+                            .filter(m => m.toLowerCase().includes(searchTag.toLowerCase()))
+                            .map(m => {
+                              const isSelected = (trade.mistakes || []).includes(m);
+                              return (
+                                <button
+                                  key={m}
+                                  onClick={() => handleToggleTag(trade, m, true)}
+                                  className="w-full flex items-center justify-between text-left px-2 py-1 rounded-md text-xs text-gray-300 hover:bg-white/[0.04] transition-colors"
+                                >
+                                  <span>{m}</span>
+                                  {isSelected && <span className="text-red-400 font-bold">✓</span>}
+                                </button>
+                              );
+                            })}
+                          {searchTag.trim() && !allExistingMistakes.some(m => m.toLowerCase() === searchTag.trim().toLowerCase()) && (
+                            <button
+                              onClick={() => {
+                                handleToggleTag(trade, searchTag.trim(), true);
+                                setSearchTag('');
+                              }}
+                              className="w-full text-left px-2 py-1.5 rounded-md text-xs text-red-400 hover:bg-red-500/10 font-medium transition-colors"
+                            >
+                              + Create "{searchTag.trim()}"
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     )}
-                  </button>
-                </div>
-
-                {/* Mobile layout */}
-                <div className="md:hidden col-span-full flex items-center justify-between mt-2 pt-2 border-t border-white/[0.03]">
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs font-bold ${trade.type === 'Long' ? 'text-emerald-400' : 'text-red-400'}`}>{trade.type}</span>
-                    <span className="text-xs text-gray-500">{trade.entry_price} → {trade.exit_price}</span>
                   </div>
-                  <span className={`text-sm font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {(trade.profit_loss ?? 0) >= 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
-                  </span>
+
+                  {/* Learnings / Notes (Inline Edit) */}
+                  <div className="relative pr-4">
+                    {editingNoteId === trade.id ? (
+                      <textarea
+                        value={noteText}
+                        onChange={e => setNoteText(e.target.value)}
+                        onBlur={() => handleSaveNote(trade)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSaveNote(trade);
+                          }
+                        }}
+                        className="w-full px-2 py-1 bg-[#151823] border border-white/[0.08] rounded text-xs text-white placeholder-gray-600 focus:outline-none resize-none h-10"
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => {
+                          setEditingNoteId(trade.id);
+                          setNoteText(trade.notes || '');
+                        }}
+                        className="text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1 rounded transition-all min-h-[20px]"
+                        title="Click to edit notes"
+                      >
+                        {trade.notes || <span className="text-gray-600 italic text-[10px]">Click to add note...</span>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-end gap-1">
+                    {trade.screenshot_url && (
+                      <button onClick={() => setSelectedScreenshotUrl(trade.screenshot_url ?? null)}
+                        className="p-1.5 text-gray-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-white/[0.04]">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      </button>
+                    )}
+                    <button onClick={() => setSelectedDetailTrade(trade)}
+                      className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    </button>
+                    <button onClick={() => { setSelectedTrade(trade); setShowForm(true); }}
+                      className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                    </button>
+                    <button onClick={() => handleDeleteTrade(trade.id)} disabled={isDeleting === trade.id}
+                      className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/[0.04] disabled:opacity-50">
+                      {isDeleting === trade.id ? (
+                        <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Mobile layout */}
+                  <div className="md:hidden col-span-full flex items-center justify-between mt-2 pt-2 border-t border-white/[0.03]">
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs font-bold ${trade.type === 'Long' ? 'text-emerald-400' : 'text-red-400'}`}>{trade.type}</span>
+                      <span className="text-xs text-gray-500">{trade.entry_price} → {trade.exit_price}</span>
+                    </div>
+                    <span className={`text-sm font-bold ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {(trade.profit_loss ?? 0) >= 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
           
           {/* Pagination */}
           {filteredTrades.length > 0 && (

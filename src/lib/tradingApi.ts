@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote } from './types';
+import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote, TradingAccount } from './types';
 import { sanitizeTradeInput } from './sanitize';
 
 async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
@@ -108,6 +108,7 @@ export interface PagedTradesOptions {
   dateFilter?: 'All' | '7d' | '30d' | '90d' | '1y';
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
+  accountId?: string | null;
 }
 
 export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTradesResult> {
@@ -121,6 +122,7 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
     dateFilter,
     sortField = 'entry_time',
     sortDirection = 'desc',
+    accountId,
   } = opts;
 
   try {
@@ -132,6 +134,7 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
       .order(sortField, { ascending: sortDirection === 'asc' });
 
     // Filters
+    if (accountId) query = query.eq('account_id', accountId);
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 
@@ -172,6 +175,7 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
     symbol,
     type,
     dateFilter,
+    accountId,
   } = opts;
 
   try {
@@ -180,6 +184,7 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
       .select('profit_loss, entry_time')
       .eq('user_id', userId);
 
+    if (accountId) query = query.eq('account_id', accountId);
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 
@@ -846,4 +851,81 @@ export async function getImportHistory(userId: string): Promise<ImportRecord[]> 
 export async function deleteImportRecord(id: string): Promise<void> {
   await supabase.from('import_history').delete().eq('id', id);
 }
+
+/**
+ * Retrieves all trading accounts for a user.
+ */
+export async function getTradingAccounts(userId: string): Promise<TradingAccount[]> {
+  try {
+    const { data, error } = await supabase
+      .from('trading_accounts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data as TradingAccount[]) || [];
+  } catch (err) {
+    console.error('getTradingAccounts error:', err);
+    return [];
+  }
+}
+
+/**
+ * Adds a new trading account.
+ */
+export async function addTradingAccount(
+  account: Omit<TradingAccount, 'id' | 'created_at' | 'updated_at' | 'balance' | 'connection_status' | 'last_sync'>
+): Promise<TradingAccount> {
+  const { data, error } = await supabase
+    .from('trading_accounts')
+    .insert([
+      {
+        ...account,
+        balance: 0.00,
+        connection_status: 'DISCONNECTED',
+        last_sync: null,
+      },
+    ])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as TradingAccount;
+}
+
+/**
+ * Updates a trading account details.
+ */
+export async function updateTradingAccount(
+  id: string,
+  account: Partial<Omit<TradingAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+): Promise<TradingAccount> {
+  const { data, error } = await supabase
+    .from('trading_accounts')
+    .update({
+      ...account,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as TradingAccount;
+}
+
+/**
+ * Deletes a trading account.
+ */
+export async function deleteTradingAccount(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('trading_accounts')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
+  return true;
+}
+
 
