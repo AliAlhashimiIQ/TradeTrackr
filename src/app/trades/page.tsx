@@ -222,30 +222,58 @@ export default function Trades() {
   const [showExportModal, setShowExportModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState<string | null>(null)
-  const [activeView, setActiveView] = useState<SavedView>('all')
-  const [showIntelligence, setShowIntelligence] = useState(false)
-  const [tableDensity, setTableDensity] = useState<TableDensity>('comfortable')
-  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
-    side: true,
-    entry: true,
-    exit: true,
-    lots: true,
-    pips: true,
-    pnl: true,
-    date: true,
-    mindset: true,
-    tags: true,
-    mistakes: true,
-    notes: true,
-    openTime: false,
-    closeTime: false,
-    commission: false,
-    netProfit: false,
-    percentGain: false,
-    holdTime: false,
-    stopLoss: false,
-    takeProfit: false,
-    account: false,
+  const [activeView, setActiveView] = useState<SavedView>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.activeView')
+      if (saved) return saved as SavedView
+    }
+    return 'all'
+  })
+  const [showIntelligence, setShowIntelligence] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.showIntelligence')
+      if (saved !== null) return saved === 'true'
+    }
+    return false
+  })
+  const [tableDensity, setTableDensity] = useState<TableDensity>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.tableDensity')
+      if (saved) return saved as TableDensity
+    }
+    return 'comfortable'
+  })
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.visibleColumns')
+      if (saved) {
+        try {
+          return JSON.parse(saved)
+        } catch {}
+      }
+    }
+    return {
+      side: true,
+      entry: true,
+      exit: true,
+      lots: true,
+      pips: true,
+      pnl: true,
+      date: true,
+      mindset: true,
+      tags: true,
+      mistakes: true,
+      notes: true,
+      openTime: false,
+      closeTime: false,
+      commission: false,
+      netProfit: false,
+      percentGain: false,
+      holdTime: false,
+      stopLoss: false,
+      takeProfit: false,
+      account: false,
+    }
   })
   const [showColumnMenu, setShowColumnMenu] = useState(false)
 
@@ -600,17 +628,6 @@ export default function Trades() {
     return Array.from(set).filter(m => !deletedMistakePresets.includes(m));
   }, [trades, deletedMistakePresets]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const savedView = window.localStorage.getItem('trades.activeView') as SavedView | null
-    const savedDensity = window.localStorage.getItem('trades.tableDensity') as TableDensity | null
-    const savedIntelligence = window.localStorage.getItem('trades.showIntelligence')
-    if (savedView) setActiveView(savedView)
-    if (savedDensity) setTableDensity(savedDensity)
-    if (savedIntelligence !== null) setShowIntelligence(savedIntelligence === 'true')
-    const savedCols = window.localStorage.getItem('trades.visibleColumns')
-    if (savedCols) try { setVisibleColumns(JSON.parse(savedCols)) } catch {}
-  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
