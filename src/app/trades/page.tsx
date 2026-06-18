@@ -2015,14 +2015,131 @@ export default function Trades() {
             { label: 'Total Trades', value: trades.length.toString(), color: '#818cf8', glow: 'rgba(99,102,241,0.05)',
               icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
           ].map((m, i) => (
-            <div key={i} className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300">
-              <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">{m.label}</span>
-                <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${m.color}12`, color: `${m.color}99` }}>{m.icon}</div>
+            <div key={i} className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3 relative z-10">
+                  <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">{m.label}</span>
+                  <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${m.color}12`, color: `${m.color}99` }}>{m.icon}</div>
+                </div>
+                <div className="text-2xl font-bold tracking-tight relative z-10" style={{ color: m.color, textShadow: `0 0 20px ${m.color}33` }}>
+                  {m.value}
+                </div>
               </div>
-              <div className="text-2xl font-bold tracking-tight relative z-10" style={{ color: m.color, textShadow: `0 0 20px ${m.color}33` }}>
-                {m.value}
-              </div>
+
+              {/* Inspiring Custom Visual Charts */}
+              {m.label === 'Total P&L' && (
+                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-1.5 relative z-10">
+                  <div className="flex justify-between text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                    <span>Avg Win</span>
+                    <span>Avg Loss</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                    <div
+                      style={{
+                        width: `${(quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss)) > 0 ? (quickMetrics.avgWin / (quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss))) * 100 : 50}%`,
+                        background: 'linear-gradient(90deg, #10b981, #34d399)'
+                      }}
+                      className="h-full"
+                    />
+                    <div
+                      style={{
+                        width: `${(quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss)) > 0 ? (Math.abs(quickMetrics.avgLoss) / (quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss))) * 100 : 50}%`,
+                        background: 'linear-gradient(90deg, #f87171, #ef4444)'
+                      }}
+                      className="h-full"
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-mono tabular-nums">
+                    <span className="text-emerald-400 font-medium">{formatCurrency(quickMetrics.avgWin)}</span>
+                    <span className="text-red-400 font-medium">-{formatCurrency(Math.abs(quickMetrics.avgLoss))}</span>
+                  </div>
+                </div>
+              )}
+
+              {m.label === 'Win Rate' && (
+                <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10">
+                  <div className="flex justify-center mb-1">
+                    <svg className="w-[110px] h-[40px]" viewBox="0 0 100 50">
+                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="7" strokeLinecap="round" />
+                      <path
+                        d="M 10 45 A 35 35 0 0 1 90 45"
+                        fill="none"
+                        stroke="url(#winRateGrad)"
+                        strokeWidth="7"
+                        strokeLinecap="round"
+                        strokeDasharray="110"
+                        strokeDashoffset={110 - (110 * quickMetrics.winRate) / 100}
+                        style={{ transition: 'stroke-dashoffset 0.8s ease-in-out' }}
+                      />
+                      <defs>
+                        <linearGradient id="winRateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="50%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="flex justify-between items-center text-[9px] text-gray-500 font-semibold tracking-wider">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-1.5 h-1.5 text-emerald-400 fill-current" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" /></svg>
+                      <span>{Math.round((quickMetrics.winRate / 100) * filteredTrades.length)} Wins</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <svg className="w-1.5 h-1.5 text-red-400 fill-current" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" /></svg>
+                      <span>{filteredTrades.length - Math.round((quickMetrics.winRate / 100) * filteredTrades.length)} Losses</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {m.label === 'Profit Factor' && (() => {
+                const gpRatio = quickMetrics.profitFactor > 0 ? (quickMetrics.profitFactor / (quickMetrics.profitFactor + 1)) * 100 : 50;
+                return (
+                  <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
+                    <div className="text-[9px] text-gray-500 leading-normal font-semibold">
+                      <span>Proportion of gross profit vs gross loss</span>
+                    </div>
+                    <svg className="w-8 h-8 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
+                      <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="4.5" className="opacity-95" />
+                      <circle
+                        cx="18"
+                        cy="18"
+                        r="15.915"
+                        fill="none"
+                        stroke="#10b981"
+                        strokeWidth="4.5"
+                        strokeDasharray={`${gpRatio} 100`}
+                        className="transition-all duration-500"
+                      />
+                    </svg>
+                  </div>
+                );
+              })()}
+
+              {m.label === 'Total Trades' && (() => {
+                const longCount = filteredTrades.filter(t => t.type === 'Long').length;
+                const shortCount = filteredTrades.filter(t => t.type === 'Short').length;
+                const total = longCount + shortCount;
+                const longPct = total > 0 ? (longCount / total) * 100 : 50;
+                return (
+                  <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-1.5 relative z-10">
+                    <div className="flex justify-between text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                      <span>Buy ({longCount})</span>
+                      <span>Sell ({shortCount})</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                      <div style={{ width: `${longPct}%` }} className="h-full bg-emerald-500" />
+                      <div style={{ width: `${100 - longPct}%` }} className="h-full bg-red-500" />
+                    </div>
+                    <div className="flex justify-between text-[9px] text-gray-500 font-bold">
+                      <span>{total > 0 ? `${longPct.toFixed(0)}%` : '--'}</span>
+                      <span>{total > 0 ? `${(100 - longPct).toFixed(0)}%` : '--'}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {m.glow && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: `radial-gradient(ellipse, ${m.glow} 0%, transparent 70%)` }} />}
             </div>
           ))}
