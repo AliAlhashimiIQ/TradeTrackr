@@ -66,3 +66,12 @@ logs
 
 # Backups
 *.backup
+
+# Playwright and testing artifacts
+/playwright-report/
+/test-results/
+/screenshots/
+/auth.json
+/.vibe/
+/src/.vibe/
+/vibe.config.json

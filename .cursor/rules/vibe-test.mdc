@@ -1,0 +1,87 @@
+---
+description: Browser testing with vibe-test MCP — use these tools whenever testing, verifying, or debugging a web app
+globs:
+alwaysApply: true
+---
+
+# Vibe Test — Browser Testing MCP Server
+
+This project has **vibe-test** configured as an MCP server. You MUST use these tools whenever the user asks to test, verify, check, debug, or QA any part of this web application. Do not write Playwright/Cypress test scripts manually when these tools are available.
+
+## Mandatory Usage Pattern
+
+ALWAYS follow this order:
+
+1. `scan_codebase` — Read the code first. Initializes the session and returns all routes, forms, coverage gaps, and ready-to-run scenarios.
+2. `get_context` — Read the actual source files for the feature being tested (real field names, selectors, API paths). Call before writing any test steps.
+3. `login` — If the app needs auth, authenticate once and the session persists.
+4. `scan_page_elements` or `explore_page` — Visually confirm what's on the page.
+5. `execute_scenario` — Run precise test flows using real selectors from step 2.
+6. `suggest_tests` — Find coverage gaps.
+7. `generate_report` — Always generate a report at the end.
+8. `cleanup` — Close browsers.
+
+## Tools Quick Reference
+
+### `scan_codebase` (CALL FIRST — always)
+```json
+{ "codebase_path": "/path/to/project", "url": "http://localhost:3000" }
+```
+
+### `get_context` (CALL BEFORE WRITING TEST STEPS)
+Returns actual source code for a feature — real field names, API endpoints. Eliminates selector guessing.
+```json
+{ "feature": "login" }
+{ "feature": "/checkout" }
+```
+
+### `login`
+```json
+{ "email": "test@example.com", "password": "pass123" }
+```
+
+### `scan_page_elements`
+```json
+{ "route": "/dashboard", "authenticated": true }
+```
+
+### `explore_page`
+Clicks every button, fills every input, records API calls and what breaks.
+```json
+{ "route": "/dashboard", "authenticated": true }
+```
+
+### `execute_scenario`
+Build steps using real selectors from `get_context`:
+```json
+{
+  "scenario": {
+    "id": "login-test",
+    "name": "Login with valid credentials",
+    "route": "/login",
+    "steps": [
+      { "action": "navigate", "url": "/login", "description": "Open login page" },
+      { "action": "fill", "selector": "[name='email']", "value": "user@test.com", "description": "Fill email" },
+      { "action": "fill", "selector": "[type='password']", "value": "pass123", "description": "Fill password" },
+      { "action": "click", "selector": "button[type='submit']", "description": "Submit" }
+    ],
+    "expected_outcome": "Redirect to dashboard"
+  }
+}
+```
+
+### `take_screenshot`
+```json
+{ "url": "/settings", "authenticated": true }
+```
+
+### `get_coverage` / `suggest_tests` / `generate_report` / `run_full_test` / `run_converge` / `cleanup`
+Self-explanatory. Use `run_full_test` for a complete one-shot run. Use `run_converge` for iterative testing until thresholds.
+
+## Key Rules
+
+- NEVER write manual Playwright/Cypress/Jest browser tests when vibe-test is available
+- ALWAYS call `scan_codebase` first, then `get_context` before test steps
+- Screenshots returned by tools are images — look at them to confirm browser state
+- VIBE.md contains test credentials, blocklist patterns, and project-specific notes
+- After code changes, re-run the relevant `execute_scenario` to verify the fix

@@ -113,19 +113,39 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
         }
 
         const advanced = calculatePerformanceMetrics(tradesResponse, cap);
-        const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
-          date: point.date,
-          value: point.equity
-        }));
+        
+        let labels: string[] = [];
+        let values: number[] = [];
+        
+        try {
+          const { data: rpcEquityData, error: rpcError } = await (supabase as any).rpc('get_user_equity_curve', {
+            p_user_id: userId,
+            p_initial_capital: cap,
+            p_start_date: bounds.startDate || null,
+            p_end_date: bounds.endDate || null,
+          });
+
+          if (rpcError || !rpcEquityData) {
+            throw rpcError || new Error('No RPC equity curve data returned');
+          }
+          
+          labels = rpcEquityData.map((point: any) => point.date);
+          values = rpcEquityData.map((point: any) => Number(point.equity));
+        } catch (rpcErr) {
+          console.warn('Fallback to client-side equity curve calculations:', rpcErr);
+          const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
+            date: point.date,
+            value: point.equity
+          }));
+          labels = equityCurve.map(point => point.date);
+          values = equityCurve.map(point => point.value);
+        }
 
         setInitialCapital(cap);
         setTrades(tradesResponse);
         setAdvancedMetrics(advanced);
         setMetrics(toTradeMetrics(advanced));
-        setEquityData({
-          labels: equityCurve.map(point => point.date),
-          values: equityCurve.map(point => point.value)
-        });
+        setEquityData({ labels, values });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
         setHasError(true);
