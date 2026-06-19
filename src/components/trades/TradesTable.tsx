@@ -5,6 +5,7 @@ import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, getTagStyle } from '@/lib/utils';
 import EmptyState from '@/components/ui/EmptyState';
 import InlineTagPopover from './InlineTagPopover';
+import { toast } from 'react-hot-toast';
 
 export const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   checkbox: 52,
@@ -85,6 +86,8 @@ export interface TradesTableProps {
   onStartInlineAdd: (index: number) => void;
   inlineNewRowIndex: number | null;
   inlineRowData: Partial<Trade> | null;
+  inlineScreenshotFile?: File | null;
+  onInlineScreenshotFileChange?: (file: File | null) => void;
   onInlineChange: (field: keyof Trade, value: any) => void;
   onInlineSave: () => Promise<void>;
   onInlineCancel: () => void;
@@ -134,6 +137,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   onStartInlineAdd,
   inlineNewRowIndex,
   inlineRowData,
+  inlineScreenshotFile = null,
+  onInlineScreenshotFileChange,
   onInlineChange,
   onInlineSave,
   onInlineCancel,
@@ -169,6 +174,10 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   formatCurrency,
 }) => {
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null);
+
+  const inlineScreenshotPreviewUrl = useMemo(() => {
+    return inlineScreenshotFile ? URL.createObjectURL(inlineScreenshotFile) : null;
+  }, [inlineScreenshotFile]);
 
   // Close active popovers when clicking outside popover-container and popover-trigger
   useEffect(() => {
@@ -419,7 +428,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
     return (
       <div
-        className="grid gap-2 px-5 py-3.5 items-center relative z-10 animate-fade-in min-w-full text-left"
+        className="grid gap-2 px-5 py-3.5 items-center relative animate-fade-in min-w-full text-left"
         style={{
           gridTemplateColumns: getGridTemplateColumns(),
           backgroundColor: '#0d0e16',
@@ -428,6 +437,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           borderBottom: '1px solid rgba(99, 102, 241, 0.25)',
           boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.8), 0 0 16px rgba(99, 102, 241, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
           backdropFilter: 'blur(12px)',
+          zIndex: activePopover?.tradeId === 'new-row' ? 30 : 10,
         }}
       >
         {/* Actions Col 1 (draft status) */}
@@ -437,9 +447,46 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
         {/* Screenshot preview */}
         <div className="flex items-center justify-center">
-          <div className="w-11 h-8 rounded border border-dashed border-white/[0.15] bg-white/[0.02] flex items-center justify-center text-gray-500" title="Screenshot (upload after saving)">
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          </div>
+          {inlineScreenshotPreviewUrl ? (
+            <div className="relative w-11 h-8 rounded border border-white/[0.15] overflow-hidden group">
+              <img
+                src={inlineScreenshotPreviewUrl}
+                alt="preview"
+                className="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                onClick={() => onInlineScreenshotFileChange?.(null)}
+                className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                title="Remove photo"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <label className="w-11 h-8 rounded border border-dashed border-white/[0.15] bg-white/[0.02] hover:border-indigo-500/50 hover:bg-indigo-500/[0.04] flex items-center justify-center text-gray-500 hover:text-indigo-400 cursor-pointer transition-all duration-200" title="Upload screenshot">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      toast.error('Image must be under 5MB');
+                      return;
+                    }
+                    onInlineScreenshotFileChange?.(file);
+                  }
+                }}
+              />
+            </label>
+          )}
         </div>
 
         {/* Symbol */}
@@ -758,7 +805,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </button>
             
             <AnimatePresence>
-              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' && renderTagsPopover(inlineRowData as Trade, false, true)}
+              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' && renderTagsPopover(inlineRowData as Trade, false, inlineNewRowIndex !== null && inlineNewRowIndex >= Math.max(1, filteredTrades.length - 1))}
             </AnimatePresence>
           </div>
         )}
@@ -792,7 +839,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </button>
             
             <AnimatePresence>
-              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' && renderTagsPopover(inlineRowData as Trade, true, true)}
+              {activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' && renderTagsPopover(inlineRowData as Trade, true, inlineNewRowIndex !== null && inlineNewRowIndex >= Math.max(1, filteredTrades.length - 1))}
             </AnimatePresence>
           </div>
         )}
@@ -837,7 +884,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   return (
     <>
       {/* Desktop view */}
-      <div className="hidden md:block card rounded-2xl overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent">
+      <div className="hidden md:block card rounded-2xl overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent min-h-[450px]">
         <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
           {/* Table Header */}
           <div
@@ -1016,7 +1063,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <>
               {inlineNewRowIndex === 0 && filteredTrades.length === 0 && renderInlineEditorRow()}
               {filteredTrades.map((trade, idx) => (
-                <div key={trade.id} className="relative min-w-full text-left">
+                <div key={trade.id} className="relative min-w-full text-left" style={{ zIndex: activePopover?.tradeId === trade.id ? 30 : 1 }}>
                   {idx === inlineNewRowIndex && renderInlineEditorRow()}
                   
                   {/* Notion-style hover insert line between rows */}

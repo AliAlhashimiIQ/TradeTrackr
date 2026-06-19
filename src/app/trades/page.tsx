@@ -203,6 +203,7 @@ export default function Trades() {
 
   const [inlineNewRowIndex, setInlineNewRowIndex] = useState<number | null>(null)
   const [inlineRowData, setInlineRowData] = useState<Partial<Trade> | null>(null)
+  const [inlineScreenshotFile, setInlineScreenshotFile] = useState<File | null>(null)
   const [uploadingTradeId, setUploadingTradeId] = useState<string | null>(null)
   const [deletedPresets, setDeletedPresets] = useState<string[]>([]);
   const [deletedMistakePresets, setDeletedMistakePresets] = useState<string[]>([]);
@@ -389,6 +390,7 @@ export default function Trades() {
 
   const handleStartInlineAdd = (index: number) => {
     setInlineNewRowIndex(index);
+    setInlineScreenshotFile(null);
     setInlineRowData({
       symbol: '',
       type: 'Long',
@@ -458,8 +460,22 @@ export default function Trades() {
         user_id: user.id,
       } as Trade;
       
-      await addTrade(newTrade);
+      const savedTrade = await addTrade(newTrade);
+      
+      if (inlineScreenshotFile && savedTrade?.id) {
+        try {
+          const url = await uploadTradeScreenshot(inlineScreenshotFile, user.id, savedTrade.id);
+          if (url) {
+            await updateTrade({ ...savedTrade, screenshot_url: url });
+          }
+        } catch (uploadError) {
+          console.error('Failed to upload inline screenshot:', uploadError);
+          toast.error('Trade saved, but screenshot upload failed');
+        }
+      }
+      
       toast.success('Trade saved inline successfully!');
+      setInlineScreenshotFile(null);
       await fetchPagedTrades();
       await fetchGlobalMetrics();
       setInlineNewRowIndex(null);
@@ -475,6 +491,7 @@ export default function Trades() {
   const handleInlineCancel = () => {
     setInlineNewRowIndex(null);
     setInlineRowData(null);
+    setInlineScreenshotFile(null);
   };
 
   const handleDeleteTagGlobally = async (tag: string, isMistake = false) => {
@@ -750,6 +767,8 @@ export default function Trades() {
           onStartInlineAdd={handleStartInlineAdd}
           inlineNewRowIndex={inlineNewRowIndex}
           inlineRowData={inlineRowData}
+          inlineScreenshotFile={inlineScreenshotFile}
+          onInlineScreenshotFileChange={setInlineScreenshotFile}
           onInlineChange={handleInlineChange}
           onInlineSave={handleInlineSave}
           onInlineCancel={handleInlineCancel}
