@@ -274,25 +274,27 @@ export default function CalendarPage() {
         }
       : isProfit
         ? {
-            background: `linear-gradient(160deg, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 100%), rgba(13,14,22,0.85)`,
-            borderRight: '1px solid rgba(16,185,129,0.12)',
-            borderBottom: '1px solid rgba(16,185,129,0.12)',
-            borderTop: '1px solid rgba(16,185,129,0.08)',
-            borderLeft: '1px solid rgba(16,185,129,0.08)',
+            background: `linear-gradient(160deg, rgba(16,185,129,0.22) 0%, rgba(16,185,129,0.04) 100%), rgba(10,11,18,0.9)`,
+            borderRight: '1px solid rgba(16,185,129,0.4)',
+            borderBottom: '1px solid rgba(16,185,129,0.4)',
+            borderTop: '1px solid rgba(16,185,129,0.3)',
+            borderLeft: '1px solid rgba(16,185,129,0.3)',
             boxShadow: `
-              0 1px 0 0 rgba(16,185,129,0.08) inset,
+              0 1px 0 0 rgba(16,185,129,0.15) inset,
+              0 0 16px rgba(16,185,129,0.18),
               0 4px 16px -4px rgba(0,0,0,0.3)
             `,
           }
         : isLoss
           ? {
-              background: `linear-gradient(160deg, rgba(239,68,68,0.07) 0%, rgba(239,68,68,0.02) 100%), rgba(13,14,22,0.85)`,
-              borderRight: '1px solid rgba(239,68,68,0.12)',
-              borderBottom: '1px solid rgba(239,68,68,0.12)',
-              borderTop: '1px solid rgba(239,68,68,0.08)',
-              borderLeft: '1px solid rgba(239,68,68,0.08)',
+              background: `linear-gradient(160deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.03) 100%), rgba(10,11,18,0.9)`,
+              borderRight: '1px solid rgba(239,68,68,0.4)',
+              borderBottom: '1px solid rgba(239,68,68,0.4)',
+              borderTop: '1px solid rgba(239,68,68,0.3)',
+              borderLeft: '1px solid rgba(239,68,68,0.3)',
               boxShadow: `
-                0 1px 0 0 rgba(239,68,68,0.07) inset,
+                0 1px 0 0 rgba(239,68,68,0.15) inset,
+                0 0 16px rgba(239,68,68,0.15),
                 0 4px 16px -4px rgba(0,0,0,0.3)
               `,
             }
@@ -327,9 +329,9 @@ export default function CalendarPage() {
             className="absolute top-0 left-[10%] right-[10%] h-[1px]"
             style={{
               background: isProfit
-                ? 'linear-gradient(90deg, transparent, rgba(16,185,129,0.4), transparent)'
+                ? 'linear-gradient(90deg, transparent, rgba(16,185,129,0.5), transparent)'
                 : isLoss
-                  ? 'linear-gradient(90deg, transparent, rgba(239,68,68,0.35), transparent)'
+                  ? 'linear-gradient(90deg, transparent, rgba(239,68,68,0.45), transparent)'
                   : 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
               opacity: 0.8,
             }}
@@ -376,14 +378,27 @@ export default function CalendarPage() {
           )}
         </div>
 
-        {/* Mobile Dot Indicator */}
+        {/* Mobile P&L Text */}
         {hasTrades && (
-          <div className="md:hidden flex justify-center mt-1 relative z-10">
-            <span className={`w-1.5 h-1.5 rounded-full ${isProfit ? 'bg-emerald-400 animate-pulse' : isLoss ? 'bg-red-400' : 'bg-gray-400'}`} />
+          <div className="md:hidden flex justify-center mt-0.5 relative z-10 w-full overflow-hidden text-center">
+            <span
+              className={`text-[8.5px] font-black tracking-tight leading-none truncate ${
+                isProfit ? 'text-emerald-400' : isLoss ? 'text-red-400' : 'text-gray-400'
+              }`}
+              style={{
+                textShadow: isProfit
+                  ? '0 0 8px rgba(16,185,129,0.3)'
+                  : isLoss
+                    ? '0 0 8px rgba(239,68,68,0.2)'
+                    : 'none',
+              }}
+            >
+              {pnl > 0 ? '+' : ''}{fmt(pnl)}
+            </span>
           </div>
         )}
 
-        {/* P&L */}
+        {/* P&L (Desktop) */}
         {hasTrades && (
           <div className="hidden md:block mt-auto pt-1">
             <div
@@ -460,6 +475,8 @@ export default function CalendarPage() {
     }
 
     const weekRows: React.ReactNode[] = []
+    const weeklyStatsList: Array<{ row: number; pnl: number; tradesCount: number; winRate: number }> = []
+
     for (let row = 0; row < cells.length / 7; row++) {
       const weekCells = cells.slice(row * 7, row * 7 + 7)
       let weekTrades: Trade[] = []
@@ -476,90 +493,99 @@ export default function CalendarPage() {
       const weekTradesCount = weekTrades.length
       const weekWinRate = calcWinRate(weekTrades)
 
+      weeklyStatsList.push({
+        row: row + 1,
+        pnl: weekPnl,
+        tradesCount: weekTradesCount,
+        winRate: weekWinRate,
+      })
+
       weekRows.push(
-        <div key={row} className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_1fr]">
+        <div key={row} className="grid grid-cols-7 border-b border-white/[0.04] last:border-b-0">
           {weekCells}
-          {/* Week total — custom summary cell */}
-          <div
-            className="hidden md:flex min-h-[110px] flex-col items-center justify-center px-3 text-center animate-fadeIn"
-            style={{
-              background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
-              borderBottom: '1px solid rgba(255,255,255,0.04)',
-              borderLeft: '1px solid rgba(255,255,255,0.06)',
-              boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset',
-            }}
-          >
-            <span className="text-xs text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
-              Week {row + 1}
-            </span>
-            <span
-              className={`text-lg font-black tabular-nums tracking-tight ${
-                weekPnl > 0 ? 'text-emerald-400' : weekPnl < 0 ? 'text-red-400' : 'text-gray-500'
-              }`}
-              style={{
-                textShadow: weekPnl > 0
-                  ? '0 0 20px rgba(16,185,129,0.3)'
-                  : weekPnl < 0
-                    ? '0 0 20px rgba(239,68,68,0.22)'
-                    : 'none',
-              }}
-            >
-              {weekPnl !== 0 ? (weekPnl > 0 ? '+' : '') + fmt(weekPnl) : '—'}
-            </span>
-            {weekTradesCount > 0 && (
-              <div className="mt-2 flex flex-col gap-1 items-center">
-                <span className="text-xs text-gray-400 font-semibold lowercase tracking-wide">
-                  {weekTradesCount} {weekTradesCount === 1 ? 'trade' : 'trades'}
-                </span>
-                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg border ${
-                  weekWinRate >= 50 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-red-500/10 text-red-400 border-red-500/25 shadow-[0_0_8px_rgba(239,68,68,0.08)]'
-                }`}>
-                  {weekWinRate}% WR
-                </span>
-              </div>
-            )}
-          </div>
         </div>
       )
     }
 
     return (
-      <div
-        className="card rounded-2xl overflow-hidden"
-        style={{
-          background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
-        }}
-      >
-        {/* Day headers */}
-        <div
-          className="grid grid-cols-7 md:grid-cols-[repeat(7,1fr)_1fr]"
-          style={{
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div
-              key={d}
-              className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
-              style={{
-                background: 'rgba(255,255,255,0.015)',
-              }}
-            >
-              {d}
-            </div>
-          ))}
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch w-full">
+        {/* Calendar Grid (7 columns - Sun to Sat) */}
+        <div className="flex-1 min-w-0">
           <div
-            className="hidden md:block px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
+            className="card rounded-2xl overflow-hidden"
             style={{
-              background: 'rgba(255,255,255,0.015)',
-              borderLeft: '1px solid rgba(255,255,255,0.06)',
+              background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
             }}
           >
-            Totals
+            {/* Day headers */}
+            <div
+              className="grid grid-cols-7 border-b border-white/[0.06] bg-white/[0.015]"
+            >
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                <div
+                  key={d}
+                  className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {weekRows}
           </div>
         </div>
 
-        {weekRows}
+        {/* Weekly Totals Sidebar (on the right for desktop, bottom for mobile) */}
+        <div className="w-full lg:w-[240px] flex flex-col gap-4 shrink-0">
+          <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider pl-1">
+            Weekly Totals
+          </div>
+          <div className="flex flex-row lg:flex-col gap-4 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-thin">
+            {weeklyStatsList.map((stat) => (
+              <div
+                key={stat.row}
+                className="card p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
+                style={{
+                  background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
+                  borderBottom: '1px solid rgba(255,255,255,0.06)',
+                  boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset',
+                }}
+              >
+                <span className="text-[10px] text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
+                  Week {stat.row}
+                </span>
+                <span
+                  className={`text-lg font-black tabular-nums tracking-tight ${
+                    stat.pnl > 0 ? 'text-emerald-400' : stat.pnl < 0 ? 'text-red-400' : 'text-gray-500'
+                  }`}
+                  style={{
+                    textShadow: stat.pnl > 0
+                      ? '0 0 20px rgba(16,185,129,0.3)'
+                      : stat.pnl < 0
+                        ? '0 0 20px rgba(239,68,68,0.22)'
+                        : 'none',
+                  }}
+                >
+                  {stat.pnl !== 0 ? (stat.pnl > 0 ? '+' : '') + fmt(stat.pnl) : '—'}
+                </span>
+                {stat.tradesCount > 0 && (
+                  <div className="mt-2 flex flex-col gap-1 items-start">
+                    <span className="text-[10px] text-gray-400 font-semibold lowercase tracking-wide">
+                      {stat.tradesCount} {stat.tradesCount === 1 ? 'trade' : 'trades'}
+                    </span>
+                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-lg border ${
+                      stat.winRate >= 50
+                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-[0_0_8px_rgba(16,185,129,0.1)]'
+                        : 'bg-red-500/10 text-red-400 border-red-500/25 shadow-[0_0_8px_rgba(239,68,68,0.08)]'
+                    }`}>
+                      {stat.winRate}% WR
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }
