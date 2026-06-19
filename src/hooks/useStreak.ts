@@ -9,6 +9,29 @@ export interface StreakInfo {
   lastJournaledDate: string | null
 }
 
+const countWeekdaysBetween = (d1: Date, d2: Date): number => {
+  const start = new Date(d1)
+  const end = new Date(d2)
+  
+  start.setHours(0, 0, 0, 0)
+  end.setHours(0, 0, 0, 0)
+  
+  if (start >= end) return 0
+  
+  let count = 0
+  start.setDate(start.getDate() + 1)
+  
+  while (start < end) {
+    const dayOfWeek = start.getDay()
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Not Sunday (0) and not Saturday (6)
+      count++
+    }
+    start.setDate(start.getDate() + 1)
+  }
+  
+  return count
+}
+
 export function useStreak() {
   const { user } = useAuth()
   const [streak, setStreak] = useState<StreakInfo>({
@@ -80,56 +103,56 @@ export function useStreak() {
         return `${year}-${month}-${day}`
       }
 
-      const todayStr = getLocalDateString(new Date())
-      
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
-      const yesterdayStr = getLocalDateString(yesterday)
-
-      const isStreakActiveToday = localDates.includes(todayStr)
-      const hasJournaledYesterday = localDates.includes(yesterdayStr)
-
-      let currentStreak = 0
       const lastJournaledDate = localDates[localDates.length - 1]
+      const lastTradeDate = new Date(lastJournaledDate + 'T00:00:00')
+      
+      const todayDate = new Date()
+      todayDate.setHours(0, 0, 0, 0)
+      
+      const weekdaysSinceLastTrade = countWeekdaysBetween(lastTradeDate, todayDate)
+      
+      // Streak is active today if we traded today, or if no weekdays (market days) have passed since our last trade
+      const todayStr = getLocalDateString(todayDate)
+      const isStreakActiveToday = localDates.includes(todayStr) || weekdaysSinceLastTrade === 0
 
       // Calculate current streak
-      if (isStreakActiveToday || hasJournaledYesterday) {
-        let checkDate = isStreakActiveToday ? new Date() : yesterday
-        let checkStr = getLocalDateString(checkDate)
-
-        while (localDates.includes(checkStr)) {
-          currentStreak++
-          checkDate.setDate(checkDate.getDate() - 1)
-          checkStr = getLocalDateString(checkDate)
+      let currentStreak = 0
+      if (isStreakActiveToday) {
+        currentStreak = 1
+        let i = localDates.length - 1
+        while (i > 0) {
+          const dateCurr = new Date(localDates[i] + 'T00:00:00')
+          const datePrev = new Date(localDates[i - 1] + 'T00:00:00')
+          
+          if (countWeekdaysBetween(datePrev, dateCurr) === 0) {
+            currentStreak++
+            i--
+          } else {
+            break
+          }
         }
       }
 
-      // Calculate longest streak
+      // Calculate longest streak in history
       let longestStreak = 0
-      let tempStreak = 0
-      let prevDate: Date | null = null
-
-      for (const dateStr of localDates) {
-        const currentDate = new Date(dateStr + 'T00:00:00') // Force local midnight parsing
+      if (localDates.length > 0) {
+        let tempStreak = 1
+        longestStreak = 1
         
-        if (prevDate === null) {
-          tempStreak = 1
-        } else {
-          // Check if exactly 1 day difference
-          const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime())
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-          if (diffDays === 1) {
+        for (let i = 1; i < localDates.length; i++) {
+          const datePrev = new Date(localDates[i - 1] + 'T00:00:00')
+          const dateCurr = new Date(localDates[i] + 'T00:00:00')
+          
+          if (countWeekdaysBetween(datePrev, dateCurr) === 0) {
             tempStreak++
-          } else if (diffDays > 1) {
+          } else {
             tempStreak = 1
           }
+          
+          if (tempStreak > longestStreak) {
+            longestStreak = tempStreak
+          }
         }
-        
-        if (tempStreak > longestStreak) {
-          longestStreak = tempStreak
-        }
-        prevDate = currentDate
       }
 
       setStreak({
