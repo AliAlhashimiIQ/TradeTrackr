@@ -322,7 +322,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     if (!totals) return null;
     return (
       <div
-        className="grid gap-2 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 backdrop-blur-md items-center min-w-full text-left"
+        className="grid gap-2 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full text-left"
         style={{ gridTemplateColumns: getGridTemplateColumns() }}
       >
         <div />
@@ -391,7 +391,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {visibleColumns.tags && <div />}
         {visibleColumns.mistakes && <div />}
         {visibleColumns.notes && <div />}
-        <div />
+        <div 
+          className="sticky right-0 z-20 h-full pr-5 -mr-5 bg-[#0d0e16]/95"
+          style={{
+            boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+          }}
+        />
       </div>
     );
   };
@@ -431,7 +436,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
     return (
       <div
-        className="grid gap-2 px-5 py-3.5 items-center relative animate-fade-in min-w-full text-left"
+        className="grid gap-2 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full text-left"
         style={{
           gridTemplateColumns: getGridTemplateColumns(),
           backgroundColor: '#0d0e16',
@@ -439,7 +444,6 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           borderTop: '1px solid rgba(99, 102, 241, 0.25)',
           borderBottom: '1px solid rgba(99, 102, 241, 0.25)',
           boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.8), 0 0 16px rgba(99, 102, 241, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
-          backdropFilter: 'blur(12px)',
           zIndex: activePopover?.tradeId === 'new-row' ? 30 : 10,
         }}
       >
@@ -859,7 +863,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         )}
 
         {/* Actions (Save / Cancel) */}
-        <div className="flex items-center justify-end gap-2">
+        <div 
+          className="sticky right-0 z-20 flex items-center justify-end gap-2 pr-5 -mr-5 h-full"
+          style={{
+            backgroundColor: '#0d0e16',
+            boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+          }}
+        >
           <button
             type="button"
             onClick={onInlineSave}
@@ -893,7 +903,6 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               gridTemplateColumns: getGridTemplateColumns(),
               borderBottom: '1px solid rgba(255,255,255,0.06)',
               background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.9)',
-              backdropFilter: 'blur(8px)',
             }}
           >
             <div className="relative group/header flex items-center justify-center h-full">
@@ -1051,7 +1060,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                 {renderResizeHandle('notes')}
               </div>
             )}
-            <div className="relative group/header text-right flex items-center justify-end h-full">
+            <div 
+              className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
+              style={{
+                background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.95)',
+                backdropFilter: 'blur(8px)',
+                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+              }}
+            >
               <span>Actions</span>
             </div>
           </div>
@@ -1466,7 +1482,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     )}
 
                     {/* Actions */}
-                    <div className="flex items-center justify-end gap-1">
+                    <div 
+                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full"
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? '#0d0e16' : '#11121b',
+                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+                      }}
+                    >
                       {trade.screenshot_url && (
                         <button
                           onClick={() => onScreenshotClick(trade.screenshot_url ?? '')}
