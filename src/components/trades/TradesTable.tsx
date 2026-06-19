@@ -1589,7 +1589,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   key={trade.id}
                   className="card p-4 rounded-2xl relative overflow-hidden text-left"
                   style={{
-                    background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
+                    backgroundColor: '#0d0e16',
+                    backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%)',
                     borderColor: 'rgba(255,255,255,0.08)',
                     borderWidth: '1px',
                   }}

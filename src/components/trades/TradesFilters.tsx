@@ -146,7 +146,8 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
               <div
                 className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl overflow-hidden text-left"
                 style={{
-                  background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
+                  backgroundColor: '#0d0e16',
+                  backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderTopColor: 'rgba(255,255,255,0.12)',
                   boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 48px -12px rgba(0,0,0,0.6), 0 4px 16px -4px rgba(0,0,0,0.4)',
