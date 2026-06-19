@@ -87,7 +87,7 @@ Goal: Eliminate credentials leaks, secure user authorization paths, and encrypt 
 
 Goal: Shrink loading times, lower client-side CPU load, and refactor monolithic files.
 
-### [ ] 3.1 Refactor Monolithic `trades/page.tsx`
+### [x] 3.1 Refactor Monolithic `trades/page.tsx`
 * **Description**: Split the monolithic 3,250-line file into distinct components inside a folder structure.
 * **Proposed Structure**:
   * `src/components/trades/TradesTable.tsx` (renders rows, handles resizing, row click).
@@ -95,7 +95,7 @@ Goal: Shrink loading times, lower client-side CPU load, and refactor monolithic 
   * `src/components/trades/TradesHeader.tsx` (renders stats pills, view toggles).
   * `src/components/trades/TradesFilters.tsx` (renders filters bar).
 
-### [ ] 3.2 Implement Server-Side Metrics Calculations
+### [x] 3.2 Implement Server-Side Metrics Calculations
 * **Description**: Reduce browser CPU freezing by delegating equity curve computations and risk calculations to database functions (RPC) or backend API routes instead of running them on the client thread.
 * **SQL Script (RPC Example)**:
   ```sql
@@ -105,7 +105,7 @@ Goal: Shrink loading times, lower client-side CPU load, and refactor monolithic 
 * **Files to Modify**:
   * [useDashboardData.ts](file:///c:/Users/ali/Desktop/TradeTrackr/src/hooks/useDashboardData.ts) (call database RPC instead of doing loop calculations).
 
-### [ ] 3.3 Add Database Composite Indexes
+### [x] 3.3 Add Database Composite Indexes
 * **Description**: Optimize database lookup times for active users by adding PostgreSQL indexes on foreign keys and commonly filtered fields.
 * **SQL Script**:
   ```sql
