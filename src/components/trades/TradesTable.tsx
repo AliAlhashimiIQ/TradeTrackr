@@ -174,6 +174,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   formatCurrency,
 }) => {
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null);
+  const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
+  const [inlineScreenshotTab, setInlineScreenshotTab] = useState<'upload' | 'embed'>('upload');
+  const [inlineScreenshotEmbedUrlInput, setInlineScreenshotEmbedUrlInput] = useState('');
 
   const inlineScreenshotPreviewUrl = useMemo(() => {
     return inlineScreenshotFile ? URL.createObjectURL(inlineScreenshotFile) : null;
@@ -447,16 +450,19 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
         {/* Screenshot preview */}
         <div className="flex items-center justify-center">
-          {inlineScreenshotPreviewUrl ? (
+          {inlineScreenshotPreviewUrl || inlineRowData.screenshot_url ? (
             <div className="relative w-11 h-8 rounded border border-white/[0.15] overflow-hidden group">
               <img
-                src={inlineScreenshotPreviewUrl}
+                src={inlineScreenshotPreviewUrl || resolveTradingViewUrl(inlineRowData.screenshot_url)}
                 alt="preview"
                 className="w-full h-full object-cover"
               />
               <button
                 type="button"
-                onClick={() => onInlineScreenshotFileChange?.(null)}
+                onClick={() => {
+                  onInlineScreenshotFileChange?.(null);
+                  onInlineChange?.('screenshot_url', undefined);
+                }}
                 className="absolute inset-0 bg-black/60 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 title="Remove photo"
               >
@@ -466,26 +472,20 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               </button>
             </div>
           ) : (
-            <label className="w-11 h-8 rounded border border-dashed border-white/[0.15] bg-white/[0.02] hover:border-indigo-500/50 hover:bg-indigo-500/[0.04] flex items-center justify-center text-gray-500 hover:text-indigo-400 cursor-pointer transition-all duration-200" title="Upload screenshot">
+            <button
+              type="button"
+              onClick={() => {
+                setInlineScreenshotTab('upload');
+                setInlineScreenshotEmbedUrlInput('');
+                setShowInlineScreenshotModal(true);
+              }}
+              className="w-11 h-8 rounded border border-dashed border-white/[0.15] bg-white/[0.02] hover:border-indigo-500/50 hover:bg-indigo-500/[0.04] flex items-center justify-center text-gray-500 hover:text-indigo-400 transition-all duration-200"
+              title="Add photo"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                      toast.error('Image must be under 5MB');
-                      return;
-                    }
-                    onInlineScreenshotFileChange?.(file);
-                  }
-                }}
-              />
-            </label>
+            </button>
           )}
         </div>
 
@@ -1063,7 +1063,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <>
               {inlineNewRowIndex === 0 && filteredTrades.length === 0 && renderInlineEditorRow()}
               {filteredTrades.map((trade, idx) => (
-                <div key={trade.id} className="relative min-w-full text-left" style={{ zIndex: activePopover?.tradeId === trade.id ? 30 : 1 }}>
+                <div key={trade.id} className="relative min-w-full text-left" style={{ zIndex: (activePopover?.tradeId === trade.id || idx === inlineNewRowIndex) ? 30 : 1 }}>
                   {idx === inlineNewRowIndex && renderInlineEditorRow()}
                   
                   {/* Notion-style hover insert line between rows */}
@@ -1800,6 +1800,104 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           </>
         )}
       </div>
+
+      {showInlineScreenshotModal && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowInlineScreenshotModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-[#0d0e16] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
+          >
+            <div className="p-5 border-b border-white/[0.06] flex justify-between items-center bg-[#0d0e16]">
+              <h2 className="text-base font-bold text-white">Add Screenshot to Draft Trade</h2>
+              <button onClick={() => setShowInlineScreenshotModal(false)} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="flex border-b border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setInlineScreenshotTab('upload')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    inlineScreenshotTab === 'upload'
+                      ? 'text-indigo-400 border-b-2 border-indigo-500'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInlineScreenshotTab('embed')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    inlineScreenshotTab === 'embed'
+                      ? 'text-indigo-400 border-b-2 border-indigo-500'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Embed Link
+                </button>
+              </div>
+              
+              <div>
+                {inlineScreenshotTab === 'upload' ? (
+                  <label className="flex flex-col items-center justify-center gap-3 py-8 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
+                    <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm text-gray-400">Choose an image file or <span className="text-indigo-400 font-semibold">browse</span></span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            toast.error('Image must be under 5MB');
+                            return;
+                          }
+                          onInlineScreenshotFileChange?.(file);
+                          onInlineChange?.('screenshot_url', undefined);
+                          setShowInlineScreenshotModal(false);
+                        }
+                      }}
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={inlineScreenshotEmbedUrlInput}
+                      onChange={e => setInlineScreenshotEmbedUrlInput(e.target.value)}
+                      placeholder="Paste TradingView link (e.g. https://www.tradingview.com/x/pCPdcgL4/)"
+                      className="w-full px-3 py-2.5 bg-[#06070b] border border-white/[0.06] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (inlineScreenshotEmbedUrlInput.trim()) {
+                          const resolved = resolveTradingViewUrl(inlineScreenshotEmbedUrlInput);
+                          onInlineChange?.('screenshot_url', resolved);
+                          onInlineScreenshotFileChange?.(null);
+                          setInlineScreenshotEmbedUrlInput('');
+                          setShowInlineScreenshotModal(false);
+                        }
+                      }}
+                      className="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-semibold transition-all shadow-[0_4px_12px_rgba(99,102,241,0.2)]"
+                    >
+                      Save Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </>
   );
 };

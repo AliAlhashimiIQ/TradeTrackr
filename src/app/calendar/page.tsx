@@ -28,10 +28,17 @@ const fmtDecimal = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n)
 
+const toLocalDateString = (d: Date) => {
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const groupTradesByDate = (trades: Trade[]) => {
   const grouped: Record<string, Trade[]> = {}
   trades.forEach((trade) => {
-    const date = new Date(trade.entry_time).toISOString().slice(0, 10)
+    const date = toLocalDateString(new Date(trade.entry_time))
     if (!grouped[date]) grouped[date] = []
     grouped[date].push(trade)
   })
@@ -146,12 +153,12 @@ export default function CalendarPage() {
       ? Math.round((wins / monthTrades.length) * 100)
       : 0
     const tradingDays = new Set(
-      monthTrades.map((t) => new Date(t.entry_time).toISOString().slice(0, 10))
+      monthTrades.map((t) => toLocalDateString(new Date(t.entry_time)))
     ).size
     const bestDay = Object.entries(tradesByDate).reduce(
       (best, [dateStr, dayTrades]) => {
-        const d = new Date(dateStr)
-        if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return best
+        const [year, month, day] = dateStr.split('-').map(Number)
+        if (month - 1 !== currentMonth || year !== currentYear) return best
         const dp = calcPnL(dayTrades)
         return dp > best ? dp : best
       },
@@ -159,8 +166,8 @@ export default function CalendarPage() {
     )
     const worstDay = Object.entries(tradesByDate).reduce(
       (worst, [dateStr, dayTrades]) => {
-        const d = new Date(dateStr)
-        if (d.getMonth() !== currentMonth || d.getFullYear() !== currentYear) return worst
+        const [year, month, day] = dateStr.split('-').map(Number)
+        if (month - 1 !== currentMonth || year !== currentYear) return worst
         const dp = calcPnL(dayTrades)
         return dp < worst ? dp : worst
       },
@@ -171,7 +178,7 @@ export default function CalendarPage() {
 
   const selectedDayTrades = useMemo(() => {
     if (!selectedDate) return []
-    const key = selectedDate.toISOString().slice(0, 10)
+    const key = toLocalDateString(selectedDate)
     return tradesByDate[key] || []
   }, [selectedDate, tradesByDate])
 
@@ -249,7 +256,7 @@ export default function CalendarPage() {
       )
     }
 
-    const dateStr = date.toISOString().slice(0, 10)
+    const dateStr = toLocalDateString(date)
     const dayTrades = tradesByDate[dateStr] || []
     const pnl = calcPnL(dayTrades)
     const isToday = isSameDay(date, today)
@@ -314,7 +321,7 @@ export default function CalendarPage() {
         whileTap={{ scale: 0.99 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         className={`
-          relative ${large ? 'min-h-[90px] md:min-h-[140px]' : 'min-h-[55px] md:min-h-[110px]'} p-2 md:p-3 cursor-pointer
+          relative ${large ? 'min-h-[140px]' : 'min-h-[110px]'} p-2 md:p-3 cursor-pointer
           transition-all duration-300 group
           ${isOutsideMonth ? 'opacity-20 pointer-events-none' : ''}
         `}
@@ -484,7 +491,7 @@ export default function CalendarPage() {
         const dayNum = row * 7 + d - firstDay + 1
         if (dayNum > 0 && dayNum <= daysInMonth) {
           const date = new Date(currentYear, currentMonth, dayNum)
-          const dateStr = date.toISOString().slice(0, 10)
+          const dateStr = toLocalDateString(date)
           const dayTrades = tradesByDate[dateStr] || []
           weekTrades = [...weekTrades, ...dayTrades]
         }
@@ -593,7 +600,7 @@ export default function CalendarPage() {
   /* ═══════════════════ WEEK VIEW ═══════════════════ */
   const renderWeekView = () => {
     const weekPnl = weekDates.reduce((s, d) => {
-      const k = d.toISOString().slice(0, 10)
+      const k = toLocalDateString(d)
       return s + calcPnL(tradesByDate[k] || [])
     }, 0)
 
@@ -638,9 +645,9 @@ export default function CalendarPage() {
         >
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400 font-bold uppercase tracking-[0.15em]">Week Total</span>
-            {weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length > 0 && (
+            {weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []).length > 0 && (
               <span className="text-xs text-gray-400 font-semibold">
-                ({weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length} {weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length === 1 ? 'trade' : 'trades'} · {calcWinRate(weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []))}% WR)
+                ({weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []).length} {weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []).length === 1 ? 'trade' : 'trades'} · {calcWinRate(weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []))}% WR)
               </span>
             )}
           </div>
