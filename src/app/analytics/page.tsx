@@ -515,43 +515,52 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Tab Navigation */}
-        <div className="flex p-1 bg-white/[0.02] dark:bg-black/35 backdrop-blur-md border border-white/[0.05] rounded-xl mb-8 w-fit max-w-full overflow-x-auto">
+        <div className="flex p-1 bg-white/[0.03] dark:bg-slate-950/40 backdrop-blur-md border border-white/[0.08] rounded-xl mb-8 w-fit max-w-full overflow-x-auto shadow-lg">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'overview'
-                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)] font-semibold'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/35 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
+            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
             Overview
           </button>
           <button
             onClick={() => setActiveTab('breakdown')}
-            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'breakdown'
-                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)] font-semibold'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/35 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
+            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
             Detailed Breakdown
           </button>
           <button
             onClick={() => setActiveTab('mistakes')}
-            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'mistakes'
-                ? 'bg-red-500/15 text-red-400 border border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.15)] font-semibold'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-red-500/15 text-red-400 border border-red-500/35 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
+            <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
             Cost of Mistakes
           </button>
           <button
             onClick={() => setActiveTab('propfirm')}
-            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
               activeTab === 'propfirm'
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)] font-semibold'
-                : 'text-slate-400 hover:text-slate-200 border border-transparent'
+                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
             🏆 Prop Firm
@@ -796,7 +805,7 @@ export default function AnalyticsPage() {
                 { label: 'Expected Value', value: loading ? '-' : formatCurrency(metrics?.expectedValue ?? 0), desc: 'Per trade on average', color: (metrics?.expectedValue ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400' },
                 { label: 'Largest Win', value: loading ? '-' : formatCurrency(metrics?.largestWin ?? 0), desc: `Largest loss: ${loading ? '-' : formatCurrency(Math.abs(metrics?.largestLoss ?? 0))}`, color: 'text-emerald-400' },
               ].map((s, i) => (
-                <div key={i} className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}>
                   <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</div>
                   <div className={`text-xl font-bold mt-1 ${s.color}`}>{s.value}</div>
                   <div className="text-[11px] text-gray-600 mt-0.5">{s.desc}</div>
@@ -845,7 +854,7 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Monthly Performance</h2>
-                  <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
+                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
                     {!loading && monthlyData.length > 0 ? `${monthlyData.length} months` : 'No data'}
                   </div>
                 </div>
@@ -856,7 +865,7 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Drawdown Analysis</h2>
-                  <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
+                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
                     {!loading && metrics ? `Max: ${metrics.maxDrawdownPercent.toFixed(1)}%` : 'No data'}
                   </div>
                 </div>
@@ -899,7 +908,7 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-base font-medium">Strategy Performance</h2>
                     <p className="text-gray-400 text-xs mt-1">Analysis of your trading strategies</p>
                   </div>
-                  <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
+                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
                     {!loading && strategyData.length > 0 ? `${strategyData.length} strategies` : 'No data'}
                   </div>
                 </div>
@@ -913,7 +922,7 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-base font-medium">Symbol Performance</h2>
                     <p className="text-gray-400 text-xs mt-1">Breakdown by trading symbols</p>
                   </div>
-                  <div className="bg-[#0d0f16] text-xs text-gray-400 px-2 py-1 rounded-md">
+                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
                     {!loading && symbolData.length > 0 ? `${symbolData.length} symbols` : 'No data'}
                   </div>
                 </div>

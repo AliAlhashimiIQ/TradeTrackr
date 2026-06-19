@@ -92,7 +92,7 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
   const wins = challengeTrades.filter(t => t.profit_loss > 0).length
   const winRate = challengeTrades.length ? (wins / challengeTrades.length) * 100 : 0
 
-  const panelClass = 'card rounded-2xl border border-white/[0.06] bg-[#0d0e16] p-5'
+  const panelClass = 'card rounded-2xl border border-white/[0.06] bg-slate-950/65 backdrop-blur-sm p-5 hover:scale-[1.01] transition-transform duration-300'
 
   return (
     <motion.div
