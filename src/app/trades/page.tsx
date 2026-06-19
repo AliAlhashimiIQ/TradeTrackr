@@ -561,7 +561,7 @@ export default function Trades() {
       return;
     }
 
-    if (trade.id === 'new-row') {
+    if (!trade.id || trade.id === 'new-row') {
       const current = isMistake ? (inlineRowData?.mistakes || []) : (inlineRowData?.tags || []);
       const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
       setInlineRowData(prev => prev ? { ...prev, [isMistake ? 'mistakes' : 'tags']: next } : null);
