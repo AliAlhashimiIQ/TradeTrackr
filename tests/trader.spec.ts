@@ -225,7 +225,15 @@ test.describe('E2E Trader Journey', () => {
       // Wait a short duration to ensure Next.js hydration and state sync is complete
       await page.waitForTimeout(1500);
       
-      const initialCount = await rows.count();
+      // Helper to get total trades from pagination text
+      const getTradesCount = async () => {
+        const paginationText = await page.locator('span, div').filter({ hasText: /of \d+ trades/ }).first().innerText();
+        const match = paginationText.match(/of (\d+) trades/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+
+      const initialCount = await getTradesCount();
+      expect(initialCount).toBeGreaterThan(0);
 
       // Set up dialog handler for window.confirm
       page.once('dialog', async dialog => {
@@ -237,9 +245,9 @@ test.describe('E2E Trader Journey', () => {
       const deleteBtn = rows.first().locator('button').last();
       await deleteBtn.click({ force: true });
 
-      // Verify that the count of XAUUSD rows decreased by 1
+      // Verify that the count of total trades decreased by 1
       await expect(async () => {
-        const currentCount = await rows.count();
+        const currentCount = await getTradesCount();
         expect(currentCount).toBe(initialCount - 1);
       }).toPass({ timeout: 10000 });
       
