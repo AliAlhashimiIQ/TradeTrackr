@@ -45,7 +45,7 @@ export default function WelcomePage() {
         .eq('id', user.id)
         .single();
 
-      const currentSettings = profile?.settings || {};
+      const currentSettings = (profile?.settings as any) || {};
       const updatedSettings = {
         ...currentSettings,
         onboarded: true,
@@ -57,7 +57,7 @@ export default function WelcomePage() {
         .from('profiles')
         .upsert({ 
           id: user.id, 
-          email: user.email,
+          email: user.email || '',
           settings: updatedSettings,
           updated_at: new Date().toISOString()
         });

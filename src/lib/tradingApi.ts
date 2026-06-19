@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote, TradingAccount } from './types';
 import { sanitizeTradeInput } from './sanitize';
+import { encryptPassword } from './crypto';
 
 async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
   if (!trades.length) return trades;
@@ -239,6 +240,10 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       mistakes: sanitized.mistakes || [],
       lots: sanitized.lots,
       pips: sanitized.pips,
+      stop_loss: sanitized.stop_loss,
+      take_profit: sanitized.take_profit,
+      commission: sanitized.commission,
+      swap: sanitized.swap,
     };
     
     // Only include optional fields if they have values
@@ -351,6 +356,10 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       mistakes: sanitized.mistakes || [],
       lots: sanitized.lots,
       pips: sanitized.pips,
+      stop_loss: sanitized.stop_loss,
+      take_profit: sanitized.take_profit,
+      commission: sanitized.commission,
+      swap: sanitized.swap,
     };
     
     if (sanitized.risk) tradeData.risk = sanitized.risk;
@@ -500,9 +509,33 @@ export async function getEquityCurveData(userId: string): Promise<ChartData> {
       };
     }
     
+    // Fetch starting balance from profile settings
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('settings')
+      .eq('id', userId)
+      .single();
+    
+    // Get trading accounts to see if we have connected balances
+    const { data: accountsData } = await supabase
+      .from('trading_accounts')
+      .select('balance')
+      .eq('user_id', userId);
+
+    const settings = (profile?.settings as any) || {};
+    const profileStartingBalance = Number(settings.startingBalance) || 10000;
+    
+    let initialCapital = profileStartingBalance;
+    if (accountsData && accountsData.length > 0) {
+      const totalAccountBalance = accountsData.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+      if (totalAccountBalance > 0) {
+        initialCapital = totalAccountBalance;
+      }
+    }
+
     // Process trades to create equity curve
     const tradesByDate: { [date: string]: number } = {};
-    let runningTotal = 10000; // Starting capital
+    let runningTotal = initialCapital; // Starting capital
     
     trades.forEach(trade => {
       const date = new Date(trade.exit_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -605,27 +638,7 @@ export async function getMarketEvents(startDate: string, endDate: string): Promi
 
 // Function to get economic calendar events
 export async function getEconomicEvents(startDate: string, endDate: string, countries?: string[]): Promise<any[]> {
-  try {
-    let query = supabase
-      .from('economic_events')
-      .select('*')
-      .gte('date', startDate)
-      .lte('date', endDate);
-    
-    // Filter by countries if provided
-    if (countries && countries.length > 0) {
-      query = query.in('country', countries);
-    }
-    
-    const { data, error } = await query.order('date', { ascending: true });
-
-    if (error) throw error;
-    
-    return data || [];
-  } catch (error) {
-    
-    return [];
-  }
+  return [];
 }
 
 // Function to get user's custom events
@@ -684,6 +697,39 @@ export async function getTradeTagsById(tradeId: string): Promise<any[]> {
     return data?.map(item => item.tags) || [];
   } catch (error) {
     return [];
+  }
+}
+
+// Function to update a tag
+export async function updateTag(tagId: string, updates: { name?: string; color?: string }): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('tags')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', tagId);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error updating tag:', error);
+    return false;
+  }
+}
+
+// Function to delete a tag
+export async function deleteTag(tagId: string): Promise<boolean> {
+  try {
+    // Delete trade_tags relationships first to avoid foreign key violations
+    await supabase.from('trade_tags').delete().eq('tag_id', tagId);
+    // Delete the tag itself
+    const { error } = await supabase.from('tags').delete().eq('id', tagId);
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting tag:', error);
+    return false;
   }
 }
 
@@ -877,11 +923,13 @@ export async function getTradingAccounts(userId: string): Promise<TradingAccount
 export async function addTradingAccount(
   account: Omit<TradingAccount, 'id' | 'created_at' | 'updated_at' | 'balance' | 'connection_status' | 'last_sync'>
 ): Promise<TradingAccount> {
+  const encPassword = account.password ? await encryptPassword(account.password) : '';
   const { data, error } = await supabase
     .from('trading_accounts')
     .insert([
       {
         ...account,
+        password: encPassword,
         balance: 0.00,
         connection_status: 'DISCONNECTED',
         last_sync: null,
@@ -901,10 +949,14 @@ export async function updateTradingAccount(
   id: string,
   account: Partial<Omit<TradingAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<TradingAccount> {
+  const accountUpdates = { ...account };
+  if (accountUpdates.password) {
+    accountUpdates.password = await encryptPassword(accountUpdates.password);
+  }
   const { data, error } = await supabase
     .from('trading_accounts')
     .update({
-      ...account,
+      ...accountUpdates,
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)

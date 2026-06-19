@@ -64,6 +64,11 @@ const nextConfig = {
         hostname: 'gfodubbocdhjckgiualw.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
+      {
+        protocol: 'https',
+        hostname: '*.tradingview.com',
+        pathname: '/**',
+      },
     ],
     // Serve WebP/AVIF where supported — next/image does this automatically
     formats: ['image/avif', 'image/webp'],

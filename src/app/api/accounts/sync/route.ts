@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
+import { decryptPassword } from '@/lib/crypto';
 
 // Initialize Supabase service role client to insert/update across constraints if needed
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -82,51 +83,49 @@ export async function POST(request: NextRequest) {
         let tradesToInsert: ParsedMT5Trade[] = [];
 
         // Check if MetaApi token is present to do a real cloud sync
-        if (metaApiToken && account.connection_type === 'API') {
-          // 1. Fetch MetaApi accounts to find a matching deployed instance
-          // (In production, this checks if the account is already provisioned on MetaApi, or provisions it)
-          try {
-            const apiHeaders = { 'auth-token': metaApiToken };
-            
-            // DEBUG: Log token info to verify it's correct
-            console.log('[MetaApi Debug] Token length:', metaApiToken?.length);
-            console.log('[MetaApi Debug] Token first 20 chars:', metaApiToken?.substring(0, 20));
-            console.log('[MetaApi Debug] Token last 20 chars:', metaApiToken?.substring((metaApiToken?.length || 0) - 20));
-            console.log('[MetaApi Debug] Token has newline:', metaApiToken?.includes('\n'));
-            console.log('[MetaApi Debug] Token has carriage return:', metaApiToken?.includes('\r'));
-            
-            // Find or provision account on MetaApi
-            let metaAccountId = '';
-            const listRes = await axios.get(
-              'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts',
-              { headers: apiHeaders }
-            );
-            
-            const existingMetaAcc = listRes.data.find(
-              (a: any) => a.login === account.account_number && a.server === account.server_name
-            );
-
-            if (existingMetaAcc) {
-              metaAccountId = existingMetaAcc.id || existingMetaAcc._id;
-            } else {
-              // Provision a new cloud account on MetaApi
-              const provRes = await axios.post(
+        if (account.connection_type === 'API') {
+          if (!metaApiToken) {
+            errors.push('MetaApi authentication token is not configured on the server. Please add META_API_TOKEN to your environment variables.');
+          } else {
+            // 1. Fetch MetaApi accounts to find a matching deployed instance
+            // (In production, this checks if the account is already provisioned on MetaApi, or provisions it)
+            try {
+              const apiHeaders = { 'auth-token': metaApiToken };
+              
+              const decryptedPassword = account.password ? await decryptPassword(account.password) : '';
+              
+              // Find or provision account on MetaApi
+              let metaAccountId = '';
+              const listRes = await axios.get(
                 'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts',
-                {
-                  name: account.name,
-                  type: 'cloud',
-                  login: account.account_number,
-                  password: account.password || '',
-                  server: account.server_name,
-                  platform: account.platform?.toLowerCase() === 'mt4' ? 'mt4' : 'mt5',
-                  magic: 0,
-                  quoteStreamingIntervalInSeconds: 2.5,
-                  reliability: 'regular',
-                },
                 { headers: apiHeaders }
               );
-              metaAccountId = provRes.data.id || provRes.data._id;
-            }
+              
+              const existingMetaAcc = listRes.data.find(
+                (a: any) => a.login === account.account_number && a.server === account.server_name
+              );
+
+              if (existingMetaAcc) {
+                metaAccountId = existingMetaAcc.id || existingMetaAcc._id;
+              } else {
+                // Provision a new cloud account on MetaApi
+                const provRes = await axios.post(
+                  'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts',
+                  {
+                    name: account.name,
+                    type: 'cloud',
+                    login: account.account_number,
+                    password: decryptedPassword,
+                    server: account.server_name,
+                    platform: account.platform?.toLowerCase() === 'mt4' ? 'mt4' : 'mt5',
+                    magic: 0,
+                    quoteStreamingIntervalInSeconds: 2.5,
+                    reliability: 'regular',
+                  },
+                  { headers: apiHeaders }
+                );
+                metaAccountId = provRes.data.id || provRes.data._id;
+              }
 
             // Ensure the account is deployed
             try {
@@ -211,78 +210,10 @@ export async function POST(request: NextRequest) {
             errors.push(`MetaApi connection error: ${apiErr.response?.data?.message || apiErr.message}`);
           }
         }
+      }
 
-        // 2. If no trades parsed from MetaApi, run the Intelligent Mock Sync Engine
-        if (tradesToInsert.length === 0 && errors.length === 0) {
-          // Generate a premium demo set of trades with a starting balance
-          // Simulate some historical MT5 deals
-          const mockAssets = ['EURUSD', 'GBPUSD', 'XAUUSD', 'NASDAQ100', 'USDJPY'];
-          const today = new Date();
-          
-          // Generate 4-8 random trades spanning the last 2 weeks
-          const count = Math.floor(Math.random() * 5) + 4;
-          let runningMockBalance = account.balance > 0 ? Number(account.balance) : 5000;
-          
-          for (let i = 0; i < count; i++) {
-            const asset = mockAssets[Math.floor(Math.random() * mockAssets.length)];
-            const isWin = Math.random() > 0.4; // 60% win rate
-            
-            let pnl = 0;
-            let entry = 0;
-            let exit = 0;
-            let lots = Number((Math.random() * 1.5 + 0.1).toFixed(2));
-            
-            if (asset === 'XAUUSD') {
-              entry = Number((2300 + Math.random() * 50).toFixed(2));
-              const delta = (Math.random() * 10 + 2) * (isWin ? 1 : -1);
-              exit = Number((entry + delta).toFixed(2));
-              pnl = Number((delta * lots * 100).toFixed(2)); // gold pip multiplier
-            } else if (asset === 'EURUSD' || asset === 'GBPUSD') {
-              entry = Number((1.08 + Math.random() * 0.1).toFixed(5));
-              const delta = (Math.random() * 0.0050 + 0.0010) * (isWin ? 1 : -1);
-              exit = Number((entry + delta).toFixed(5));
-              pnl = Number((delta * lots * 100000).toFixed(2)); // standard fx lot size
-            } else if (asset === 'NASDAQ100') {
-              entry = Number((19000 + Math.random() * 500).toFixed(1));
-              const delta = (Math.random() * 150 + 20) * (isWin ? 1 : -1);
-              exit = Number((entry + delta).toFixed(1));
-              pnl = Number((delta * lots * 20).toFixed(2));
-            } else { // USDJPY
-              entry = Number((155 + Math.random() * 3).toFixed(3));
-              const delta = (Math.random() * 0.6 + 0.1) * (isWin ? 1 : -1);
-              exit = Number((entry + delta).toFixed(3));
-              pnl = Number((delta * lots * 1000).toFixed(2));
-            }
-
-            // Create timestamp within the last 14 days
-            const dayOffset = Math.floor(Math.random() * 14);
-            const hourOffset = Math.floor(Math.random() * 24);
-            const entryDate = new Date();
-            entryDate.setDate(today.getDate() - dayOffset);
-            entryDate.setHours(today.getHours() - hourOffset);
-            
-            const exitDate = new Date(entryDate.getTime() + (Math.floor(Math.random() * 3) + 1) * 3600 * 1000); // 1-4 hours trade duration
-
-            tradesToInsert.push({
-              symbol: asset,
-              type: Math.random() > 0.5 ? 'Long' : 'Short',
-              entry_time: entryDate.toISOString(),
-              exit_time: exitDate.toISOString(),
-              entry_price: entry,
-              exit_price: exit,
-              quantity: lots,
-              lots: lots,
-              profit_loss: pnl,
-              notes: `MT5 Live API Sync | Deal #${Math.floor(10000000 + Math.random() * 90000000)}`,
-              account_id: account.id,
-              user_id: userId,
-            });
-
-            runningMockBalance += pnl;
-          }
-          
-          newBalance = Number(runningMockBalance.toFixed(2));
-        }
+        // 2. If no trades parsed from MetaApi, don't run the mock engine anymore
+        // We will just log that sync was completed but no new trades were found, unless there's an error.
 
         // 3. Fetch existing trade keys to check for duplicates
         const { data: existingTrades, error: fetchErr } = await supabase

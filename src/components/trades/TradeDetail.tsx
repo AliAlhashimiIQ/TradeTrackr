@@ -5,6 +5,7 @@ import { Trade } from '@/lib/types';
 import TradeNotes from './TradeNotes';
 import Image from 'next/image';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
+import { resolveTradingViewUrl } from '@/lib/utils';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -64,7 +65,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
 
   // Open screenshot in modal
   const openScreenshot = (screenshotUrl: string) => {
-    setSelectedScreenshot(screenshotUrl);
+    setSelectedScreenshot(resolveTradingViewUrl(screenshotUrl));
     setZoomLevel(1);
     setDragPosition({ x: 0, y: 0 });
   };
@@ -325,7 +326,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                 {trade.screenshot_url && typeof trade.screenshot_url === 'string' && (
                   <div className="bg-[#1a1f2c] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Screenshot</h3>
-                    <a href={trade.screenshot_url} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
+                    <a href={resolveTradingViewUrl(trade.screenshot_url)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
                   </div>
                 )}
               </div>
@@ -346,7 +347,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                           className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                         >
                           <Image
-                            src={url ?? ''}
+                            src={resolveTradingViewUrl(url ?? '')}
                             alt={`Trade Screenshot ${index + 1}`}
                             layout="fill"
                             objectFit="cover"
@@ -368,7 +369,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                         className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                       >
                         <Image
-                          src={trade.screenshot_url ?? ''}
+                          src={resolveTradingViewUrl(trade.screenshot_url ?? '')}
                           alt="Trade Screenshot"
                           layout="fill"
                           objectFit="cover"

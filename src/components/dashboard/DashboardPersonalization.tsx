@@ -13,9 +13,9 @@ const DashboardPersonalization = ({ dateRange = '30d' }: { dateRange?: DateRange
   const router = useRouter();
   const [activeWidgets, setActiveWidgets] = useState(availableWidgets);
   const [isCustomizing, setIsCustomizing] = useState(false);
-  const { trades, isLoading } = useTrades(dateRange);
-  const metrics = trades.length > 0 ? calculatePerformanceMetrics(trades) : null;
-  const drawdown = trades.length > 0 ? calculateMaxDrawdown(trades) : null;
+  const { trades, isLoading, initialCapital } = useTrades(dateRange);
+  const metrics = trades.length > 0 ? calculatePerformanceMetrics(trades, initialCapital) : null;
+  const drawdown = trades.length > 0 ? calculateMaxDrawdown(trades, initialCapital) : null;
 
   // Risk alerts (same logic as DashboardAdvancedFeatures)
   const riskAlerts = [];

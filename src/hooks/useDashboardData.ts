@@ -3,6 +3,7 @@ import type { Trade, TradeMetrics } from '@/lib/types';
 import { DateRange } from '@/components/dashboard/DateRangeSelector';
 import { PerformanceMetrics, calculatePerformanceMetrics, generateEquityCurveData } from '@/lib/tradeMetrics';
 import { getAllTrades } from '@/lib/tradingApi';
+import { supabase } from '@/lib/supabaseClient';
 
 function getDateRangeBounds(dateRange: DateRange): { startDate?: string; endDate?: string } {
   if (dateRange === 'all') {
@@ -45,6 +46,7 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [initialCapital, setInitialCapital] = useState<number>(10000);
   const [metrics, setMetrics] = useState<TradeMetrics>({
     total_pnl: 0,
     win_rate: 0,
@@ -64,6 +66,7 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
     if (!userId) {
       setIsLoading(false);
       setTrades([]);
+      setInitialCapital(10000);
       setMetrics({
         total_pnl: 0,
         win_rate: 0,
@@ -83,13 +86,39 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
       setHasError(false);
       try {
         const bounds = getDateRangeBounds(dateRange);
-        const tradesResponse = await getAllTrades(userId, bounds);
-        const advanced = calculatePerformanceMetrics(tradesResponse);
-        const equityCurve = generateEquityCurveData(tradesResponse).map(point => ({
+        
+        // Fetch trades, profile, and accounts in parallel
+        const [tradesResponse, profileRes, accountsRes] = await Promise.all([
+          getAllTrades(userId, bounds),
+          supabase
+            .from('profiles')
+            .select('settings')
+            .eq('id', userId)
+            .single(),
+          supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('user_id', userId)
+        ]);
+
+        const settings = (profileRes.data?.settings as any) || {};
+        const profileStartingBalance = Number(settings.startingBalance) || 10000;
+        
+        let cap = profileStartingBalance;
+        if (accountsRes.data && accountsRes.data.length > 0) {
+          const totalAccountBalance = accountsRes.data.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+          if (totalAccountBalance > 0) {
+            cap = totalAccountBalance;
+          }
+        }
+
+        const advanced = calculatePerformanceMetrics(tradesResponse, cap);
+        const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
           date: point.date,
           value: point.equity
         }));
 
+        setInitialCapital(cap);
         setTrades(tradesResponse);
         setAdvancedMetrics(advanced);
         setMetrics(toTradeMetrics(advanced));
@@ -101,6 +130,7 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
         console.error('Error fetching dashboard data:', error);
         setHasError(true);
         setTrades([]);
+        setInitialCapital(10000);
         setMetrics({
           total_pnl: 0,
           win_rate: 0,
@@ -125,8 +155,10 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
     metrics,
     equityData,
     advancedMetrics,
+    initialCapital,
     allTrades: trades,
     isLoading,
     hasError
   };
-} 
+}
+ 

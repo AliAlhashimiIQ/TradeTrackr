@@ -32,7 +32,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
           
           if (isMounted) {
             const isNewUser = error?.code === 'PGRST116';
-            const hasNotOnboarded = isNewUser || !data?.settings?.onboarded;
+            const hasNotOnboarded = isNewUser || !(data?.settings as any)?.onboarded;
 
             if (hasNotOnboarded && pathname !== '/welcome') {
               router.push('/welcome');

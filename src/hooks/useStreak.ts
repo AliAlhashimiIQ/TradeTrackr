@@ -45,10 +45,12 @@ export function useStreak() {
         return
       }
 
+      const validEntries = (data || []).filter((t): t is { entry_time: string } => !!t.entry_time);
+
       // Convert entry_times to local YYYY-MM-DD dates
       const localDates = Array.from(
         new Set(
-          data.map((t) => {
+          validEntries.map((t) => {
             const d = new Date(t.entry_time)
             // Use local date parts to avoid UTC timezone shifts
             const year = d.getFullYear()

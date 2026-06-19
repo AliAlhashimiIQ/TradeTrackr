@@ -135,7 +135,7 @@ export default function Dashboard() {
     const loadChallenge = async () => {
       if (!user) return;
       const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
-      const s = data?.settings || {};
+      const s = (data?.settings as any) || {};
       if (!s.propFirmId) return;
       const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
       const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);
@@ -145,7 +145,7 @@ export default function Dashboard() {
     loadChallenge();
   }, [user]);
 
-  const { trades, metrics, equityData, advancedMetrics, isLoading } = useDashboardData(user?.id, dateRange)
+  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange)
 
   const equityChartData = useMemo(() =>
     equityData.labels.map((d, i) => ({ date: d, equity: equityData.values[i] })),
@@ -156,11 +156,11 @@ export default function Dashboard() {
     [...trades].sort((a, b) => new Date(b.entry_time).getTime() - new Date(a.entry_time).getTime()),
     [trades]
   )
-  const recent = sorted.slice(0, 8)
+  const recent = useMemo(() => sorted.slice(0, 8), [sorted])
   const streak = useMemo(() => getStreak(trades), [trades])
   const psychScore = useMemo(() => getPsychologyScore(trades), [trades])
   const bestSession = useMemo(() => getBestSession(trades), [trades])
-  const drawdown = useMemo(() => calculateMaxDrawdown(trades), [trades])
+  const drawdown = useMemo(() => calculateMaxDrawdown(trades, initialCapital), [trades, initialCapital])
   const behaviors = useMemo(() => detectStreaksAndBehaviors(recent), [recent])
   const tagPerf = useMemo(() => analyzeTagPerformance(recent), [recent])
   const totalPips = useMemo(() => trades.filter(t => isForexPair(t.symbol)).reduce((s, t) => s + (t.pips || 0), 0), [trades])
@@ -189,14 +189,15 @@ export default function Dashboard() {
     const today = new Date().toISOString().split('T')[0]
     return trades.filter(t => t.entry_time.startsWith(today))
   }, [trades])
-  const todayPnL = todayTrades.reduce((s, t) => s + t.profit_loss, 0)
+  const todayPnL = useMemo(() => todayTrades.reduce((s, t) => s + t.profit_loss, 0), [todayTrades])
+
 
   // Compute challenge status after trades are loaded
   useEffect(() => {
     const loadChallenge = async () => {
       if (!user || !trades.length) return;
       const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
-      const s = data?.settings || {};
+      const s = (data?.settings as any) || {};
       if (!s.propFirmId || !s.propFirmTier) return;
       const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
       const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);

@@ -12,6 +12,7 @@ interface DashboardPerformanceOverviewProps {
   metrics: TradeMetrics;
   equityData: { labels: string[], values: number[] };
   advancedMetrics: any | null;
+  initialCapital?: number;
 }
 
 type ChartType = 'line' | 'bar' | 'pie';
@@ -20,7 +21,8 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
   dateRange,
   metrics,
   equityData,
-  advancedMetrics 
+  advancedMetrics,
+  initialCapital = 10000
 }) => {
   const [chartType, setChartType] = useState<ChartType>('line');
   const isLoading = false;
@@ -116,7 +118,7 @@ const DashboardPerformanceOverview: React.FC<DashboardPerformanceOverviewProps> 
             <EquityCurve 
               data={formattedEquityData}
               type={chartType}
-              initialCapital={10000}
+              initialCapital={initialCapital}
             />
           </div>
         ) : (

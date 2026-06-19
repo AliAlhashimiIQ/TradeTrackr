@@ -8,59 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { isForexPair, calculatePips } from '@/lib/forexUtils';
+import { resolveTradingViewUrl } from '@/lib/utils';
 
-const parseMetadata = (notes: string | undefined) => {
-  if (!notes) return { notes: '', stop_loss: undefined, take_profit: undefined, commission: undefined };
-  let parsedSL: number | undefined;
-  let parsedTP: number | undefined;
-  let parsedComm: number | undefined;
 
-  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
-  const match = notes.match(blockRegex);
-  let cleanNotes = notes;
-  if (match) {
-    if (match[1]) parsedSL = parseFloat(match[1]);
-    if (match[2]) parsedTP = parseFloat(match[2]);
-    if (match[3]) parsedComm = parseFloat(match[3]);
-    cleanNotes = notes.replace(blockRegex, '').trim();
-  }
-  
-  if (parsedComm === undefined) {
-    const commMatch = notes.match(/Commission:\s*([\d.-]+)/i);
-    if (commMatch) parsedComm = parseFloat(commMatch[1]);
-  }
-  if (parsedSL === undefined) {
-    const slMatch = notes.match(/(?:S\/L|Stop\s*Loss):\s*([\d.-]+)/i);
-    if (slMatch) parsedSL = parseFloat(slMatch[1]);
-  }
-  if (parsedTP === undefined) {
-    const tpMatch = notes.match(/(?:T\/P|Take\s*Profit):\s*([\d.-]+)/i);
-    if (tpMatch) parsedTP = parseFloat(tpMatch[1]);
-  }
-
-  return {
-    notes: cleanNotes,
-    stop_loss: parsedSL,
-    take_profit: parsedTP,
-    commission: parsedComm,
-  };
-};
-
-const serializeMetadata = (notes: string, stop_loss?: number, take_profit?: number, commission?: number) => {
-  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
-  let cleanNotes = notes.replace(blockRegex, '').trim();
-
-  const hasSL = stop_loss !== undefined && stop_loss !== null && !isNaN(stop_loss);
-  const hasTP = take_profit !== undefined && take_profit !== null && !isNaN(take_profit);
-  const hasComm = commission !== undefined && commission !== null && !isNaN(commission);
-
-  if (hasSL || hasTP || hasComm) {
-    const formatVal = (val?: number) => (val !== undefined && val !== null && !isNaN(val) ? val : '');
-    const block = `[SL=${formatVal(stop_loss)};TP=${formatVal(take_profit)};Comm=${formatVal(commission)};Swap=]`;
-    cleanNotes = cleanNotes ? `${cleanNotes} ${block}` : block;
-  }
-  return cleanNotes;
-};
 
 interface EnhancedTradeFormProps {
   initialTrade?: Partial<Trade>;
@@ -134,6 +84,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(initialTrade?.screenshot_url || null);
+  const [screenshotTab, setScreenshotTab] = useState<'upload' | 'embed'>('upload');
+  const [embedUrl, setEmbedUrl] = useState('');
   const [customTag, setCustomTag] = useState('');
   const [customMistake, setCustomMistake] = useState('');
   const [showOptional, setShowOptional] = useState(false);
@@ -165,11 +117,10 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       if (initialTrade.entry_time) formatted.entry_time = new Date(initialTrade.entry_time).toISOString().split('T')[0];
       if (initialTrade.exit_time) formatted.exit_time = new Date(initialTrade.exit_time).toISOString().split('T')[0];
       
-      const parsed = parseMetadata(initialTrade.notes);
-      formatted.notes = parsed.notes;
-      formatted.stop_loss = parsed.stop_loss;
-      formatted.take_profit = parsed.take_profit;
-      formatted.commission = parsed.commission;
+      formatted.notes = initialTrade.notes || '';
+      formatted.stop_loss = initialTrade.stop_loss;
+      formatted.take_profit = initialTrade.take_profit;
+      formatted.commission = initialTrade.commission;
       
       setFormData(formatted);
     } else if (user) {
@@ -270,13 +221,6 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * effectiveQuantity
         : ((formData.entry_price || 0) - (formData.exit_price || 0)) * effectiveQuantity;
       
-      const serializedNotes = serializeMetadata(
-        formData.notes || '',
-        formData.stop_loss,
-        formData.take_profit,
-        formData.commission
-      );
-
       await onSubmit({
         user_id: userId,
         symbol: formData.symbol?.toUpperCase(),
@@ -287,13 +231,16 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         entry_time: formData.entry_time,
         exit_time: formData.exit_time,
         profit_loss: calculatedPnl,
-        notes: serializedNotes,
+        notes: formData.notes || '',
         screenshot_url: screenshotUrl,
         emotional_state: formData.emotional_state,
         tags: formData.tags,
         mistakes: formData.mistakes,
         lots: Number(formData.lots),
         pips: Number(formData.pips),
+        stop_loss: formData.stop_loss !== undefined && formData.stop_loss !== null ? Number(formData.stop_loss) : undefined,
+        take_profit: formData.take_profit !== undefined && formData.take_profit !== null ? Number(formData.take_profit) : undefined,
+        commission: formData.commission !== undefined && formData.commission !== null ? Number(formData.commission) : undefined,
         ...(initialTrade?.id ? { id: initialTrade.id } : {}),
       });
       toast.success(isEditing ? 'Trade updated!' : 'Trade logged!');
@@ -514,16 +461,104 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                     {screenshotPreview ? (
                       <div className="relative rounded-xl overflow-hidden border border-white/[0.08]">
-                        <img src={screenshotPreview} alt="Chart" className="w-full max-h-40 object-cover" />
-                        <button type="button" onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); }}
-                          className="absolute top-2 right-2 w-7 h-7 bg-black/80 rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors text-xs">✕</button>
+                        <img src={screenshotPreview} alt="Chart" className="w-full max-h-64 object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setScreenshotFile(null);
+                            setScreenshotPreview(null);
+                            handleChange('screenshot_url', '');
+                          }}
+                          className="absolute top-2 right-2 w-7 h-7 bg-black/80 rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors text-xs"
+                        >
+                          ✕
+                        </button>
                       </div>
                     ) : (
-                      <label className="flex items-center justify-center gap-3 py-6 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <span className="text-base text-gray-500">Drop chart screenshot or <span className="text-indigo-400">browse</span></span>
-                        <input type="file" accept="image/*" onChange={handleScreenshot} className="hidden" />
-                      </label>
+                      <div 
+                        onPaste={(e) => {
+                          // If pasting into a text input, let it function normally
+                          if (e.target instanceof HTMLInputElement && e.target.type === 'text') {
+                            return;
+                          }
+                          const text = e.clipboardData.getData('text');
+                          if (text && (text.startsWith('http://') || text.startsWith('https://') || text.includes('tradingview.com/x/'))) {
+                            e.preventDefault();
+                            const resolved = resolveTradingViewUrl(text);
+                            setScreenshotPreview(resolved);
+                            handleChange('screenshot_url', resolved);
+                            setScreenshotFile(null);
+                            setEmbedUrl('');
+                            toast.success('Pasted link embedded successfully!');
+                          }
+                        }}
+                        className="bg-[#0d0e16] rounded-xl border border-white/[0.06] overflow-hidden"
+                      >
+                        <div className="flex border-b border-white/[0.06]">
+                          <button
+                            type="button"
+                            onClick={() => setScreenshotTab('upload')}
+                            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                              screenshotTab === 'upload'
+                                ? 'bg-indigo-500/10 text-indigo-400 border-b-2 border-indigo-500'
+                                : 'text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            Upload File
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setScreenshotTab('embed')}
+                            className={`flex-1 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                              screenshotTab === 'embed'
+                                ? 'bg-indigo-500/10 text-indigo-400 border-b-2 border-indigo-500'
+                                : 'text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            Embed Link
+                          </button>
+                        </div>
+                        
+                        <div className="p-4">
+                          {screenshotTab === 'upload' ? (
+                            <label className="flex items-center justify-center gap-3 py-6 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
+                              <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-sm text-gray-500">Drop chart screenshot or <span className="text-indigo-400">browse</span></span>
+                              <input type="file" accept="image/*" onChange={handleScreenshot} className="hidden" />
+                            </label>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={embedUrl}
+                                  onChange={e => setEmbedUrl(e.target.value)}
+                                  placeholder="Paste TradingView link (e.g. https://www.tradingview.com/x/pCPdcgL4/)"
+                                  className="flex-1 px-3 py-2 bg-[#06070b] border border-white/[0.06] rounded-lg text-white text-xs placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (embedUrl.trim()) {
+                                      const resolved = resolveTradingViewUrl(embedUrl.trim());
+                                      setScreenshotPreview(resolved);
+                                      handleChange('screenshot_url', resolved);
+                                      setScreenshotFile(null);
+                                      setEmbedUrl('');
+                                    }
+                                  }}
+                                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition-colors"
+                                >
+                                  Embed
+                                </button>
+                              </div>
+                              <p className="text-[10px] text-gray-500">Supports direct image links and TradingView chart sharing URLs (which auto-convert to direct image PNGs).</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
 

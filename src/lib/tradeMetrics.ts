@@ -210,7 +210,10 @@ export function calculateRiskRewardRatio(trades: Trade[]): number {
  * @param trades Array of trade objects sorted by date
  * @returns Object containing drawdown amount and percentage
  */
-export function calculateMaxDrawdown(trades: Trade[]): { amount: number; percentage: number } {
+export function calculateMaxDrawdown(
+  trades: Trade[],
+  initialCapital: number = 10000
+): { amount: number; percentage: number } {
   if (!trades.length) return { amount: 0, percentage: 0 };
   
   // Sort trades by date if not already sorted
@@ -222,7 +225,6 @@ export function calculateMaxDrawdown(trades: Trade[]): { amount: number; percent
   let peak = 0;
   let maxDrawdown = 0;
   let maxDrawdownPercent = 0;
-  let initialCapital = 10000; // Assuming $10,000 starting capital
   
   sortedTrades.forEach(trade => {
     cumulativePnL += trade.profit_loss;
@@ -612,7 +614,7 @@ export function calculatePerformanceMetrics(
   const riskRewardRatio = calculateRiskRewardRatio(trades);
   
   // Drawdown metrics
-  const drawdown = calculateMaxDrawdown(trades);
+  const drawdown = calculateMaxDrawdown(trades, initialCapital);
   
   // Calculate drawdown duration (simplified)
   const maxDrawdownDuration = 0; // Requires more complex calculation

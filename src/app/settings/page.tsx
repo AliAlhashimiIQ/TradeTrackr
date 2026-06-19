@@ -25,6 +25,7 @@ function SettingsContent() {
   const [currency, setCurrency] = useState('USD');
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [defaultTradeType, setDefaultTradeType] = useState('Long');
+  const [startingBalance, setStartingBalance] = useState('10000');
 
   // Notification settings state
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -54,11 +55,12 @@ function SettingsContent() {
 
           if (error && error.code !== 'PGRST116') throw error;
           
-          const settings = data?.settings || {};
+          const settings = (data?.settings as any) || {};
           
           if (settings.currency) setCurrency(settings.currency);
           if (settings.timezone) setTimezone(settings.timezone);
           if (settings.defaultTradeType) setDefaultTradeType(settings.defaultTradeType);
+          if (settings.startingBalance !== undefined) setStartingBalance(String(settings.startingBalance));
           if (settings.emailNotifications !== undefined) setEmailNotifications(settings.emailNotifications);
           if (settings.weeklyReport !== undefined) setWeeklyReport(settings.weeklyReport);
           if (settings.tradeAlerts !== undefined) setTradeAlerts(settings.tradeAlerts);
@@ -84,14 +86,14 @@ function SettingsContent() {
         .eq('id', user.id)
         .single();
         
-      const currentSettings = profile?.settings || {};
+      const currentSettings = (profile?.settings as any) || {};
       const updatedSettings = { ...currentSettings, ...updates };
 
       const { error } = await supabase
         .from('profiles')
         .upsert({ 
           id: user.id, 
-          email: user.email,
+          email: user.email || '',
           settings: updatedSettings,
           updated_at: new Date().toISOString()
         });
@@ -109,13 +111,15 @@ function SettingsContent() {
     const success = await updateSupabaseSettings({
       currency,
       timezone,
-      defaultTradeType
+      defaultTradeType,
+      startingBalance: Number(startingBalance) || 10000
     });
     
     // Also save to localStorage as a fallback for immediate UI updates
     localStorage.setItem('settings_currency', currency);
     localStorage.setItem('settings_timezone', timezone);
     localStorage.setItem('settings_defaultTradeType', defaultTradeType);
+    localStorage.setItem('settings_startingBalance', startingBalance);
     
     setIsSaving(false);
     if (success) {
@@ -374,6 +378,18 @@ function SettingsContent() {
                       <option value="Long">Long</option>
                       <option value="Short">Short</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Starting Balance (Manual Accounts)</label>
+                    <input
+                      type="number"
+                      value={startingBalance}
+                      onChange={(e) => setStartingBalance(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-[#0f1117] border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      placeholder="10000"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">This balance will be used as the starting capital for manual trades when no external trading account is linked.</p>
                   </div>
 
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-800">

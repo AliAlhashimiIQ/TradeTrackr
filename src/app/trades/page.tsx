@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { Trade, TradingAccount } from '@/lib/types'
-import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts } from '@/lib/tradingApi'
-import { uploadTradeScreenshot } from '@/lib/supabaseClient'
+import { getAllTrades, getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts, getUserTags, updateTag, deleteTag } from '@/lib/tradingApi'
+import { uploadTradeScreenshot, supabase } from '@/lib/supabaseClient'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import Link from 'next/link'
@@ -19,6 +19,7 @@ import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils'
 import { TradesListSkeleton } from '@/components/ui/SkeletonLoader'
 import EmptyState from '@/components/ui/EmptyState'
 import toast from 'react-hot-toast'
+import { resolveTradingViewUrl, getTagStyle, TAG_COLORS } from '@/lib/utils'
 
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review'
 type TableDensity = 'compact' | 'comfortable'
@@ -179,73 +180,7 @@ interface ParsedMetadata {
   swap?: number;
 }
 
-const parseMetadata = (notes: string | undefined): ParsedMetadata => {
-  if (!notes) return { notes: '' };
-
-  let parsedSL: number | undefined;
-  let parsedTP: number | undefined;
-  let parsedComm: number | undefined;
-  let parsedSwap: number | undefined;
-
-  // Try parsing our formatted block: [SL=X;TP=Y;Comm=Z;Swap=W]
-  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
-  const match = notes.match(blockRegex);
-  let cleanNotes = notes;
-  if (match) {
-    if (match[1]) parsedSL = parseFloat(match[1]);
-    if (match[2]) parsedTP = parseFloat(match[2]);
-    if (match[3]) parsedComm = parseFloat(match[3]);
-    if (match[4]) parsedSwap = parseFloat(match[4]);
-    cleanNotes = notes.replace(blockRegex, '').trim();
-  }
-
-  // Fall back to parsing MT5 text imports or other matches
-  if (parsedComm === undefined) {
-    const commMatch = notes.match(/Commission:\s*([\d.-]+)/i);
-    if (commMatch) parsedComm = parseFloat(commMatch[1]);
-  }
-  if (parsedSwap === undefined) {
-    const swapMatch = notes.match(/Swap:\s*([\d.-]+)/i);
-    if (swapMatch) parsedSwap = parseFloat(swapMatch[1]);
-  }
-  if (parsedSL === undefined) {
-    const slMatch = notes.match(/(?:S\/L|Stop\s*Loss):\s*([\d.-]+)/i);
-    if (slMatch) parsedSL = parseFloat(slMatch[1]);
-  }
-  if (parsedTP === undefined) {
-    const tpMatch = notes.match(/(?:T\/P|Take\s*Profit):\s*([\d.-]+)/i);
-    if (tpMatch) parsedTP = parseFloat(tpMatch[1]);
-  }
-
-  return {
-    notes: cleanNotes,
-    stop_loss: parsedSL,
-    take_profit: parsedTP,
-    commission: parsedComm,
-    swap: parsedSwap,
-  };
-};
-
-const serializeMetadata = (
-  notes: string,
-  metadata: { stop_loss?: number; take_profit?: number; commission?: number; swap?: number }
-): string => {
-  const blockRegex = /\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/;
-  let cleanNotes = notes.replace(blockRegex, '').trim();
-
-  const { stop_loss, take_profit, commission, swap } = metadata;
-  const hasSL = stop_loss !== undefined && stop_loss !== null && !isNaN(stop_loss);
-  const hasTP = take_profit !== undefined && take_profit !== null && !isNaN(take_profit);
-  const hasComm = commission !== undefined && commission !== null && !isNaN(commission);
-  const hasSwap = swap !== undefined && swap !== null && !isNaN(swap);
-
-  if (hasSL || hasTP || hasComm || hasSwap) {
-    const formatVal = (val?: number) => (val !== undefined && val !== null && !isNaN(val) ? val : '');
-    const block = `[SL=${formatVal(stop_loss)};TP=${formatVal(take_profit)};Comm=${formatVal(commission)};Swap=${formatVal(swap)}]`;
-    cleanNotes = cleanNotes ? `${cleanNotes} ${block}` : block;
-  }
-  return cleanNotes;
-};
+// Legacy note metadata parser and serializer removed. Stop Loss, Take Profit, Commission, and Swap are now first-class database columns in public.trades.
 
 interface TagPopoverContentProps {
   trade: Trade;
@@ -255,6 +190,11 @@ interface TagPopoverContentProps {
   presetsList: string[];
   onDeleteTagGlobally: (tag: string, isMistake: boolean) => void;
   renderUp?: boolean;
+  userTagsConfig: any[];
+  fetchUserTags: () => Promise<void>;
+  user: any;
+  onRenameTagGlobally: (oldName: string, newName: string, isMistake: boolean) => Promise<void>;
+  onUpdateTagColor: (tag: string, color: string, isMistake: boolean) => Promise<void>;
 }
 
 const TagPopoverContent = ({
@@ -265,16 +205,41 @@ const TagPopoverContent = ({
   presetsList,
   onDeleteTagGlobally,
   renderUp = false,
+  userTagsConfig,
+  fetchUserTags,
+  user,
+  onRenameTagGlobally,
+  onUpdateTagColor,
 }: TagPopoverContentProps) => {
   const [searchTag, setSearchTag] = useState('')
   const [isAddingCustomTag, setIsAddingCustomTag] = useState(false);
   const [newTagNameInput, setNewTagNameInput] = useState('');
-
-  const tagColorClass = isMistake
-    ? 'bg-red-500/10 text-red-300 border-red-500/20'
-    : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20';
+  
+  // Notion-style tag editing states
+  const [editingTag, setEditingTag] = useState<{ id?: string; name: string; color?: string } | null>(null);
+  const [tagBeingEdited, setTagBeingEdited] = useState<string>('');
 
   const currentList = isMistake ? (trade.mistakes || []) : (trade.tags || []);
+
+  const handleUpdateColor = async (colorHex: string) => {
+    if (!editingTag) return;
+    await onUpdateTagColor(tagBeingEdited, colorHex, isMistake);
+    setEditingTag(prev => prev ? { ...prev, color: colorHex } : null);
+  };
+
+  const handleRenameTag = async () => {
+    if (!editingTag) return;
+    const newName = editingTag.name.trim();
+    if (!newName || newName === tagBeingEdited) return;
+    await onRenameTagGlobally(tagBeingEdited, newName, isMistake);
+    setEditingTag(null);
+  };
+
+  const handleDeleteTag = async () => {
+    if (!editingTag) return;
+    await onDeleteTagGlobally(tagBeingEdited, isMistake);
+    setEditingTag(null);
+  };
 
   return (
     <motion.div 
@@ -294,135 +259,242 @@ const TagPopoverContent = ({
         width: '280px',
       }}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
-        <button 
-          type="button"
-          onClick={onClose}
-          className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
-          title="Close"
+      {editingTag ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="text-left"
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Current Tags */}
-      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Current {isMistake ? 'Mistakes' : 'Tags'}</div>
-      <div className="flex flex-wrap gap-1.5 mb-3 items-center">
-        {currentList.map((tag) => (
-          <span
-            key={tag}
-            className={`text-[11px] px-2.5 py-1 rounded-full ${tagColorClass} border flex items-center gap-1.5 font-medium`}
-          >
-            {tag}
+          {/* Header with Back button */}
+          <div className="flex items-center gap-2 mb-4">
             <button
               type="button"
-              onClick={() => onToggleTag(trade, tag, isMistake)}
-              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+              onClick={() => setEditingTag(null)}
+              className="p-1 hover:bg-white/5 rounded text-gray-400 hover:text-white transition-colors"
+              title="Back"
             >
-              ✕
+              ← Back
             </button>
-          </span>
-        ))}
+            <span className="text-xs font-bold text-gray-200">Edit {isMistake ? 'Mistake' : 'Tag'}</span>
+          </div>
 
-        {isAddingCustomTag ? (
-          <input
-            type="text"
-            placeholder="New tag..."
-            value={newTagNameInput}
-            onChange={e => setNewTagNameInput(e.target.value)}
-            onBlur={() => {
-              if (!newTagNameInput.trim()) setIsAddingCustomTag(false);
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (newTagNameInput.trim()) {
-                  onToggleTag(trade, newTagNameInput.trim(), isMistake);
-                  setNewTagNameInput('');
-                  setIsAddingCustomTag(false);
-                }
-              } else if (e.key === 'Escape') {
-                setIsAddingCustomTag(false);
-              }
-            }}
-            className="px-2.5 py-1 bg-[#0d0e16] border border-white/[0.08] rounded-full text-xs text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-700 font-sans"
-            autoFocus
-          />
-        ) : (
+          {/* Rename Input */}
+          <div className="mb-4">
+            <label className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] block mb-1">Name</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={editingTag.name}
+                onChange={(e) => setEditingTag({ ...editingTag, name: e.target.value })}
+                className="flex-1 px-2.5 py-1.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                placeholder="Tag name"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRenameTag();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleRenameTag}
+                className="px-2.5 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/35 text-indigo-300 text-xs rounded-lg transition-colors font-medium border border-indigo-500/30"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+
+          {/* Color Palette Choice */}
+          <div className="mb-4">
+            <label className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] block mb-2">Color</label>
+            <div className="grid grid-cols-5 gap-2">
+              {TAG_COLORS.map(colorPreset => {
+                const isSelected = editingTag.color?.toLowerCase() === colorPreset.hex.toLowerCase() || editingTag.color?.toLowerCase() === colorPreset.name.toLowerCase();
+                return (
+                  <button
+                    key={colorPreset.name}
+                    type="button"
+                    onClick={() => handleUpdateColor(colorPreset.hex)}
+                    className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all hover:scale-110 active:scale-95`}
+                    style={{
+                      backgroundColor: colorPreset.bg,
+                      borderColor: isSelected ? '#ffffff' : colorPreset.border,
+                      boxShadow: isSelected ? '0 0 8px rgba(255,255,255,0.4)' : 'none',
+                    }}
+                    title={colorPreset.name}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: colorPreset.hex }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/[0.06] my-3" />
+
+          {/* Delete tag globally */}
           <button
             type="button"
-            onClick={() => setIsAddingCustomTag(true)}
-            className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-white border border-dashed border-white/[0.1] transition-all flex items-center gap-1"
+            onClick={handleDeleteTag}
+            className="w-full py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs rounded-lg border border-red-500/20 transition-all font-medium flex items-center justify-center gap-1.5"
           >
-            <span>+ Create Tag</span>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Globally
           </button>
-        )}
-      </div>
+        </motion.div>
+      ) : (
+        <>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
+            <button 
+              type="button"
+              onClick={onClose}
+              className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
+              title="Close"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
-      {/* Divider */}
-      <div className="border-t border-white/[0.06] my-2.5" />
-
-      {/* Select a Tag */}
-      <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Select a {isMistake ? 'Mistake' : 'Tag'}</div>
-      <input
-        type="text"
-        placeholder={`Search ${isMistake ? 'mistakes' : 'tags'}...`}
-        value={searchTag}
-        onChange={e => setSearchTag(e.target.value)}
-        className="w-full px-2.5 py-1.5 mb-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
-      />
-
-      <div className="max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin pr-1">
-        {presetsList
-          .filter(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
-          .map(tag => {
-            const isSelected = currentList.includes(tag);
-            return (
-              <div
-                key={tag}
-                className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group/item cursor-pointer"
-                onClick={() => onToggleTag(trade, tag, isMistake)}
-              >
-                <span className={`text-[11px] px-2.5 py-0.5 rounded-full ${tagColorClass} border font-medium`}>
+          {/* Current Tags */}
+          <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Current {isMistake ? 'Mistakes' : 'Tags'}</div>
+          <div className="flex flex-wrap gap-1.5 mb-3 items-center">
+            {currentList.map((tag) => {
+              const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
+              const style = getTagStyle(tc?.color, isMistake);
+              return (
+                <span
+                  key={tag}
+                  style={style}
+                  className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 font-medium"
+                >
                   {tag}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  {isSelected && <span className="text-indigo-400 font-bold text-xs">✓</span>}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteTagGlobally(tag, isMistake);
-                    }}
-                    className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
-                    title="Delete globally"
+                    onClick={() => onToggleTag(trade, tag, isMistake)}
+                    className="hover:opacity-80 text-[10px] font-bold transition-opacity"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    ✕
                   </button>
-                </div>
-              </div>
-            );
-          })}
-        
-        {searchTag.trim() && !presetsList.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
-          <button
-            type="button"
-            onClick={() => {
-              onToggleTag(trade, searchTag.trim(), isMistake);
-              setSearchTag('');
-            }}
-            className="w-full text-left px-2 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 font-semibold transition-colors"
-          >
-            + Create "{searchTag.trim()}"
-          </button>
-        )}
-      </div>
+                </span>
+              );
+            })}
+
+            {isAddingCustomTag ? (
+              <input
+                type="text"
+                placeholder="New tag..."
+                value={newTagNameInput}
+                onChange={e => setNewTagNameInput(e.target.value)}
+                onBlur={() => {
+                  if (!newTagNameInput.trim()) setIsAddingCustomTag(false);
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newTagNameInput.trim()) {
+                      onToggleTag(trade, newTagNameInput.trim(), isMistake);
+                      setNewTagNameInput('');
+                      setIsAddingCustomTag(false);
+                    }
+                  } else if (e.key === 'Escape') {
+                    setIsAddingCustomTag(false);
+                  }
+                }}
+                className="px-2.5 py-1 bg-[#0d0e16] border border-white/[0.08] rounded-full text-xs text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-700 font-sans"
+                autoFocus
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsAddingCustomTag(true)}
+                className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.03] hover:bg-white/[0.06] text-gray-400 hover:text-white border border-dashed border-white/[0.1] transition-all flex items-center gap-1"
+              >
+                <span>+ Create Tag</span>
+              </button>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-white/[0.06] my-2.5" />
+
+          {/* Select a Tag */}
+          <div className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] mb-2">Select a {isMistake ? 'Mistake' : 'Tag'}</div>
+          <input
+            type="text"
+            placeholder={`Search ${isMistake ? 'mistakes' : 'tags'}...`}
+            value={searchTag}
+            onChange={e => setSearchTag(e.target.value)}
+            className="w-full px-2.5 py-1.5 mb-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+          />
+
+          <div className="max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin pr-1">
+            {presetsList
+              .filter(tag => tag.toLowerCase().includes(searchTag.toLowerCase()))
+              .map(tag => {
+                const isSelected = currentList.includes(tag);
+                const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
+                const style = getTagStyle(tc?.color, isMistake);
+                return (
+                  <div
+                    key={tag}
+                    className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group/item cursor-pointer"
+                    onClick={() => onToggleTag(trade, tag, isMistake)}
+                  >
+                    <span style={style} className={`text-[11px] px-2.5 py-0.5 rounded-full border font-medium`}>
+                      {tag}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {isSelected && <span className="text-indigo-400 font-bold text-xs">✓</span>}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const tagConfig = userTagsConfig.find(tc => tc.name.toLowerCase() === tag.toLowerCase());
+                          setTagBeingEdited(tag);
+                          setEditingTag({
+                            id: tagConfig?.id,
+                            name: tag,
+                            color: tagConfig?.color || (isMistake ? '#ef4444' : '#6366f1')
+                          });
+                        }}
+                        className="opacity-0 group-hover/item:opacity-100 p-1 text-gray-400 hover:text-white hover:bg-white/5 rounded transition-all"
+                        title="Edit tag"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            
+            {searchTag.trim() && !presetsList.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onToggleTag(trade, searchTag.trim(), isMistake);
+                  setSearchTag('');
+                }}
+                className="w-full text-left px-2 py-1.5 rounded-lg text-xs text-indigo-400 hover:bg-indigo-500/10 font-semibold transition-colors"
+              >
+                + Create "{searchTag.trim()}"
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </motion.div>
   );
 };
@@ -450,13 +522,26 @@ export default function Trades() {
   
   const [selectedTradeIds, setSelectedTradeIds] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.pageSize')
+      if (saved) {
+        const parsed = Number(saved)
+        if (!isNaN(parsed) && parsed > 0) return parsed
+      }
+    }
+    return 10
+  })
   const [totalPages, setTotalPages] = useState(1)
   const [quickMetrics, setQuickMetrics] = useState({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 })
   const [showTagModal, setShowTagModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState<string | null>(null)
+  const [screenshotEditTrade, setScreenshotEditTrade] = useState<Trade | null>(null)
+  const [screenshotEditTab, setScreenshotEditTab] = useState<'upload' | 'embed'>('upload')
+  const [screenshotEditEmbedUrl, setScreenshotEditEmbedUrl] = useState('')
+  const [userTagsConfig, setUserTagsConfig] = useState<any[]>([])
   const [activeView, setActiveView] = useState<SavedView>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('trades.activeView')
@@ -821,18 +906,112 @@ export default function Trades() {
     setTrades(updated);
 
     try {
-      const { supabase } = await import('@/lib/supabaseClient');
-      if (!isMistake && user) {
+      if (user) {
         await supabase
           .from('tags')
           .delete()
           .eq('user_id', user.id)
           .eq('name', tag);
+          
+        if (isMistake) {
+          const { data, error } = await supabase
+            .from('trades')
+            .select('id, mistakes')
+            .eq('user_id', user.id)
+            .contains('mistakes', [tag]);
+          if (!error && data) {
+            for (const tradeRow of data) {
+              const updatedMistakes = (tradeRow.mistakes || []).filter((m: string) => m !== tag);
+              await supabase
+                .from('trades')
+                .update({ mistakes: updatedMistakes })
+                .eq('id', tradeRow.id);
+            }
+          }
+        }
       }
       toast.success(`Tag "${tag}" deleted globally`);
+      await fetchUserTags();
     } catch (e) {
       console.error(e);
       toast.error('Failed to delete tag');
+    }
+  };
+
+  const handleUpdateTagColor = async (tag: string, colorHex: string, isMistake = false) => {
+    if (!user) return;
+    try {
+      const existing = userTagsConfig.find(tc => tc.name.toLowerCase() === tag.toLowerCase());
+      if (existing) {
+        const success = await updateTag(existing.id, { color: colorHex });
+        if (!success) throw new Error('Failed to update tag');
+      } else {
+        await supabase
+          .from('tags')
+          .insert({
+            name: tag,
+            user_id: user.id,
+            color: colorHex
+          });
+      }
+      await fetchUserTags();
+      toast.success('Color updated');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update color');
+    }
+  };
+
+  const handleRenameTagGlobally = async (oldName: string, newName: string, isMistake = false) => {
+    if (!user) return;
+    try {
+      const existing = userTagsConfig.find(tc => tc.name.toLowerCase() === oldName.toLowerCase());
+      if (existing) {
+        const success = await updateTag(existing.id, { name: newName });
+        if (!success) throw new Error('Failed to rename tag');
+      } else {
+        await supabase
+          .from('tags')
+          .insert({
+            name: newName,
+            user_id: user.id,
+            color: isMistake ? '#ef4444' : '#6366f1'
+          });
+      }
+
+      // Update local state
+      const updated = trades.map(t => {
+        const current = isMistake ? (t.mistakes || []) : (t.tags || []);
+        if (current.includes(oldName)) {
+          const next = current.map(x => x === oldName ? newName : x);
+          return { ...t, [isMistake ? 'mistakes' : 'tags']: next };
+        }
+        return t;
+      });
+      setTrades(updated);
+
+      if (isMistake) {
+        const { data, error } = await supabase
+          .from('trades')
+          .select('id, mistakes')
+          .eq('user_id', user.id)
+          .contains('mistakes', [oldName]);
+        if (!error && data) {
+          for (const tradeRow of data) {
+            const updatedMistakes = (tradeRow.mistakes || []).map((m: string) => m === oldName ? newName : m);
+            await supabase
+              .from('trades')
+              .update({ mistakes: updatedMistakes })
+              .eq('id', tradeRow.id);
+          }
+        }
+      }
+
+      await fetchUserTags();
+      toast.success(`Tag renamed to "${newName}"`);
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to rename tag');
     }
   };
 
@@ -847,6 +1026,11 @@ export default function Trades() {
         presetsList={isMistake ? allExistingMistakes : allExistingTags}
         onDeleteTagGlobally={handleDeleteTagGlobally}
         renderUp={renderUp}
+        userTagsConfig={userTagsConfig}
+        fetchUserTags={fetchUserTags}
+        user={user}
+        onRenameTagGlobally={handleRenameTagGlobally}
+        onUpdateTagColor={handleUpdateTagColor}
       />
     );
   };
@@ -908,6 +1092,11 @@ export default function Trades() {
         [isMistake ? 'mistakes' : 'tags']: next
       });
       toast.success(isMistake ? 'Mistake tag updated' : 'Strategy tag updated');
+      
+      // If we added a tag that doesn't exist in userTagsConfig, refetch config
+      if (!isMistake && !userTagsConfig.some(t => t.name.toLowerCase() === tag.toLowerCase())) {
+        fetchUserTags();
+      }
     } catch (error) {
       console.error(error);
       toast.error('Failed to update tags');
@@ -1001,19 +1190,35 @@ export default function Trades() {
     window.localStorage.setItem('trades.visibleColumns', JSON.stringify(visibleColumns))
   }, [visibleColumns])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    window.localStorage.setItem('trades.pageSize', String(pageSize))
+  }, [pageSize])
+
   useEffect(() => { if (!loading && !user) router.push('/login') }, [user, loading, router])
 
-  useEffect(() => {
-    if (user) {
-      getTradingAccounts(user.id).then(setUserAccounts)
+  const fetchUserTags = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const tags = await getUserTags(user.id);
+      setUserTagsConfig(tags);
+    } catch (err) {
+      console.error('Error fetching user tags:', err);
     }
-  }, [user])
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      getTradingAccounts(user.id).then(setUserAccounts)
+      fetchUserTags();
+    }
+  }, [user?.id, fetchUserTags])
 
   // ── Server-side paginated fetch (6.1 / 6.2) ──────────────────────────────
   // Fetches only one page of trades from Supabase at a time.
   // Runs whenever filters, sort, or page changes.
   const fetchPagedTrades = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id) return;
     setIsLoading(true);
     try {
       const { trades: page, total } = await getPagedTrades({
@@ -1029,14 +1234,13 @@ export default function Trades() {
         accountId: accountFilter || undefined,
       });
       const enrichedPage = page.map(t => {
-        const parsed = parseMetadata(t.notes);
         return {
           ...t,
-          notes: parsed.notes,
-          stop_loss: parsed.stop_loss,
-          take_profit: parsed.take_profit,
-          commission: parsed.commission,
-          swap: parsed.swap,
+          notes: t.notes ? t.notes.replace(/\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/, '').trim() : '',
+          stop_loss: t.stop_loss ?? undefined,
+          take_profit: t.take_profit ?? undefined,
+          commission: t.commission ?? undefined,
+          swap: t.swap ?? undefined,
         };
       });
       setTrades(enrichedPage);          // current page only
@@ -1044,11 +1248,11 @@ export default function Trades() {
       setTotalPages(Math.ceil(total / pageSize));
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
-  }, [user, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, accountFilter]);
+  }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, accountFilter]);
 
   // ── Fetch global metrics for the current filter set ──────────────────────
   const fetchGlobalMetrics = useCallback(async () => {
-    if (!user) return;
+    if (!user?.id) return;
     try {
       const fullTrades = await getFilteredTradeMetrics({
         userId: user.id,
@@ -1081,10 +1285,10 @@ export default function Trades() {
         setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
       }
     } catch (err) { console.error(err); }
-  }, [user, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, accountFilter]);
+  }, [user?.id, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, accountFilter]);
 
-  useEffect(() => { if (user) fetchPagedTrades(); }, [fetchPagedTrades, user]);
-  useEffect(() => { if (user) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user]);
+  useEffect(() => { if (user?.id) fetchPagedTrades(); }, [fetchPagedTrades, user?.id]);
+  useEffect(() => { if (user?.id) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user?.id]);
   
   // Apply activeView-only client filter on the already-fetched page (6.1)
   // All other filters are handled server-side by fetchPagedTrades.
@@ -1218,16 +1422,8 @@ export default function Trades() {
     
     setIsLoading(true);
     try {
-      const serializedNotes = serializeMetadata(inlineRowData.notes || '', {
-        stop_loss: inlineRowData.stop_loss,
-        take_profit: inlineRowData.take_profit,
-        commission: inlineRowData.commission,
-        swap: inlineRowData.swap,
-      });
-
       const newTrade = {
         ...inlineRowData,
-        notes: serializedNotes,
         user_id: user.id,
       } as Trade;
       
@@ -2470,40 +2666,55 @@ export default function Trades() {
                         <div className="w-3.5 h-3.5 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
                       </div>
                     ) : trade.screenshot_url ? (
-                      <div className="relative w-11 h-8 rounded border border-white/[0.15] overflow-hidden cursor-pointer hover:scale-105 transition-all">
+                      <div 
+                        onClick={() => setSelectedScreenshotUrl(trade.screenshot_url || null)}
+                        className="relative w-11 h-8 rounded border border-white/[0.15] overflow-hidden cursor-pointer hover:scale-105 transition-all group"
+                      >
                         <img
-                          src={trade.screenshot_url}
+                          src={resolveTradingViewUrl(trade.screenshot_url)}
                           alt="trade chart"
                           className="w-full h-full object-cover"
-                          onClick={() => setSelectedScreenshotUrl(trade.screenshot_url || null)}
                         />
+                        {/* Preview Eye Overlay */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                          <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </div>
+                        {/* Delete Button */}
                         <button
+                          type="button"
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (window.confirm("Remove screenshot?")) {
                               await handleUpdateScreenshot(trade, "");
                             }
                           }}
-                          className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex items-center justify-center text-red-400 hover:text-red-500 transition-opacity text-[8px] font-bold"
+                          className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:scale-110 active:scale-95"
+                          title="Delete screenshot"
                         >
-                          Delete
+                          <svg className="w-2 h-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </div>
                     ) : (
-                      <label className="w-11 h-8 rounded border border-dashed border-white/[0.25] bg-white/[0.04] hover:border-indigo-500/70 hover:bg-indigo-500/[0.08] transition-all flex items-center justify-center cursor-pointer text-gray-400 hover:text-indigo-300">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setScreenshotEditTrade(trade);
+                          setScreenshotEditTab('upload');
+                          setScreenshotEditEmbedUrl('');
+                        }}
+                        className="w-11 h-8 rounded border border-dashed border-white/[0.25] bg-white/[0.04] hover:border-indigo-500/70 hover:bg-indigo-500/[0.08] transition-all flex items-center justify-center cursor-pointer text-gray-400 hover:text-indigo-300"
+                        title="Add screenshot"
+                      >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={async (e) => {
-                            const file = e.target.files?.[0];
-                            if (file) await handleUploadScreenshot(trade, file);
-                          }}
-                        />
-                      </label>
+                      </button>
                     )}
                   </div>
                   
@@ -2732,20 +2943,25 @@ export default function Trades() {
                   {visibleColumns.tags && (
                     <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
                       <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
-                        {trade.tags && trade.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[11px] px-2.5 py-1 rounded-full bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                          >
-                            {tag}
-                            <button
-                              onClick={() => handleToggleTag(trade, tag, false)}
-                              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                        {trade.tags && trade.tags.map((tag) => {
+                          const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
+                          const style = getTagStyle(tc?.color, false);
+                          return (
+                            <span
+                              key={tag}
+                              style={style}
+                              className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                             >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
+                              {tag}
+                              <button
+                                onClick={() => handleToggleTag(trade, tag, false)}
+                                className="hover:opacity-80 text-[10px] font-bold transition-opacity"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          );
+                        })}
                       </div>
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
@@ -2764,20 +2980,25 @@ export default function Trades() {
                   {visibleColumns.mistakes && (
                     <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
                       <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
-                        {trade.mistakes && trade.mistakes.map((mistake) => (
-                          <span
-                            key={mistake}
-                            className="text-[11px] px-2.5 py-1 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/20 flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                          >
-                            {mistake}
-                            <button
-                              onClick={() => handleToggleTag(trade, mistake, true)}
-                              className="hover:text-red-400 text-gray-500 text-[10px] font-bold transition-colors"
+                        {trade.mistakes && trade.mistakes.map((mistake) => {
+                          const tc = userTagsConfig.find(c => c.name.toLowerCase() === mistake.toLowerCase());
+                          const style = getTagStyle(tc?.color, true);
+                          return (
+                            <span
+                              key={mistake}
+                              style={style}
+                              className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
                             >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
+                              {mistake}
+                              <button
+                                onClick={() => handleToggleTag(trade, mistake, true)}
+                                className="hover:opacity-80 text-[10px] font-bold transition-opacity"
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          );
+                        })}
                       </div>
                       <button
                         onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
@@ -3004,16 +3225,24 @@ export default function Trades() {
                           {trade.emotional_state}
                         </span>
                       )}
-                      {trade.tags && trade.tags.map((tag) => (
-                        <span key={tag} className="text-[9px] px-2.5 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-medium">
-                          {tag}
-                        </span>
-                      ))}
-                      {trade.mistakes && trade.mistakes.map((mistake) => (
-                        <span key={mistake} className="text-[9px] px-2.5 py-0.5 rounded-lg bg-red-500/10 text-red-300 border border-red-500/20 font-medium">
-                          {mistake}
-                        </span>
-                      ))}
+                      {trade.tags && trade.tags.map((tag) => {
+                        const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
+                        const style = getTagStyle(tc?.color, false);
+                        return (
+                          <span key={tag} style={style} className="text-[9px] px-2.5 py-0.5 rounded-lg border font-medium">
+                            {tag}
+                          </span>
+                        );
+                      })}
+                      {trade.mistakes && trade.mistakes.map((mistake) => {
+                        const tc = userTagsConfig.find(c => c.name.toLowerCase() === mistake.toLowerCase());
+                        const style = getTagStyle(tc?.color, true);
+                        return (
+                          <span key={mistake} style={style} className="text-[9px] px-2.5 py-0.5 rounded-lg border font-medium">
+                            {mistake}
+                          </span>
+                        );
+                      })}
                     </div>
 
                     {/* Actions Row */}
@@ -3149,8 +3378,101 @@ export default function Trades() {
             <button onClick={() => setSelectedScreenshotUrl(null)} className="absolute -top-10 right-0 text-gray-400 hover:text-white transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            <img src={selectedScreenshotUrl} alt="Trade Screenshot" className="max-w-full max-h-[80vh] object-contain rounded-xl mx-auto" />
+            <img src={resolveTradingViewUrl(selectedScreenshotUrl)} alt="Trade Screenshot" className="max-w-full max-h-[80vh] object-contain rounded-xl mx-auto" />
           </div>
+        </div>
+      )}
+
+      {/* Screenshot Edit/Embed Modal */}
+      {screenshotEditTrade && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setScreenshotEditTrade(null)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-[#0d0e16] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
+          >
+            <div className="p-5 border-b border-white/[0.06] flex justify-between items-center bg-[#0d0e16]">
+              <h2 className="text-base font-bold text-white">Add Screenshot to {screenshotEditTrade.symbol}</h2>
+              <button onClick={() => setScreenshotEditTrade(null)} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="flex border-b border-white/[0.06]">
+                <button
+                  type="button"
+                  onClick={() => setScreenshotEditTab('upload')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    screenshotEditTab === 'upload'
+                      ? 'text-indigo-400 border-b-2 border-indigo-500'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Upload File
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScreenshotEditTab('embed')}
+                  className={`flex-1 pb-3 text-xs font-bold uppercase tracking-wider transition-colors ${
+                    screenshotEditTab === 'embed'
+                      ? 'text-indigo-400 border-b-2 border-indigo-500'
+                      : 'text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  Embed Link
+                </button>
+              </div>
+              
+              <div>
+                {screenshotEditTab === 'upload' ? (
+                  <label className="flex flex-col items-center justify-center gap-3 py-8 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
+                    <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm text-gray-400">Choose an image file or <span className="text-indigo-400 font-semibold">browse</span></span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          await handleUploadScreenshot(screenshotEditTrade, file);
+                          setScreenshotEditTrade(null);
+                        }
+                      }}
+                    />
+                  </label>
+                ) : (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={screenshotEditEmbedUrl}
+                      onChange={e => setScreenshotEditEmbedUrl(e.target.value)}
+                      placeholder="Paste TradingView link (e.g. https://www.tradingview.com/x/pCPdcgL4/)"
+                      className="w-full px-3 py-2.5 bg-[#06070b] border border-white/[0.06] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (screenshotEditEmbedUrl.trim()) {
+                          const resolved = resolveTradingViewUrl(screenshotEditEmbedUrl);
+                          await handleUpdateScreenshot(screenshotEditTrade, resolved);
+                          setScreenshotEditEmbedUrl('');
+                          setScreenshotEditTrade(null);
+                        }
+                      }}
+                      className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-colors"
+                    >
+                      Embed Link
+                    </button>
+                    <p className="text-[10px] text-gray-500 text-center">Supports direct image links and TradingView chart sharing URLs (which auto-convert to direct image PNGs).</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
         </div>
       )}
 

@@ -9,6 +9,7 @@ import {
   getEquityCurveData 
 } from '@/lib/tradingApi';
 import { Trade, TradeMetrics, OpenPosition, ChartData } from '@/lib/types';
+import { supabase } from '@/lib/supabaseClient';
 
 // Components
 import DashboardHeader from './DashboardHeader';
@@ -105,6 +106,7 @@ export default function DashboardSummary() {
   const [positions, setPositions] = useState<OpenPosition[]>([]);
   const [equityData, setEquityData] = useState<ChartData>({ labels: [], values: [] });
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [initialCapital, setInitialCapital] = useState<number>(25000);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -113,17 +115,38 @@ export default function DashboardSummary() {
       setIsLoading(true);
       try {
         // Fetch data in parallel
-        const [tradesData, metricsData, positionsData, equityData] = await Promise.all([
+        const [tradesData, metricsData, positionsData, equityDataVal, profileRes, accountsRes] = await Promise.all([
           getRecentTrades(user.id),
           getTradeMetrics(user.id),
           getOpenPositions(user.id),
-          getEquityCurveData(user.id)
+          getEquityCurveData(user.id),
+          supabase
+            .from('profiles')
+            .select('settings')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('user_id', user.id)
         ]);
+
+        const settings = (profileRes.data?.settings as any) || {};
+        const profileStartingBalance = Number(settings.startingBalance) || 10000;
+        
+        let cap = profileStartingBalance;
+        if (accountsRes.data && accountsRes.data.length > 0) {
+          const totalAccountBalance = accountsRes.data.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+          if (totalAccountBalance > 0) {
+            cap = totalAccountBalance;
+          }
+        }
 
         setTrades(tradesData);
         setMetrics(metricsData);
         setPositions(positionsData);
-        setEquityData(equityData);
+        setEquityData(equityDataVal);
+        setInitialCapital(cap);
         
         // No fetching insights in this example, using defaults
         setInsights([]);
@@ -151,7 +174,7 @@ export default function DashboardSummary() {
         {/* Account Details */}
         <div className="mb-8">
           {/* Pass trades to AccountDetails for balance/growth tracking */}
-          <AccountDetails initialBalance={25000} trades={trades} />
+          <AccountDetails initialBalance={initialCapital} trades={trades} />
         </div>
 
         {/* Action buttons */}

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { Trade } from '@/lib/types';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import Link from 'next/link';
+import { resolveTradingViewUrl } from '@/lib/utils';
 
 export default function TradeDetailPage({ params }: { params: { id: string } }) {
   const { user, loading } = useAuth();
@@ -225,8 +226,8 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
             {trade.screenshot_url && (
               <div className="bg-[#151823] border border-white/[0.06] rounded-2xl p-6 overflow-hidden">
                 <h2 className="text-lg font-bold text-white mb-4">Screenshot</h2>
-                <a href={trade.screenshot_url} target="_blank" rel="noreferrer" className="block relative rounded-lg overflow-hidden border border-white/[0.06] group">
-                  <img src={trade.screenshot_url} alt="Trade chart" className="w-full object-cover aspect-video group-hover:scale-105 transition-transform duration-500" />
+                <a href={resolveTradingViewUrl(trade.screenshot_url)} target="_blank" rel="noreferrer" className="block relative rounded-lg overflow-hidden border border-white/[0.06] group">
+                  <img src={resolveTradingViewUrl(trade.screenshot_url)} alt="Trade chart" className="w-full object-cover aspect-video group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="text-white font-medium bg-black/80 px-4 py-2 rounded-full border border-white/10">View Full Size</span>
                   </div>

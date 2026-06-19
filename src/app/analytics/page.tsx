@@ -108,7 +108,7 @@ export default function AnalyticsPage() {
 
         // Load challenge status
         const { data: profileData } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
-        const s = profileData?.settings || {};
+        const s = (profileData?.settings as any) || {};
         if (s.propFirmId && s.propFirmTier) {
           const firm = PROP_FIRMS.find((f: any) => f.id === s.propFirmId);
           const tier = firm?.tiers.find((t: any) => t.tierName === s.propFirmTier);

@@ -77,11 +77,11 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   const [showCorrelation, setShowCorrelation] = useState(false);
   
   // Fetch trades for AI components
-  const { trades, isLoading } = useTrades(dateRange);
+  const { trades, isLoading, initialCapital } = useTrades(dateRange);
   
   // Metrics
-  const metrics = useMemo(() => calculatePerformanceMetrics(trades), [trades]);
-  const drawdown = useMemo(() => calculateMaxDrawdown(trades), [trades]);
+  const metrics = useMemo(() => calculatePerformanceMetrics(trades, initialCapital), [trades, initialCapital]);
+  const drawdown = useMemo(() => calculateMaxDrawdown(trades, initialCapital), [trades, initialCapital]);
   const correlations = useMemo(() => getInstrumentCorrelations(trades), [trades]);
   const consistentPositionSize = useMemo(() => isPositionSizeConsistent(trades), [trades]);
   
