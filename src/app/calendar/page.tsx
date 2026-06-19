@@ -51,8 +51,7 @@ const calcWinRate = (trades: Trade[]) => {
 const getDaysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate()
 
 const getFirstDayOfMonth = (y: number, m: number) => {
-  const d = new Date(y, m, 1).getDay()
-  return d === 0 ? 6 : d - 1
+  return new Date(y, m, 1).getDay()
 }
 
 const isSameDay = (a: Date, b: Date) =>
@@ -63,12 +62,12 @@ const isSameDay = (a: Date, b: Date) =>
 const getWeekDates = (date: Date) => {
   const d = new Date(date)
   const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  const monday = new Date(d)
-  monday.setDate(diff)
+  const diff = d.getDate() - day
+  const sunday = new Date(d)
+  sunday.setDate(diff)
   return Array.from({ length: 7 }, (_, i) => {
-    const dd = new Date(monday)
-    dd.setDate(monday.getDate() + i)
+    const dd = new Date(sunday)
+    dd.setDate(sunday.getDate() + i)
     return dd
   })
 }
@@ -482,7 +481,7 @@ export default function CalendarPage() {
           {weekCells}
           {/* Week total — custom summary cell */}
           <div
-            className="hidden md:flex min-h-[110px] flex-col items-center justify-center px-3 text-center"
+            className="hidden md:flex min-h-[110px] flex-col items-center justify-center px-3 text-center animate-fadeIn"
             style={{
               background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
               borderBottom: '1px solid rgba(255,255,255,0.04)',
@@ -490,30 +489,30 @@ export default function CalendarPage() {
               boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset',
             }}
           >
-            <span className="text-[9px] text-indigo-400/80 uppercase tracking-[0.15em] font-extrabold mb-1">
+            <span className="text-xs text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
               Week {row + 1}
             </span>
             <span
-              className={`text-sm font-black tabular-nums tracking-tight ${
+              className={`text-lg font-black tabular-nums tracking-tight ${
                 weekPnl > 0 ? 'text-emerald-400' : weekPnl < 0 ? 'text-red-400' : 'text-gray-500'
               }`}
               style={{
                 textShadow: weekPnl > 0
-                  ? '0 0 16px rgba(16,185,129,0.25)'
+                  ? '0 0 20px rgba(16,185,129,0.3)'
                   : weekPnl < 0
-                    ? '0 0 16px rgba(239,68,68,0.2)'
+                    ? '0 0 20px rgba(239,68,68,0.22)'
                     : 'none',
               }}
             >
               {weekPnl !== 0 ? (weekPnl > 0 ? '+' : '') + fmt(weekPnl) : '—'}
             </span>
             {weekTradesCount > 0 && (
-              <div className="mt-1.5 flex flex-col gap-0.5">
-                <span className="text-[9px] text-gray-500 font-semibold lowercase tracking-wide">
+              <div className="mt-2 flex flex-col gap-1 items-center">
+                <span className="text-xs text-gray-400 font-semibold lowercase tracking-wide">
                   {weekTradesCount} {weekTradesCount === 1 ? 'trade' : 'trades'}
                 </span>
-                <span className={`text-[8px] font-bold px-1 py-0.2 rounded-full ${
-                  weekWinRate >= 50 ? 'bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/10' : 'bg-red-500/10 text-red-400/80 border border-red-500/10'
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-lg border ${
+                  weekWinRate >= 50 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-[0_0_8px_rgba(16,185,129,0.1)]' : 'bg-red-500/10 text-red-400 border-red-500/25 shadow-[0_0_8px_rgba(239,68,68,0.08)]'
                 }`}>
                   {weekWinRate}% WR
                 </span>
@@ -538,7 +537,7 @@ export default function CalendarPage() {
             borderBottom: '1px solid rgba(255,255,255,0.06)',
           }}
         >
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
             <div
               key={d}
               className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
@@ -584,7 +583,7 @@ export default function CalendarPage() {
           className="grid grid-cols-7"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
         >
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => (
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
             <div
               key={d}
               className="px-3 py-3 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider"
@@ -612,22 +611,22 @@ export default function CalendarPage() {
           }}
         >
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.15em]">Week Total</span>
+            <span className="text-xs text-gray-400 font-bold uppercase tracking-[0.15em]">Week Total</span>
             {weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length > 0 && (
-              <span className="text-[10px] text-gray-500 font-semibold">
+              <span className="text-xs text-gray-400 font-semibold">
                 ({weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length} {weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []).length === 1 ? 'trade' : 'trades'} · {calcWinRate(weekDates.map(date => date.toISOString().slice(0, 10)).flatMap(k => tradesByDate[k] || []))}% WR)
               </span>
             )}
           </div>
           <span
-            className={`text-base font-black tabular-nums ${
+            className={`text-lg font-black tabular-nums ${
               weekPnl > 0 ? 'text-emerald-400' : weekPnl < 0 ? 'text-red-400' : 'text-gray-500'
             }`}
             style={{
               textShadow: weekPnl > 0
-                ? '0 0 16px rgba(16,185,129,0.25)'
+                ? '0 0 20px rgba(16,185,129,0.3)'
                 : weekPnl < 0
-                  ? '0 0 16px rgba(239,68,68,0.2)'
+                  ? '0 0 20px rgba(239,68,68,0.22)'
                   : 'none',
             }}
           >
