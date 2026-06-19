@@ -313,7 +313,7 @@ export default function AnalyticsPage() {
             <div className="relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white rounded-lg text-sm transition-colors duration-150"
+                className="flex items-center px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 rounded-xl text-sm transition-all duration-150"
               >
                 <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
               </button>
               
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-lg z-20 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-48 bg-[#0d0e16] border border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
                   {(['7d', '30d', '90d', '1y', 'all'] as TimePeriod[]).map((period) => (
                     <button
                       key={period}
@@ -333,7 +333,7 @@ export default function AnalyticsPage() {
                         setTimePeriod(period);
                         setShowFilters(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 transition-colors duration-150"
+                      className="block w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/[0.05] transition-colors duration-150"
                     >
                       {period === 'all' ? 'All Time' : `Last ${period}`}
                     </button>
@@ -345,14 +345,14 @@ export default function AnalyticsPage() {
             {/* Filters Button */}
             <button 
               onClick={() => setShowAdvancedFilters(true)}
-              className="flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white rounded-lg text-sm transition-colors duration-150"
+              className="flex items-center px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 rounded-xl text-sm transition-all duration-150"
             >
               <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span>Advanced Filters</span>
               {activeFilters && (
-                <span className="ml-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="ml-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {Object.values(activeFilters).flat().filter(Boolean).length}
                 </span>
               )}
@@ -361,7 +361,7 @@ export default function AnalyticsPage() {
             {/* Export Button */}
             <button 
               onClick={() => setShowExportModal(true)}
-              className="flex items-center px-4 py-2 bg-slate-100 hover:bg-white text-slate-900 rounded-lg text-sm font-medium transition-colors duration-150"
+              className="flex items-center px-4 py-2.5 bg-white text-slate-950 hover:bg-slate-100 rounded-xl text-sm font-semibold transition-all duration-150 shadow-md"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -515,51 +515,51 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 mb-8">
+        <div className="flex p-1 bg-white/[0.02] dark:bg-black/35 backdrop-blur-md border border-white/[0.05] rounded-xl mb-8 w-fit max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 ${
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === 'overview'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700'
+                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)] font-semibold'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
             }`}
           >
             Overview
           </button>
           <button
             onClick={() => setActiveTab('breakdown')}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 ${
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === 'breakdown'
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-[0_0_12px_rgba(59,130,246,0.15)] font-semibold'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
             }`}
           >
             Detailed Breakdown
           </button>
           <button
             onClick={() => setActiveTab('mistakes')}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 ${
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === 'mistakes'
-                ? 'border-red-500 text-red-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+                ? 'bg-red-500/15 text-red-400 border border-red-500/30 shadow-[0_0_12px_rgba(239,68,68,0.15)] font-semibold'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
             }`}
           >
             Cost of Mistakes
           </button>
           <button
             onClick={() => setActiveTab('propfirm')}
-            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-150 flex items-center gap-1.5 ${
+            className={`px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
               activeTab === 'propfirm'
-                ? 'border-indigo-500 text-indigo-400'
-                : 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-[0_0_12px_rgba(99,102,241,0.15)] font-semibold'
+                : 'text-slate-400 hover:text-slate-200 border border-transparent'
             }`}
           >
             🏆 Prop Firm
             {challengeStatus && !challengeStatus.isViolated && (
-              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             )}
             {challengeStatus?.isViolated && (
-              <span className="w-2 h-2 rounded-full bg-red-400"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
             )}
           </button>
         </div>
@@ -572,32 +572,33 @@ export default function AnalyticsPage() {
             <>
             {/* Key Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className={`${panelClass} overflow-hidden`}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Win Rate</h2>
-                    <div className="p-2 bg-blue-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Win Rate Card */}
+              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3 relative z-10">
+                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Win Rate</span>
+                    <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-blue-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1">
-                    <div className="text-4xl font-bold text-white">
+                  <div className="flex items-baseline space-x-1 relative z-10">
+                    <div className="text-4xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(59,130,246,0.2)' }}>
                       {loading ? '-' : `${metrics?.winRate.toFixed(0)}%`}
                     </div>
                     
                     {!loading && metrics && metrics.winRate > 50 ? (
                       <div className="text-green-400 text-sm font-medium flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                         </svg>
                         <span>Good</span>
                       </div>
                     ) : !loading && metrics ? (
                       <div className="text-yellow-400 text-sm font-medium flex items-center">
-                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                         <span>Improve</span>
@@ -605,110 +606,185 @@ export default function AnalyticsPage() {
                     ) : null}
                   </div>
                 </div>
-                
-                <div className="bg-[#0d0f16] px-6 py-3 border-t border-[#1c2033]">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="text-gray-400">
-                      {loading ? '-' : `${metrics?.winningTrades} / ${metrics?.totalTrades} trades`}
+
+                {/* Semicircular Gauge Arc */}
+                <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
+                  <div className="flex justify-center">
+                    <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
+                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
+                      <path
+                        d="M 10 45 A 35 35 0 0 1 90 45"
+                        fill="none"
+                        stroke="url(#winRateGrad)"
+                        strokeWidth="9.5"
+                        strokeLinecap="round"
+                        strokeDasharray="110"
+                        strokeDashoffset={110 - (110 * (metrics?.winRate ?? 0)) / 100}
+                        style={{ transition: 'stroke-dashoffset 0.8s ease-in-out' }}
+                      />
+                      <defs>
+                        <linearGradient id="winRateGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="50%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-gray-400 font-semibold tracking-wide px-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
+                      <span>{metrics?.winningTrades} Wins</span>
                     </div>
-                    <div className="text-green-400 font-medium">
-                      {loading ? '' : `${metrics?.profitFactor.toFixed(2)} profit factor`}
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-red-400 block" />
+                      <span>{metrics ? metrics.totalTrades - metrics.winningTrades : 0} Losses</span>
                     </div>
                   </div>
                 </div>
+                
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.05) 0%, transparent 70%)' }} />
               </div>
               
-              <div className={`${panelClass} overflow-hidden`}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">R Distribution</h2>
-                    <div className="p-2 bg-green-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* R Distribution (Avg R:R) Card */}
+              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3 relative z-10">
+                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Avg R:R</span>
+                    <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-green-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1">
-                    <div className="text-4xl font-bold text-white">
+                  <div className="flex items-baseline space-x-1 relative z-10">
+                    <div className="text-4xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(16,185,129,0.2)' }}>
                       {loading ? '-' : `${metrics?.riskRewardRatio.toFixed(2)}`}
                     </div>
-                    <div className="text-gray-400 text-xl">R</div>
+                    <div className="text-gray-400 text-xl font-medium">R</div>
                   </div>
                 </div>
                 
-                <div className="bg-[#0d0f16] px-6 py-3 border-t border-[#1c2033]">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="text-green-400">
-                      {loading ? '-' : `${formatCurrency(metrics?.averageWin || 0)} avg win`}
-                    </div>
-                    <div className="text-red-400">
-                      {loading ? '-' : `${formatCurrency(metrics?.averageLoss || 0)} avg loss`}
-                    </div>
+                {/* Ratio Win vs Loss progress bar */}
+                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                  <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                    <span>Avg Win</span>
+                    <span>Avg Loss</span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                    <div
+                      style={{
+                        width: `${(metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0) > 0 ? ((metrics?.averageWin || 0) / ((metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0))) * 100 : 50}%`,
+                        background: 'linear-gradient(90deg, #10b981, #34d399)'
+                      }}
+                      className="h-full"
+                    />
+                    <div
+                      style={{
+                        width: `${(metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0) > 0 ? (Math.abs(metrics?.averageLoss || 0) / ((metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0))) * 100 : 50}%`,
+                        background: 'linear-gradient(90deg, #f87171, #ef4444)'
+                      }}
+                      className="h-full"
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs font-semibold font-mono">
+                    <span className="text-emerald-400">{formatCurrency(metrics?.averageWin || 0)}</span>
+                    <span className="text-red-400">-{formatCurrency(Math.abs(metrics?.averageLoss || 0))}</span>
                   </div>
                 </div>
+                
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%)' }} />
               </div>
               
-              <div className={`${panelClass} overflow-hidden`}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Strategy Usage</h2>
-                    <div className="p-2 bg-purple-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Strategy Usage Card */}
+              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3 relative z-10">
+                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Strategy Usage</span>
+                    <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-purple-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="text-4xl font-bold text-white">
+                  <div className="text-4xl font-bold text-white tracking-tight relative z-10" style={{ textShadow: '0 0 20px rgba(168,85,247,0.2)' }}>
                     {loading ? '-' : strategyData.length}
                   </div>
                 </div>
                 
-                <div className="bg-[#0d0f16] px-6 py-3 border-t border-[#1c2033]">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="text-gray-400">
-                      {loading || !strategyData.length ? '-' : 
-                        `${strategyData[0].strategy}: ${strategyData[0].winRate.toFixed(0)}% WR`}
-                    </div>
-                    <div className="text-blue-400">
-                      {loading || !strategyData.length ? '-' : 
-                        `${formatCurrency(strategyData[0].pnL)} P&L`}
-                    </div>
-                  </div>
+                {/* Win rate progress bar for top strategy */}
+                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                  {strategyData.length > 0 ? (
+                    <>
+                      <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                        <span className="truncate max-w-[70%]">{strategyData[0].strategy} Win Rate</span>
+                        <span>{strategyData[0].winRate.toFixed(0)}%</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                        <div 
+                          style={{ width: `${strategyData[0].winRate}%` }} 
+                          className="h-full bg-indigo-500" 
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 font-semibold">
+                        <span>Top Strategy</span>
+                        <span className="text-indigo-400">{formatCurrency(strategyData[0].pnL)} P&L</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-gray-500 py-3 text-center">No strategies tagged yet</div>
+                  )}
                 </div>
+                
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(168,85,247,0.05) 0%, transparent 70%)' }} />
               </div>
 
-              {/* Total Pips Card (New for Forex) */}
-              <div className={`${panelClass} overflow-hidden`}>
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-gray-300 text-sm font-medium uppercase tracking-wider">Total Pips</h2>
-                    <div className="p-2 bg-indigo-500/10 rounded-lg">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {/* Total Pips Card */}
+              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3 relative z-10">
+                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Total Pips</span>
+                    <div className="p-2 bg-indigo-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-indigo-400">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1">
-                    <div className={`text-4xl font-bold ${totalPips >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  <div className="flex items-baseline space-x-1 relative z-10">
+                    <div className={`text-4xl font-bold tracking-tight ${totalPips >= 0 ? 'text-emerald-400' : 'text-red-400'}`} style={{ textShadow: totalPips >= 0 ? '0 0 20px rgba(52,211,153,0.2)' : '0 0 20px rgba(248,113,113,0.2)' }}>
                       {loading ? '-' : formatPips(totalPips)}
                     </div>
                     <div className="text-gray-500 text-xl font-medium ml-1">PIPS</div>
                   </div>
                 </div>
                 
-                <div className="bg-[#0d0f16] px-6 py-3 border-t border-[#1c2033]">
-                  <div className="flex justify-between items-center text-xs">
-                    <div className="text-gray-400">
-                      Forex Performance
+                {/* Forex vs Other ratio bar */}
+                {(() => {
+                  const forexCount = filteredTrades.filter(t => isForexPair(t.symbol)).length;
+                  const nonForexCount = filteredTrades.length - forexCount;
+                  const pct = filteredTrades.length > 0 ? (forexCount / filteredTrades.length) * 100 : 50;
+                  return (
+                    <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                      <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                        <span>Forex ({forexCount})</span>
+                        <span>Other ({nonForexCount})</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                        <div style={{ width: `${pct}%` }} className="h-full bg-indigo-500" />
+                        <div style={{ width: `${100 - pct}%` }} className="h-full bg-blue-500" />
+                      </div>
+                      <div className="flex justify-between text-xs text-gray-400 font-bold">
+                        <span>{filteredTrades.length > 0 ? `${pct.toFixed(0)}%` : '--'}</span>
+                        <span>{filteredTrades.length > 0 ? `${(100 - pct).toFixed(0)}%` : '--'}</span>
+                      </div>
                     </div>
-                    <div className="text-indigo-400 font-medium">
-                      {filteredTrades.filter(t => isForexPair(t.symbol)).length} forex trades
-                    </div>
-                  </div>
-                </div>
+                  );
+                })()}
+                
+                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.05) 0%, transparent 70%)' }} />
               </div>
             </div>
 
@@ -905,8 +981,8 @@ export default function AnalyticsPage() {
                       Based on your trading data, consider focusing on your top-performing strategies and symbols.
                       Your best trading occurs during market hours, especially in the morning session.
                     </p>
-                    <div className="bg-[#0d0f16]/50 rounded-lg p-3 border border-red-500/20">
-                      <p className="text-red-400 text-xs font-bold mb-1 uppercase">Top Mistake to Fix:</p>
+                    <div className="bg-red-500/5 rounded-xl p-3.5 border border-red-500/15 backdrop-blur-sm shadow-[0_0_12px_rgba(239,68,68,0.05)]">
+                      <p className="text-red-400 text-xs font-bold mb-1 uppercase tracking-wider">Top Mistake to Fix:</p>
                       <p className="text-gray-300 text-sm italic">
                         {filteredTrades.some(t => t.mistakes?.length) 
                           ? "Check the 'Cost of Mistakes' chart above. Eliminating your #1 mistake could increase your bottom line significantly."
@@ -930,7 +1006,7 @@ export default function AnalyticsPage() {
                 { label: 'Psychology Score', value: filteredTrades.length ? `${Math.round((filteredTrades.filter(t => !t.mistakes?.length).length / filteredTrades.length) * 100)}%` : '—', color: 'text-indigo-400' },
                 { label: 'Unique Mistake Types', value: [...new Set(filteredTrades.flatMap(t => t.mistakes || []))].length.toString(), color: 'text-yellow-400' },
               ].map((s, i) => (
-                <div key={i} className="bg-[#151823] rounded-xl border border-[#1c2033] p-4">
+                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}>
                   <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
                   <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
                 </div>
@@ -938,7 +1014,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Cost of Mistakes Chart */}
-            <div className="bg-[#151823] rounded-xl border border-red-500/10 p-5 mb-6">
+            <div className={`${panelClass} p-5 mb-6 border-red-500/15`}>
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-white font-medium">Dollar Cost of Each Mistake</h2>
@@ -950,8 +1026,8 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Per-Mistake Table */}
-            <div className="bg-[#151823] rounded-xl border border-[#1c2033] overflow-hidden mb-8">
-              <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-[#0a0b12]">
+            <div className={`${panelClass} overflow-hidden mb-8`}>
+              <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-white/[0.02] dark:bg-black/20">
                 <div className="col-span-2">Mistake</div>
                 <div>Occurrences</div>
                 <div>Total P&L Impact</div>
@@ -967,7 +1043,7 @@ export default function AnalyticsPage() {
                   const totalPnL = mTrades.reduce((s, t) => s + t.profit_loss, 0);
                   const winRate = mTrades.length ? (mTrades.filter(t => t.profit_loss > 0).length / mTrades.length * 100) : 0;
                   return (
-                    <div key={mistake} className="grid grid-cols-5 gap-4 px-5 py-3.5 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors">
+                    <div key={mistake} className="grid grid-cols-5 gap-4 px-5 py-3.5 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors duration-150">
                       <div className="col-span-2">
                         <span className="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs font-medium border border-red-900/40">{mistake}</span>
                       </div>
