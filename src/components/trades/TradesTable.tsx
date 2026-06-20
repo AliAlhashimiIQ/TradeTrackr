@@ -427,10 +427,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {visibleColumns.mistakes && <div />}
         {visibleColumns.notes && <div />}
         <div 
-          className="sticky right-0 z-20 h-full pr-5 -mr-5 bg-[#0d0e16]/95"
-          style={{
-            boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
-          }}
+          className="h-full pr-5 -mr-5"
         />
       </div>
     );
@@ -1107,12 +1104,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               </div>
             )}
             <div 
-              className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
-              style={{
-                background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.95)',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
-              }}
+              className="text-right flex items-center justify-end h-full pr-5 -mr-5"
             >
               <span>Actions</span>
             </div>
@@ -1533,11 +1525,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Actions */}
                     <div 
-                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full"
-                      style={{
-                        backgroundColor: idx % 2 === 0 ? '#0d0e16' : '#11121b',
-                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
-                      }}
+                      className="flex items-center justify-end gap-1 pr-5 -mr-5 h-full"
                     >
                       {trade.screenshot_url && (
                         <button
