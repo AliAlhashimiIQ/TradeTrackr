@@ -357,7 +357,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     if (!totals) return null;
     return (
       <div
-        className="grid gap-2 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full text-left"
+        className="grid gap-4 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full w-max text-left"
         style={{ gridTemplateColumns: getGridTemplateColumns() }}
       >
         <div />
@@ -468,7 +468,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
     return (
       <div
-        className="grid gap-2 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full text-left"
+        className="grid gap-4 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full w-max text-left"
         style={{
           gridTemplateColumns: getGridTemplateColumns(),
           backgroundColor: '#0d0e16',
@@ -942,7 +942,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
           {/* Table Header */}
           <div
-            className="grid gap-2 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full text-left"
+            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left"
             style={{
               gridTemplateColumns: getGridTemplateColumns(),
               borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -1145,7 +1145,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   )}
 
                   <div
-                    className={`grid gap-2 px-5 ${tableDensity === 'compact' ? 'py-3' : 'py-4'} items-center hover:bg-indigo-500/[0.03] transition-all duration-200 ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.015]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.04]' : ''} group/row min-w-full text-left`}
+                    className={`grid gap-4 px-5 ${tableDensity === 'compact' ? 'py-3' : 'py-4'} items-center hover:bg-indigo-500/[0.03] transition-all duration-200 ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.015]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.04]' : ''} group/row min-w-full w-max text-left`}
                     style={{ gridTemplateColumns: getGridTemplateColumns() }}
                   >
                     {/* Checkbox + inline add button */}
