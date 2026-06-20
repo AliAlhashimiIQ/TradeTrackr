@@ -90,6 +90,7 @@ export default function Trades() {
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
   const [accountFilter, setAccountFilter] = useState<string | null>(null)
   const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
+  const [startingBalance, setStartingBalance] = useState<number>(10000)
   const [sortField, setSortField] = useState<keyof Trade>('entry_time')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
   
@@ -251,6 +252,25 @@ export default function Trades() {
     if (user?.id) {
       getTradingAccounts(user.id).then(setUserAccounts)
       fetchUserTags();
+      
+      // Fetch starting balance from profile settings
+      const loadProfileSettings = async () => {
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('settings')
+            .eq('id', user.id)
+            .single();
+          const settings = (data?.settings as any) || {};
+          const profileStartingBalance = Number(settings.startingBalance);
+          if (!isNaN(profileStartingBalance) && profileStartingBalance > 0) {
+            setStartingBalance(profileStartingBalance);
+          }
+        } catch (err) {
+          console.error('Error fetching profile settings:', err);
+        }
+      };
+      loadProfileSettings();
     }
   }, [user?.id, fetchUserTags])
 
@@ -792,6 +812,7 @@ export default function Trades() {
           isDeleting={isDeleting}
           uploadingTradeId={uploadingTradeId}
           userAccounts={userAccounts}
+          startingBalance={startingBalance}
           accountsMap={accountsMap}
           sortField={sortField}
           sortDirection={sortDirection}

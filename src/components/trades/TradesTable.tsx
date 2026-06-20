@@ -31,7 +31,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   tags: 180,
   mistakes: 180,
   notes: 240,
-  actions: 100,
+  actions: 140,
 };
 
 export const MIN_COLUMN_WIDTHS: Record<string, number> = {
@@ -58,7 +58,7 @@ export const MIN_COLUMN_WIDTHS: Record<string, number> = {
   tags: 120,
   mistakes: 120,
   notes: 150,
-  actions: 80,
+  actions: 140,
 };
 
 export const EMOTIONS = [
@@ -111,6 +111,7 @@ export interface TradesTableProps {
   isDeleting: string | null;
   uploadingTradeId: string | null;
   userAccounts: TradingAccount[];
+  startingBalance?: number;
   accountsMap: Map<string, string>;
   sortField: keyof Trade;
   sortDirection: 'asc' | 'desc';
@@ -122,6 +123,37 @@ export interface TradesTableProps {
   onPageSizeChange: (size: number) => void;
   formatCurrency: (value: number) => string;
 }
+
+const getAccountSizeForTrade = (
+  accountId: string | undefined | null,
+  userAccounts: TradingAccount[],
+  startingBalance: number
+): number => {
+  if (accountId) {
+    const account = userAccounts.find(a => a.id === accountId);
+    if (account && account.balance > 0) {
+      return account.balance;
+    }
+  }
+  // Fallback to sum of all accounts
+  if (userAccounts && userAccounts.length > 0) {
+    const totalBalance = userAccounts.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+    if (totalBalance > 0) {
+      return totalBalance;
+    }
+  }
+  return startingBalance || 10000;
+};
+
+const getPercentGain = (
+  pnl: number,
+  accountId: string | undefined | null,
+  userAccounts: TradingAccount[],
+  startingBalance: number
+): number => {
+  const accountSize = getAccountSizeForTrade(accountId, userAccounts, startingBalance);
+  return (pnl / accountSize) * 100;
+};
 
 export const TradesTable: React.FC<TradesTableProps> = ({
   filteredTrades,
@@ -162,6 +194,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   isDeleting,
   uploadingTradeId,
   userAccounts,
+  startingBalance = 10000,
   accountsMap,
   sortField,
   sortDirection,
@@ -233,7 +266,10 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
   const getGridTemplateColumns = () => {
     const getWidth = (key: string, def: string) => {
-      const w = columnWidths[key];
+      let w = columnWidths[key];
+      if (key === 'actions') {
+        w = Math.max(140, w || 140);
+      }
       return w ? `${w}px` : def;
     };
     const cols = [
@@ -286,10 +322,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         forexCount++;
       }
       
-      if (t.entry_price && t.exit_price) {
-        const pct = ((t.exit_price - t.entry_price) / t.entry_price) * 100 * (t.type === 'Long' ? 1 : -1);
-        totalPctGain += pct;
-      }
+      const pct = getPercentGain(t.profit_loss ?? 0, t.account_id, userAccounts, startingBalance);
+      totalPctGain += pct;
       
       totalCommission += Number((t as any).commission ?? 0);
       
@@ -333,12 +367,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {visibleColumns.entry && <div />}
         {visibleColumns.exit && <div />}
         {visibleColumns.lots && (
-          <div className="text-right font-mono text-gray-300 tabular-nums">
+          <div className="text-right text-gray-300 tabular-nums">
             {formatLots(totals.totalLots)}
           </div>
         )}
         {visibleColumns.pips && (
-          <div className="text-right font-mono text-gray-300 tabular-nums">
+          <div className="text-right text-gray-300 tabular-nums">
             {totals.avgPips !== 0 ? `${totals.avgPips.toFixed(1)} avg` : '--'}
           </div>
         )}
@@ -355,20 +389,20 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         )}
         {visibleColumns.percentGain && (
           <div
-            className="text-right font-mono tabular-nums"
+            className="text-right tabular-nums"
             style={{ color: totals.avgPctGain > 0 ? '#34d399' : totals.avgPctGain < 0 ? '#f87171' : '#9ca3af' }}
           >
             {totals.avgPctGain !== 0 ? `${totals.avgPctGain.toFixed(2)}% avg` : '--'}
           </div>
         )}
         {visibleColumns.commission && (
-          <div className="text-right font-mono text-gray-400 tabular-nums">
+          <div className="text-right text-gray-400 tabular-nums">
             {formatCurrency(totals.totalCommission)}
           </div>
         )}
         {visibleColumns.netProfit && (
           <div
-            className="text-right font-mono font-bold tabular-nums"
+            className="text-right font-bold tabular-nums"
             style={{
               color: totals.totalNetProfit > 0 ? '#34d399' : totals.totalNetProfit < 0 ? '#f87171' : '#9ca3af',
               textShadow: totals.totalNetProfit !== 0 ? `0 0 10px ${totals.totalNetProfit > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)'}` : 'none'
@@ -381,7 +415,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {visibleColumns.openTime && <div />}
         {visibleColumns.closeTime && <div />}
         {visibleColumns.holdTime && (
-          <div className="text-right font-mono text-gray-300 tabular-nums">
+          <div className="text-right text-gray-300 tabular-nums">
             {totals.avgHoldTimeStr}
           </div>
         )}
@@ -608,9 +642,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {/* Percent Gain */}
         {visibleColumns.percentGain && (
           <div className="text-right text-xs font-mono text-gray-400 font-sans">
-            {inlineRowData.entry_price && inlineRowData.exit_price ? (
+            {inlineRowData.profit_loss !== undefined && inlineRowData.profit_loss !== null ? (
               (() => {
-                const pct = ((inlineRowData.exit_price - inlineRowData.entry_price) / inlineRowData.entry_price) * 100 * (inlineRowData.type === 'Long' ? 1 : -1);
+                const pct = getPercentGain(inlineRowData.profit_loss, inlineRowData.account_id, userAccounts, startingBalance);
                 return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
               })()
             ) : '--'}
@@ -1225,22 +1259,21 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       </div>
                     )}
 
-                    {/* Entry */}
-                    {visibleColumns.entry && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300 text-right tabular-nums`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
+                        {visibleColumns.entry && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-300 text-right tabular-nums`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
 
                     {/* Exit */}
-                    {visibleColumns.exit && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-300 text-right tabular-nums`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
+                    {visibleColumns.exit && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-300 text-right tabular-nums`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
 
                     {/* Lots / Qty */}
                     {visibleColumns.lots && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right font-mono tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
                         {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </div>
                     )}
 
                     {/* Pips */}
                     {visibleColumns.pips && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${!isForexPair(trade.symbol) ? 'text-gray-600' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!isForexPair(trade.symbol) ? 'text-gray-400' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
                         {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
                       </div>
                     )}
@@ -1263,10 +1296,10 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Percent Gain */}
                     {visibleColumns.percentGain && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
-                        {trade.entry_price && trade.exit_price ? (
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
+                        {trade.profit_loss !== undefined && trade.profit_loss !== null ? (
                           (() => {
-                            const pct = ((trade.exit_price - trade.entry_price) / trade.entry_price) * 100 * (trade.type === 'Long' ? 1 : -1);
+                            const pct = getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance);
                             return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
                           })()
                         ) : '--'}
@@ -1275,14 +1308,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Commission */}
                     {visibleColumns.commission && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
                         {(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}
                       </div>
                     )}
 
                     {/* Net Profit */}
                     {visibleColumns.netProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
                         {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0))}
                       </div>
                     )}
@@ -1317,14 +1350,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Stop Loss */}
                     {visibleColumns.stopLoss && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
                         {(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
                       </div>
                     )}
 
                     {/* Take Profit */}
                     {visibleColumns.takeProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
                         {(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
                       </div>
                     )}
@@ -1685,13 +1718,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Lots / Qty</span>
-                      <span className="text-gray-300 font-mono font-medium">
+                      <span className="text-gray-300 font-medium">
                         {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Execution</span>
-                      <span className="text-gray-300 font-mono">
+                      <span className="text-gray-300">
                         {trade.entry_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)} → {trade.exit_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)}
                       </span>
                     </div>
