@@ -14,6 +14,10 @@ const getReviewReasonLabel = (reason: ReviewReason): string => {
   return 'Large Loss';
 };
 
+const fmtCurrency = (value: number): string => {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+};
+
 export interface TradesFiltersProps {
   activeView: SavedView;
   onViewChange: (view: SavedView) => void;
@@ -297,31 +301,111 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                 </div>
 
                 <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-white">Smart Review Queue</h3>
-                    <span className="text-[10px] uppercase tracking-wider text-gray-500">Needs Attention</span>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
+                      <span className="text-indigo-400 text-lg">🔍</span>
+                      Smart Review Queue
+                    </h3>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                      Needs Attention
+                    </span>
                   </div>
                   {reviewQueue.length === 0 ? (
-                    <div className="text-sm text-gray-500">No high-priority reviews right now.</div>
+                    <div className="text-sm text-gray-500 py-6 text-center">No high-priority reviews right now.</div>
                   ) : (
-                    <div className="space-y-2">
-                      {reviewQueue.map(({ trade, reasons }) => (
-                        <button
-                          key={trade.id}
-                          onClick={() => onReviewClick(trade)}
-                          className="w-full flex items-center justify-between text-left px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] transition-colors"
-                        >
-                          <div>
-                            <div className="text-sm font-semibold text-white">{trade.symbol}</div>
-                            <div className="text-xs text-gray-400">{reasons.slice(0, 2).map(getReviewReasonLabel).join(' · ')}</div>
-                          </div>
-                          {reasons.length >= 3 ? (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/10 text-red-400 border border-red-500/20">High Risk</span>
-                          ) : (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">Review</span>
-                          )}
-                        </button>
-                      ))}
+                    <div className="space-y-2.5">
+                      {reviewQueue.map(({ trade, reasons, quality }) => {
+                        const isHighRisk = reasons.length >= 3 || quality < 50;
+                        const isMedRisk = reasons.length === 2 || (quality >= 50 && quality < 70);
+                        
+                        // Determine border color based on severity
+                        const severityBorder = isHighRisk 
+                          ? 'hover:border-red-500/30' 
+                          : isMedRisk 
+                            ? 'hover:border-amber-500/30' 
+                            : 'hover:border-indigo-500/30';
+                        
+                        return (
+                          <button
+                            key={trade.id}
+                            onClick={() => onReviewClick(trade)}
+                            className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-xl bg-white/[0.015] hover:bg-white/[0.04] border border-white/[0.03] ${severityBorder} transition-all duration-300 gap-3 group`}
+                          >
+                            <div className="flex items-start gap-3">
+                              {/* Left status vertical indicator strip */}
+                              <div 
+                                className={`w-1 self-stretch rounded-full ${
+                                  isHighRisk ? 'bg-red-500' : isMedRisk ? 'bg-amber-500' : 'bg-indigo-400'
+                                }`} 
+                              />
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
+                                    {trade.symbol}
+                                  </span>
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-white/[0.04] text-gray-400 uppercase">
+                                    {trade.type} {trade.lots ? `${trade.lots} Lot` : ''}
+                                  </span>
+                                  {trade.profit_loss !== undefined && (
+                                    <span className={`text-xs font-mono font-bold ${
+                                      trade.profit_loss >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                    }`}>
+                                      {trade.profit_loss >= 0 ? '+' : ''}{fmtCurrency(trade.profit_loss)}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {reasons.map(reason => {
+                                    if (reason === 'fomo') {
+                                      return (
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                          FOMO
+                                        </span>
+                                      );
+                                    }
+                                    if (reason === 'no-plan') {
+                                      return (
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                                          No Plan
+                                        </span>
+                                      );
+                                    }
+                                    if (reason === 'oversized') {
+                                      return (
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                          Oversized
+                                        </span>
+                                      );
+                                    }
+                                    return (
+                                      <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                        Large Loss
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 self-end sm:self-center">
+                              {/* Quality Score Indicator */}
+                              <div className="text-right">
+                                <span className="text-[10px] text-gray-500 block">Quality</span>
+                                <span className={`text-xs font-bold font-mono ${
+                                  quality >= 70 ? 'text-emerald-400' : quality >= 50 ? 'text-amber-400' : 'text-red-400'
+                                }`}>
+                                  {quality}%
+                                </span>
+                              </div>
+                              
+                              {/* Review CTA Div */}
+                              <div className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/[0.04] border border-white/[0.06] text-gray-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-300">
+                                Review &rarr;
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
