@@ -20,6 +20,9 @@ export default function Header() {
 
   const handleLogout = async () => {
     await signOut()
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('onboarded')
+    }
     router.push('/login')
   }
 

@@ -18,15 +18,27 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const [checkingOnboard, setCheckingOnboard] = useState(true);
+  const [checkingOnboard, setCheckingOnboard] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.sessionStorage.getItem('onboarded') !== 'true';
+    }
+    return true;
+  });
 
   useEffect(() => {
     let isMounted = true;
     
     if (!loading && !user) {
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.removeItem('onboarded');
+      }
       router.push('/login');
     } else if (!loading && user) {
       const checkOnboarding = async () => {
+        if (typeof window !== 'undefined' && window.sessionStorage.getItem('onboarded') === 'true') {
+          if (isMounted) setCheckingOnboard(false);
+          return;
+        }
         try {
           const { data, error } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
           
@@ -37,6 +49,9 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
             if (hasNotOnboarded && pathname !== '/welcome') {
               router.push('/welcome');
             } else {
+              if (typeof window !== 'undefined') {
+                window.sessionStorage.setItem('onboarded', 'true');
+              }
               setCheckingOnboard(false);
             }
           }
