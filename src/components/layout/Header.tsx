@@ -108,9 +108,10 @@ export default function Header() {
                   >
                     {isActive && (
                       <motion.div
-                        layoutId="nav-active"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.15 }}
                         className="absolute inset-0 bg-gradient-to-r from-indigo-600/80 to-blue-600/80 rounded-lg shadow-lg shadow-indigo-500/20"
-                        transition={{ type: 'spring', bounce: 0.2, duration: 0.4 }}
                       />
                     )}
                     <span className="relative z-10 flex items-center gap-2">
