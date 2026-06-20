@@ -129,8 +129,11 @@ export default function Header() {
             {/* Mobile Menu Button */}
             <div className="flex lg:hidden items-center gap-2">
               {user && !isLoadingStreak && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-semibold select-none shadow-sm shadow-amber-500/5" title={`${streak.currentStreak} day streak`}>
-                  <span>🔥</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-xs font-semibold select-none shadow-sm shadow-amber-500/5" title={`${streak.currentStreak} day streak`}>
+                  <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925 3.546 5.974 5.974 0 0 1-2.133-1A3.75 3.75 0 0 0 12 18Z" />
+                  </svg>
                   <span>{streak.currentStreak || 0}d</span>
                 </div>
               )}
@@ -152,7 +155,10 @@ export default function Header() {
               {user && !isLoadingStreak && (
                 streak.currentStreak > 0 ? (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-semibold cursor-default select-none shadow-sm shadow-amber-500/5 group relative">
-                    <span className="text-base group-hover:scale-125 transition-transform duration-200">🔥</span>
+                    <svg className="w-3.5 h-3.5 text-amber-500 group-hover:scale-125 transition-transform duration-200" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925 3.546 5.974 5.974 0 0 1-2.133-1A3.75 3.75 0 0 0 12 18Z" />
+                    </svg>
                     <span>{streak.currentStreak} Day Streak</span>
                     <div className="absolute top-full right-0 mt-2 z-50 bg-[#0f1117] border border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-white">
                       <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>
@@ -171,7 +177,10 @@ export default function Header() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.02] border border-white/[0.06] text-gray-400 hover:text-white rounded-xl text-xs font-semibold cursor-default select-none group relative">
-                    <span className="text-base grayscale group-hover:grayscale-0 transition-all duration-200">🔥</span>
+                    <svg className="w-3.5 h-3.5 text-gray-500 group-hover:text-amber-500/60 transition-colors duration-200" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925 3.546 5.974 5.974 0 0 1-2.133-1A3.75 3.75 0 0 0 12 18Z" />
+                    </svg>
                     <span>0 Day Streak</span>
                     <div className="absolute top-full right-0 mt-2 z-50 bg-[#0f1117] border border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-white">
                       <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>

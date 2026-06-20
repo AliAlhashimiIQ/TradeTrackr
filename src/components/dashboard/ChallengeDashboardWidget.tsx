@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { ChallengeStatus } from '@/lib/propFirms'
 import { Trade } from '@/lib/types'
 import { getEconomicCalendar } from '@/lib/economicCalendarApi'
+import PropFirmLogo from '@/components/ui/PropFirmLogo'
 
 interface Props {
   status: ChallengeStatus
@@ -179,8 +180,8 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
       <div className="p-5 border-b border-white/[0.05]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center text-xl">
-              {firm.logo}
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+              <PropFirmLogo firmId={firm.id} className="w-5 h-5" />
             </div>
             <div>
               <p className="text-white font-bold text-sm leading-tight">{firm.name}</p>
@@ -260,12 +261,29 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
                 transition={{ duration: 0.8, ease: 'easeOut', delay: 0.25 }}
               />
             </div>
-            <p className="text-[10px] text-gray-500 mt-1">
-              {consistencyStats.isBreached 
-                ? '⚠️ Consistency rule breached: Best day profit exceeds 40% of target.'
-                : consistencyStats.isClose
-                ? '⚠️ Approaching limit! Keep position sizes smaller to maintain consistency.'
-                : '🟢 Single-day profits are within safety boundaries.'}
+            <p className="text-[10px] text-gray-500 mt-1 flex items-center gap-1.5">
+              {consistencyStats.isBreached ? (
+                <>
+                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Consistency rule breached: Best day profit exceeds 40% of target.</span>
+                </>
+              ) : consistencyStats.isClose ? (
+                <>
+                  <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>Approaching limit! Keep position sizes smaller to maintain consistency.</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.0" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Single-day profits are within safety boundaries.</span>
+                </>
+              )}
             </p>
           </div>
         )}
@@ -343,8 +361,13 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
             </div>
             <div className="space-y-1 max-h-[80px] overflow-y-auto pr-1">
               {newsBreaches.map((breach, idx) => (
-                <p key={idx} className="text-[10px] text-amber-300/90 leading-tight">
-                  ⚠️ Trade on <span className="font-semibold">{breach.trade.symbol}</span> was opened within {Math.round(breach.diffMinutes)}m of <span className="underline">{breach.event.Event}</span> ({getCountryCurrency(breach.event.Country)})
+                <p key={idx} className="text-[10px] text-amber-300/90 leading-tight flex items-start gap-1">
+                  <svg className="w-3 h-3 text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>
+                    Trade on <span className="font-semibold">{breach.trade.symbol}</span> was opened within {Math.round(breach.diffMinutes)}m of <span className="underline">{breach.event.Event}</span> ({getCountryCurrency(breach.event.Country)})
+                  </span>
                 </p>
               ))}
             </div>

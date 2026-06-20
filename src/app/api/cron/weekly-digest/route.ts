@@ -557,7 +557,7 @@ Write in a supportive, professional, and coach-like tone. Return only a JSON obj
         
         <div class="ai-card">
           <div class="ai-card-title">
-            <span style="font-size: 16px; margin-right: 6px;">🧠</span> AI Discipline & Psychology Assessment
+            AI Discipline & Psychology Assessment
           </div>
           <div class="ai-content">
             ${aiAssessment}
@@ -582,7 +582,9 @@ Write in a supportive, professional, and coach-like tone. Return only a JSON obj
         </p>
         
         <div class="hero-stat loss" style="background-color: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.15); padding: 36px 24px;">
-          <span style="font-size: 40px; display: block; margin-bottom: 12px;">💤</span>
+          <svg width="40" height="40" style="display: block; margin: 0 auto 12px auto; color: #f87171;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"></path>
+          </svg>
           <div class="hero-stat-label" style="color: #a78bfa;">No Trades Logged This Week</div>
           <p style="font-size: 14px; color: #94a3b8; max-width: 400px; margin: 12px auto 0 auto; line-height: 1.5;">
             Traders who journal consistently are 3x more likely to maintain profitability. Don't let your streak break!
@@ -591,7 +593,7 @@ Write in a supportive, professional, and coach-like tone. Return only a JSON obj
         
         <div class="ai-card" style="border-color: rgba(99, 102, 241, 0.3);">
           <div class="ai-card-title" style="color: #818cf8;">
-            <span style="font-size: 16px; margin-right: 6px;">🔥</span> Keep Your Journaling Active
+            Keep Your Journaling Active
           </div>
           <div class="ai-content">
             <p>Your current streak is <strong>${currentStreak} days</strong>.</p>

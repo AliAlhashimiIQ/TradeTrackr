@@ -635,7 +635,10 @@ export default function AnalyticsPage() {
                 : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
             }`}
           >
-            🏆 Prop Firm
+            <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
+            </svg>
+            Prop Firm
             {challengeStatus && !challengeStatus.isViolated && (
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             )}

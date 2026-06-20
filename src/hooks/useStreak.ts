@@ -194,9 +194,8 @@ export function useStreak() {
         const newFrozen = [...frozenDates, yesterdayStr]
         await setFrozenDates(newFrozen)
         await setStreakFreezes(streakFreezes - 1)
-        toast.success(`❄️ Journaling Streak Frozen! Yesterday's streak was saved using a Streak Freeze token. (${streakFreezes - 1} remaining)`, {
-          duration: 5000,
-          icon: '❄️'
+        toast.success(`Journaling Streak Frozen! Yesterday's streak was saved using a Streak Freeze token. (${streakFreezes - 1} remaining)`, {
+          duration: 5000
         })
         return
       }
@@ -230,9 +229,8 @@ export function useStreak() {
           
           await setStreakFreezes(nextFreezes)
           
-          toast.success(`🎉 Milestone reached! You earned a Streak Freeze token for maintaining a ${streak.currentStreak}-day streak!`, {
-            duration: 6000,
-            icon: '🎉'
+          toast.success(`Milestone reached! You earned a Streak Freeze token for maintaining a ${streak.currentStreak}-day streak!`, {
+            duration: 6000
           })
         }
       }

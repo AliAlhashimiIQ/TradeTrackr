@@ -40,7 +40,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
   const symbolCategories: SymbolCategory[] = [
     {
       name: 'frequent',
-      displayName: '⭐ Frequent',
+      displayName: 'Frequent',
       symbols: [
         { name: 'EURUSD', color: 'blue' },
         { name: 'BTCUSD', color: 'amber' },
@@ -50,7 +50,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     },
     {
       name: 'forex',
-      displayName: '💱 Forex',
+      displayName: 'Forex',
       symbols: [
         { name: 'EURUSD', color: 'blue' },
         { name: 'GBPUSD', color: 'indigo' },
@@ -62,7 +62,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     },
     {
       name: 'crypto',
-      displayName: '🪙 Crypto',
+      displayName: 'Crypto',
       symbols: [
         { name: 'BTCUSD', color: 'amber' },
         { name: 'ETHUSD', color: 'teal' },
@@ -72,7 +72,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     },
     {
       name: 'indices',
-      displayName: '📊 Indices',
+      displayName: 'Indices',
       symbols: [
         { name: 'ES', color: 'blue' },
         { name: 'NQ', color: 'teal' },
@@ -82,7 +82,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     },
     {
       name: 'stocks',
-      displayName: '📈 Stocks',
+      displayName: 'Stocks',
       symbols: [
         { name: 'AAPL', color: 'gray' },
         { name: 'MSFT', color: 'blue' },
@@ -94,7 +94,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     },
     {
       name: 'custom',
-      displayName: '⚙️ Custom',
+      displayName: 'Custom',
       symbols: []
     }
   ];
@@ -201,12 +201,57 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
   
   // Get current category's symbols
   const currentCategory = selectedCategory === 'custom' 
-    ? { name: 'custom', displayName: '⚙️ Custom', symbols: customSymbols }
+    ? { name: 'custom', displayName: 'Custom', symbols: customSymbols }
     : symbolCategories.find(cat => cat.name === selectedCategory) || symbolCategories[0];
 
   // Get color classes for a symbol
   const getColorClasses = (color: string) => {
     return COLOR_CLASSES[color] || COLOR_CLASSES.blue;
+  };
+
+  const renderCategoryIcon = (name: string) => {
+    const iconClass = "w-3 h-3 flex-shrink-0";
+    switch (name) {
+      case 'frequent':
+        return (
+          <svg className={iconClass} fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 .587l3.668 7.431 8.2 1.191-5.934 5.787 1.4 8.168L12 18.896l-7.334 3.857 1.4-8.168L.132 9.209l8.2-1.191L12 .587z" />
+          </svg>
+        );
+      case 'forex':
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'crypto':
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        );
+      case 'indices':
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case 'stocks':
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        );
+      case 'custom':
+        return (
+          <svg className={iconClass} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        );
+      default:
+        return null;
+    }
   };
 
   return (
@@ -218,13 +263,14 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
             key={category.name}
             type="button"
             onClick={() => setSelectedCategory(category.name)}
-            className={`px-2 py-1 rounded-md whitespace-nowrap ${
+            className={`px-2 py-1 rounded-md whitespace-nowrap flex items-center gap-1.5 ${
               selectedCategory === category.name 
                 ? 'bg-blue-600 text-white' 
                 : 'bg-gray-700/30 text-gray-400 hover:bg-gray-700/50'
             }`}
           >
-            {category.displayName}
+            {renderCategoryIcon(category.name)}
+            <span>{category.displayName}</span>
           </button>
         ))}
       </div>

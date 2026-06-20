@@ -365,7 +365,9 @@ export default function Home() {
             className="text-center mb-10"
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 mb-6 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-sm font-medium">
-              <span className="text-base">🏆</span>
+              <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
+              </svg>
               Built for Prop Firm Traders
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4 tracking-tight">
@@ -396,9 +398,35 @@ export default function Home() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              { icon: '📉', title: 'Daily DD Tracking', desc: 'Know exactly where you stand on your daily loss limit' },
-              { icon: '📊', title: 'Consistency Rules', desc: 'Auto-checks if any single day exceeds 40% of total profit' },
-              { icon: '🎯', title: 'Profit Targets', desc: 'Real-time progress bar towards your challenge profit target' },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                  </svg>
+                ),
+                title: 'Daily DD Tracking',
+                desc: 'Know exactly where you stand on your daily loss limit'
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                ),
+                title: 'Consistency Rules',
+                desc: 'Auto-checks if any single day exceeds 40% of total profit'
+              },
+              {
+                icon: (
+                  <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <circle cx="12" cy="12" r="6" />
+                    <circle cx="12" cy="12" r="2" />
+                  </svg>
+                ),
+                title: 'Profit Targets',
+                desc: 'Real-time progress bar towards your challenge profit target'
+              },
             ].map((item, i) => (
               <motion.div
                 key={item.title}
@@ -408,7 +436,7 @@ export default function Home() {
                 transition={{ delay: i * 0.1 }}
                 className="p-5 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-amber-500/20 transition-all duration-300"
               >
-                <div className="text-2xl mb-3">{item.icon}</div>
+                <div className="mb-3">{item.icon}</div>
                 <h3 className="text-sm font-semibold text-white mb-1">{item.title}</h3>
                 <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
               </motion.div>

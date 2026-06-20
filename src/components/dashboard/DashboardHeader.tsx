@@ -39,7 +39,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className={`${TEXT.heading.h1} flex items-center bg-clip-text text-transparent bg-gradient-to-r from-[${COLORS.text.primary}] to-[${COLORS.text.secondary}]`}>
-            Welcome back, {displayName} <span className={`ml-2 text-[${COLORS.text.primary}]`}>👋</span>
+            Welcome back, {displayName}
           </h1>
           <p className={`${TEXT.body.regular} text-[${COLORS.text.secondary}] mt-1 flex items-center`}>
             <span className={`inline-block w-2 h-2 rounded-full bg-[${COLORS.primary}] mr-2`}></span>
@@ -49,7 +49,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         
         <div className={`flex items-center px-5 py-2.5 bg-gradient-to-r from-[${COLORS.background.dark}] to-[${COLORS.background.medium}] rounded-xl border border-[${COLORS.border.primary}] shadow-lg ${TRANSITIONS.medium}`}>
           <div className={`mr-3 h-8 w-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-[${COLORS.warning}] to-[${COLORS.danger}] bg-opacity-20`}>
-            <span className="text-lg">🔥</span>
+            <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925 3.546 5.974 5.974 0 0 1-2.133-1A3.75 3.75 0 0 0 12 18Z" />
+            </svg>
           </div>
           <div>
             <div className={`font-medium text-[${COLORS.text.primary}]`}>{streakDays}-day streak!</div>

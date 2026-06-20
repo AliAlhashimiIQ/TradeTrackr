@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { Trade } from '@/lib/types'
 import { ChallengeStatus } from '@/lib/propFirms'
 import PropFirmSimulator from '@/components/analytics/PropFirmSimulator'
+import PropFirmLogo from '@/components/ui/PropFirmLogo'
 
 interface Props {
   trades: Trade[]
@@ -25,7 +26,11 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
     return (
       <div className="space-y-8">
         <div className="flex flex-col items-center justify-center py-10 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-3xl mb-4">🏆</div>
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-4">
+            <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
+            </svg>
+          </div>
           <h3 className="text-white font-bold text-lg mb-2">No Challenge Active</h3>
           <p className="text-gray-500 text-sm max-w-sm mb-6">
             Set up your prop firm challenge in Settings to track your progress, consistency score, and violation risks.
@@ -108,8 +113,8 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
       {/* Challenge Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-2xl">
-            {firm.logo}
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center">
+            <PropFirmLogo firmId={firm.id} className="w-6 h-6" />
           </div>
           <div>
             <h3 className="text-white font-bold">{firm.name} — {tier.tierName}</h3>

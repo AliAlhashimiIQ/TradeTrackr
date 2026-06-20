@@ -27,7 +27,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'ftmo',
     name: 'FTMO',
-    logo: '🏆',
+    logo: 'trophy',
     website: 'https://ftmo.com',
     tiers: [
       { tierName: '10K Challenge', accountSize: 10000, maxDailyLossPercent: 5, maxTotalLossPercent: 10, profitTargetPercent: 10, minTradingDays: 4, maxTradingDays: 30, newsRestrictionMinutes: 0, consistencyRule: false, trailingDrawdown: false },
@@ -40,7 +40,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'e8',
     name: 'E8 Markets',
-    logo: '🎯',
+    logo: 'target',
     website: 'https://e8markets.com',
     tiers: [
       { tierName: '25K E8', accountSize: 25000, maxDailyLossPercent: 5, maxTotalLossPercent: 8, profitTargetPercent: 8, minTradingDays: 0, maxTradingDays: null, newsRestrictionMinutes: 0, consistencyRule: false, trailingDrawdown: false },
@@ -51,7 +51,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'funded_next',
     name: 'FundedNext',
-    logo: '⚡',
+    logo: 'zap',
     website: 'https://fundednext.com',
     tiers: [
       { tierName: '6K Express', accountSize: 6000, maxDailyLossPercent: 5, maxTotalLossPercent: 10, profitTargetPercent: 25, minTradingDays: 0, maxTradingDays: null, newsRestrictionMinutes: 2, consistencyRule: true, trailingDrawdown: false },
@@ -64,7 +64,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'the5ers',
     name: 'The5%ers',
-    logo: '🌍',
+    logo: 'globe',
     website: 'https://the5ers.com',
     tiers: [
       { tierName: '6K High Stakes', accountSize: 6000, maxDailyLossPercent: 4, maxTotalLossPercent: 6, profitTargetPercent: 8, minTradingDays: 0, maxTradingDays: null, newsRestrictionMinutes: 0, consistencyRule: false, trailingDrawdown: false },
@@ -75,7 +75,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'apex',
     name: 'Apex Trader Funding',
-    logo: '🦅',
+    logo: 'apex',
     website: 'https://apextraderfunding.com',
     tiers: [
       { tierName: '25K Full', accountSize: 25000, maxDailyLossPercent: 6, maxTotalLossPercent: 6, profitTargetPercent: 6, minTradingDays: 7, maxTradingDays: null, newsRestrictionMinutes: 0, consistencyRule: true, trailingDrawdown: true },
@@ -87,7 +87,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'topstep',
     name: 'Topstep',
-    logo: '📈',
+    logo: 'trending-up',
     website: 'https://topstep.com',
     tiers: [
       { tierName: '50K Express', accountSize: 50000, maxDailyLossPercent: 4, maxTotalLossPercent: 6, profitTargetPercent: 6, minTradingDays: 0, maxTradingDays: null, newsRestrictionMinutes: 0, consistencyRule: false, trailingDrawdown: true },
@@ -98,7 +98,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'goat_funded',
     name: 'Goat Funded',
-    logo: '🐐',
+    logo: 'star',
     website: 'https://goatfunded.com',
     tiers: [
       { tierName: '10K Standard', accountSize: 10000, maxDailyLossPercent: 5, maxTotalLossPercent: 10, profitTargetPercent: 8, minTradingDays: 3, maxTradingDays: 45, newsRestrictionMinutes: 2, consistencyRule: false, trailingDrawdown: false },
@@ -110,7 +110,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'funding_pips',
     name: 'Funding Pips',
-    logo: '💧',
+    logo: 'droplet',
     website: 'https://fundingpips.com',
     tiers: [
       { tierName: '10K Challenge', accountSize: 10000, maxDailyLossPercent: 4, maxTotalLossPercent: 8, profitTargetPercent: 8, minTradingDays: 4, maxTradingDays: 60, newsRestrictionMinutes: 2, consistencyRule: false, trailingDrawdown: false },
@@ -122,7 +122,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'myfunded_fx',
     name: 'MyFundedFX',
-    logo: '🔵',
+    logo: 'shield',
     website: 'https://myfundedfx.tech',
     tiers: [
       { tierName: '10K Standard', accountSize: 10000, maxDailyLossPercent: 5, maxTotalLossPercent: 10, profitTargetPercent: 10, minTradingDays: 0, maxTradingDays: null, newsRestrictionMinutes: 2, consistencyRule: false, trailingDrawdown: false },
@@ -135,7 +135,7 @@ export const PROP_FIRMS: PropFirm[] = [
   {
     id: 'true_forex',
     name: 'True Forex Funds',
-    logo: '🌐',
+    logo: 'network',
     website: 'https://trueforexfunds.com',
     tiers: [
       { tierName: '10K Standard', accountSize: 10000, maxDailyLossPercent: 5, maxTotalLossPercent: 10, profitTargetPercent: 8, minTradingDays: 4, maxTradingDays: 30, newsRestrictionMinutes: 0, consistencyRule: false, trailingDrawdown: false },

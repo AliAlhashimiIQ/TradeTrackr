@@ -355,7 +355,7 @@ export default function Dashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <div>
-              <span className="text-red-300 font-bold text-sm">🚨 Challenge Violation — </span>
+              <span className="text-red-300 font-bold text-sm">Challenge Violation — </span>
               <span className="text-red-300 text-sm">{challengeStatus.violationReason}</span>
             </div>
           </motion.div>
@@ -368,7 +368,9 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             className="flex items-center gap-3 px-5 py-3 bg-blue-500/10 border border-blue-500/30 rounded-xl"
           >
-            <span className="text-xl">❄️</span>
+            <svg className="w-5 h-5 text-blue-400 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18m-3-6L6 18M6 6l12 12" />
+            </svg>
             <div className="flex-1">
               <span className="text-blue-300 font-bold text-sm">Streak Frozen — </span>
               <span className="text-blue-300 text-sm">
@@ -637,8 +639,17 @@ export default function Dashboard() {
                   <div>
                     <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Journaling Streak</div>
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black ${journalStreak.currentStreak > 0 ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.04] text-gray-500'}`}>
-                        {journalStreak.currentStreak > 0 ? '🔥' : '💤'}
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${journalStreak.currentStreak > 0 ? 'bg-amber-500/15' : 'bg-white/[0.04]'}`}>
+                        {journalStreak.currentStreak > 0 ? (
+                          <svg className="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.467 5.99 5.99 0 0 0-1.925 3.546 5.974 5.974 0 0 1-2.133-1A3.75 3.75 0 0 0 12 18Z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+                          </svg>
+                        )}
                       </div>
                       <div>
                         <div className="text-3xl font-black text-white font-mono">

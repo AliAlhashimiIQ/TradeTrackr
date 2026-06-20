@@ -10,6 +10,7 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PROP_FIRMS } from '@/lib/propFirms';
+import PropFirmLogo from '@/components/ui/PropFirmLogo';
 import { useSettings } from '@/providers/SettingsProvider';
 
 function SettingsContent() {
@@ -536,7 +537,7 @@ function SettingsContent() {
                               : 'bg-[#0d0e16] border-white/[0.06] text-gray-400 hover:text-white hover:border-white/20'
                           }`}
                         >
-                          <span className="text-base">{firm.logo}</span>
+                          <PropFirmLogo firmId={firm.id} className="w-4 h-4 flex-shrink-0" />
                           <span className="truncate">{firm.name}</span>
                         </button>
                       ))}
