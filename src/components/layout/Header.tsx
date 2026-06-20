@@ -17,6 +17,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null)
 
   const handleLogout = async () => {
     await signOut()
@@ -96,23 +97,43 @@ export default function Header() {
               </div>
             </div>
 
-            <nav className="hidden lg:flex items-center bg-white/[0.04] rounded-xl p-1 border border-white/[0.04]">
+            <nav className="hidden lg:flex items-center bg-white/[0.04] rounded-xl p-1 border border-white/[0.04]" onMouseLeave={() => setHoveredPath(null)}>
               {navigationItems.map((item) => {
                 const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname?.startsWith(item.path))
                 return (
                   <Link 
                     key={item.path}
                     href={item.path}
-                    className={`px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all duration-200 ${
+                    onMouseEnter={() => setHoveredPath(item.path)}
+                    className={`relative px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors duration-200 ${
                       isActive 
-                        ? 'text-white bg-gradient-to-r from-indigo-600/85 to-blue-600/85 shadow-lg shadow-indigo-500/20' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/[0.05]'
+                        ? 'text-white' 
+                        : 'text-gray-400 hover:text-white'
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
-                    </svg>
-                    {item.label}
+                    {hoveredPath === item.path && !isActive && (
+                      <motion.div
+                        layoutId="nav-hover-bg"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        className="absolute inset-0 bg-white/[0.05] rounded-lg"
+                      />
+                    )}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-active-bg"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        className="absolute inset-0 bg-gradient-to-r from-indigo-600/80 to-blue-600/80 rounded-lg shadow-lg shadow-indigo-500/20"
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
+                      </svg>
+                      {item.label}
+                    </span>
                   </Link>
                 )
               })}

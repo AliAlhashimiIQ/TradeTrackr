@@ -3,7 +3,6 @@
 import React, { ReactNode, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import Header from './Header'
 
 interface AuthenticatedLayoutProps {
   children: ReactNode;
@@ -91,8 +90,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   }
 
   return (
-    <div className="liquid-bg min-h-screen bg-[#06070b] flex flex-col relative">
-      <Header />
+    <div className="liquid-bg flex-1 flex flex-col relative bg-[#06070b]">
       <main className="flex-1 py-4 relative z-10">
         {children}
       </main>
