@@ -286,8 +286,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         forexCount++;
       }
       
-      if (t.entry_price && t.quantity) {
-        totalPctGain += ((t.profit_loss ?? 0) / (t.entry_price * t.quantity)) * 100;
+      if (t.entry_price && t.exit_price) {
+        const pct = ((t.exit_price - t.entry_price) / t.entry_price) * 100 * (t.type === 'Long' ? 1 : -1);
+        totalPctGain += pct;
       }
       
       totalCommission += Number((t as any).commission ?? 0);
@@ -606,10 +607,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
         {/* Percent Gain */}
         {visibleColumns.percentGain && (
-          <div className="text-right text-xs font-mono text-gray-500 font-sans">
-            {inlineRowData.entry_price && inlineRowData.profit_loss
-              ? `${(((inlineRowData.profit_loss) / (inlineRowData.entry_price * (inlineRowData.lots || inlineRowData.quantity || 1))) * 100).toFixed(2)}%`
-              : '--'}
+          <div className="text-right text-xs font-mono text-gray-400 font-sans">
+            {inlineRowData.entry_price && inlineRowData.exit_price ? (
+              (() => {
+                const pct = ((inlineRowData.exit_price - inlineRowData.entry_price) / inlineRowData.entry_price) * 100 * (inlineRowData.type === 'Long' ? 1 : -1);
+                return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+              })()
+            ) : '--'}
           </div>
         )}
 
@@ -1260,7 +1264,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     {/* Percent Gain */}
                     {visibleColumns.percentGain && (
                       <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
-                        {trade.entry_price ? `${(((trade.profit_loss ?? 0) / (trade.entry_price * (trade.quantity || 1))) * 100).toFixed(2)}%` : '--'}
+                        {trade.entry_price && trade.exit_price ? (
+                          (() => {
+                            const pct = ((trade.exit_price - trade.entry_price) / trade.entry_price) * 100 * (trade.type === 'Long' ? 1 : -1);
+                            return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+                          })()
+                        ) : '--'}
                       </div>
                     )}
 
