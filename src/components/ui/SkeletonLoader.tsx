@@ -1,6 +1,5 @@
-'use client'
-
 import React from 'react'
+import { motion } from 'framer-motion'
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
@@ -64,7 +63,12 @@ export function SkeletonRow() {
 
 export function DashboardSkeleton() {
   return (
-    <div className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12"
+    >
       {/* Header */}
       <div className="flex items-center justify-between pt-2">
         <div className="space-y-2">
@@ -104,13 +108,18 @@ export function DashboardSkeleton() {
           <SkeletonRow key={i} />
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 export function AnalyticsSkeleton() {
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
@@ -154,13 +163,18 @@ export function AnalyticsSkeleton() {
         <SkeletonChart className="min-h-[400px]" />
         <SkeletonChart className="min-h-[400px]" />
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 export function TradesListSkeleton() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
@@ -209,13 +223,18 @@ export function TradesListSkeleton() {
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 export function CalendarSkeleton() {
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
+    >
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
@@ -254,6 +273,6 @@ export function CalendarSkeleton() {
           ))}
         </div>
       </div>
-    </div>
+    </motion.div>
   )
 }

@@ -229,7 +229,12 @@ export default function Dashboard() {
   
   return (
     <AuthenticatedLayout>
-      <div className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12">
+      <motion.div 
+        initial={{ opacity: 0, y: 4 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="px-4 sm:px-6 lg:px-8 space-y-6 pb-12"
+      >
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
@@ -727,7 +732,7 @@ export default function Dashboard() {
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </AuthenticatedLayout>
   )
 }

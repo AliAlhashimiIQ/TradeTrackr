@@ -724,7 +724,12 @@ export default function Trades() {
 
   return (
     <AuthenticatedLayout>
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 4 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8"
+      >
         
         {/* Extracted Header Component */}
         <TradesHeader
@@ -824,7 +829,7 @@ export default function Trades() {
           onPageSizeChange={onPageSize => { setPageSize(onPageSize); setCurrentPage(1); }}
           formatCurrency={formatCurrency}
         />
-      </div>
+      </motion.div>
 
       {/* Edit Trade Modal */}
       {showForm && (
