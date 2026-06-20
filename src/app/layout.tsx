@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans } from 'next/font/google'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import ClientNetworkWrapper from '@/components/common/ClientNetworkWrapper'
 import PageTransitionProvider from '@/providers/PageTransitionProvider'
 import { Providers } from '@/providers/Providers'
@@ -34,6 +35,7 @@ export default function RootLayout({
           <ClientNetworkWrapper />
           <ToastProvider />
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   )
