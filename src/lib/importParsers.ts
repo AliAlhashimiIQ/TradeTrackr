@@ -313,6 +313,28 @@ export const PRESET_MAPPINGS: Record<string, CsvColumnMapping> = {
   thinkorswim: { symbol: 'Symbol', type: 'Side', entry_time: 'Time Opened', exit_time: 'Time Closed', entry_price: 'Avg Entry Price', exit_price: 'Avg Exit Price', lots: 'Qty', profit_loss: 'P/L Open' },
 }
 
+function parseCsvLine(line: string, delim: string): string[] {
+  const result: string[] = [];
+  let curVal = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === delim && !inQuotes) {
+      result.push(curVal.trim().replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
+      curVal = '';
+    } else {
+      curVal += char;
+    }
+  }
+  result.push(curVal.trim().replace(/^"(.*)"$/, '$1').replace(/""/g, '"'));
+  
+  return result;
+}
+
 export function parseCsv(csvText: string, mapping: CsvColumnMapping = DEFAULT_CSV_MAPPING): ParseResult {
   const errors: string[] = []
   const trades: ParsedTrade[] = []
@@ -320,16 +342,16 @@ export function parseCsv(csvText: string, mapping: CsvColumnMapping = DEFAULT_CS
     const lines = csvText.split(/\r?\n/).filter(l => l.trim())
     if (lines.length < 2) { errors.push('CSV has no data rows.'); return { trades, errors, source: 'csv' } }
     const delim = lines[0].includes(';') ? ';' : ','
-    const headers = lines[0].split(delim).map(h => h.trim().replace(/["']/g, ''))
+    const headers = parseCsvLine(lines[0], delim).map(h => h.trim().toLowerCase());
     const colIdx = {} as Record<keyof CsvColumnMapping, number>
     for (const [field, colName] of Object.entries(mapping) as [keyof CsvColumnMapping, string][]) {
-      const i = headers.findIndex(h => h.toLowerCase() === colName.toLowerCase())
+      const i = headers.findIndex(h => h === colName.toLowerCase())
       if (i < 0) errors.push(`Column "${colName}" not found. Available: ${headers.join(', ')}`)
       colIdx[field] = i
     }
     if (errors.length > 0) return { trades, errors, source: 'csv' }
     for (let i = 1; i < lines.length; i++) {
-      const cells = lines[i].split(delim).map(c => c.trim().replace(/["']/g, ''))
+      const cells = parseCsvLine(lines[i], delim)
       if (cells.length < 3) continue
       const get = (f: keyof CsvColumnMapping) => colIdx[f] >= 0 ? cells[colIdx[f]] ?? '' : ''
       const symbol = get('symbol').toUpperCase()

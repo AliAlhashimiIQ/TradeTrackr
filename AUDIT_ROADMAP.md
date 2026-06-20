@@ -8,7 +8,7 @@ This document serves as the single source of truth for TradeTrackr from codebase
 | :--- | :--- | :--- | :--- |
 | **Phase 0 — Current State & Summary** | — | — | ⚠️ **No-Go** |
 | **Phase 1 — Critical Bugs & Security** | 9 | 100% (9/9) | 🟢 **Go** |
-| **Phase 2 — Performance & Architecture** | 4 | 50% (2/4) | 🟡 **Needs Pre-Launch Refactor** |
+| **Phase 2 — Performance & Architecture** | 4 | 100% (4/4) | 🟢 **Go** |
 | **Phase 3 — UI/UX, Accessibility, Mobile** | 5 | 20% (1/5) | 🟡 **Needs Polish** |
 | **Phase 4 — Feature Gap vs Competitors** | 1 | 0% (0/1) | 🟡 **Gap to Competitors is Wide** |
 | **Phase 5 — Retention & Engagement** | 3 | 0% (0/3) | 🔴 **Major Risk to LTV** |
@@ -136,21 +136,21 @@ TradeTrackr is a modern, high-aesthetic trading journal and analytics dashboard 
 
 ## Phase 2 — Performance & Architecture
 
-- [ ] **[HIGH]** O(N) Client-Side Calculations on Analytics Load — `src/app/analytics/page.tsx:139`
+- [x] **[HIGH]** O(N) Client-Side Calculations on Analytics Load — `src/app/analytics/page.tsx:139`
   - **Current behavior**: Page fetches the entire trade list (`useTrades('all')`) and runs 9 separate calculation loops sequentially in React renders.
   - **Expected/desired behavior**: Heavy aggregations (heatmaps, distributions, strategy P&L) should be pre-calculated in background DB views or RPC calls, or calculated off the main thread.
   - **Why it matters**: If a active trader logs 5000+ trades, clicking the Analytics tab will lock the browser thread for several seconds, degrading UX.
   - **Fix**: Delegate math calculations to database functions (RPC) or offload client calculations into a Web Worker.
   - **Effort**: M
-  - **Status**: Not started
+  - **Status**: Completed
 
-- [ ] **[MEDIUM]** Brittle Split-based CSV Parser — `src/lib/importParsers.ts:318`, `src/lib/importParsers.ts:330`
+- [x] **[MEDIUM]** Brittle Split-based CSV Parser — `src/lib/importParsers.ts:318`, `src/lib/importParsers.ts:330`
   - **Current behavior**: CSV columns are extracted using basic `csvText.split(/\r?\n/)` and `line.split(delim)`.
   - **Expected/desired behavior**: CSV files should be processed using a standard parser that handles commas inside double quotes.
   - **Why it matters**: If a user logs a trade note with a comma (e.g., `"Took trade at VWAP, exit near EMA"`), the split parser shifts all subsequent columns, corrupting quantities and PnL.
   - **Fix**: Integrate a lightweight, zero-dependency CSV parser library (like PapaParse) or use a robust regex.
   - **Effort**: S
-  - **Status**: Not started
+  - **Status**: Completed
 
 - [x] **[MEDIUM]** Monolithic Trades Listing Page — `src/app/trades/page.tsx`
   - **Current behavior**: Original page was a massive 3,250-line file handling filters, state management, column widths, and table styling.

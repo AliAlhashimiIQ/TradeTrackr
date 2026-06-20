@@ -25,15 +25,6 @@ import { getAllTrades } from '@/lib/tradingApi';
 import { Trade } from '@/lib/types';
 import { isForexPair, formatPips } from '@/lib/forexUtils';
 import {
-  calculatePerformanceMetrics,
-  generateEquityCurveData,
-  generatePnLDistributionData,
-  generateMonthlyPerformanceData,
-  generateStrategyPerformanceData,
-  generateSymbolPerformanceData,
-  generateTradeTypePerformanceData,
-  generateTimeOfDayPerformanceData,
-  generatePerformanceHeatmapData,
   PerformanceMetrics,
   TimeSeriesPerformance,
   TradeDistribution,
@@ -60,6 +51,7 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { trades: cachedTrades, isLoading: tradesLoading } = useTrades('all');
   const [loading, setLoading] = useState(true);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'mistakes' | 'propfirm'>('overview');
@@ -133,39 +125,59 @@ export default function AnalyticsPage() {
     processTrades();
   }, [user, cachedTrades, tradesLoading]);
   
-  // ── 6.3 Memoize ALL heavy chart data in one pass ─────────────────────────
-  // Replaces 9 separate setState calls with a single memoised computation.
-  // Only re-runs when filteredTrades reference changes.
-  const computedMetrics = useMemo(() => {
-    if (!filteredTrades.length) return null;
-    return {
-      metrics:      calculatePerformanceMetrics(filteredTrades),
-      equityCurve:  generateEquityCurveData(filteredTrades),
-      distribution: generatePnLDistributionData(filteredTrades, 10),
-      monthly:      generateMonthlyPerformanceData(filteredTrades),
-      strategy:     generateStrategyPerformanceData(filteredTrades),
-      symbol:       generateSymbolPerformanceData(filteredTrades),
-      tradeType:    generateTradeTypePerformanceData(filteredTrades),
-      timeOfDay:    generateTimeOfDayPerformanceData(filteredTrades),
-      heatmap:      generatePerformanceHeatmapData(filteredTrades),
-      totalPips:    filteredTrades.reduce((s, t) => s + (t.pips || 0), 0),
+  // ── 6.3 Offload heavy chart data calculations to a Web Worker ────────────────
+  // Prevents blocking/freezing the main UI thread when loading thousands of trades.
+  useEffect(() => {
+    if (!filteredTrades.length) {
+      setMetrics(null);
+      setEquityCurveData([]);
+      setDistributionData([]);
+      setMonthlyData([]);
+      setStrategyData([]);
+      setSymbolData([]);
+      setTradeTypeData([]);
+      setTimeOfDayData([]);
+      setHeatmapData([]);
+      setTotalPips(0);
+      return;
+    }
+
+    setIsCalculating(true);
+    
+    const worker = new Worker(new URL('./analytics.worker.ts', import.meta.url));
+
+    worker.postMessage({ trades: filteredTrades });
+
+    worker.onmessage = (event) => {
+      const data = event.data;
+      if (data.error) {
+        console.error('Analytics Web Worker error:', data.error);
+      } else {
+        setMetrics(data.metrics);
+        setEquityCurveData(data.equityCurve);
+        setDistributionData(data.distribution);
+        setMonthlyData(data.monthly);
+        setStrategyData(data.strategy);
+        setSymbolData(data.symbol);
+        setTradeTypeData(data.tradeType);
+        setTimeOfDayData(data.timeOfDay);
+        setHeatmapData(data.heatmap);
+        setTotalPips(data.totalPips);
+      }
+      setIsCalculating(false);
+      worker.terminate();
+    };
+
+    worker.onerror = (err) => {
+      console.error('Analytics Web Worker onerror:', err);
+      setIsCalculating(false);
+      worker.terminate();
+    };
+
+    return () => {
+      worker.terminate();
     };
   }, [filteredTrades]);
-
-  // Sync memoised values back into state for components that read from state
-  useEffect(() => {
-    if (!computedMetrics) return;
-    setMetrics(computedMetrics.metrics);
-    setEquityCurveData(computedMetrics.equityCurve);
-    setDistributionData(computedMetrics.distribution);
-    setMonthlyData(computedMetrics.monthly);
-    setStrategyData(computedMetrics.strategy);
-    setSymbolData(computedMetrics.symbol);
-    setTradeTypeData(computedMetrics.tradeType);
-    setTimeOfDayData(computedMetrics.timeOfDay);
-    setHeatmapData(computedMetrics.heatmap);
-    setTotalPips(computedMetrics.totalPips);
-  }, [computedMetrics]);
   
   // Apply time period filter
   useEffect(() => {
@@ -286,7 +298,7 @@ export default function AnalyticsPage() {
     value: point.equity
   }));
   
-  if (authLoading || loading) {
+  if (authLoading || loading || isCalculating) {
     return (
       <AuthenticatedLayout>
         <AnalyticsSkeleton />
