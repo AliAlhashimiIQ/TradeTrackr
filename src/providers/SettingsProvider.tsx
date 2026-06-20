@@ -11,6 +11,10 @@ interface SettingsContextType {
   setCurrency: (currency: string) => void;
   timezone: string;
   setTimezone: (timezone: string) => void;
+  streakFreezes: number;
+  setStreakFreezes: (count: number) => Promise<void>;
+  frozenDates: string[];
+  setFrozenDates: (dates: string[]) => Promise<void>;
   loading: boolean;
   refreshSettings: () => Promise<void>;
 }
@@ -22,6 +26,8 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
   const [colorblindMode, setColorblindModeState] = useState(false)
   const [currency, setCurrency] = useState('USD')
   const [timezone, setTimezone] = useState('UTC')
+  const [streakFreezes, setStreakFreezesState] = useState(1)
+  const [frozenDates, setFrozenDatesState] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
   const setColorblindMode = (enabled: boolean) => {
@@ -31,6 +37,64 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       window.dispatchEvent(new Event('settings_changed'))
     }
   };
+
+  const setStreakFreezes = async (count: number) => {
+    setStreakFreezesState(count)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('settings_streakFreezes', String(count))
+    }
+    if (!user) return
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
+        .single()
+      const currentSettings = (profile?.settings as any) || {}
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email || '',
+          settings: {
+            ...currentSettings,
+            streakFreezes: count
+          },
+          updated_at: new Date().toISOString()
+        })
+    } catch (err) {
+      console.error('Failed to save streak freezes:', err)
+    }
+  }
+
+  const setFrozenDates = async (dates: string[]) => {
+    setFrozenDatesState(dates)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('settings_frozenDates', JSON.stringify(dates))
+    }
+    if (!user) return
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('settings')
+        .eq('id', user.id)
+        .single()
+      const currentSettings = (profile?.settings as any) || {}
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email || '',
+          settings: {
+            ...currentSettings,
+            frozenDates: dates
+          },
+          updated_at: new Date().toISOString()
+        })
+    } catch (err) {
+      console.error('Failed to save frozen dates:', err)
+    }
+  }
 
   const loadSettings = async () => {
     if (!user) {
@@ -48,6 +112,12 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
         if (localCurr) setCurrency(localCurr)
         const localTz = localStorage.getItem('settings_timezone')
         if (localTz) setTimezone(localTz)
+        const localSf = localStorage.getItem('settings_streakFreezes')
+        if (localSf !== null) setStreakFreezesState(Number(localSf))
+        const localFd = localStorage.getItem('settings_frozenDates')
+        if (localFd !== null) {
+          try { setFrozenDatesState(JSON.parse(localFd)) } catch {}
+        }
       }
 
       // Then fetch from supabase for source of truth
@@ -71,6 +141,15 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
         if (settings.timezone) {
           setTimezone(settings.timezone)
           localStorage.setItem('settings_timezone', settings.timezone)
+        }
+        if (settings.streakFreezes !== undefined) {
+          const sf = Number(settings.streakFreezes)
+          setStreakFreezesState(sf)
+          localStorage.setItem('settings_streakFreezes', String(sf))
+        }
+        if (settings.frozenDates !== undefined && Array.isArray(settings.frozenDates)) {
+          setFrozenDatesState(settings.frozenDates)
+          localStorage.setItem('settings_frozenDates', JSON.stringify(settings.frozenDates))
         }
       }
     } catch (e) {
@@ -108,6 +187,12 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       if (localCurr) setCurrency(localCurr)
       const localTz = localStorage.getItem('settings_timezone')
       if (localTz) setTimezone(localTz)
+      const localSf = localStorage.getItem('settings_streakFreezes')
+      if (localSf !== null) setStreakFreezesState(Number(localSf))
+      const localFd = localStorage.getItem('settings_frozenDates')
+      if (localFd !== null) {
+        try { setFrozenDatesState(JSON.parse(localFd)) } catch {}
+      }
     }
     window.addEventListener('settings_changed', handleSettingsChanged)
     return () => {
@@ -123,6 +208,10 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
       setCurrency,
       timezone,
       setTimezone,
+      streakFreezes,
+      setStreakFreezes,
+      frozenDates,
+      setFrozenDates,
       loading,
       refreshSettings: loadSettings
     }}>

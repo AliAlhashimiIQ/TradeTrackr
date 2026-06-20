@@ -11,7 +11,7 @@ This document serves as the single source of truth for TradeTrackr from codebase
 | **Phase 2 — Performance & Architecture** | 4 | 100% (4/4) | 🟢 **Go** |
 | **Phase 3 — UI/UX, Accessibility, Mobile** | 5 | 100% (5/5) | 🟢 **Go** |
 | **Phase 4 — Feature Gap vs Competitors** | 1 | 100% (1/1) | 🟢 **Go** |
-| **Phase 5 — Retention & Engagement** | 3 | 0% (0/3) | 🔴 **Major Risk to LTV** |
+| **Phase 5 — Retention & Engagement** | 3 | 100% (3/3) | 🟢 **Go** |
 | **Phase 6 — Monetization & Billing** | 3 | 0% (0/3) | 🔴 **Incomplete Core Business Engine** |
 | **Phase 7 — Code Quality & Maintainability** | 3 | 33% (1/3) | 🟡 **Decent Foundation** |
 | **Phase 8 — Pre-Launch Go/No-Go Checklist** | 10 | 10% (1/10) | 🔴 **Not Ready for Production** |
@@ -236,29 +236,29 @@ TradeTrackr is a modern, high-aesthetic trading journal and analytics dashboard 
 
 ## Phase 5 — Retention & Engagement Mechanics
 
-- [ ] **[HIGH]** Low User Onboarding Retention hook — `welcome/page.tsx`
+- [x] **[HIGH]** Low User Onboarding Retention hook — `welcome/page.tsx`
   - **Current behavior**: User completes onboarding, arriving on an empty dashboard with no active encouragement.
   - **Expected/desired behavior**: Onboarding should guide the user to perform their first action (importing 3 trades or creating a mock account) immediately.
   - **Why it matters**: 50% of trading journal trial signups churn within the first 24 hours if the onboarding flow doesn't show quick value.
   - **Fix**: Integrate a step-by-step progress guide on the empty dashboard, rewarding the first logged trade with a confirmation confetti pop.
   - **Effort**: M
-  - **Status**: Not started
+  - **Status**: Completed
 
-- [ ] **[MEDIUM]** Streak resets are discouraging to traders — `src/hooks/useStreak.ts`
+- [x] **[MEDIUM]** Streak resets are discouraging to traders — `src/hooks/useStreak.ts`
   - **Current behavior**: If a user misses a day of journaling, the streak resets to 0.
   - **Expected/desired behavior**: Implement a "streak freeze" badge system or gamified check-ins to prevent user discouragement.
   - **Why it matters**: Active traders who lose a high streak feel discouraged and often stop journaling entirely.
   - **Fix**: Allow users to earn "streak freeze" tokens by maintaining consistent logging.
   - **Effort**: S
-  - **Status**: Not started
+  - **Status**: Completed
 
-- [ ] **[MEDIUM]** Missing Weekly Performance Digests — `src/app/api/ai`
+- [x] **[MEDIUM]** Missing Weekly Performance Digests — `src/app/api/ai`
   - **Current behavior**: User must log in manually to see their stats; no weekly notifications are sent.
   - **Expected/desired behavior**: System should compile a weekly summary email detailing best setups and psychological leaks, sent automatically.
   - **Why it matters**: Email reports re-engage users who forgot to open the app during a busy trading week.
   - **Fix**: Write a cron-job endpoint utilizing `resend` to compile and send weekly reports.
   - **Effort**: M
-  - **Status**: Not started
+  - **Status**: Completed
 
 ---
 
