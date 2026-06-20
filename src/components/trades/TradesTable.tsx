@@ -2,10 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trade, TradingAccount } from '@/lib/types';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
-import { resolveTradingViewUrl, getTagStyle } from '@/lib/utils';
+import { resolveTradingViewUrl, getTagStyle, getPLColorClasses, toLocalYMD, toLocalISOString, toLocalDatetimeLocal, fromLocalDatetimeLocal } from '@/lib/utils';
 import EmptyState from '@/components/ui/EmptyState';
 import InlineTagPopover from './InlineTagPopover';
 import { toast } from 'react-hot-toast';
+import { useSettings } from '@/providers/SettingsProvider';
 
 export const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   checkbox: 52,
@@ -122,6 +123,9 @@ export interface TradesTableProps {
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
   formatCurrency: (value: number) => string;
+  onManualLogClick?: () => void;
+  onLoadDemoClick?: () => Promise<void> | void;
+  isDemoLoading?: boolean;
 }
 
 const getAccountSizeForTrade = (
@@ -205,7 +209,11 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   onPageChange,
   onPageSizeChange,
   formatCurrency,
+  onManualLogClick,
+  onLoadDemoClick,
+  isDemoLoading = false
 }) => {
+  const { colorblindMode } = useSettings();
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
   const [inlineScreenshotTab, setInlineScreenshotTab] = useState<'upload' | 'embed'>('upload');
@@ -380,8 +388,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div
             className="text-right font-bold tabular-nums"
             style={{
-              color: totals.totalPnL > 0 ? '#34d399' : totals.totalPnL < 0 ? '#f87171' : '#9ca3af',
-              textShadow: totals.totalPnL !== 0 ? `0 0 10px ${totals.totalPnL > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)'}` : 'none'
+              color: getPLColorClasses(totals.totalPnL, colorblindMode).hexColor,
+              textShadow: totals.totalPnL !== 0 ? `0 0 10px ${getPLColorClasses(totals.totalPnL, colorblindMode).hexShadow}` : 'none'
             }}
           >
             {totals.totalPnL > 0 ? '+' : ''}{formatCurrency(totals.totalPnL)}
@@ -390,7 +398,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         {visibleColumns.percentGain && (
           <div
             className="text-right tabular-nums"
-            style={{ color: totals.avgPctGain > 0 ? '#34d399' : totals.avgPctGain < 0 ? '#f87171' : '#9ca3af' }}
+            style={{ color: getPLColorClasses(totals.avgPctGain, colorblindMode).hexColor }}
           >
             {totals.avgPctGain !== 0 ? `${totals.avgPctGain.toFixed(2)}% avg` : '--'}
           </div>
@@ -404,8 +412,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div
             className="text-right font-bold tabular-nums"
             style={{
-              color: totals.totalNetProfit > 0 ? '#34d399' : totals.totalNetProfit < 0 ? '#f87171' : '#9ca3af',
-              textShadow: totals.totalNetProfit !== 0 ? `0 0 10px ${totals.totalNetProfit > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.12)'}` : 'none'
+              color: getPLColorClasses(totals.totalNetProfit, colorblindMode).hexColor,
+              textShadow: totals.totalNetProfit !== 0 ? `0 0 10px ${getPLColorClasses(totals.totalNetProfit, colorblindMode).hexShadow}` : 'none'
             }}
           >
             {totals.totalNetProfit > 0 ? '+' : ''}{formatCurrency(totals.totalNetProfit)}
@@ -539,21 +547,24 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         </div>
 
         {/* Side */}
-        {visibleColumns.side && (
-          <div className="flex items-center">
-            <button
-              type="button"
-              onClick={() => onInlineChange('type', inlineRowData.type === 'Long' ? 'Short' : 'Long')}
-              className={`w-full py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 border hover:scale-[1.02] active:scale-[0.98] ${
-                inlineRowData.type === 'Long'
-                  ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.12)]'
-                  : 'bg-red-500/15 hover:bg-red-500/25 text-red-400 border-red-500/30 hover:border-red-500/50 shadow-[0_0_16px_rgba(239,68,68,0.12)]'
-              }`}
-            >
-              {inlineRowData.type === 'Long' ? 'BUY' : 'SELL'}
-            </button>
-          </div>
-        )}
+        {visibleColumns.side && (() => {
+          const sideColor = getPLColorClasses(inlineRowData.type === 'Long' ? 1 : -1, colorblindMode);
+          return (
+            <div className="flex items-center">
+              <button
+                type="button"
+                onClick={() => onInlineChange('type', inlineRowData.type === 'Long' ? 'Short' : 'Long')}
+                className={`w-full py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-widest transition-all duration-200 border hover:scale-[1.02] active:scale-[0.98] ${
+                  inlineRowData.type === 'Long'
+                    ? `${sideColor.bg15} ${sideColor.text} ${sideColor.border30} hover:${sideColor.border50} ${sideColor.shadow}`
+                    : `${sideColor.bg15} ${sideColor.text} ${sideColor.border30} hover:${sideColor.border50} ${sideColor.shadow}`
+                }`}
+              >
+                {inlineRowData.type === 'Long' ? 'BUY' : 'SELL'}
+              </button>
+            </div>
+          );
+        })()}
 
         {/* Entry Price */}
         {visibleColumns.entry && (
@@ -629,7 +640,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               onChange={e => onInlineChange('profit_loss', parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
               className={`w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-600 focus:outline-none font-mono font-bold transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset] ${
-                (inlineRowData.profit_loss || 0) > 0 ? 'text-emerald-400' : (inlineRowData.profit_loss || 0) < 0 ? 'text-red-400' : 'text-white'
+                (inlineRowData.profit_loss || 0) !== 0 ? getPLColorClasses(inlineRowData.profit_loss || 0, colorblindMode).text : 'text-white'
               }`}
               placeholder="0.00"
             />
@@ -677,9 +688,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div>
             <input
               type="date"
-              value={inlineRowData.entry_time ? inlineRowData.entry_time.split('T')[0] : ''}
+              value={inlineRowData.entry_time ? toLocalYMD(inlineRowData.entry_time) : ''}
               onChange={e => {
-                const dateVal = e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString();
+                const dateVal = e.target.value ? toLocalISOString(e.target.value) : new Date().toISOString();
                 onInlineChange('entry_time', dateVal);
                 onInlineChange('exit_time', dateVal);
               }}
@@ -694,8 +705,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div>
             <input
               type="datetime-local"
-              value={inlineRowData.entry_time ? new Date(inlineRowData.entry_time).toISOString().slice(0, 16) : ''}
-              onChange={e => onInlineChange('entry_time', e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+              value={inlineRowData.entry_time ? toLocalDatetimeLocal(inlineRowData.entry_time) : ''}
+              onChange={e => onInlineChange('entry_time', e.target.value ? fromLocalDatetimeLocal(e.target.value) : new Date().toISOString())}
               onKeyDown={handleKeyDown}
               className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
             />
@@ -705,8 +716,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div>
             <input
               type="datetime-local"
-              value={inlineRowData.exit_time ? new Date(inlineRowData.exit_time).toISOString().slice(0, 16) : ''}
-              onChange={e => onInlineChange('exit_time', e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString())}
+              value={inlineRowData.exit_time ? toLocalDatetimeLocal(inlineRowData.exit_time) : ''}
+              onChange={e => onInlineChange('exit_time', e.target.value ? fromLocalDatetimeLocal(e.target.value) : new Date().toISOString())}
               onKeyDown={handleKeyDown}
               className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
             />
@@ -1113,7 +1124,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
           {/* Rows */}
           {filteredTrades.length === 0 && inlineNewRowIndex === null ? (
-            <EmptyState variant="trades" />
+            <EmptyState
+              variant="trades"
+              onManualLogClick={onManualLogClick}
+              onLoadDemoClick={onLoadDemoClick}
+              isDemoLoading={isDemoLoading}
+            />
           ) : (
             <>
               {inlineNewRowIndex === 0 && filteredTrades.length === 0 && renderInlineEditorRow()}
@@ -1219,12 +1235,16 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         </button>
                       )}
                     </div>
-                    
                     {/* Symbol */}
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <div className={`${tableDensity === 'compact' ? 'w-6 h-6 text-[9px]' : 'w-7 h-7 text-xs'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${(trade.profit_loss ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-400 ring-1 ring-emerald-500/20' : 'bg-red-500/10 text-red-400 ring-1 ring-red-500/20'}`}>
-                        {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
-                      </div>
+                      {(() => {
+                        const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                        return (
+                          <div className={`${tableDensity === 'compact' ? 'w-6 h-6 text-[9px]' : 'w-7 h-7 text-xs'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${pnlColors.bg10} ${pnlColors.text} ring-1 ${pnlColors.ring20}`}>
+                            {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
+                          </div>
+                        );
+                      })()}
                       <div className="min-w-0 truncate">
                         <div className="flex items-center gap-1 min-w-0">
                           <span className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white group-hover/row:text-indigo-300 transition-colors duration-200 truncate`}>{trade.symbol}</span>
@@ -1265,39 +1285,48 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     )}
 
                     {/* Pips */}
-                    {visibleColumns.pips && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!isForexPair(trade.symbol) ? 'text-gray-400' : (trade.pips ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
-                        {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
-                      </div>
-                    )}
+                    {visibleColumns.pips && (() => {
+                      const pipColors = getPLColorClasses(trade.pips ?? 0, colorblindMode);
+                      return (
+                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!isForexPair(trade.symbol) ? 'text-gray-400' : pipColors.text70}`}>
+                          {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
+                        </div>
+                      );
+                    })()}
 
                     {/* P&L */}
-                    {visibleColumns.pnl && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold tabular-nums text-right`}>
-                        <span
-                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg"
-                          style={{
-                            color: (trade.profit_loss ?? 0) > 0 ? '#34d399' : (trade.profit_loss ?? 0) < 0 ? '#f87171' : '#9ca3af',
-                            background: (trade.profit_loss ?? 0) > 0 ? 'rgba(16,185,129,0.06)' : (trade.profit_loss ?? 0) < 0 ? 'rgba(239,68,68,0.06)' : 'transparent',
-                            textShadow: (trade.profit_loss ?? 0) !== 0 ? `0 0 12px ${(trade.profit_loss ?? 0) > 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.18)'}` : 'none',
-                          }}
-                        >
-                          {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
-                        </span>
-                      </div>
-                    )}
+                    {visibleColumns.pnl && (() => {
+                      const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                      return (
+                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold tabular-nums text-right`}>
+                          <span
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg"
+                            style={{
+                              color: pnlColors.hexColor,
+                              background: pnlColors.hexBg,
+                              textShadow: (trade.profit_loss ?? 0) !== 0 ? `0 0 12px ${pnlColors.hexShadow}` : 'none',
+                            }}
+                          >
+                            {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                          </span>
+                        </div>
+                      );
+                    })()}
 
                     {/* Percent Gain */}
-                    {visibleColumns.percentGain && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-500/70' : 'text-red-500/70'}`}>
-                        {trade.profit_loss !== undefined && trade.profit_loss !== null ? (
-                          (() => {
-                            const pct = getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance);
-                            return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
-                          })()
-                        ) : '--'}
-                      </div>
-                    )}
+                    {visibleColumns.percentGain && (() => {
+                      const gainColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                      return (
+                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${gainColors.text70}`}>
+                          {trade.profit_loss !== undefined && trade.profit_loss !== null ? (
+                            (() => {
+                              const pct = getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance);
+                              return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
+                            })()
+                          ) : '--'}
+                        </div>
+                      );
+                    })()}
 
                     {/* Commission */}
                     {visibleColumns.commission && (
@@ -1307,11 +1336,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     )}
 
                     {/* Net Profit */}
-                    {visibleColumns.netProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
-                        {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0))}
-                      </div>
-                    )}
+                    {visibleColumns.netProfit && (() => {
+                      const netColors = getPLColorClasses((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0), colorblindMode);
+                      return (
+                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${netColors.text}`}>
+                          {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0))}
+                        </div>
+                      );
+                    })()}
 
                     {/* Date */}
                     {visibleColumns.date && (
@@ -1635,7 +1667,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       {/* Mobile view */}
       <div className="md:hidden space-y-4">
         {filteredTrades.length === 0 ? (
-          <EmptyState variant="trades" />
+          <EmptyState
+            variant="trades"
+            onManualLogClick={onManualLogClick}
+            onLoadDemoClick={onLoadDemoClick}
+            isDemoLoading={isDemoLoading}
+          />
         ) : (
           <>
             {filteredTrades.map((trade) => {
@@ -1658,44 +1695,57 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   }}
                 >
                   {/* Colored Glow at the bottom of the card */}
-                  {pnlValue !== 0 && (
-                    <div
-                      className="absolute bottom-[-20px] right-[-20px] w-24 h-24 rounded-full pointer-events-none blur-[40px]"
-                      style={{
-                        background: isProfit ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
-                      }}
-                    />
-                  )}
+                  {pnlValue !== 0 && (() => {
+                    const glowColors = getPLColorClasses(pnlValue, colorblindMode);
+                    return (
+                      <div
+                        className="absolute bottom-[-20px] right-[-20px] w-24 h-24 rounded-full pointer-events-none blur-[40px]"
+                        style={{
+                          background: glowColors.hexBg,
+                        }}
+                      />
+                    );
+                  })()}
 
                   {/* Card Header: Symbol, Type, P&L */}
                   <div className="flex items-center justify-between mb-3 relative z-10">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold text-white tracking-tight">{trade.symbol}</span>
-                      <span
-                        className="text-[9px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider"
-                        style={
-                          isLong
-                            ? { background: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }
-                            : { background: 'rgba(239,68,68,0.1)', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)' }
-                        }
-                      >
-                        {isLong ? 'BUY' : 'SELL'}
-                      </span>
+                      {(() => {
+                        const sideColors = getPLColorClasses(isLong ? 1 : -1, colorblindMode);
+                        return (
+                          <span
+                            className="text-[9px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wider"
+                            style={{
+                              background: sideColors.hexBg,
+                              color: sideColors.hexColor,
+                              border: `1px solid ${sideColors.hexBg.replace('0.06', '0.2')}`
+                            }}
+                          >
+                            {isLong ? 'BUY' : 'SELL'}
+                          </span>
+                        );
+                      })()}
                       {trade.account_id && accountsMap.has(trade.account_id) && (
                         <span className="text-[8px] px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase tracking-wider">
                           {accountsMap.get(trade.account_id)}
                         </span>
                       )}
                     </div>
-                    <span
-                      className="text-sm font-bold tabular-nums px-2.5 py-0.5 rounded-lg"
-                      style={{
-                        color: isProfit ? '#34d399' : isLoss ? '#f87171' : '#9ca3af',
-                        background: isProfit ? 'rgba(16,185,129,0.06)' : isLoss ? 'rgba(239,68,68,0.06)' : 'transparent',
-                      }}
-                    >
-                      {pnlValue > 0 ? '+' : ''}{formatCurrency(pnlValue)}
-                    </span>
+                    {(() => {
+                      const pnlColors = getPLColorClasses(pnlValue, colorblindMode);
+                      return (
+                        <span
+                          className="text-sm font-bold tabular-nums px-2.5 py-0.5 rounded-lg"
+                          style={{
+                            color: pnlColors.hexColor,
+                            background: pnlColors.hexBg,
+                          }}
+                        >
+                          {pnlValue > 0 ? '+' : ''}{formatCurrency(pnlValue)}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   {/* Details Grid: Date, Price, Lots, Pips */}

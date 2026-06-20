@@ -1,12 +1,15 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ChallengeStatus } from '@/lib/propFirms'
+import { Trade } from '@/lib/types'
+import { getEconomicCalendar } from '@/lib/economicCalendarApi'
 
 interface Props {
   status: ChallengeStatus
+  trades?: Trade[]
 }
 
 function fmt(n: number) {
@@ -17,7 +20,30 @@ function pct(n: number) {
   return `${n >= 0 ? '+' : ''}${n.toFixed(2)}%`
 }
 
-export default function ChallengeDashboardWidget({ status }: Props) {
+function getSymbolCurrencies(symbol: string): string[] {
+  const clean = symbol.toUpperCase().replace(/[^A-Z]/g, '');
+  if (clean.length === 6) {
+    return [clean.slice(0, 3), clean.slice(3, 6)];
+  }
+  if (clean.startsWith('XAU')) return ['USD', 'XAU'];
+  if (clean.startsWith('BTC') || clean.startsWith('ETH')) return ['USD'];
+  return [clean];
+}
+
+function getCountryCurrency(country: string): string {
+  const c = country.toLowerCase();
+  if (c.includes('united states') || c.includes('us')) return 'USD';
+  if (c.includes('euro') || c.includes('germany') || c.includes('france') || c.includes('italy')) return 'EUR';
+  if (c.includes('united kingdom') || c.includes('uk') || c.includes('england')) return 'GBP';
+  if (c.includes('japan')) return 'JPY';
+  if (c.includes('canada')) return 'CAD';
+  if (c.includes('australia')) return 'AUD';
+  if (c.includes('new zealand')) return 'NZD';
+  if (c.includes('switzerland')) return 'CHF';
+  return '';
+}
+
+export default function ChallengeDashboardWidget({ status, trades = [] }: Props) {
   const {
     firm, tier, pnl, pnlPercent, profitTargetAmount,
     maxDailyLossAmount, maxTotalLossAmount,
@@ -30,20 +56,122 @@ export default function ChallengeDashboardWidget({ status }: Props) {
   const totalDanger = totalDrawdownPercent >= 80
   const isWinning = pnl >= 0
 
+  const [newsEvents, setNewsEvents] = useState<any[]>([])
+  const [loadingNews, setLoadingNews] = useState(false)
+
+  // Fetch News Events
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        setLoadingNews(true)
+        const start = status.startDate
+        // Get window of challenge start to tomorrow
+        const end = new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0]
+        
+        const events = await getEconomicCalendar({
+          startDate: start,
+          endDate: end,
+          importance: ['3'] // high impact news
+        })
+        
+        if (events && Array.isArray(events)) {
+          setNewsEvents(events)
+        }
+      } catch (err) {
+        console.error('Failed to load news for breach check:', err)
+      } finally {
+        setLoadingNews(false)
+      }
+    }
+    fetchNews()
+  }, [status.startDate])
+
+  // Consistency Rule progress calculations
+  const consistencyStats = useMemo(() => {
+    if (!trades || trades.length === 0 || !profitTargetAmount) return null
+    
+    // Group trades by entry date (YYYY-MM-DD)
+    const dailyPnlMap: Record<string, number> = {}
+    
+    // Filter trades that belong to this challenge (after challenge start date)
+    const challengeTrades = trades.filter(t => t.entry_time >= status.startDate)
+    if (challengeTrades.length === 0) return null
+
+    challengeTrades.forEach(trade => {
+      const dateStr = trade.entry_time.split('T')[0]
+      dailyPnlMap[dateStr] = (dailyPnlMap[dateStr] || 0) + (trade.profit_loss || 0)
+    })
+    
+    const dailyPnls = Object.values(dailyPnlMap)
+    const bestDayPnl = Math.max(...dailyPnls, 0)
+    
+    const ratio = bestDayPnl / profitTargetAmount
+    const isClose = ratio >= 0.32 && ratio < 0.40
+    const isBreached = ratio >= 0.40
+    
+    return {
+      bestDayPnl,
+      ratio,
+      isClose,
+      isBreached,
+      percentage: ratio * 100
+    }
+  }, [trades, profitTargetAmount, status.startDate])
+
+  // News Breach Checker
+  const newsBreaches = useMemo(() => {
+    if (!trades || trades.length === 0 || newsEvents.length === 0) return []
+    
+    const breaches: Array<{ trade: Trade; event: any; diffMinutes: number }> = []
+    
+    const challengeTrades = trades.filter(t => t.entry_time >= status.startDate)
+
+    challengeTrades.forEach(trade => {
+      if (!trade.entry_time) return
+      const tradeTime = new Date(trade.entry_time).getTime()
+      const symbolCurrencies = getSymbolCurrencies(trade.symbol)
+      
+      newsEvents.forEach(event => {
+        if (!event.Date || Number(event.Importance) < 3) return
+        
+        const eventCurrency = getCountryCurrency(event.Country || '')
+        if (!eventCurrency || !symbolCurrencies.includes(eventCurrency)) return
+        
+        const newsTime = new Date(event.Date).getTime()
+        const diffMinutes = Math.abs(tradeTime - newsTime) / 60000
+        
+        if (diffMinutes <= 2) {
+          breaches.push({
+            trade,
+            event,
+            diffMinutes
+          })
+        }
+      })
+    })
+    
+    return breaches
+  }, [trades, newsEvents, status.startDate])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="card rounded-2xl border border-white/[0.07] bg-[#0d0e16] overflow-hidden"
+      className="card rounded-2xl border border-white/[0.07] bg-[#0d0e16] overflow-hidden flex flex-col"
     >
       {/* Violation banner */}
-      {isViolated && (
+      {(isViolated || (consistencyStats?.isBreached && tier.consistencyRule)) && (
         <div className="bg-red-500/20 border-b border-red-500/40 px-4 py-2.5 flex items-center gap-2">
           <svg className="w-4 h-4 text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <span className="text-red-300 text-xs font-semibold">{violationReason}</span>
+          <span className="text-red-300 text-xs font-semibold">
+            {isViolated 
+              ? violationReason 
+              : `Consistency rule breached (Best day ${consistencyStats?.percentage.toFixed(1)}% of target exceeds 40% limit)`
+            }
+          </span>
         </div>
       )}
 
@@ -73,9 +201,9 @@ export default function ChallengeDashboardWidget({ status }: Props) {
       </div>
 
       {/* Metrics Grid */}
-      <div className="p-5 grid grid-cols-2 gap-4">
+      <div className="p-5 flex-1 space-y-4">
         {/* Profit Progress */}
-        <div className="col-span-2">
+        <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Profit Progress</span>
             <div className="flex items-baseline gap-1">
@@ -100,69 +228,132 @@ export default function ChallengeDashboardWidget({ status }: Props) {
           </div>
         </div>
 
-        {/* Daily Loss Meter */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Daily DD</span>
-            <span className={`text-[11px] font-bold ${dailyDanger ? 'text-red-400' : 'text-gray-300'}`}>
-              {fmt(Math.abs(todayPnL < 0 ? todayPnL : 0))} / {fmt(maxDailyLossAmount)}
-            </span>
+        {/* Consistency Rule Gauge (40% rule) */}
+        {consistencyStats && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Consistency Gauge</span>
+              <div className="flex items-baseline gap-1 text-xs">
+                <span className={`font-bold ${
+                  consistencyStats.isBreached 
+                    ? 'text-red-400' 
+                    : consistencyStats.isClose 
+                    ? 'text-amber-400' 
+                    : 'text-gray-300'
+                }`}>
+                  {consistencyStats.percentage.toFixed(1)}%
+                </span>
+                <span className="text-gray-500">/ 40.0% limit</span>
+              </div>
+            </div>
+            <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full ${
+                  consistencyStats.isBreached 
+                    ? 'bg-red-500' 
+                    : consistencyStats.isClose 
+                    ? 'bg-amber-500' 
+                    : 'bg-indigo-500'
+                }`}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(100, (consistencyStats.percentage / 40.0) * 100)}%` }}
+                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.25 }}
+              />
+            </div>
+            <p className="text-[10px] text-gray-500 mt-1">
+              {consistencyStats.isBreached 
+                ? '⚠️ Consistency rule breached: Best day profit exceeds 40% of target.'
+                : consistencyStats.isClose
+                ? '⚠️ Approaching limit! Keep position sizes smaller to maintain consistency.'
+                : '🟢 Single-day profits are within safety boundaries.'}
+            </p>
           </div>
-          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full transition-colors ${
-                dailyDanger ? 'bg-red-500' : dailyDrawdownPercent >= 50 ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}
-              initial={{ width: 0 }}
-              animate={{ width: `${dailyDrawdownPercent}%` }}
-              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 }}
-            />
+        )}
+
+        {/* Daily & Total Loss Meters */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Daily DD</span>
+              <span className={`text-[11px] font-bold ${dailyDanger ? 'text-red-400' : 'text-gray-300'}`}>
+                {fmt(Math.abs(todayPnL < 0 ? todayPnL : 0))} / {fmt(maxDailyLossAmount)}
+              </span>
+            </div>
+            <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full transition-colors ${
+                  dailyDanger ? 'bg-red-500' : dailyDrawdownPercent >= 50 ? 'bg-amber-500' : 'bg-emerald-500'
+                }`}
+                initial={{ width: 0 }}
+                animate={{ width: `${dailyDrawdownPercent}%` }}
+                transition={{ duration: 0.7, ease: 'easeOut', delay: 0.3 }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total DD</span>
+              <span className={`text-[11px] font-bold ${totalDanger ? 'text-red-400' : 'text-gray-300'}`}>
+                {fmt(Math.abs(pnl < 0 ? pnl : 0))} / {fmt(maxTotalLossAmount)}
+              </span>
+            </div>
+            <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full transition-colors ${
+                  totalDanger ? 'bg-red-500' : totalDrawdownPercent >= 50 ? 'bg-amber-500' : 'bg-blue-500'
+                }`}
+                initial={{ width: 0 }}
+                animate={{ width: `${totalDrawdownPercent}%` }}
+                transition={{ duration: 0.7, ease: 'easeOut', delay: 0.35 }}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Total Loss Meter */}
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total DD</span>
-            <span className={`text-[11px] font-bold ${totalDanger ? 'text-red-400' : 'text-gray-300'}`}>
-              {fmt(Math.abs(pnl < 0 ? pnl : 0))} / {fmt(maxTotalLossAmount)}
-            </span>
+        {/* Quick Numbers */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Today's P&L</p>
+            <p className={`text-lg font-black ${todayPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
+            </p>
           </div>
-          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full transition-colors ${
-                totalDanger ? 'bg-red-500' : totalDrawdownPercent >= 50 ? 'bg-amber-500' : 'bg-blue-500'
-              }`}
-              initial={{ width: 0 }}
-              animate={{ width: `${totalDrawdownPercent}%` }}
-              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.35 }}
-            />
+
+          <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+              {daysRemaining !== null ? 'Days Left' : 'Day'}
+            </p>
+            <p className={`text-lg font-black ${
+              daysRemaining !== null && daysRemaining <= 5 ? 'text-amber-400' : 'text-white'
+            }`}>
+              {daysRemaining !== null ? daysRemaining : `#${daysElapsed}`}
+            </p>
           </div>
         </div>
 
-        {/* Today P&L */}
-        <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Today's P&L</p>
-          <p className={`text-lg font-black ${todayPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
-          </p>
-        </div>
-
-        {/* Days */}
-        <div className="bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
-          <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">
-            {daysRemaining !== null ? 'Days Left' : 'Day'}
-          </p>
-          <p className={`text-lg font-black ${
-            daysRemaining !== null && daysRemaining <= 5 ? 'text-amber-400' : 'text-white'
-          }`}>
-            {daysRemaining !== null ? daysRemaining : `#${daysElapsed}`}
-          </p>
-        </div>
+        {/* News breaches */}
+        {newsBreaches.length > 0 && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mt-2 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>News Gating Warning</span>
+            </div>
+            <div className="space-y-1 max-h-[80px] overflow-y-auto pr-1">
+              {newsBreaches.map((breach, idx) => (
+                <p key={idx} className="text-[10px] text-amber-300/90 leading-tight">
+                  ⚠️ Trade on <span className="font-semibold">{breach.trade.symbol}</span> was opened within {Math.round(breach.diffMinutes)}m of <span className="underline">{breach.event.Event}</span> ({getCountryCurrency(breach.event.Country)})
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer */}
-      <div className="px-5 pb-4 flex items-center justify-between">
+      <div className="px-5 py-4 border-t border-white/[0.05] flex items-center justify-between bg-black/20">
         <div className="flex items-center gap-2">
           {tier.trailingDrawdown && (
             <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold uppercase tracking-wider">
@@ -182,7 +373,7 @@ export default function ChallengeDashboardWidget({ status }: Props) {
         </div>
         <Link
           href="/analytics?tab=propfirm"
-          className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors font-medium"
+          className="text-[11px] text-indigo-400 hover:text-indigo-300 transition-colors font-medium font-semibold"
         >
           Full Report →
         </Link>

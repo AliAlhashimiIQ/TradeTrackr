@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 
@@ -12,6 +12,9 @@ interface EmptyStateProps {
   subtitle?: string
   ctaLabel?: string
   ctaHref?: string
+  onManualLogClick?: () => void
+  onLoadDemoClick?: () => Promise<void> | void
+  isDemoLoading?: boolean
 }
 
 const illustrations: Record<EmptyVariant, React.ReactNode> = {
@@ -145,8 +148,158 @@ export default function EmptyState({
   subtitle,
   ctaLabel,
   ctaHref,
+  onManualLogClick,
+  onLoadDemoClick,
+  isDemoLoading = false
 }: EmptyStateProps) {
   const d = defaults[variant]
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null)
+
+  if (variant === 'trades') {
+    const checklistSteps = [
+      {
+        id: 1,
+        title: 'Link Trading Account',
+        description: 'Connect MetaTrader 5 or other accounts to automate executions sync and track prop firm rules.',
+        btnLabel: 'Link Account',
+        href: '/settings?tab=account',
+        color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+          </svg>
+        )
+      },
+      {
+        id: 2,
+        title: 'Import CSV Report',
+        description: 'Bulk upload historical trades from MetaTrader, TradeZella, TraderSync, or custom files.',
+        btnLabel: 'Import Report',
+        href: '/import',
+        color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/30 text-purple-400',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+        )
+      },
+      {
+        id: 3,
+        title: 'Add Manual Trade',
+        description: 'Log a ticket manually with lot sizing, strategy tags, entry/exit parameters, screenshots, and emotional notes.',
+        btnLabel: 'Add Trade',
+        action: onManualLogClick,
+        color: 'from-emerald-500/20 to-indigo-500/10 border-emerald-500/30 text-emerald-400',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+        )
+      },
+      {
+        id: 4,
+        title: 'Preview with Demo Data',
+        description: 'Inject 5 high-fidelity mock trades to instantly check out dashboard gauges, streaks, and analytics curves.',
+        btnLabel: 'Inject Demo Data',
+        action: onLoadDemoClick,
+        loading: isDemoLoading,
+        color: 'from-amber-500/20 to-indigo-500/10 border-amber-500/30 text-amber-400',
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+          </svg>
+        )
+      }
+    ]
+
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        {/* Onboarding Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="text-center mb-10"
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-xs font-semibold mb-4 uppercase tracking-widest">
+            🏁 Getting Started Onboarding
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Welcome to TradeTrackr!</h2>
+          <p className="text-gray-400 text-sm max-w-lg mx-auto">
+            Your journal is currently empty. Get started by connecting an account, uploading a CSV, adding a manual trade, or loading demo data.
+          </p>
+        </motion.div>
+
+        {/* Onboarding Checklist Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {checklistSteps.map((step, idx) => (
+            <motion.div
+              key={step.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.08 }}
+              onMouseEnter={() => setHoveredStep(step.id)}
+              onMouseLeave={() => setHoveredStep(null)}
+              className="card bg-[#0d0e16] border border-white/[0.06] rounded-2xl p-5 hover:border-indigo-500/40 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-xl"
+              style={{
+                boxShadow: hoveredStep === step.id ? '0 12px 32px rgba(99, 102, 241, 0.08)' : 'none'
+              }}
+            >
+              {/* Subtle background glow */}
+              {hoveredStep === step.id && (
+                <div className="absolute -right-16 -bottom-16 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+              )}
+
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`p-2 rounded-xl bg-gradient-to-br ${step.color.split(' ').slice(0, 2).join(' ')} border border-white/5`}>
+                    {step.icon}
+                  </div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                    <span className="text-[10px] text-gray-500 bg-white/5 w-5 h-5 rounded-full flex items-center justify-center font-mono">
+                      {step.id}
+                    </span>
+                    {step.title}
+                  </h3>
+                </div>
+                <p className="text-gray-400 text-xs leading-relaxed mb-6">
+                  {step.description}
+                </p>
+              </div>
+
+              <div>
+                {step.href ? (
+                  <Link
+                    href={step.href}
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-white/[0.08] hover:border-indigo-500/30 bg-white/[0.02] hover:bg-indigo-500/10 text-gray-300 hover:text-white text-xs font-semibold tracking-wide transition-all duration-200"
+                  >
+                    {step.btnLabel}
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={step.action}
+                    disabled={step.loading}
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-white/[0.08] hover:border-indigo-500/30 bg-white/[0.02] hover:bg-indigo-500/10 text-gray-300 hover:text-white text-xs font-semibold tracking-wide transition-all duration-200 disabled:opacity-50"
+                  >
+                    {step.loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        Injecting...
+                      </div>
+                    ) : (
+                      step.btnLabel
+                    )}
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}

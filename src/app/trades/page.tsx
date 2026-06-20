@@ -16,6 +16,7 @@ import { calculatePerformanceMetrics } from '@/lib/tradeMetrics'
 import { TradesListSkeleton } from '@/components/ui/SkeletonLoader'
 import toast from 'react-hot-toast'
 import { resolveTradingViewUrl } from '@/lib/utils'
+import Confetti from 'react-confetti'
 
 // Extracted Subcomponents
 import TradesHeader from '@/components/trades/TradesHeader'
@@ -75,6 +76,21 @@ const formatCurrency = (value: number): string => {
 export default function Trades() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const [isDemoLoading, setIsDemoLoading] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [windowDimensions, setWindowDimensions] = useState({ width: 0, height: 0 })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setWindowDimensions({ width: window.innerWidth, height: window.innerHeight })
+      const handleResize = () => {
+        setWindowDimensions({ width: window.innerWidth, height: window.innerHeight })
+      }
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
   const [trades, setTrades] = useState<Trade[]>([])
   const [filteredTrades, setFilteredTrades] = useState<Trade[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -400,11 +416,116 @@ export default function Trades() {
       toast.success('Trade updated');
     } else {
       if (!user) return;
+      const isFirst = trades.length === 0;
       await addTrade({ ...tradeData, user_id: user.id } as Trade);
       await fetchPagedTrades();
       await fetchGlobalMetrics();
       setShowForm(false); setSelectedTrade(null);
       toast.success('Trade saved successfully');
+      if (isFirst) {
+        setShowConfetti(true);
+      }
+    }
+  };
+
+  const handleLoadDemoTrades = async () => {
+    if (!user?.id) return;
+    setIsDemoLoading(true);
+    try {
+      const demoTrades: Partial<Trade>[] = [
+        {
+          symbol: 'EURUSD',
+          type: 'Long',
+          entry_price: 1.08520,
+          exit_price: 1.08940,
+          lots: 1.5,
+          quantity: 1.5,
+          profit_loss: 630.00,
+          entry_time: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
+          exit_time: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000 + 45 * 60 * 1000).toISOString(),
+          notes: 'Took trade at VWAP support. Exit near resistance. Good discipline.',
+          tags: ['Breakout', 'Trend'],
+          mistakes: [],
+          pips: 42.0,
+          emotional_state: 'confident'
+        },
+        {
+          symbol: 'XAUUSD',
+          type: 'Short',
+          entry_price: 2320.50,
+          exit_price: 2312.00,
+          lots: 1.0,
+          quantity: 1.0,
+          profit_loss: 850.00,
+          entry_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          exit_time: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+          notes: 'Short at double top on Gold. Quick 85 pips scalp.',
+          tags: ['Reversal', 'Sniper Entry'],
+          mistakes: [],
+          pips: 85.0,
+          emotional_state: 'calm'
+        },
+        {
+          symbol: 'GBPUSD',
+          type: 'Long',
+          entry_price: 1.26420,
+          exit_price: 1.26120,
+          lots: 2.0,
+          quantity: 2.0,
+          profit_loss: -600.00,
+          entry_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          exit_time: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString(),
+          notes: 'Tried to catch falling knife. Did not wait for confirmation.',
+          tags: [],
+          mistakes: ['FOMO Entry', 'Late Entry'],
+          pips: -30.0,
+          emotional_state: 'anxious'
+        },
+        {
+          symbol: 'US100',
+          type: 'Long',
+          entry_price: 19520.00,
+          exit_price: 19610.00,
+          lots: 0.5,
+          quantity: 0.5,
+          profit_loss: 450.00,
+          entry_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          exit_time: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000).toISOString(),
+          notes: 'Rode the indices momentum after CPI release.',
+          tags: ['Breakout', 'News'],
+          mistakes: [],
+          pips: 90.0,
+          emotional_state: 'greed'
+        },
+        {
+          symbol: 'BTCUSD',
+          type: 'Short',
+          entry_price: 66420.00,
+          exit_price: 66550.00,
+          lots: 0.1,
+          quantity: 0.1,
+          profit_loss: -13.00,
+          entry_time: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+          exit_time: new Date(Date.now() - 5.5 * 60 * 60 * 1000).toISOString(),
+          notes: 'Tiny scalp attempt on Bitcoin. Stopped out quickly.',
+          tags: ['Scalp'],
+          mistakes: [],
+          pips: -130.0,
+          emotional_state: 'neutral'
+        }
+      ];
+
+      for (const t of demoTrades) {
+        await addTrade({ ...t, user_id: user.id } as Trade);
+      }
+      toast.success('5 demo trades loaded successfully!');
+      await fetchPagedTrades();
+      await fetchGlobalMetrics();
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to load demo trades');
+    } finally {
+      setIsDemoLoading(false);
     }
   };
 
@@ -475,6 +596,7 @@ export default function Trades() {
     
     setIsLoading(true);
     try {
+      const isFirst = trades.length === 0;
       const newTrade = {
         ...inlineRowData,
         user_id: user.id,
@@ -500,6 +622,9 @@ export default function Trades() {
       await fetchGlobalMetrics();
       setInlineNewRowIndex(null);
       setInlineRowData(null);
+      if (isFirst) {
+        setShowConfetti(true);
+      }
     } catch (e) {
       console.error(e);
       toast.error('Failed to save trade');
@@ -724,6 +849,15 @@ export default function Trades() {
 
   return (
     <AuthenticatedLayout>
+      {showConfetti && (
+        <Confetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          recycle={false}
+          numberOfPieces={300}
+          onConfettiComplete={() => setShowConfetti(false)}
+        />
+      )}
       <motion.div 
         initial={{ opacity: 0, y: 4 }} 
         animate={{ opacity: 1, y: 0 }} 
@@ -737,7 +871,14 @@ export default function Trades() {
           tradesCount={trades.length}
           filteredTradesCount={filteredTrades.length}
           filteredTrades={filteredTrades}
-          onLogTradeClick={() => handleStartInlineAdd(0)}
+          onLogTradeClick={() => {
+            if (typeof window !== 'undefined' && window.innerWidth < 768) {
+              setSelectedTrade(null);
+              setShowForm(true);
+            } else {
+              handleStartInlineAdd(0);
+            }
+          }}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
           formatCurrency={formatCurrency}
@@ -828,6 +969,9 @@ export default function Trades() {
           onPageChange={onPage => { setCurrentPage(onPage); }}
           onPageSizeChange={onPageSize => { setPageSize(onPageSize); setCurrentPage(1); }}
           formatCurrency={formatCurrency}
+          onManualLogClick={() => { setSelectedTrade(null); setShowForm(true); }}
+          onLoadDemoClick={handleLoadDemoTrades}
+          isDemoLoading={isDemoLoading}
         />
       </motion.div>
 

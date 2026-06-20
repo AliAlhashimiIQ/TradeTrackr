@@ -5,7 +5,8 @@ import { Trade } from '@/lib/types';
 import TradeNotes from './TradeNotes';
 import Image from 'next/image';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
-import { resolveTradingViewUrl } from '@/lib/utils';
+import { resolveTradingViewUrl, getPLColorClasses } from '@/lib/utils';
+import { useSettings } from '@/providers/SettingsProvider';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -13,6 +14,7 @@ interface TradeDetailProps {
 }
 
 export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
+  const { colorblindMode } = useSettings();
   const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots'>('details');
   const isForex = isForexPair(trade.symbol);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
@@ -121,7 +123,9 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
             <h2 className="text-xl font-bold text-white flex items-center">
               {trade.symbol}
               <span className={`ml-3 px-2 py-1 rounded text-sm ${
-                trade.type === 'Long' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'
+                trade.type === 'Long'
+                  ? `${getPLColorClasses(1, colorblindMode).bg10} ${getPLColorClasses(1, colorblindMode).text}`
+                  : `${getPLColorClasses(-1, colorblindMode).bg10} ${getPLColorClasses(-1, colorblindMode).text}`
               }`}>
                 {trade.type}
               </span>
@@ -226,10 +230,10 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                         {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </div>
                     </div>
-                    {isForex && trade.pips !== undefined && trade.pips !== null && (
+                     {isForex && trade.pips !== undefined && trade.pips !== null && (
                       <div>
                         <div className="text-gray-400 text-xs">Pips</div>
-                        <div className={`font-mono text-lg ${(trade.pips ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                        <div className={`font-mono text-lg ${getPLColorClasses(trade.pips ?? 0, colorblindMode).text}`}>
                           {formatPips(trade.pips)}
                         </div>
                       </div>
@@ -237,7 +241,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                     <div>
                       <div className="text-gray-400 text-xs">Profit/Loss</div>
                       <div className={`font-mono text-lg ${
-                        trade.profit_loss > 0 ? 'text-green-400' : trade.profit_loss < 0 ? 'text-red-400' : 'text-gray-400'
+                        trade.profit_loss !== 0 ? getPLColorClasses(trade.profit_loss, colorblindMode).text : 'text-gray-400'
                       }`}>
                         {trade.profit_loss > 0 ? '+' : ''}{formatCurrency(trade.profit_loss)}
                       </div>
@@ -262,7 +266,7 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                       <div>
                         <div className="text-gray-400 text-xs">R Multiple</div>
                         <div className={`text-lg ${
-                          (trade.r_multiple || 0) > 0 ? 'text-green-400' : 'text-red-400'
+                          getPLColorClasses(trade.r_multiple || 0, colorblindMode).text
                         }`}>
                           {(trade.r_multiple || 0) > 0 ? '+' : ''}{trade.r_multiple?.toFixed(2)}R
                         </div>

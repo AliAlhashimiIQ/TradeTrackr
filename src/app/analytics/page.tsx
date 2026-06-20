@@ -49,13 +49,14 @@ type TimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 export default function AnalyticsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { trades: cachedTrades, isLoading: tradesLoading } = useTrades('all');
+  const { trades: cachedTrades, initialCapital = 10000, isLoading: tradesLoading } = useTrades('all');
   const [loading, setLoading] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'breakdown' | 'mistakes' | 'propfirm'>('overview');
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null);
+  const [excludedMistakes, setExcludedMistakes] = useState<string[]>([]);
   
   // New states for advanced filters and export
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -297,6 +298,65 @@ export default function AnalyticsPage() {
     date: point.date,
     value: point.equity
   }));
+
+  const allMistakesList = useMemo(() => {
+    return [...new Set(filteredTrades.flatMap(t => t.mistakes || []))];
+  }, [filteredTrades]);
+
+  const simulatedTrades = useMemo(() => {
+    if (excludedMistakes.length === 0) return filteredTrades;
+    return filteredTrades.filter(t => !(t.mistakes || []).some(m => excludedMistakes.includes(m)));
+  }, [filteredTrades, excludedMistakes]);
+
+  const simulatedMetrics = useMemo(() => {
+    const actualPnL = filteredTrades.reduce((sum, t) => sum + t.profit_loss, 0);
+    const simPnL = simulatedTrades.reduce((sum, t) => sum + t.profit_loss, 0);
+    const recoveryProfit = simPnL - actualPnL;
+
+    const wins = simulatedTrades.filter(t => t.profit_loss > 0).length;
+    const simWinRate = simulatedTrades.length ? (wins / simulatedTrades.length) * 100 : 0;
+
+    const grossProfit = simulatedTrades.filter(t => t.profit_loss > 0).reduce((sum, t) => sum + t.profit_loss, 0);
+    const grossLoss = Math.abs(simulatedTrades.filter(t => t.profit_loss < 0).reduce((sum, t) => sum + t.profit_loss, 0));
+    const simProfitFactor = grossLoss > 0 ? (grossProfit / grossLoss) : grossProfit > 0 ? 99 : 0;
+
+    const actualWins = filteredTrades.filter(t => t.profit_loss > 0).length;
+    const actualWinRate = filteredTrades.length ? (actualWins / filteredTrades.length) * 100 : 0;
+    const actualGrossProfit = filteredTrades.filter(t => t.profit_loss > 0).reduce((sum, t) => sum + t.profit_loss, 0);
+    const actualGrossLoss = Math.abs(filteredTrades.filter(t => t.profit_loss < 0).reduce((sum, t) => sum + t.profit_loss, 0));
+    const actualProfitFactor = actualGrossLoss > 0 ? (actualGrossProfit / actualGrossLoss) : actualGrossProfit > 0 ? 99 : 0;
+
+    return {
+      actualPnL,
+      simPnL,
+      recoveryProfit,
+      actualWinRate,
+      simWinRate,
+      actualProfitFactor,
+      simProfitFactor,
+      simTradesCount: simulatedTrades.length
+    };
+  }, [filteredTrades, simulatedTrades, excludedMistakes]);
+
+  const simulatedEquityCurve = useMemo(() => {
+    if (excludedMistakes.length === 0) return [];
+    
+    // Sort trades chronologically
+    const chronTrades = [...simulatedTrades].sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime());
+    
+    let balance = initialCapital;
+    const curve = [{ date: 'Start', value: balance }];
+    
+    chronTrades.forEach(trade => {
+      balance += trade.profit_loss;
+      curve.push({
+        date: trade.entry_time.split('T')[0],
+        value: balance
+      });
+    });
+    
+    return curve;
+  }, [simulatedTrades, initialCapital, excludedMistakes]);
   
   if (authLoading || loading || isCalculating) {
     return (
@@ -1032,6 +1092,145 @@ export default function AnalyticsPage() {
                   <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
                 </div>
               ))}
+            </div>
+
+            {/* What-If Mistakes Simulator Panel */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* Left Panel: Checklist of Mistakes */}
+              <div className={`${panelClass} p-5 border-blue-500/10 flex flex-col`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-white font-medium text-sm sm:text-base">What-If Mistake Excluder</h2>
+                    <p className="text-gray-500 text-xs mt-0.5">Toggle mistakes to exclude them from the curve</p>
+                  </div>
+                  {excludedMistakes.length > 0 && (
+                    <button 
+                      onClick={() => setExcludedMistakes([])}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                    >
+                      Reset All
+                    </button>
+                  )}
+                </div>
+                
+                {allMistakesList.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center py-8 text-center text-xs text-gray-500">
+                    No mistakes logged in current date range.
+                  </div>
+                ) : (
+                  <div className="space-y-2 flex-1 overflow-y-auto max-h-[300px] pr-1">
+                    {allMistakesList.map(mistake => {
+                      const isChecked = excludedMistakes.includes(mistake);
+                      const mTrades = filteredTrades.filter(t => t.mistakes?.includes(mistake));
+                      const totalPnL = mTrades.reduce((s, t) => s + t.profit_loss, 0);
+
+                      return (
+                        <label 
+                          key={mistake} 
+                          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
+                            isChecked 
+                              ? 'bg-blue-600/10 border-blue-500/30' 
+                              : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {
+                                if (isChecked) {
+                                  setExcludedMistakes(prev => prev.filter(m => m !== mistake));
+                                } else {
+                                  setExcludedMistakes(prev => [...prev, mistake]);
+                                }
+                              }}
+                              className="rounded border-gray-700 bg-gray-900 text-blue-500 focus:ring-blue-500/50 w-4 h-4"
+                            />
+                            <span className="text-xs font-semibold text-gray-200">{mistake}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-gray-500 block">{mTrades.length} trades</span>
+                            <span className="text-xs font-bold text-red-400">-${Math.abs(totalPnL).toFixed(0)}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Middle Panel: Recalculated Stats */}
+              <div className={`${panelClass} p-5 border-emerald-500/10 flex flex-col justify-between`}>
+                <div>
+                  <h2 className="text-white font-medium mb-3 text-sm sm:text-base">Simulated Recovery Impact</h2>
+                  {excludedMistakes.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-gray-500">
+                      Select one or more mistakes to calculate simulated metrics.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Big recovery card */}
+                      <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 text-center">
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1">
+                          Simulated Recovery Profit
+                        </span>
+                        <span className="text-3xl font-black text-emerald-400">
+                          +${simulatedMetrics?.recoveryProfit.toFixed(0)}
+                        </span>
+                        <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
+                          By avoiding the selected mistakes, you would have avoided those losses entirely!
+                        </p>
+                      </div>
+
+                      {/* Stat grid */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl text-center">
+                          <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Win Rate</span>
+                          <div className="text-sm font-bold text-white">
+                            {simulatedMetrics?.simWinRate.toFixed(1)}%
+                          </div>
+                          <span className="text-[9px] text-gray-500">
+                            was {simulatedMetrics?.actualWinRate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl text-center">
+                          <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Profit Factor</span>
+                          <div className="text-sm font-bold text-white">
+                            {simulatedMetrics?.simProfitFactor.toFixed(2)}
+                          </div>
+                          <span className="text-[9px] text-gray-500">
+                            was {simulatedMetrics?.actualProfitFactor.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {excludedMistakes.length > 0 && (
+                  <p className="text-[10px] text-gray-500 mt-3 text-center border-t border-white/[0.04] pt-2">
+                    Simulating {simulatedMetrics?.simTradesCount} trades out of {filteredTrades.length}
+                  </p>
+                )}
+              </div>
+
+              {/* Right Panel: Simulated Equity Curve Comparison */}
+              <div className={`${panelClass} p-5 border-blue-500/10 min-h-[300px] flex flex-col`}>
+                <h2 className="text-white font-medium mb-3 text-sm sm:text-base">Simulated Equity Curve</h2>
+                <div className="flex-1 min-h-[220px]">
+                  {excludedMistakes.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-xs text-gray-500 text-center">
+                      Select mistakes to overlay the simulated growth curve.
+                    </div>
+                  ) : (
+                    <EquityCurve 
+                      data={equityChartData} 
+                      simulatedData={simulatedEquityCurve} 
+                      initialCapital={initialCapital} 
+                    />
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Cost of Mistakes Chart */}

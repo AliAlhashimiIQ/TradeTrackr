@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -29,6 +29,7 @@ interface DataPoint {
 
 interface EquityCurveProps {
   data: DataPoint[];
+  simulatedData?: DataPoint[];
   initialCapital?: number;
   type?: 'line' | 'bar' | 'pie';
   loading?: boolean;
@@ -52,15 +53,28 @@ const formatDate = (dateStr: string) => {
 // Custom tooltip component
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
+    const actualPoint = payload.find((p: any) => p.dataKey === 'value');
+    const simPoint = payload.find((p: any) => p.name === 'Simulated Balance' || p.dataKey === 'simulatedValue');
+    
     return (
       <div className="bg-slate-950/95 p-3 rounded-xl border border-slate-800 shadow-2xl backdrop-blur-sm">
-        <p className="text-xs text-slate-400 mb-1">{label}</p>
-        <p className="text-sm font-semibold text-slate-100">${payload[0].value.toFixed(2)}</p>
-        {payload[0].payload.change && (
-          <p className={`text-xs ${payload[0].payload.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-            {payload[0].payload.change >= 0 ? '+' : ''}
-            {payload[0].payload.change.toFixed(2)} ({payload[0].payload.changePercent.toFixed(2)}%)
-          </p>
+        <p className="text-xs text-slate-400 mb-2">{label}</p>
+        {actualPoint && (
+          <div className="mb-2">
+            <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Actual Balance</p>
+            <p className="text-sm font-bold text-slate-100">${actualPoint.value.toFixed(2)}</p>
+          </div>
+        )}
+        {simPoint && (
+          <div className="border-t border-slate-800/80 pt-1.5 mt-1.5">
+            <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Simulated Balance</p>
+            <p className="text-sm font-bold text-slate-100">${simPoint.value.toFixed(2)}</p>
+            {actualPoint && (
+              <p className="text-[11px] text-emerald-300 font-medium mt-0.5">
+                Difference: +${(simPoint.value - actualPoint.value).toFixed(2)}
+              </p>
+            )}
+          </div>
         )}
       </div>
     );
@@ -74,6 +88,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
  */
 const EquityCurve: React.FC<EquityCurveProps> = ({
   data,
+  simulatedData,
   initialCapital = 10000,
   type = 'line',
   loading = false,
@@ -88,17 +103,78 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
   }, []);
   
   // Process the data to include daily change
-  const processedData = data.map((point, index, arr) => {
-    const prevValue = index > 0 ? arr[index - 1].value : initialCapital;
-    const change = point.value - prevValue;
-    const changePercent = (change / prevValue) * 100;
+  const processedData = useMemo(() => {
+    return data.map((point, index, arr) => {
+      const prevValue = index > 0 ? arr[index - 1].value : initialCapital;
+      const change = point.value - prevValue;
+      const changePercent = (change / prevValue) * 100;
+      
+      return {
+        ...point,
+        change,
+        changePercent
+      };
+    });
+  }, [data, initialCapital]);
+
+  // Process the merged data for actual vs simulated
+  const mergedData = useMemo(() => {
+    if (!simulatedData || simulatedData.length === 0) {
+      return processedData;
+    }
+
+    const map: Record<string, { date: string; value?: number; simulatedValue?: number; change?: number; changePercent?: number }> = {};
     
-    return {
-      ...point,
-      change,
-      changePercent
-    };
-  });
+    processedData.forEach(p => {
+      map[p.date] = { 
+        date: p.date, 
+        value: p.value, 
+        change: p.change, 
+        changePercent: p.changePercent 
+      };
+    });
+    
+    const processedSim = simulatedData.map((point, index, arr) => {
+      const prevValue = index > 0 ? arr[index - 1].value : initialCapital;
+      const change = point.value - prevValue;
+      const changePercent = (change / prevValue) * 100;
+      return {
+        ...point,
+        change,
+        changePercent
+      };
+    });
+
+    processedSim.forEach(p => {
+      if (map[p.date]) {
+        map[p.date].simulatedValue = p.value;
+      } else {
+        map[p.date] = { 
+          date: p.date, 
+          simulatedValue: p.value 
+        };
+      }
+    });
+
+    const sorted = Object.values(map).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    let lastValue = initialCapital;
+    let lastSimValue = initialCapital;
+    
+    return sorted.map(item => {
+      if (item.value !== undefined) {
+        lastValue = item.value;
+      }
+      if (item.simulatedValue !== undefined) {
+        lastSimValue = item.simulatedValue;
+      }
+      return {
+        ...item,
+        value: item.value ?? lastValue,
+        simulatedValue: item.simulatedValue ?? lastSimValue
+      };
+    });
+  }, [processedData, simulatedData, initialCapital]);
 
   // For pie chart, calculate profit/loss categories
   const profitLossData = (() => {
@@ -126,8 +202,14 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
   })();
 
   // For setting grid based on data
-  const minValue = Math.min(...processedData.map(d => d.value));
-  const maxValue = Math.max(...processedData.map(d => d.value));
+  const minValue = Math.min(
+    ...processedData.map(d => d.value), 
+    ...(simulatedData ? simulatedData.map(d => d.value) : [])
+  );
+  const maxValue = Math.max(
+    ...processedData.map(d => d.value), 
+    ...(simulatedData ? simulatedData.map(d => d.value) : [])
+  );
   
   // Calculate appropriate tick values for Y axis
   const valueDomain = [
@@ -160,7 +242,7 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
     <div className="h-full w-full">
       {type === 'line' && (
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={processedData}>
+          <ComposedChart data={mergedData}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#818cf8" stopOpacity={0.45} />
@@ -187,14 +269,30 @@ const EquityCurve: React.FC<EquityCurveProps> = ({
             />
             <Tooltip content={<CustomTooltip />} />
             <ReferenceLine y={initialCapital} stroke="#64748b" strokeDasharray="3 4" strokeOpacity={0.65} />
+            {simulatedData && simulatedData.length > 0 && (
+              <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: 12, fill: '#e2e8f0' }} />
+            )}
             <Area 
               type="monotone" 
               dataKey="value" 
+              name="Actual Balance"
               fill="url(#colorValue)" 
               stroke="#60a5fa" 
               strokeWidth={2.5}
               animationDuration={800}
             />
+            {simulatedData && simulatedData.length > 0 && (
+              <Line
+                type="monotone"
+                dataKey="simulatedValue"
+                name="Simulated Balance"
+                stroke="#10b981"
+                strokeWidth={2.5}
+                strokeDasharray="5 5"
+                dot={false}
+                animationDuration={800}
+              />
+            )}
           </ComposedChart>
         </ResponsiveContainer>
       )}

@@ -8,7 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { isForexPair, calculatePips, getSymbolMultiplier } from '@/lib/forexUtils';
-import { resolveTradingViewUrl } from '@/lib/utils';
+import { resolveTradingViewUrl, toLocalYMD, toLocalISOString, toLocalDatetimeLocal, fromLocalDatetimeLocal, getPLColorClasses } from '@/lib/utils';
+import { useSettings } from '@/providers/SettingsProvider';
 
 
 
@@ -62,6 +63,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   className = '',
 }) => {
   const { user } = useAuth();
+  const { colorblindMode } = useSettings();
   const isEditing = !!initialTrade;
   
   const [formData, setFormData] = useState<Partial<Trade>>({
@@ -70,8 +72,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
     entry_price: undefined,
     exit_price: undefined,
     quantity: undefined,
-    entry_time: new Date().toISOString().split('T')[0],
-    exit_time: new Date().toISOString().split('T')[0],
+    entry_time: toLocalYMD(new Date().toISOString()),
+    exit_time: toLocalYMD(new Date().toISOString()),
     notes: '',
     tags: [],
     mistakes: [],
@@ -114,8 +116,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   useEffect(() => {
     if (initialTrade) {
       const formatted = { ...initialTrade };
-      if (initialTrade.entry_time) formatted.entry_time = new Date(initialTrade.entry_time).toISOString().split('T')[0];
-      if (initialTrade.exit_time) formatted.exit_time = new Date(initialTrade.exit_time).toISOString().split('T')[0];
+      if (initialTrade.entry_time) formatted.entry_time = toLocalYMD(initialTrade.entry_time);
+      if (initialTrade.exit_time) formatted.exit_time = toLocalYMD(initialTrade.exit_time);
       
       formatted.notes = initialTrade.notes || '';
       formatted.stop_loss = initialTrade.stop_loss;
@@ -123,8 +125,36 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       formatted.commission = initialTrade.commission;
       
       setFormData(formatted);
-    } else if (user) {
-      setFormData(prev => ({ ...prev, user_id: user.id }));
+    } else {
+      if (user) {
+        setFormData(prev => ({ ...prev, user_id: user.id }));
+      }
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const symbol = params.get('symbol');
+        const type = params.get('type');
+        const entryPrice = params.get('entry_price');
+        const exitPrice = params.get('exit_price');
+        const quantity = params.get('quantity');
+        const lots = params.get('lots');
+        const notes = params.get('notes');
+
+        const updates: Partial<Trade> = {};
+        if (symbol) updates.symbol = symbol.toUpperCase();
+        if (type) updates.type = (type.toLowerCase() === 'short' || type.toLowerCase() === 'sell') ? 'Short' : 'Long';
+        if (entryPrice) updates.entry_price = parseFloat(entryPrice) || undefined;
+        if (exitPrice) updates.exit_price = parseFloat(exitPrice) || undefined;
+        if (quantity) updates.quantity = parseFloat(quantity) || undefined;
+        if (lots) updates.lots = parseFloat(lots) || 0.01;
+        if (notes) updates.notes = notes;
+
+        if (Object.keys(updates).length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            ...updates
+          }));
+        }
+      }
     }
   }, [initialTrade, user]);
 
@@ -229,8 +259,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         entry_price: Number(formData.entry_price),
         exit_price: Number(formData.exit_price),
         quantity: isForex ? Number(formData.lots || 0) : Number(formData.quantity),
-        entry_time: formData.entry_time,
-        exit_time: formData.exit_time,
+        entry_time: toLocalISOString(formData.entry_time || '', initialTrade?.entry_time),
+        exit_time: toLocalISOString(formData.exit_time || '', initialTrade?.exit_time),
         profit_loss: calculatedPnl,
         notes: formData.notes || '',
         screenshot_url: screenshotUrl,
@@ -696,14 +726,16 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                 style={{ background: 'linear-gradient(135deg, rgba(15,16,28,0.95) 0%, rgba(13,14,22,0.98) 100%)' }}>
                 
                 {/* Top accent line */}
-                <div className={`h-1 ${hasRequiredFields ? (isWin ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-red-500 to-red-400') : 'bg-gradient-to-r from-indigo-500 to-blue-500'}`} />
+                <div className={`h-1 ${hasRequiredFields ? (isWin ? (colorblindMode ? 'bg-gradient-to-r from-blue-500 to-blue-400' : 'bg-gradient-to-r from-emerald-500 to-emerald-400') : (colorblindMode ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-red-500 to-red-400')) : 'bg-gradient-to-r from-indigo-500 to-blue-500'}`} />
                 
                 <div className="p-7">
                   {/* Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="text-sm font-bold text-gray-500 uppercase tracking-widest">Trade Ticket</div>
                     <div className={`px-3 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider ${
-                      formData.type === 'Long' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'
+                      formData.type === 'Long'
+                        ? `${getPLColorClasses(1, colorblindMode).bg15} ${getPLColorClasses(1, colorblindMode).text}`
+                        : `${getPLColorClasses(-1, colorblindMode).bg15} ${getPLColorClasses(-1, colorblindMode).text}`
                     }`}>
                       {formData.type}
                     </div>
@@ -743,7 +775,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">{isForex ? 'Pips' : 'R-Multiple'}</div>
-                      <div className={`text-lg font-bold ${isForex ? (displayPips >= 0 ? 'text-emerald-400' : 'text-red-400') : 'text-white'}`}>
+                      <div className={`text-lg font-bold ${isForex ? getPLColorClasses(displayPips, colorblindMode).text : 'text-white'}`}>
                         {isForex ? `${displayPips >= 0 ? '+' : ''}${displayPips.toFixed(1)}` : (initialTrade?.r_multiple?.toFixed(2) || '—')}
                       </div>
                     </div>
@@ -752,7 +784,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   {/* P&L Display */}
                   <div className={`rounded-xl p-5 text-center mb-6 ${
                     pnl !== null 
-                      ? (isWin ? 'bg-emerald-500/[0.08] border border-emerald-500/20' : 'bg-red-500/[0.08] border border-red-500/20')
+                      ? `${getPLColorClasses(pnl, colorblindMode).bg10} border ${getPLColorClasses(pnl, colorblindMode).border30}`
                       : 'bg-white/[0.02] border border-white/[0.04]'
                   }`}>
                     <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
@@ -765,9 +797,9 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         className={`text-5xl font-black tracking-tight ${
-                          pnl !== null ? (isWin ? 'text-emerald-400' : 'text-red-400') : 'text-gray-700'
+                          pnl !== null ? getPLColorClasses(pnl, colorblindMode).text : 'text-gray-700'
                         }`}
-                        style={pnl !== null && isWin ? { textShadow: '0 0 30px rgba(16,185,129,0.3)' } : pnl !== null ? { textShadow: '0 0 30px rgba(239,68,68,0.3)' } : {}}
+                        style={pnl !== null ? { textShadow: `0 0 30px ${getPLColorClasses(pnl, colorblindMode).hexShadow}` } : {}}
                       >
                         {pnl !== null ? `${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}` : '$0.00'}
                       </motion.div>
@@ -789,7 +821,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   {formData.mistakes && formData.mistakes.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-6">
                       {formData.mistakes.map(mistake => (
-                        <span key={mistake} className="px-2 py-0.5 text-[10px] font-medium rounded bg-red-500/10 text-red-300 border border-red-500/20">
+                        <span key={mistake} className={`px-2 py-0.5 text-[10px] font-medium rounded ${getPLColorClasses(-1, colorblindMode).bg10} ${getPLColorClasses(-1, colorblindMode).text} border ${getPLColorClasses(-1, colorblindMode).border30}`}>
                           {mistake}
                         </span>
                       ))}

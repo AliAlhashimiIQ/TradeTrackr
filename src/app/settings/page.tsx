@@ -10,10 +10,12 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PROP_FIRMS } from '@/lib/propFirms';
+import { useSettings } from '@/providers/SettingsProvider';
 
 function SettingsContent() {
   const { user, loading, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { colorblindMode, setColorblindMode } = useSettings();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<'general' | 'notifications' | 'data' | 'danger' | 'account'>(
@@ -26,6 +28,7 @@ function SettingsContent() {
   const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [defaultTradeType, setDefaultTradeType] = useState('Long');
   const [startingBalance, setStartingBalance] = useState('10000');
+  const [localColorblindMode, setLocalColorblindMode] = useState(false);
 
   // Notification settings state
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -61,6 +64,10 @@ function SettingsContent() {
           if (settings.timezone) setTimezone(settings.timezone);
           if (settings.defaultTradeType) setDefaultTradeType(settings.defaultTradeType);
           if (settings.startingBalance !== undefined) setStartingBalance(String(settings.startingBalance));
+          if (settings.colorblindMode !== undefined) {
+            setLocalColorblindMode(!!settings.colorblindMode);
+            setColorblindMode(!!settings.colorblindMode);
+          }
           if (settings.emailNotifications !== undefined) setEmailNotifications(settings.emailNotifications);
           if (settings.weeklyReport !== undefined) setWeeklyReport(settings.weeklyReport);
           if (settings.tradeAlerts !== undefined) setTradeAlerts(settings.tradeAlerts);
@@ -112,7 +119,8 @@ function SettingsContent() {
       currency,
       timezone,
       defaultTradeType,
-      startingBalance: Number(startingBalance) || 10000
+      startingBalance: Number(startingBalance) || 10000,
+      colorblindMode: localColorblindMode
     });
     
     // Also save to localStorage as a fallback for immediate UI updates
@@ -120,6 +128,10 @@ function SettingsContent() {
     localStorage.setItem('settings_timezone', timezone);
     localStorage.setItem('settings_defaultTradeType', defaultTradeType);
     localStorage.setItem('settings_startingBalance', startingBalance);
+    localStorage.setItem('settings_colorblindMode', String(localColorblindMode));
+    
+    // Update global state
+    setColorblindMode(localColorblindMode);
     
     setIsSaving(false);
     if (success) {
@@ -366,6 +378,24 @@ function SettingsContent() {
                         <span className="text-xs font-medium">System</span>
                       </button>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-gray-700 bg-[#0f1117]">
+                    <div>
+                      <label className="block text-sm font-semibold text-white">Colorblind Mode</label>
+                      <p className="text-xs text-gray-400 mt-0.5">Swap standard Green/Red accents for high-contrast Blue/Orange variants.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLocalColorblindMode(!localColorblindMode)}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        localColorblindMode ? 'bg-indigo-600' : 'bg-gray-700'
+                      }`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        localColorblindMode ? 'translate-x-6' : 'translate-x-1'
+                      }`} />
+                    </button>
                   </div>
 
                   <div>

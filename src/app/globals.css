@@ -575,3 +575,70 @@
     -moz-appearance: textfield;
   }
 }
+
+/* ───────────────────────────────────────────────────
+   COLORBLIND MODE OVERRIDES
+   Toggled via root html/body .colorblind class.
+   Remaps wins (green/emerald) to blue and losses (red) to orange.
+   ─────────────────────────────────────────────────── */
+.colorblind {
+  --success: #3b82f6 !important; /* blue */
+  --danger: #f97316 !important; /* orange */
+}
+
+/* Text color overrides */
+.colorblind .text-emerald-400,
+.colorblind .text-green-400,
+.colorblind .text-emerald-500,
+.colorblind .text-emerald-500\/70,
+.colorblind .text-emerald-600 {
+  color: #60a5fa !important; /* blue-400 */
+}
+
+.colorblind .text-red-400,
+.colorblind .text-red-500,
+.colorblind .text-red-500\/70,
+.colorblind .text-red-600 {
+  color: #fb923c !important; /* orange-400 */
+}
+
+/* Background overrides */
+.colorblind .bg-emerald-500\/10,
+.colorblind .bg-green-900\/30 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.colorblind .bg-emerald-500\/15 {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+}
+
+.colorblind .bg-red-500\/10,
+.colorblind .bg-red-900\/30 {
+  background-color: rgba(249, 115, 22, 0.1) !important;
+}
+
+.colorblind .bg-red-500\/15 {
+  background-color: rgba(249, 115, 22, 0.15) !important;
+}
+
+/* Ring & Border overrides */
+.colorblind .ring-emerald-500\/20 {
+  --tw-ring-color: rgba(59, 130, 246, 0.2) !important;
+  ring-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.colorblind .ring-red-500\/20 {
+  --tw-ring-color: rgba(249, 115, 22, 0.2) !important;
+  ring-color: rgba(249, 115, 22, 0.2) !important;
+}
+
+.colorblind .border-emerald-500\/20,
+.colorblind .border-emerald-500\/30 {
+  border-color: rgba(59, 130, 246, 0.25) !important;
+}
+
+.colorblind .border-red-500\/20,
+.colorblind .border-red-500\/30 {
+  border-color: rgba(249, 115, 22, 0.25) !important;
+}
+

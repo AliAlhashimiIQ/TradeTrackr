@@ -480,7 +480,7 @@ export default function Dashboard() {
                   </div>
                   <EquityAreaChart data={equityChartData} initialCapital={initialCapital} />
                 </motion.div>
-                {challengeStatus && <ChallengeDashboardWidget status={challengeStatus} />}
+                {challengeStatus && <ChallengeDashboardWidget status={challengeStatus} trades={trades} />}
               </div>
             </ErrorBoundary>
 

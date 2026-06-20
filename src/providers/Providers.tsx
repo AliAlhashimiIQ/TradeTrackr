@@ -2,9 +2,11 @@
 
 import { AuthProvider } from './AuthProvider'
 import { ThemeProvider } from './ThemeProvider'
+import { SettingsProvider } from './SettingsProvider'
 import { useAuth } from '@/hooks/useAuth'
 import { usePathname } from 'next/navigation'
 import Header from '@/components/layout/Header'
+import CommandPalette from '@/components/layout/CommandPalette'
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -14,7 +16,9 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
-        <LayoutContent>{children}</LayoutContent>
+        <SettingsProvider>
+          <LayoutContent>{children}</LayoutContent>
+        </SettingsProvider>
       </AuthProvider>
     </ThemeProvider>
   )
@@ -33,7 +37,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col w-full relative">
         {children}
       </div>
+      {user && <CommandPalette />}
     </div>
   )
 }
+
  

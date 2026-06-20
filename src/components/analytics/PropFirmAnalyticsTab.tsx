@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import type { Trade } from '@/lib/types'
 import { ChallengeStatus } from '@/lib/propFirms'
+import PropFirmSimulator from '@/components/analytics/PropFirmSimulator'
 
 interface Props {
   trades: Trade[]
@@ -22,21 +23,25 @@ function pct(n: number, decimals = 1) {
 export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props) {
   if (!challengeStatus) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-3xl mb-4">🏆</div>
-        <h3 className="text-white font-bold text-lg mb-2">No Challenge Active</h3>
-        <p className="text-gray-500 text-sm max-w-sm mb-6">
-          Set up your prop firm challenge in Settings to track your progress, consistency score, and violation risks.
-        </p>
-        <Link
-          href="/settings?tab=account"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-lg shadow-indigo-500/20"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Set Up Prop Firm
-        </Link>
+      <div className="space-y-8">
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-3xl mb-4">🏆</div>
+          <h3 className="text-white font-bold text-lg mb-2">No Challenge Active</h3>
+          <p className="text-gray-500 text-sm max-w-sm mb-6">
+            Set up your prop firm challenge in Settings to track your progress, consistency score, and violation risks.
+          </p>
+          <Link
+            href="/settings?tab=account"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-lg shadow-indigo-500/20"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Set Up Prop Firm
+          </Link>
+        </div>
+        
+        <PropFirmSimulator />
       </div>
     )
   }
@@ -74,7 +79,6 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
   const worstDay = pnlByDay.length ? [...pnlByDay].sort((a, b) => a.pnl - b.pnl)[0] : null
 
   // Consistency score: % of days where best day profit < 40% of total gains
-  // (simplified: % of profitable days that didn't exceed 40% of total gain)
   const totalGain = Math.max(pnl, 0)
   const consistencyScore = useMemo(() => {
     if (!pnlByDay.length || !totalGain) return 100
@@ -143,6 +147,13 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
           </div>
         ))}
       </div>
+
+      {/* Projection Simulator Card */}
+      <PropFirmSimulator 
+        accountSize={startBalance} 
+        targetPercent={tier.profitTargetPercent} 
+        maxTotalLossPercent={tier.maxTotalLossPercent} 
+      />
 
       {/* Daily Breakdown Table */}
       {pnlByDay.length > 0 && (

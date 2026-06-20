@@ -110,4 +110,138 @@ export function getTagStyle(hexColor: string | null | undefined, isMistake = fal
   };
 }
 
+export interface PLColors {
+  text: string;
+  text70: string;
+  bg10: string;
+  ring20: string;
+  bg15: string;
+  border30: string;
+  border50: string;
+  shadow: string;
+  hexColor: string;
+  hexBg: string;
+  hexShadow: string;
+}
+
+export function getPLColorClasses(value: number, isColorblind = false): PLColors {
+  const isPositive = value >= 0;
+  if (isColorblind) {
+    return {
+      text: isPositive ? 'text-blue-400' : 'text-orange-400',
+      text70: isPositive ? 'text-blue-500/70' : 'text-orange-500/70',
+      bg10: isPositive ? 'bg-blue-500/10' : 'bg-orange-500/10',
+      ring20: isPositive ? 'ring-blue-500/20' : 'ring-orange-500/20',
+      bg15: isPositive ? 'bg-blue-500/15' : 'bg-orange-500/15',
+      border30: isPositive ? 'border-blue-500/30' : 'border-orange-500/30',
+      border50: isPositive ? 'border-blue-500/50' : 'border-orange-500/50',
+      shadow: isPositive 
+        ? 'shadow-[0_0_16px_rgba(59,130,246,0.12)]' 
+        : 'shadow-[0_0_16px_rgba(249,115,22,0.12)]',
+      hexColor: isPositive ? '#60a5fa' : '#fb923c', // Blue-400 / Orange-400 hex
+      hexBg: isPositive ? 'rgba(59,130,246,0.06)' : 'rgba(249,115,22,0.06)',
+      hexShadow: isPositive ? 'rgba(59,130,246,0.2)' : 'rgba(249,115,22,0.2)'
+    };
+  } else {
+    return {
+      text: isPositive ? 'text-emerald-400' : 'text-red-400',
+      text70: isPositive ? 'text-emerald-500/70' : 'text-red-500/70',
+      bg10: isPositive ? 'bg-emerald-500/10' : 'bg-red-500/10',
+      ring20: isPositive ? 'ring-emerald-500/20' : 'ring-red-500/20',
+      bg15: isPositive ? 'bg-emerald-500/15' : 'bg-red-500/15',
+      border30: isPositive ? 'border-emerald-500/30' : 'border-red-500/30',
+      border50: isPositive ? 'border-emerald-500/50' : 'border-red-500/50',
+      shadow: isPositive 
+        ? 'shadow-[0_0_16px_rgba(16,185,129,0.12)]' 
+        : 'shadow-[0_0_16px_rgba(239,68,68,0.12)]',
+      hexColor: isPositive ? '#34d399' : '#f87171', // emerald-400 / red-400 equivalent hex
+      hexBg: isPositive ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)',
+      hexShadow: isPositive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.18)'
+    };
+  }
+}
+
+export function toLocalYMD(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function toLocalISOString(ymdString: string, existingTimeStr?: string): string {
+  if (!ymdString) return new Date().toISOString();
+  
+  if (ymdString.includes('T')) {
+    return ymdString;
+  }
+  
+  const [year, month, day] = ymdString.split('-').map(Number);
+  const date = new Date();
+  date.setFullYear(year);
+  date.setMonth(month - 1);
+  date.setDate(day);
+  
+  if (existingTimeStr) {
+    const d = new Date(existingTimeStr);
+    if (!isNaN(d.getTime())) {
+      date.setHours(d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+    }
+  } else {
+    const now = new Date();
+    date.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+  }
+
+  const tzOffset = -date.getTimezoneOffset();
+  const diff = tzOffset >= 0 ? '+' : '-';
+  const pad = (num: number) => String(num).padStart(2, '0');
+  
+  const offsetHours = pad(Math.floor(Math.abs(tzOffset) / 60));
+  const offsetMins = pad(Math.abs(tzOffset) % 60);
+  
+  const yearStr = date.getFullYear();
+  const monthStr = pad(date.getMonth() + 1);
+  const dayStr = pad(date.getDate());
+  const hoursStr = pad(date.getHours());
+  const minsStr = pad(date.getMinutes());
+  const secsStr = pad(date.getSeconds());
+  
+  return `${yearStr}-${monthStr}-${dayStr}T${hoursStr}:${minsStr}:${secsStr}${diff}${offsetHours}:${offsetMins}`;
+}
+
+export function toLocalDatetimeLocal(dateString: string | null | undefined): string {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '';
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+export function fromLocalDatetimeLocal(localDateTimeStr: string): string {
+  if (!localDateTimeStr) return new Date().toISOString();
+  
+  const [datePart, timePart] = localDateTimeStr.split('T');
+  if (!datePart || !timePart) return new Date(localDateTimeStr).toISOString();
+
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes] = timePart.split(':').map(Number);
+  
+  const date = new Date(year, month - 1, day, hours, minutes, 0);
+  
+  const tzOffset = -date.getTimezoneOffset();
+  const diff = tzOffset >= 0 ? '+' : '-';
+  const pad = (num: number) => String(num).padStart(2, '0');
+  
+  const offsetHours = pad(Math.floor(Math.abs(tzOffset) / 60));
+  const offsetMins = pad(Math.abs(tzOffset) % 60);
+  
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00${diff}${offsetHours}:${offsetMins}`;
+}
+
 
