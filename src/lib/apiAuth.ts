@@ -8,12 +8,17 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function authenticateRequest(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
-  const token = authHeader?.replace('Bearer ', '');
+  let token = authHeader?.replace('Bearer ', '') || undefined;
+
+  if (!token) {
+    const { searchParams } = new URL(req.url);
+    token = searchParams.get('token') || undefined;
+  }
 
   if (!token) {
     return {
       error: NextResponse.json(
-        { error: 'Missing authorization header' },
+        { error: 'Missing authorization header or token parameter' },
         { status: 401 }
       ),
     };

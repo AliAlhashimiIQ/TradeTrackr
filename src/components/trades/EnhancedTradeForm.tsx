@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { isForexPair, calculatePips } from '@/lib/forexUtils';
+import { isForexPair, calculatePips, getSymbolMultiplier } from '@/lib/forexUtils';
 import { resolveTradingViewUrl } from '@/lib/utils';
 
 
@@ -138,9 +138,10 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       // Standard Forex PnL calculation: (Exit - Entry) * Lots * 100,000
       // For simplicity in this app, we'll assume the user might want a direct multiplier or we use 100k
       // But let's stick to what the user provides. If they want $ per pip, it's usually Lots * 10.
+      const multiplier = getSymbolMultiplier(formData.symbol || '');
       return type === 'Long'
-        ? (exit_price - entry_price) * (lots * 100000)
-        : (entry_price - exit_price) * (lots * 100000);
+        ? (exit_price - entry_price) * (lots * multiplier)
+        : (entry_price - exit_price) * (lots * multiplier);
     }
     
     if (!quantity) return null;
@@ -216,7 +217,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         const url = await uploadTradeScreenshot(screenshotFile, userId, tradeId);
         if (url) screenshotUrl = url;
       }
-      const effectiveQuantity = isForex ? (formData.lots || 0) * 100000 : (formData.quantity || 0);
+      const effectiveQuantity = isForex ? (formData.lots || 0) * getSymbolMultiplier(formData.symbol || '') : (formData.quantity || 0);
       const calculatedPnl = formData.type === 'Long'
         ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * effectiveQuantity
         : ((formData.entry_price || 0) - (formData.exit_price || 0)) * effectiveQuantity;

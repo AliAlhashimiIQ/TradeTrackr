@@ -1,7 +1,6 @@
 import { supabase } from './supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote, TradingAccount } from './types';
 import { sanitizeTradeInput } from './sanitize';
-import { encryptPassword } from './crypto';
 
 async function attachTagsToTrades(trades: Trade[]): Promise<Trade[]> {
   if (!trades.length) return trades;
@@ -923,23 +922,24 @@ export async function getTradingAccounts(userId: string): Promise<TradingAccount
 export async function addTradingAccount(
   account: Omit<TradingAccount, 'id' | 'created_at' | 'updated_at' | 'balance' | 'connection_status' | 'last_sync'>
 ): Promise<TradingAccount> {
-  const encPassword = account.password ? await encryptPassword(account.password) : '';
-  const { data, error } = await supabase
-    .from('trading_accounts')
-    .insert([
-      {
-        ...account,
-        password: encPassword,
-        balance: 0.00,
-        connection_status: 'DISCONNECTED',
-        last_sync: null,
-      },
-    ])
-    .select()
-    .single();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
-  if (error) throw error;
-  return data as TradingAccount;
+  const res = await fetch('/api/accounts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(account),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json();
+    throw new Error(errData.error || 'Failed to add trading account');
+  }
+
+  return await res.json() as TradingAccount;
 }
 
 /**
@@ -949,22 +949,24 @@ export async function updateTradingAccount(
   id: string,
   account: Partial<Omit<TradingAccount, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
 ): Promise<TradingAccount> {
-  const accountUpdates = { ...account };
-  if (accountUpdates.password) {
-    accountUpdates.password = await encryptPassword(accountUpdates.password);
-  }
-  const { data, error } = await supabase
-    .from('trading_accounts')
-    .update({
-      ...accountUpdates,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select()
-    .single();
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
 
-  if (error) throw error;
-  return data as TradingAccount;
+  const res = await fetch(`/api/accounts?id=${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(account),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json();
+    throw new Error(errData.error || 'Failed to update trading account');
+  }
+
+  return await res.json() as TradingAccount;
 }
 
 /**

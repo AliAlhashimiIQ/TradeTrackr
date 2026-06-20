@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/apiAuth';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 
 // Allowed MIME types for video uploads
@@ -17,6 +17,12 @@ export async function POST(request: NextRequest) {
   if ('error' in auth && auth.error) return auth.error;
 
   const userId = auth.user!.id;
+
+  // Rate Limit: 5 uploads per minute
+  const limit = checkRateLimit(userId, 5, 60_000);
+  if (!limit.allowed) {
+    return rateLimitExceeded(limit.resetIn);
+  }
 
   try {
     // 2. Parse the multipart form data

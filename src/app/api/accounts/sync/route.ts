@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/apiAuth';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 import { decryptPassword } from '@/lib/crypto';
@@ -29,6 +29,12 @@ export async function POST(request: NextRequest) {
   if ('error' in auth && auth.error) return auth.error;
 
   const userId = auth.user!.id;
+
+  // Rate Limit: 3 syncs per minute
+  const limit = checkRateLimit(userId, 3, 60_000);
+  if (!limit.allowed) {
+    return rateLimitExceeded(limit.resetIn);
+  }
 
   try {
     const body = await request.json();

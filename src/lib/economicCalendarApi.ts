@@ -80,81 +80,32 @@ export async function getEconomicCalendar(params: {
   endDate?: string;
   importance?: string[];
 }) {
-  const apiKey = process.env.NEXT_PUBLIC_TRADING_ECONOMICS_API_KEY;
-  
-  // For development/testing, if no API key, return mock data
-  if (!apiKey || apiKey === 'your_api_key_here') {
-    console.warn('No Trading Economics API key found. Using mock data.');
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return MOCK_ECONOMIC_EVENTS;
-  }
-  
   try {
-    // Build base URL
-    let url = BASE_URL;
-    
-    // Build query parameters array
     const queryParts = [];
-    
-    // Add API key as 'client' parameter (this is the format shown in their docs)
-    queryParts.push(`client=${apiKey}`);
-    
-    // Add parameters to the array
     if (params.country?.length) queryParts.push(`c=${params.country.join(',')}`);
     if (params.indicator?.length) queryParts.push(`i=${params.indicator.join(',')}`);
     if (params.importance?.length) queryParts.push(`importance=${params.importance.join(',')}`);
     if (params.startDate) queryParts.push(`d1=${params.startDate}`);
     if (params.endDate) queryParts.push(`d2=${params.endDate}`);
-    
-    // Combine all parameters
-    url = `${url}?${queryParts.join('&')}`;
-    
-    
-    // Make the API request with a timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-    
-    const response = await fetch(url, { 
+
+    const url = `/api/calendar?${queryParts.join('&')}`;
+
+    const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
       },
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
-    
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`API error ${response.status}: ${errorText}`);
-      
-      // If we get a 401 or 403, it's likely an API key issue
-      if (response.status === 401 || response.status === 403) {
-        throw new Error('API key is invalid or unauthorized. Please check your Trading Economics API key.');
-      }
-      
-      throw new Error(`Failed to fetch economic calendar: ${response.status}`);
+      throw new Error(`Proxy error ${response.status}`);
     }
-    
+
     const data = await response.json();
-    
-    if (!data || (Array.isArray(data) && data.length === 0)) {
-      console.warn('Economic calendar API returned empty data');
-      return [];
-    }
-    
     return data;
   } catch (error) {
-    console.error('Economic calendar API error:', error);
-    
-    // If we're in development mode, return mock data
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('Using mock data since API request failed in development mode');
-      return MOCK_ECONOMIC_EVENTS;
-    }
-    
-    // In production, propagate the error
-    throw new Error(`Failed to fetch economic calendar data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    console.error('Economic calendar client error:', error);
+    // Fallback to mock data on failure/error
+    return MOCK_ECONOMIC_EVENTS;
   }
 } 

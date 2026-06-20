@@ -16,6 +16,8 @@ export interface ParseResult {
   trades: ParsedTrade[]; errors: string[]; source: 'mt5' | 'csv'
 }
 
+import { getSymbolMultiplier } from './forexUtils'
+
 // ── Regex HTML table extractor ────────────────────────────────────────────────
 // Bypasses DOMParser entirely — works even when textContent returns empty.
 
@@ -155,7 +157,7 @@ function parsePositions(rows: string[][]): ParsedTrade[] {
       symbol: sym, type,
       entry_time: entryT, exit_time: exitT,
       entry_price: entryP, exit_price: exitP,
-      quantity: lots * 100000, lots,
+      quantity: lots * getSymbolMultiplier(sym), lots,
       profit_loss: profit, commission: comm, swap,
       _key: makeKey(sym, entryT, lots),
     })
@@ -249,7 +251,7 @@ function parseDeals(rows: string[][]): ParsedTrade[] {
       entry_time: d.entryT || new Date().toISOString(),
       exit_time:  d.exitT  || d.entryT || new Date().toISOString(),
       entry_price: d.entryP, exit_price: d.exitP,
-      quantity: d.lots * 100000, lots: d.lots,
+      quantity: d.lots * getSymbolMultiplier(d.sym || ''), lots: d.lots,
       profit_loss: d.profit, commission: d.comm, swap: d.swap,
       _key: makeKey(d.sym, d.entryT, d.lots),
     }))
@@ -340,7 +342,7 @@ export function parseCsv(csvText: string, mapping: CsvColumnMapping = DEFAULT_CS
         symbol, type: rawType.includes('sell') || rawType.includes('short') ? 'Short' : 'Long',
         entry_time: entryTime, exit_time: exitTime,
         entry_price: parseNum(get('entry_price')), exit_price: parseNum(get('exit_price')),
-        lots, quantity: lots * 100000, profit_loss: parseNum(get('profit_loss')),
+        lots, quantity: lots * getSymbolMultiplier(symbol), profit_loss: parseNum(get('profit_loss')),
         _key: makeKey(symbol, entryTime, lots),
       })
     }

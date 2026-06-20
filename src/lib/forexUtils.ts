@@ -54,3 +54,39 @@ export const formatPips = (pips?: number): string => {
   if (pips === undefined || pips === null) return '0.0';
   return `${pips > 0 ? '+' : ''}${pips.toFixed(1)}`;
 };
+
+/**
+ * Gets the volume/lot multiplier for a given symbol
+ */
+export const getSymbolMultiplier = (symbol: string): number => {
+  if (!symbol) return 100000;
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  // Gold
+  if (cleanSymbol === 'XAUUSD' || cleanSymbol === 'GOLD') {
+    return 100;
+  }
+  // Silver
+  if (cleanSymbol === 'XAGUSD' || cleanSymbol === 'SILVER') {
+    return 5000;
+  }
+  // Cryptos
+  const cryptos = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'DOGE', 'XRP', 'LTC', 'LINK', 'BNB', 'SHIB', 'AVAX', 'MATIC'];
+  if (cryptos.some(crypto => cleanSymbol.startsWith(crypto))) {
+    return 1;
+  }
+  // Indices / Futures
+  const indices = ['US30', 'NAS100', 'NDX', 'SPX500', 'SPX', 'GER30', 'DE30', 'UK100', 'JPN225', 'HK50'];
+  if (indices.some(index => cleanSymbol.includes(index))) {
+    return 1;
+  }
+  
+  // Standard Forex
+  if (isForexPair(symbol)) {
+    return 100000;
+  }
+  
+  // Default for stocks / everything else
+  return 1;
+};
+

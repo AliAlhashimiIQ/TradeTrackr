@@ -42,6 +42,28 @@ export function formatPercentage(value: number): string {
 export function resolveTradingViewUrl(url: string | null | undefined): string {
   if (!url) return '';
   const trimmed = url.trim();
+  
+  // If it's a Supabase storage URL, rewrite it to go through the media proxy
+  if (trimmed.includes('/storage/v1/object/public/')) {
+    let token = '';
+    if (typeof window !== 'undefined') {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          try {
+            const item = localStorage.getItem(key);
+            if (item) {
+              const parsed = JSON.parse(item);
+              token = parsed.access_token || '';
+              break;
+            }
+          } catch (e) {}
+        }
+      }
+    }
+    return `/api/media?url=${encodeURIComponent(trimmed)}${token ? `&token=${token}` : ''}`;
+  }
+
   // Match tradingview.com/x/[id]/ or tradingview.com/x/[id]
   const match = trimmed.match(/(?:tradingview\.com\/x\/)([a-zA-Z0-9_-]+)/i);
   if (match) {

@@ -22,7 +22,7 @@ import TradesHeader from '@/components/trades/TradesHeader'
 import TradesFilters from '@/components/trades/TradesFilters'
 import TradesTable, { DEFAULT_COLUMN_WIDTHS } from '@/components/trades/TradesTable'
 import { motion } from 'framer-motion'
-import { isForexPair } from '@/lib/forexUtils'
+import { isForexPair, getSymbolMultiplier } from '@/lib/forexUtils'
 
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review'
 type TableDensity = 'comfortable' | 'compact'
@@ -447,7 +447,7 @@ export default function Trades() {
         if (entry > 0 && exit > 0 && qty > 0) {
           let pnl = 0;
           if (isForexPair(next.symbol || '')) {
-            const lotSize = 100000;
+            const lotSize = getSymbolMultiplier(next.symbol || '');
             pnl = (dir === 'Long' ? (exit - entry) : (entry - exit)) * lotSize * (lotsVal > 0 ? lotsVal : 0.1);
           } else {
             pnl = (dir === 'Long' ? (exit - entry) : (entry - exit)) * qty;
