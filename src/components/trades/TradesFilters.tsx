@@ -303,7 +303,9 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                 <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                      <span className="text-indigo-400 text-lg">🔍</span>
+                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
                       Smart Review Queue
                     </h3>
                     <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">
@@ -324,6 +326,8 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                           : isMedRisk 
                             ? 'hover:border-amber-500/30' 
                             : 'hover:border-indigo-500/30';
+                        
+                        const hasStrategyTags = trade.tags && trade.tags.length > 0;
                         
                         return (
                           <button
@@ -355,18 +359,24 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   )}
                                 </div>
                                 <div className="flex flex-wrap gap-1.5 mt-2">
-                                  {reasons.map(reason => {
+                                  {/* Strategy Tags or Fallback */}
+                                  {hasStrategyTags ? (
+                                    trade.tags?.map(tag => (
+                                      <span key={tag} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                        {tag}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                                      No Strategy Tags
+                                    </span>
+                                  )}
+
+                                  {reasons.filter(r => r !== 'no-plan').map(reason => {
                                     if (reason === 'fomo') {
                                       return (
                                         <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
                                           FOMO
-                                        </span>
-                                      );
-                                    }
-                                    if (reason === 'no-plan') {
-                                      return (
-                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                                          No Plan
                                         </span>
                                       );
                                     }
@@ -388,9 +398,9 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                             </div>
                             
                             <div className="flex items-center gap-3 self-end sm:self-center">
-                              {/* Quality Score Indicator */}
+                              {/* Trade Execution Score */}
                               <div className="text-right">
-                                <span className="text-[10px] text-gray-500 block">Quality</span>
+                                <span className="text-[10px] text-gray-500 block">Score</span>
                                 <span className={`text-xs font-bold font-mono ${
                                   quality >= 70 ? 'text-emerald-400' : quality >= 50 ? 'text-amber-400' : 'text-red-400'
                                 }`}>
