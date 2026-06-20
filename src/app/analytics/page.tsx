@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import dynamic from 'next/dynamic';
+import { useTrades } from '@/hooks/useTrades';
 
 // ─── 6.5 Dynamic (code-split) imports for heavy chart components ──────────────
 // Each chart is a separate JS chunk — only loaded when the analytics tab is opened.
@@ -57,6 +58,7 @@ type TimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 export default function AnalyticsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { trades: cachedTrades, isLoading: tradesLoading } = useTrades('all');
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [showFilters, setShowFilters] = useState(false);
@@ -91,19 +93,17 @@ export default function AnalyticsPage() {
     }
   }, [user, authLoading, router]);
   
-  // Fetch trades and calculate metrics
+  // Fetch trades and calculate metrics from shared SWR hook
   useEffect(() => {
-    const fetchTrades = async () => {
-      if (!user) return;
-      
+    if (tradesLoading || !user) return;
+    
+    const processTrades = async () => {
       setLoading(true);
-      
       try {
-        const trades = await getAllTrades(user.id);
-        setAllTrades(trades);
+        setAllTrades(cachedTrades);
         
         // Apply time period filter
-        const filtered = filterTradesByTimePeriod(trades, timePeriod);
+        const filtered = filterTradesByTimePeriod(cachedTrades, timePeriod);
         setFilteredTrades(filtered);
 
         // Load challenge status
@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
           if (firm && tier) {
             const startBalance = Number(s.challengeStartBalance) || tier.accountSize;
             const startDate = s.challengeStartDate || new Date().toISOString().slice(0, 10);
-            const challengeTrades = trades.filter((t: any) => t.entry_time >= startDate);
+            const challengeTrades = cachedTrades.filter((t: any) => t.entry_time >= startDate);
             const totalPnL = challengeTrades.reduce((sum: number, t: any) => sum + t.profit_loss, 0);
             const currentBalance = startBalance + totalPnL;
             const todayStr = new Date().toISOString().slice(0, 10);
@@ -124,14 +124,14 @@ export default function AnalyticsPage() {
           }
         }
       } catch (error) {
-        console.error('Error fetching trades:', error);
+        console.error('Error processing analytics trades:', error);
       } finally {
         setLoading(false);
       }
     };
-    
-    fetchTrades();
-  }, [user]);
+
+    processTrades();
+  }, [user, cachedTrades, tradesLoading]);
   
   // ── 6.3 Memoize ALL heavy chart data in one pass ─────────────────────────
   // Replaces 9 separate setState calls with a single memoised computation.
