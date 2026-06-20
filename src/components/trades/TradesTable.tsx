@@ -937,8 +937,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   return (
     <>
       {/* Desktop view */}
-      <div className="hidden md:block card rounded-2xl overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent min-h-[450px]">
-        <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
+      <div className="hidden md:block card rounded-2xl min-h-[450px] overflow-hidden flex flex-col">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent flex-grow">
+          <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
           {/* Table Header */}
           <div
             className="grid gap-2 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full text-left"
@@ -1589,8 +1590,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </>
           )}
         </div>
+      </div>
 
-        {/* Desktop Pagination */}
+      {/* Desktop Pagination */}
         {filteredTrades.length > 0 && (
           <div className="px-5 py-4 border-t border-white/[0.06] flex items-center justify-between bg-[#0a0b12]/50">
             <span className="text-xs text-gray-500">
