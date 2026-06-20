@@ -574,8 +574,16 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
         {/* Pips */}
         {visibleColumns.pips && (
-          <div className="text-right text-xs font-mono text-gray-500 tabular-nums">
-            {inlineRowData.pips !== undefined ? inlineRowData.pips : '--'}
+          <div>
+            <input
+              type="number"
+              step="any"
+              value={inlineRowData.pips !== undefined && inlineRowData.pips !== null ? inlineRowData.pips : ''}
+              onChange={e => onInlineChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onKeyDown={handleKeyDown}
+              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              placeholder="0.0"
+            />
           </div>
         )}
 

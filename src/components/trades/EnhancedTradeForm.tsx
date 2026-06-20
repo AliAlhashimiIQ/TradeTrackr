@@ -390,45 +390,30 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   />
                   {errors.quantity && <p className="text-xs text-red-500 mt-1">{errors.quantity}</p>}
                 </div>
-                {isForex ? (
-                  <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Pips</label>
-                    <div className="flex items-center">
-                      <input
-                        type="number" step="any"
-                        value={formData.pips ?? ''}
-                        onChange={e => handleChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
-                        placeholder="0.0"
-                        className="w-full bg-transparent text-indigo-400 text-xl font-bold placeholder-gray-700 focus:outline-none"
-                      />
-                      <span className="text-[10px] font-bold text-indigo-500/50 ml-1 uppercase">Pips</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Date</label>
+                <div className="bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Pips</label>
+                  <div className="flex items-center">
                     <input
-                      type="date"
-                      value={formData.entry_time || ''}
-                      onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
-                      className={`w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark] ${errors.entry_time ? 'text-red-400' : ''}`}
+                      type="number" step="any"
+                      value={formData.pips ?? ''}
+                      onChange={e => handleChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                      placeholder="0.0"
+                      className="w-full bg-transparent text-indigo-400 text-xl font-bold placeholder-gray-700 focus:outline-none"
                     />
-                    {errors.entry_time && <p className="text-xs text-red-500 mt-1">{errors.entry_time}</p>}
+                    <span className="text-[10px] font-bold text-indigo-500/50 ml-1 uppercase">Pips</span>
                   </div>
-                )}
-              </div>
-              {isForex && (
-                <div className="mt-3 bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Date</label>
-                  <input
-                    type="date"
-                    value={formData.entry_time || ''}
-                    onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
-                    className={`w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark] ${errors.entry_time ? 'text-red-400' : ''}`}
-                  />
-                  {errors.entry_time && <p className="text-xs text-red-500 mt-1">{errors.entry_time}</p>}
                 </div>
-              )}
+              </div>
+              <div className="mt-3 bg-[#0d0e16] rounded-xl border border-white/[0.06] p-4">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Date</label>
+                <input
+                  type="date"
+                  value={formData.entry_time || ''}
+                  onChange={e => { handleChange('entry_time', e.target.value); handleChange('exit_time', e.target.value); }}
+                  className={`w-full bg-transparent text-white text-base font-medium focus:outline-none [color-scheme:dark] ${errors.entry_time ? 'text-red-400' : ''}`}
+                />
+                {errors.entry_time && <p className="text-xs text-red-500 mt-1">{errors.entry_time}</p>}
+              </div>
             </div>
 
             {/* Optional Sections Toggle */}
