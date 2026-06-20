@@ -906,7 +906,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
           {/* Table Header */}
           <div
-            className="grid gap-2 px-5 py-3.5 text-[10px] font-bold text-gray-500 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full text-left"
+            className="grid gap-2 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full text-left"
             style={{
               gridTemplateColumns: getGridTemplateColumns(),
               borderBottom: '1px solid rgba(255,255,255,0.06)',
@@ -1266,63 +1266,63 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Commission */}
                     {visibleColumns.commission && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-500 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
                         {(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}
                       </div>
                     )}
 
                     {/* Net Profit */}
                     {visibleColumns.netProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-500'}`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-right tabular-nums ${(trade.profit_loss ?? 0) > 0 ? 'text-emerald-400' : (trade.profit_loss ?? 0) < 0 ? 'text-red-400' : 'text-gray-400'}`}>
                         {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0))}
                       </div>
                     )}
 
                     {/* Date */}
                     {visibleColumns.date && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500 text-left`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left`}>
                         {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </div>
                     )}
 
                     {/* Open Time */}
                     {visibleColumns.openTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500 text-left tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left tabular-nums`}>
                         {new Date(trade.entry_time).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     )}
 
                     {/* Close Time */}
                     {visibleColumns.closeTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500 text-left tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left tabular-nums`}>
                         {new Date(trade.exit_time).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     )}
 
                     {/* Hold Time */}
                     {visibleColumns.holdTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
                         {(() => { const m = Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; })()}
                       </div>
                     )}
 
                     {/* Stop Loss */}
                     {visibleColumns.stopLoss && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-500 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
                         {(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
                       </div>
                     )}
 
                     {/* Take Profit */}
                     {visibleColumns.takeProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-500 text-right tabular-nums`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-mono text-gray-400 text-right tabular-nums`}>
                         {(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
                       </div>
                     )}
 
                     {/* Account */}
                     {visibleColumns.account && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-500 text-left truncate`}>
+                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left truncate`}>
                         {trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}
                       </div>
                     )}
@@ -1669,25 +1669,25 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   {/* Details Grid: Date, Price, Lots, Pips */}
                   <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs mb-3 border-y border-white/[0.04] py-2 relative z-10">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Date</span>
+                      <span className="text-gray-400">Date</span>
                       <span className="text-gray-300 font-medium">
                         {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Lots / Qty</span>
+                      <span className="text-gray-400">Lots / Qty</span>
                       <span className="text-gray-300 font-mono font-medium">
                         {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Execution</span>
+                      <span className="text-gray-400">Execution</span>
                       <span className="text-gray-300 font-mono">
                         {trade.entry_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)} → {trade.exit_price?.toFixed(isForexPair(trade.symbol) ? 5 : 2)}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Pips / Duration</span>
+                      <span className="text-gray-400">Pips / Duration</span>
                       <span className="text-gray-300">
                         {isForexPair(trade.symbol) ? `${formatPips(trade.pips)} pips` : durationStr}
                       </span>
@@ -1731,7 +1731,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         onClick={() => {
                           onNotesEditClick(trade);
                         }}
-                        className="text-[10px] text-gray-500 hover:text-white cursor-pointer select-none truncate font-medium italic text-left"
+                        className="text-[10px] text-gray-400 hover:text-white cursor-pointer select-none truncate font-medium italic text-left"
                         title="Click to view or edit learnings notes"
                       >
                         {trade.notes ? `Learnings: "${trade.notes}"` : '+ Add learning note...'}
