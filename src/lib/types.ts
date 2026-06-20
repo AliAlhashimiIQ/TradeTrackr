@@ -134,3 +134,38 @@ export interface TradingAccount {
   updated_at: string;
 }
 
+export interface BacktestingSession {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  symbol: string;
+  timeframe: string;
+  strategy?: string | null;
+  initial_balance: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BacktestTrade {
+  id: string;
+  session_id: string;
+  user_id: string;
+  symbol: string;
+  type: 'Long' | 'Short';
+  entry_price: number;
+  exit_price?: number;
+  entry_time: string;
+  exit_time?: string;
+  quantity: number;
+  profit_loss?: number;
+  pips?: number;
+  stop_loss?: number;
+  take_profit?: number;
+  notes?: string;
+  screenshot_url?: string | null;
+  is_open?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
