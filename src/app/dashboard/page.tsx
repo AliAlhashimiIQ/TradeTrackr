@@ -221,20 +221,7 @@ export default function Dashboard() {
     if (!authLoading && !user) router.push('/login')
   }, [authLoading, user, router])
 
-  // Load prop firm challenge config from Supabase
-  useEffect(() => {
-    const loadChallenge = async () => {
-      if (!user) return;
-      const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
-      const s = (data?.settings as any) || {};
-      if (!s.propFirmId) return;
-      const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
-      const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);
-      if (!firm || !tier) return;
-      // We don't have current balance here without all-time trades; will compute after trades load
-    };
-    loadChallenge();
-  }, [user]);
+
 
   const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange)
 
@@ -286,17 +273,23 @@ export default function Dashboard() {
   // Compute challenge status after trades are loaded
   useEffect(() => {
     const loadChallenge = async () => {
-      if (!user || !trades.length) return;
+      if (!user) return;
       const { data } = await supabase.from('profiles').select('settings').eq('id', user.id).single();
       const s = (data?.settings as any) || {};
-      if (!s.propFirmId || !s.propFirmTier) return;
+      if (!s.propFirmId || !s.propFirmTier) {
+        setChallengeStatus(null);
+        return;
+      }
       const firm = PROP_FIRMS.find(f => f.id === s.propFirmId);
       const tier = firm?.tiers.find(t => t.tierName === s.propFirmTier);
-      if (!firm || !tier) return;
+      if (!firm || !tier) {
+        setChallengeStatus(null);
+        return;
+      }
       const startBalance = Number(s.challengeStartBalance) || tier.accountSize;
       const startDate = s.challengeStartDate || new Date().toISOString().slice(0, 10);
       // All-time P&L since challenge start
-      const challengeTrades = trades.filter(t => t.entry_time >= startDate);
+      const challengeTrades = (trades || []).filter(t => t.entry_time >= startDate);
       const totalPnL = challengeTrades.reduce((sum, t) => sum + t.profit_loss, 0);
       const currentBalance = startBalance + totalPnL;
       const todayChallengePnL = challengeTrades
@@ -397,16 +390,21 @@ export default function Dashboard() {
         )}
 
         {noTrades ? (
-          <EmptyState
-            variant="trades"
-            title="No trades yet"
-            subtitle="Log your first trade to unlock your Command Center — equity curves, streaks, psychology scores, and AI-powered insights."
-            ctaLabel="Add Your First Trade"
-            ctaHref="/trades/new"
-            onManualLogClick={() => router.push('/trades/new')}
-            onLoadDemoClick={handleLoadDemoTrades}
-            isDemoLoading={isDemoLoading}
-          />
+          <div className={`grid gap-6 ${challengeStatus ? 'lg:grid-cols-[1fr_340px]' : ''}`}>
+            <EmptyState
+              variant="trades"
+              title="No trades yet"
+              subtitle="Log your first trade to unlock your Command Center — equity curves, streaks, psychology scores, and AI-powered insights."
+              ctaLabel="Add Your First Trade"
+              ctaHref="/trades/new"
+              onManualLogClick={() => router.push('/trades/new')}
+              onLoadDemoClick={handleLoadDemoTrades}
+              isDemoLoading={isDemoLoading}
+            />
+            {challengeStatus && (
+              <ChallengeDashboardWidget status={challengeStatus} trades={trades} />
+            )}
+          </div>
         ) : (
           <>
             {/* ── Stat Pills Row ── */}
