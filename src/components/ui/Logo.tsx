@@ -15,53 +15,39 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 24 }) => {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Monogram T & R with Up-trending stock chart arrow */}
+      {/* Monogram T & R with Up-trending stock chart arrow (Favicon style) */}
       <path
-        d="M 6 6 H 18"
+        d="M 6 11.5 V 6 H 14.5"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M 12 6 V 18"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M 9 18 H 15"
+        d="M 9.5 18 H 14.5"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M 12 11 L 6 6"
+        d="M 6 15.5 L 11.5 10 L 14 12.5 L 18 5.5"
         stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M 12 11 L 6 16"
+        d="M 14.5 5.5 H 18 V 9"
         stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M 12 11 L 18 5"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M 13 5 H 18 V 10"
-        stroke="currentColor"
-        strokeWidth="2.2"
+        strokeWidth="2.4"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -70,3 +56,4 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 24 }) => {
 }
 
 export default Logo
+
