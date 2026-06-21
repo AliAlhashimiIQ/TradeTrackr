@@ -954,7 +954,7 @@
 /* Modals & Dialogs */
 :root:not(.dark) [role="dialog"],
 :root:not(.dark) .modal,
-:root:not(.dark) .absolute.bg-[#0f1117] {
+:root:not(.dark) .absolute[class*="bg-[#0f1117]"] {
   background: #ffffff !important;
   border-color: rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
