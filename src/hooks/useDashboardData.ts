@@ -95,38 +95,9 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
     let values: number[] = [];
     
     // Bypass RPC calculations when filtering by a specific account because get_user_equity_curve RPC doesn't support account_id
-    if (!accountFilterId) {
-      try {
-        const { data: rpcEquityData, error: rpcError } = await (supabase as any).rpc('get_user_equity_curve', {
-          p_user_id: userId,
-          p_initial_capital: cap,
-          p_start_date: bounds.startDate || null,
-          p_end_date: bounds.endDate || null,
-        });
-
-        if (rpcError || !rpcEquityData) {
-          throw rpcError || new Error('No RPC equity curve data returned');
-        }
-        
-        labels = rpcEquityData.map((point: any) => point.date);
-        values = rpcEquityData.map((point: any) => Number(point.equity));
-      } catch (rpcErr) {
-        console.warn('Fallback to client-side equity curve calculations:', rpcErr);
-        const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
-          date: point.date,
-          value: point.equity
-        }));
-        labels = equityCurve.map(point => point.date);
-        values = equityCurve.map(point => point.value);
-      }
-    } else {
-      const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
-        date: point.date,
-        value: point.equity
-      }));
-      labels = equityCurve.map(point => point.date);
-      values = equityCurve.map(point => point.value);
-    }
+    const equityCurve = generateEquityCurveData(tradesResponse, cap);
+    labels = equityCurve.map(point => point.date);
+    values = equityCurve.map(point => point.equity);
 
     return {
       trades: tradesResponse,

@@ -363,10 +363,89 @@ export function calculateExpectedValue(trades: Trade[]): number {
   return (winRateDecimal * avgWin) - ((1 - winRateDecimal) * avgLoss);
 }
 
+export interface EquityAdjustment {
+  date: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal' | 'fee';
+}
+
+/**
+ * Port of SQL RPC get_user_equity_curve logic to JS pure function.
+ * Supports initial capital, exit-time grouping, deposits, withdrawals, and fees.
+ */
+export function calculateEquityCurve(
+  trades: Trade[],
+  initialCapital: number = 10000,
+  adjustments: EquityAdjustment[] = []
+): TimeSeriesPerformance[] {
+  // Sort trades by exit_time (realized PnL occurs on exit)
+  const sortedTrades = [...trades]
+    .filter(t => t.exit_time)
+    .sort((a, b) => new Date(a.exit_time).getTime() - new Date(b.exit_time).getTime());
+
+  // Group all changes by date
+  const dailyPnL: Record<string, number> = {};
+
+  // Add trades P&L
+  sortedTrades.forEach(trade => {
+    const date = new Date(trade.exit_time).toISOString().split('T')[0];
+    dailyPnL[date] = (dailyPnL[date] || 0) + trade.profit_loss;
+  });
+
+  // Add adjustments (deposits, withdrawals, fees)
+  adjustments.forEach(adj => {
+    const date = new Date(adj.date).toISOString().split('T')[0];
+    let netAmount = adj.amount;
+    if (adj.type === 'withdrawal') {
+      netAmount = -Math.abs(adj.amount);
+    } else if (adj.type === 'fee') {
+      netAmount = -Math.abs(adj.amount);
+    } else if (adj.type === 'deposit') {
+      netAmount = Math.abs(adj.amount);
+    }
+    dailyPnL[date] = (dailyPnL[date] || 0) + netAmount;
+  });
+
+  // Get sorted unique dates
+  const uniqueDates = Object.keys(dailyPnL).sort();
+  if (uniqueDates.length === 0) {
+    return [];
+  }
+
+  let cumulativePnL = 0;
+  let peak = 0;
+  const equityCurve: TimeSeriesPerformance[] = [];
+
+  uniqueDates.forEach(dateString => {
+    const dailyChange = dailyPnL[dateString];
+    cumulativePnL += dailyChange;
+    const equity = initialCapital + cumulativePnL;
+
+    if (cumulativePnL > peak) {
+      peak = cumulativePnL;
+    }
+
+    const drawdown = peak - cumulativePnL;
+    const peakEquity = initialCapital + peak;
+    const drawdownPercent = (peakEquity > 0) ? (drawdown / peakEquity * 100) : 0;
+
+    equityCurve.push({
+      date: dateString,
+      cumulativePnL,
+      dailyPnL: dailyChange,
+      drawdown,
+      drawdownPercent,
+      equity
+    });
+  });
+
+  return equityCurve;
+}
+
 /**
  * Generate equity curve data points for charting
  * 
- * @param trades Array of trade objects sorted by date
+ * @param trades Array of trade objects
  * @param initialCapital Starting capital amount
  * @returns Array of equity curve data points
  */
@@ -374,61 +453,7 @@ export function generateEquityCurveData(
   trades: Trade[],
   initialCapital: number = 10000
 ): TimeSeriesPerformance[] {
-  if (!trades.length) return [];
-  
-  // Sort trades by date if not already sorted
-  const sortedTrades = [...trades].sort((a, b) => 
-    new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime()
-  );
-  
-  let cumulativePnL = 0;
-  let peak = 0;
-  let equity = initialCapital;
-  
-  const equityCurve: TimeSeriesPerformance[] = [];
-  const tradeDateMap: Record<string, number> = {};
-  
-  // Group trades by date
-  sortedTrades.forEach(trade => {
-    const date = new Date(trade.entry_time).toISOString().split('T')[0];
-    tradeDateMap[date] = (tradeDateMap[date] || 0) + trade.profit_loss;
-  });
-  
-  // Fill in all dates in the range
-  const startDate = new Date(sortedTrades[0].entry_time);
-  const endDate = new Date(sortedTrades[sortedTrades.length - 1].entry_time);
-  
-  const currentDate = new Date(startDate);
-  
-  while (currentDate <= endDate) {
-    const dateString = currentDate.toISOString().split('T')[0];
-    const dailyPnL = tradeDateMap[dateString] || 0;
-    
-    cumulativePnL += dailyPnL;
-    equity = initialCapital + cumulativePnL;
-    
-    if (cumulativePnL > peak) {
-      peak = cumulativePnL;
-    }
-    
-    const drawdown = peak - cumulativePnL;
-    const peakEquity = initialCapital + peak;
-    const drawdownPercent = (peakEquity > 0) ? (drawdown / peakEquity * 100) : 0;
-    
-    equityCurve.push({
-      date: dateString,
-      cumulativePnL,
-      dailyPnL,
-      drawdown,
-      drawdownPercent,
-      equity
-    });
-    
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
-  }
-  
-  return equityCurve;
+  return calculateEquityCurve(trades, initialCapital, []);
 }
 
 /**
