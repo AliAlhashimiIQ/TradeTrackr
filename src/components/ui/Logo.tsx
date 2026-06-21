@@ -17,7 +17,7 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 24 }) => {
     >
       {/* Monogram T & R with Up-trending stock chart arrow (Favicon style) */}
       <path
-        d="M 6 11.5 V 6 H 14.5"
+        d="M 6 11.5 V 6 H 12"
         stroke="currentColor"
         strokeWidth="2.4"
         strokeLinecap="round"
