@@ -132,7 +132,7 @@ export default function Header() {
           <div className="flex items-center justify-between px-2">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25 group-hover:border-indigo-500/30 transition-all">
-                <Logo className="w-6.5 h-6.5" />
+                <Logo className="w-6 h-6" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
             </Link>

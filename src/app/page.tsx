@@ -171,7 +171,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-lg flex items-center justify-center shadow-md shadow-black/20">
-              <Logo className="w-5.5 h-5.5" />
+              <Logo className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold tracking-tight">TradeTrackr</span>
           </div>

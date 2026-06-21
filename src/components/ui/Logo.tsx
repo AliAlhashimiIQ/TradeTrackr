@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 
 interface LogoProps {
   className?: string
@@ -7,7 +7,9 @@ interface LogoProps {
 }
 
 export const Logo: React.FC<LogoProps> = ({ className = '', size = 24, useGradient = true }) => {
-  const strokeColor = useGradient ? 'url(#logo-gradient-brand)' : 'currentColor';
+  const uniqueId = useId()
+  const gradientId = `logo-gradient-${uniqueId.replace(/:/g, '')}`
+  const strokeColor = useGradient ? `url(#${gradientId})` : 'currentColor';
 
   return (
     <svg
@@ -19,7 +21,7 @@ export const Logo: React.FC<LogoProps> = ({ className = '', size = 24, useGradie
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <linearGradient id="logo-gradient-brand" x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gradientId} x1="0" y1="24" x2="24" y2="0" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#6366f1" />
           <stop offset="50%" stopColor="#4f46e5" />
           <stop offset="100%" stopColor="#3b82f6" />
