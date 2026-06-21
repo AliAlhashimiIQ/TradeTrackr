@@ -42,35 +42,50 @@ function toTradeMetrics(performance: PerformanceMetrics): TradeMetrics {
 }
 
 // Optimized custom hook for dashboard data using SWR caching
-export function useDashboardData(userId: string | undefined, dateRange: DateRange = '30d') {
+export function useDashboardData(userId: string | undefined, dateRange: DateRange = '30d', accountId?: string | 'all') {
   
   const fetcher = async () => {
     if (!userId) throw new Error('No user ID provided');
     
     const bounds = getDateRangeBounds(dateRange);
+    const accountFilterId = accountId && accountId !== 'all' ? accountId : undefined;
     
     // Fetch trades, profile settings, and accounts in parallel
     const [tradesResponse, profileRes, accountsRes] = await Promise.all([
-      getAllTrades(userId, bounds),
+      getAllTrades(userId, { ...bounds, accountId: accountFilterId }),
       supabase
         .from('profiles')
         .select('settings')
         .eq('id', userId)
         .single(),
-      supabase
-        .from('trading_accounts')
-        .select('balance')
-        .eq('user_id', userId)
+      accountFilterId
+        ? supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('id', accountFilterId)
+            .single()
+        : supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('user_id', userId)
     ]);
 
     const settings = (profileRes.data?.settings as any) || {};
     const profileStartingBalance = Number(settings.startingBalance) || 10000;
     
     let cap = profileStartingBalance;
-    if (accountsRes.data && accountsRes.data.length > 0) {
-      const totalAccountBalance = accountsRes.data.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
-      if (totalAccountBalance > 0) {
-        cap = totalAccountBalance;
+    if (accountFilterId) {
+      const balance = Number((accountsRes.data as any)?.balance || 0);
+      if (balance > 0) {
+        cap = balance;
+      }
+    } else {
+      const accountsList = (accountsRes.data as any[]) || [];
+      if (accountsList.length > 0) {
+        const totalAccountBalance = accountsList.reduce((sum, acc) => sum + Number(acc.balance || 0), 0);
+        if (totalAccountBalance > 0) {
+          cap = totalAccountBalance;
+        }
       }
     }
 
@@ -79,22 +94,32 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
     let labels: string[] = [];
     let values: number[] = [];
     
-    try {
-      const { data: rpcEquityData, error: rpcError } = await (supabase as any).rpc('get_user_equity_curve', {
-        p_user_id: userId,
-        p_initial_capital: cap,
-        p_start_date: bounds.startDate || null,
-        p_end_date: bounds.endDate || null,
-      });
+    // Bypass RPC calculations when filtering by a specific account because get_user_equity_curve RPC doesn't support account_id
+    if (!accountFilterId) {
+      try {
+        const { data: rpcEquityData, error: rpcError } = await (supabase as any).rpc('get_user_equity_curve', {
+          p_user_id: userId,
+          p_initial_capital: cap,
+          p_start_date: bounds.startDate || null,
+          p_end_date: bounds.endDate || null,
+        });
 
-      if (rpcError || !rpcEquityData) {
-        throw rpcError || new Error('No RPC equity curve data returned');
+        if (rpcError || !rpcEquityData) {
+          throw rpcError || new Error('No RPC equity curve data returned');
+        }
+        
+        labels = rpcEquityData.map((point: any) => point.date);
+        values = rpcEquityData.map((point: any) => Number(point.equity));
+      } catch (rpcErr) {
+        console.warn('Fallback to client-side equity curve calculations:', rpcErr);
+        const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
+          date: point.date,
+          value: point.equity
+        }));
+        labels = equityCurve.map(point => point.date);
+        values = equityCurve.map(point => point.value);
       }
-      
-      labels = rpcEquityData.map((point: any) => point.date);
-      values = rpcEquityData.map((point: any) => Number(point.equity));
-    } catch (rpcErr) {
-      console.warn('Fallback to client-side equity curve calculations:', rpcErr);
+    } else {
       const equityCurve = generateEquityCurveData(tradesResponse, cap).map(point => ({
         date: point.date,
         value: point.equity
@@ -113,7 +138,7 @@ export function useDashboardData(userId: string | undefined, dateRange: DateRang
   };
 
   const { data, error } = useSWR(
-    userId ? ['dashboard', userId, dateRange] : null,
+    userId ? ['dashboard', userId, dateRange, accountId] : null,
     fetcher,
     {
       revalidateOnFocus: false,

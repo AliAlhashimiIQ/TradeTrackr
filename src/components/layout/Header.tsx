@@ -9,6 +9,7 @@ import { useStreak } from '@/hooks/useStreak'
 import { useTheme } from 'next-themes'
 
 import Logo from '@/components/ui/Logo'
+import AccountSwitcher from '@/components/layout/AccountSwitcher'
 
 export default function Header() {
   const pathname = usePathname()
@@ -158,6 +159,7 @@ export default function Header() {
 
             {/* Profile Section */}
             <div className="hidden sm:flex items-center gap-4 ml-4 pl-4 border-l border-white/[0.06]" ref={profileRef}>
+              {user && <AccountSwitcher />}
               {/* Streak Counter */}
               {user && !isLoadingStreak && (
                 streak.currentStreak > 0 ? (
@@ -314,9 +316,14 @@ export default function Header() {
                 </div>
 
                 <div className="pt-6 border-t border-white/[0.06] space-y-4">
-                  <div className="px-4">
-                    <p className="text-xs text-gray-500 font-medium mb-2 uppercase tracking-widest">Account</p>
-                    <p className="text-sm font-semibold text-white truncate mt-0.5">{user?.email}</p>
+                  <div className="px-4 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-widest">Account</p>
+                        <p className="text-sm font-semibold text-white truncate mt-0.5 max-w-[120px]">{user?.email}</p>
+                      </div>
+                      <AccountSwitcher />
+                    </div>
                   </div>
                   <Link 
                     href="/settings"

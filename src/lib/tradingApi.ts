@@ -56,6 +56,7 @@ export async function getRecentTrades(userId: string, limit: number = 5): Promis
 interface GetAllTradesOptions {
   startDate?: string;
   endDate?: string;
+  accountId?: string | null;
 }
 
 // Function to get all trades (used for analytics, dashboard — full dataset needed)
@@ -76,6 +77,10 @@ export async function getAllTrades(userId?: string, options?: GetAllTradesOption
 
     if (options?.endDate) {
       query = query.lte('entry_time', options.endDate);
+    }
+
+    if (options?.accountId) {
+      query = query.eq('account_id', options.accountId);
     }
 
     const { data, error } = await query;
@@ -225,6 +230,7 @@ export async function addTrade(trade: Trade): Promise<Trade> {
     const tradeData: Record<string, unknown> = {
       id: sanitized.id,
       user_id: sanitized.user_id,
+      account_id: sanitized.account_id || null,
       symbol: sanitized.symbol,
       type: sanitized.type,
       entry_price: sanitized.entry_price,
@@ -341,6 +347,7 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
     const tradeData: Record<string, unknown> = {
       id: sanitized.id,
       user_id: sanitized.user_id,
+      account_id: sanitized.account_id || null,
       symbol: sanitized.symbol,
       type: sanitized.type,
       entry_price: sanitized.entry_price,
@@ -790,6 +797,7 @@ export async function bulkInsertTrades(
   }>,
   source: 'mt5' | 'csv',
   fileName: string,
+  accountId?: string | null,
 ): Promise<BulkImportResult> {
   const errors: string[] = [];
   let imported = 0;
@@ -810,6 +818,7 @@ export async function bulkInsertTrades(
       const rows = toInsert.map((t) => ({
         id: crypto.randomUUID(),
         user_id: userId,
+        account_id: accountId || null,
         symbol: t.symbol,
         type: t.type,
         entry_time: t.entry_time,

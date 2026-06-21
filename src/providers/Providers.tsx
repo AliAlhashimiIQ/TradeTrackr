@@ -3,6 +3,7 @@
 import { AuthProvider } from './AuthProvider'
 import { ThemeProvider } from './ThemeProvider'
 import { SettingsProvider } from './SettingsProvider'
+import { AccountProvider } from './AccountProvider'
 import { useAuth } from '@/hooks/useAuth'
 import { usePathname } from 'next/navigation'
 import Header from '@/components/layout/Header'
@@ -16,9 +17,11 @@ export function Providers({ children }: ProvidersProps) {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <AuthProvider>
-        <SettingsProvider>
-          <LayoutContent>{children}</LayoutContent>
-        </SettingsProvider>
+        <AccountProvider>
+          <SettingsProvider>
+            <LayoutContent>{children}</LayoutContent>
+          </SettingsProvider>
+        </AccountProvider>
       </AuthProvider>
     </ThemeProvider>
   )

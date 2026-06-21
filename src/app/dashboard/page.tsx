@@ -9,6 +9,7 @@ import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import DateRangeSelector, { DateRange } from '@/components/dashboard/DateRangeSelector'
 import { useDashboardData } from '@/hooks/useDashboardData'
 import { useAuth } from '@/hooks/useAuth'
+import { useAccount } from '@/hooks/useAccount'
 import type { Trade } from '@/lib/types'
 import { useStreak } from '@/hooks/useStreak'
 import { calculateMaxDrawdown } from '@/lib/tradeMetrics'
@@ -93,6 +94,7 @@ const item = {
 export default function Dashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
+  const { selectedAccountId } = useAccount()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null)
   const { streak: journalStreak } = useStreak()
@@ -203,8 +205,8 @@ export default function Dashboard() {
         await addTrade({ ...t, user_id: user.id } as Trade);
       }
       
-      await mutate(['dashboard', user.id, dateRange])
-      await mutate(['trades', user.id, 'all'])
+      await mutate(['dashboard', user.id, dateRange, selectedAccountId])
+      await mutate(['trades', user.id, 'all', selectedAccountId])
       
       toast.success('Demo trades injected successfully!');
       setShowConfetti(true)
@@ -223,7 +225,7 @@ export default function Dashboard() {
 
 
 
-  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange)
+  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange, selectedAccountId)
 
   const equityChartData = useMemo(() =>
     equityData.labels.map((d, i) => ({ date: d, equity: equityData.values[i] })),

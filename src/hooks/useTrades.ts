@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient'
 /**
  * Optimized Hook to fetch trade data based on date range using SWR caching
  */
-export function useTrades(dateRange: DateRange) {
+export function useTrades(dateRange: DateRange, accountId?: string | 'all') {
   const { user } = useAuth()
 
   const fetcher = async () => {
@@ -39,32 +39,48 @@ export function useTrades(dateRange: DateRange) {
     
     const startDateStr = startDate.toISOString()
     const endDateStr = endDate.toISOString()
+    const accountFilterId = accountId && accountId !== 'all' ? accountId : undefined;
     
     // Fetch trades and initial capital in parallel
     const [tradesData, profileRes, accountsRes] = await Promise.all([
       getAllTrades(user.id, {
         startDate: startDateStr,
-        endDate: endDateStr
+        endDate: endDateStr,
+        accountId: accountFilterId
       }),
       supabase
         .from('profiles')
         .select('settings')
         .eq('id', user.id)
         .single(),
-      supabase
-        .from('trading_accounts')
-        .select('balance')
-        .eq('user_id', user.id)
+      accountFilterId
+        ? supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('id', accountFilterId)
+            .single()
+        : supabase
+            .from('trading_accounts')
+            .select('balance')
+            .eq('user_id', user.id)
     ])
     
     const settings = (profileRes.data?.settings as any) || {}
     const profileStartingBalance = Number(settings.startingBalance) || 10000
     
     let cap = profileStartingBalance
-    if (accountsRes.data && accountsRes.data.length > 0) {
-      const totalAccountBalance = accountsRes.data.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)
-      if (totalAccountBalance > 0) {
-        cap = totalAccountBalance
+    if (accountFilterId) {
+      const balance = Number((accountsRes.data as any)?.balance || 0)
+      if (balance > 0) {
+        cap = balance
+      }
+    } else {
+      const accountsList = (accountsRes.data as any[]) || []
+      if (accountsList.length > 0) {
+        const totalAccountBalance = accountsList.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)
+        if (totalAccountBalance > 0) {
+          cap = totalAccountBalance
+        }
       }
     }
     
@@ -75,7 +91,7 @@ export function useTrades(dateRange: DateRange) {
   }
 
   const { data, error } = useSWR(
-    user ? ['trades', user.id, dateRange] : null,
+    user ? ['trades', user.id, dateRange, accountId] : null,
     fetcher,
     {
       revalidateOnFocus: false,

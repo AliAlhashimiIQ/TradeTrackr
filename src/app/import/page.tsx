@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
 import { parseMT5Html, parseCsv, ParsedTrade, PRESET_MAPPINGS, CsvColumnMapping } from '@/lib/importParsers'
 import { bulkInsertTrades, getImportHistory, deleteImportRecord, ImportRecord } from '@/lib/tradingApi'
+import { useAccount } from '@/hooks/useAccount'
 
 type ImportStep = 'upload' | 'preview' | 'done'
 type FileFormat = 'mt5' | 'csv'
@@ -32,6 +33,19 @@ const FIELD_LABELS: Record<keyof CsvColumnMapping, string> = {
 export default function ImportPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+
+  const { accounts, selectedAccountId } = useAccount()
+  const [targetAccountId, setTargetAccountId] = useState<string>('all')
+
+  useEffect(() => {
+    if (selectedAccountId && selectedAccountId !== 'all') {
+      setTargetAccountId(selectedAccountId)
+    } else if (accounts.length > 0) {
+      setTargetAccountId(accounts[0].id)
+    } else {
+      setTargetAccountId('all')
+    }
+  }, [selectedAccountId, accounts])
 
   const [step, setStep] = useState<ImportStep>('upload')
   const [dragging, setDragging] = useState(false)
@@ -158,7 +172,13 @@ export default function ImportPage() {
     if (!user) return
     setImporting(true)
     const toImport = parsed.filter((t) => selectedKeys.has(t._key))
-    const res = await bulkInsertTrades(user.id, toImport, fileFormat, fileName)
+    const res = await bulkInsertTrades(
+      user.id,
+      toImport,
+      fileFormat,
+      fileName,
+      targetAccountId === 'all' ? null : targetAccountId
+    )
     setResult({ imported: res.imported, skipped: res.skipped, errors: res.errors })
     setImporting(false)
     setStep('done')
@@ -354,6 +374,28 @@ export default function ImportPage() {
                 </div>
               ) : (
                 <>
+                  {/* Target Account Selector */}
+                  <div className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-white">Target Trading Account</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">Select the account these trades should be imported into.</p>
+                    </div>
+                    <div className="w-full sm:w-64">
+                      <select
+                        value={targetAccountId}
+                        onChange={(e) => setTargetAccountId(e.target.value)}
+                        className="input w-full text-sm py-2 bg-[#0a0b0f] border-white/[0.06] focus:border-indigo-500/50"
+                      >
+                        <option value="all">Default (Unassociated)</option>
+                        {accounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            {acc.name} ({acc.account_number})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Summary bar */}
                   <div className="card p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>

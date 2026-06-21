@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
+import { useAccount } from '@/hooks/useAccount'
 import { getAllTrades } from '@/lib/tradingApi'
 import { Trade } from '@/lib/types'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
@@ -110,6 +111,7 @@ const TrendDown = () => (
 export default function CalendarPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const { selectedAccountId } = useAccount()
   const [trades, setTrades] = useState<Trade[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Month')
@@ -129,14 +131,16 @@ export default function CalendarPage() {
     const fetch = async () => {
       if (!user) { setIsLoading(false); return }
       try {
-        const all = await getAllTrades(user.id)
+        const all = await getAllTrades(user.id, {
+          accountId: selectedAccountId === 'all' ? undefined : selectedAccountId
+        })
         setTrades(all)
       } finally {
         setIsLoading(false)
       }
     }
     fetch()
-  }, [user])
+  }, [user, selectedAccountId])
 
   const tradesByDate = useMemo(() => groupTradesByDate(trades), [trades])
 

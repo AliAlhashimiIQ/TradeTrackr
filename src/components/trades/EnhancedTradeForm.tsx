@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { isForexPair, calculatePips, getSymbolMultiplier } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, toLocalYMD, toLocalISOString, toLocalDatetimeLocal, fromLocalDatetimeLocal, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
+import { useAccount } from '@/hooks/useAccount';
 
 
 
@@ -64,6 +65,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 }) => {
   const { user } = useAuth();
   const { colorblindMode } = useSettings();
+  const { accounts, selectedAccountId } = useAccount();
   const isEditing = !!initialTrade;
   
   const [formData, setFormData] = useState<Partial<Trade>>({
@@ -157,6 +159,16 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       }
     }
   }, [initialTrade, user]);
+
+  useEffect(() => {
+    if (!isEditing && !formData.account_id) {
+      if (selectedAccountId && selectedAccountId !== 'all') {
+        setFormData(prev => ({ ...prev, account_id: selectedAccountId }));
+      } else if (accounts.length > 0) {
+        setFormData(prev => ({ ...prev, account_id: accounts[0].id }));
+      }
+    }
+  }, [selectedAccountId, accounts, isEditing, formData.account_id]);
 
   // P&L calculation
   const pnl = (() => {
@@ -272,6 +284,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         stop_loss: formData.stop_loss !== undefined && formData.stop_loss !== null ? Number(formData.stop_loss) : undefined,
         take_profit: formData.take_profit !== undefined && formData.take_profit !== null ? Number(formData.take_profit) : undefined,
         commission: formData.commission !== undefined && formData.commission !== null ? Number(formData.commission) : undefined,
+        account_id: formData.account_id || null,
         ...(initialTrade?.id ? { id: initialTrade.id } : {}),
       });
       toast.success(isEditing ? 'Trade updated!' : 'Trade logged!');
@@ -339,6 +352,26 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Trading Account */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                <h2 className="text-base font-bold text-white uppercase tracking-wider">Trading Account</h2>
+              </div>
+              <select
+                value={formData.account_id || ''}
+                onChange={e => handleChange('account_id', e.target.value || null)}
+                className="w-full px-5 py-4 bg-[#0d0e16] border border-white/[0.06] rounded-xl text-white text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all [color-scheme:dark]"
+              >
+                <option value="">No Account (Default)</option>
+                {accounts.map(acc => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name} ({acc.account_number || 'No Number'})
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Direction */}
