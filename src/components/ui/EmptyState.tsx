@@ -162,7 +162,7 @@ export default function EmptyState({
         title: 'Link Trading Account',
         description: 'Connect MetaTrader 5 or other accounts to automate executions sync and track prop firm rules.',
         btnLabel: 'Link Account',
-        href: '/settings?tab=account',
+        href: '/accounts',
         color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

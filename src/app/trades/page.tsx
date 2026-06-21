@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useAccount } from '@/hooks/useAccount'
 import { Trade, TradingAccount } from '@/lib/types'
-import { getPagedTrades, deleteTrade, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts, getUserTags, updateTag } from '@/lib/tradingApi'
+import { getPagedTrades, deleteTrade, deleteTradesBulk, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts, getUserTags, updateTag } from '@/lib/tradingApi'
 import { uploadTradeScreenshot, supabase } from '@/lib/supabaseClient'
 import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
@@ -105,7 +105,7 @@ export default function Trades() {
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'All' | 'Long' | 'Short'>('All')
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
-  const { selectedAccountId, selectAccount } = useAccount()
+  const { accounts, selectedAccountId, selectAccount } = useAccount()
   const accountFilter = selectedAccountId === 'all' ? null : selectedAccountId
   const setAccountFilter = (id: string | null) => selectAccount(id || 'all')
   const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
@@ -518,8 +518,9 @@ export default function Trades() {
         }
       ];
 
+      const targetAccountId = selectedAccountId !== 'all' ? selectedAccountId : (accounts[0]?.id || null);
       for (const t of demoTrades) {
-        await addTrade({ ...t, user_id: user.id } as Trade);
+        await addTrade({ ...t, user_id: user.id, account_id: targetAccountId } as Trade);
       }
       toast.success('5 demo trades loaded successfully!');
       await fetchPagedTrades();
@@ -777,7 +778,7 @@ export default function Trades() {
     if (action === 'delete') {
       if (!window.confirm(`Delete ${selectedTradeIds.length} trades?`)) return;
       setIsLoading(true);
-      await Promise.all(selectedTradeIds.map(id => deleteTrade(id)));
+      await deleteTradesBulk(selectedTradeIds);
       await fetchPagedTrades();
       await fetchGlobalMetrics();
       setSelectedTradeIds([]); setIsLoading(false);

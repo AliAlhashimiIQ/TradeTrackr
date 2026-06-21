@@ -12,6 +12,8 @@ import {
   addTradingAccount,
   updateTradingAccount,
   deleteTradingAccount,
+  getUnassignedTradesCount,
+  assignLegacyTradesToAccount,
 } from '@/lib/tradingApi'
 import { toast } from 'react-hot-toast'
 
@@ -32,6 +34,9 @@ const COMMON_SERVERS = [
 
 export default function AccountsPage() {
   const { user, loading } = useAuth()
+  const [unassignedCount, setUnassignedCount] = useState<number>(0)
+  const [isMigrating, setIsMigrating] = useState(false)
+  const [selectedMigrationAccountId, setSelectedMigrationAccountId] = useState<string>('')
   const router = useRouter()
 
   const [activeTab, setActiveTab] = useState<TabType>('accounts')
@@ -73,10 +78,29 @@ export default function AccountsPage() {
     try {
       const data = await getTradingAccounts(user.id)
       setAccounts(data)
+      const count = await getUnassignedTradesCount(user.id)
+      setUnassignedCount(count)
+      if (data.length > 0 && !selectedMigrationAccountId) {
+        setSelectedMigrationAccountId(data[0].id)
+      }
     } catch (err) {
       toast.error('Failed to load accounts')
     } finally {
       setAccountsLoading(false)
+    }
+  }
+
+  const handleMigrateTrades = async () => {
+    if (!user || !selectedMigrationAccountId || unassignedCount === 0) return
+    setIsMigrating(true)
+    try {
+      const count = await assignLegacyTradesToAccount(user.id, selectedMigrationAccountId)
+      toast.success(`Success! Assigned ${count} legacy trades to the selected account.`)
+      setUnassignedCount(0)
+    } catch (err) {
+      toast.error('Failed to migrate trades')
+    } finally {
+      setIsMigrating(false)
     }
   }
 
@@ -450,6 +474,44 @@ export default function AccountsPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Legacy Trades Migration Panel */}
+        {unassignedCount > 0 && accounts.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-5 rounded-2xl border border-amber-500/20 bg-amber-500/5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 text-left"
+          >
+            <div className="space-y-1">
+              <h3 className="text-white font-bold flex items-center gap-2">
+                <span className="text-amber-400">⚠️</span> Legacy Unassigned Trades Detected
+              </h3>
+              <p className="text-gray-400 text-xs leading-relaxed max-w-2xl">
+                You have <strong className="text-white">{unassignedCount} trades</strong> logged without an associated trading account. You can bulk-assign all of them to one of your accounts to make them visible under individual account analytics.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 w-full md:w-auto">
+              <select
+                value={selectedMigrationAccountId}
+                onChange={(e) => setSelectedMigrationAccountId(e.target.value)}
+                className="input text-xs py-2 bg-[#0a0b0f] border-white/[0.06] focus:border-indigo-500/50 w-full md:w-48 [color-scheme:dark]"
+              >
+                {accounts.map((acc) => (
+                  <option key={acc.id} value={acc.id}>
+                    {acc.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={handleMigrateTrades}
+                disabled={isMigrating || !selectedMigrationAccountId}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-black font-semibold rounded-xl text-xs transition-all whitespace-nowrap flex items-center gap-1.5"
+              >
+                {isMigrating ? 'Assigning...' : 'Assign Trades'}
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Main Grid/Table */}
         <div className="card overflow-hidden">

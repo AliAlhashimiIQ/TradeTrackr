@@ -421,6 +421,23 @@ export async function deleteTrade(tradeId: string): Promise<boolean> {
   }
 }
 
+// Function to delete multiple trades in bulk
+export async function deleteTradesBulk(tradeIds: string[]): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('trades')
+      .delete()
+      .in('id', tradeIds);
+
+    if (error) throw error;
+    
+    return true;
+  } catch (error) {
+    console.error('deleteTradesBulk error:', error);
+    throw error;
+  }
+}
+
 // Function to get trade metrics
 export async function getTradeMetrics(userId: string): Promise<TradeMetrics> {
   try {
@@ -990,5 +1007,45 @@ export async function deleteTradingAccount(id: string): Promise<boolean> {
   if (error) throw error;
   return true;
 }
+
+/**
+ * Gets the count of trades with no account assigned.
+ */
+export async function getUnassignedTradesCount(userId: string): Promise<number> {
+  try {
+    const { count, error } = await supabase
+      .from('trades')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .is('account_id', null);
+
+    if (error) throw error;
+    return count || 0;
+  } catch (err) {
+    console.error('getUnassignedTradesCount error:', err);
+    return 0;
+  }
+}
+
+/**
+ * Assigns all unassigned trades of a user to a specific account.
+ */
+export async function assignLegacyTradesToAccount(userId: string, accountId: string): Promise<number> {
+  try {
+    const { data, error } = await supabase
+      .from('trades')
+      .update({ account_id: accountId })
+      .eq('user_id', userId)
+      .is('account_id', null)
+      .select('id');
+
+    if (error) throw error;
+    return data?.length || 0;
+  } catch (err) {
+    console.error('assignLegacyTradesToAccount error:', err);
+    throw err;
+  }
+}
+
 
 

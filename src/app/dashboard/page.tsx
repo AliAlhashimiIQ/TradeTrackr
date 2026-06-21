@@ -94,7 +94,7 @@ const item = {
 export default function Dashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { selectedAccountId } = useAccount()
+  const { accounts, selectedAccountId } = useAccount()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null)
   const { streak: journalStreak } = useStreak()
@@ -201,8 +201,9 @@ export default function Dashboard() {
         }
       ];
 
+      const targetAccountId = selectedAccountId !== 'all' ? selectedAccountId : (accounts[0]?.id || null)
       for (const t of demoTrades) {
-        await addTrade({ ...t, user_id: user.id } as Trade);
+        await addTrade({ ...t, user_id: user.id, account_id: targetAccountId } as Trade);
       }
       
       await mutate(['dashboard', user.id, dateRange, selectedAccountId])
