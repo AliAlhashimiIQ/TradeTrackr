@@ -173,7 +173,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({
               formatter={formatTooltipValue}
               contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
             />
-            <Bar dataKey={metric} background={{ fill: '#0f172a' }} barSize={24} radius={[0, 8, 8, 0]}>
+            <Bar dataKey={metric} barSize={24} radius={[0, 8, 8, 0]}>
               {strategies.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={STRATEGY_COLORS[index % STRATEGY_COLORS.length]} />
               ))}

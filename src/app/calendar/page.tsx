@@ -1076,6 +1076,61 @@ export default function CalendarPage() {
             </motion.div>
           )}
         </AnimatePresence>
+        {/* ─── Month Quick Select ─── */}
+        <div className="mt-8 pt-6 border-t border-white/[0.06] flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
+              Quick Month Select
+            </span>
+            <div className="flex items-center gap-1.5 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1">
+              <button 
+                onClick={() => {
+                  setCurrentDate(new Date(currentYear - 1, currentMonth, 1))
+                  setSelectedDate(null)
+                }}
+                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
+                title="Previous Year"
+              >
+                <ChevronLeft />
+              </button>
+              <span className="text-xs font-bold text-white px-2.5 font-mono select-none">{currentYear}</span>
+              <button 
+                onClick={() => {
+                  setCurrentDate(new Date(currentYear + 1, currentMonth, 1))
+                  setSelectedDate(null)
+                }}
+                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
+                title="Next Year"
+              >
+                <ChevronRight />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
+            {Array.from({ length: 12 }, (_, m) => {
+              const dateForMonth = new Date(currentYear, m, 1)
+              const name = dateForMonth.toLocaleString('default', { month: 'short' })
+              const isActive = currentMonth === m
+              
+              return (
+                <button
+                  key={m}
+                  onClick={() => {
+                    setCurrentDate(new Date(currentYear, m, 1))
+                    setSelectedDate(null)
+                  }}
+                  className={`py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 border ${
+                    isActive 
+                      ? 'bg-indigo-600/10 text-indigo-400 border-indigo-500/35 shadow-lg shadow-indigo-500/5'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5 border-white/[0.04]'
+                  }`}
+                >
+                  {name}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </AuthenticatedLayout>
   )

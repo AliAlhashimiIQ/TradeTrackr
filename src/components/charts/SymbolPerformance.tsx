@@ -142,7 +142,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
             formatter={(value: number) => [formatTooltipValue(value), metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trades']}
             contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
           />
-          <Bar dataKey={metric} background={{ fill: '#0f172a' }} barSize={24} radius={[0, 8, 8, 0]}>
+          <Bar dataKey={metric} barSize={24} radius={[0, 8, 8, 0]}>
             {sortedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
             ))}

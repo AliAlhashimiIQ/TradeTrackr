@@ -35,9 +35,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const showHeader = user && !noHeaderPaths.some(p => pathname === p || pathname?.startsWith(p + '/'))
 
   return (
-    <div className="flex flex-col min-h-screen w-full">
+    <div className="flex flex-col min-h-screen w-full bg-[#06070b]">
       {showHeader && <Header />}
-      <div className="flex-1 flex flex-col w-full relative">
+      <div className={`flex-1 flex flex-col w-full relative ${showHeader ? 'lg:pl-64' : ''}`}>
         {children}
       </div>
       {user && <CommandPalette />}

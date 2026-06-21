@@ -1263,11 +1263,6 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       <div className="min-w-0 truncate">
                         <div className="flex items-center gap-1 min-w-0">
                           <span className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white group-hover/row:text-indigo-300 transition-colors duration-200 truncate`}>{trade.symbol}</span>
-                          {trade.account_id && accountsMap.has(trade.account_id) && (
-                            <span className="text-[8px] px-1 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold uppercase tracking-wider flex-shrink-0">
-                              {accountsMap.get(trade.account_id)}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>
