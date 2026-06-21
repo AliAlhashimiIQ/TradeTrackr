@@ -180,6 +180,26 @@ export default function CalendarPage() {
     return { pnl, wins, losses, winRate, tradingDays, totalTrades: monthTrades.length, bestDay, worstDay }
   }, [trades, currentMonth, currentYear, tradesByDate])
 
+  const yearMonthlyStats = useMemo(() => {
+    return Array.from({ length: 12 }, (_, m) => {
+      const monthTrades = trades.filter((t) => {
+        const d = new Date(t.entry_time)
+        return d.getMonth() === m && d.getFullYear() === currentYear
+      })
+      const pnl = calcPnL(monthTrades)
+      const wins = monthTrades.filter((t) => t.profit_loss > 0).length
+      const winRate = monthTrades.length
+        ? Math.round((wins / monthTrades.length) * 100)
+        : 0
+      return {
+        month: m,
+        pnl,
+        tradesCount: monthTrades.length,
+        winRate,
+      }
+    })
+  }, [trades, currentYear])
+
   const selectedDayTrades = useMemo(() => {
     if (!selectedDate) return []
     const key = toLocalDateString(selectedDate)
@@ -1106,26 +1126,73 @@ export default function CalendarPage() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2">
-            {Array.from({ length: 12 }, (_, m) => {
-              const dateForMonth = new Date(currentYear, m, 1)
-              const name = dateForMonth.toLocaleString('default', { month: 'short' })
-              const isActive = currentMonth === m
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {yearMonthlyStats.map((stat) => {
+              const dateForMonth = new Date(currentYear, stat.month, 1)
+              const name = dateForMonth.toLocaleString('default', { month: 'long' })
+              const isActive = currentMonth === stat.month
+              const isProfit = stat.pnl > 0
+              const isLoss = stat.pnl < 0
               
               return (
                 <button
-                  key={m}
+                  key={stat.month}
                   onClick={() => {
-                    setCurrentDate(new Date(currentYear, m, 1))
+                    setCurrentDate(new Date(currentYear, stat.month, 1))
                     setSelectedDate(null)
                   }}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 border ${
+                  className={`card p-4 rounded-xl flex flex-col justify-between text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] group ${
                     isActive 
-                      ? 'bg-indigo-600/10 text-indigo-400 border-indigo-500/35 shadow-lg shadow-indigo-500/5'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5 border-white/[0.04]'
+                      ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-500/[0.03]' 
+                      : 'border-white/[0.06] hover:border-white/[0.12] bg-[#0a0b12]/40'
                   }`}
+                  style={{
+                    background: isActive ? 'linear-gradient(160deg, rgba(99,102,241,0.06) 0%, rgba(99,102,241,0.01) 100%)' : 'var(--calendar-weekly-card-bg)',
+                    boxShadow: isActive ? '0 0 20px rgba(99,102,241,0.05), var(--calendar-weekly-card-shadow)' : 'var(--calendar-weekly-card-shadow)',
+                  }}
                 >
-                  {name}
+                  <div className="flex flex-col gap-1 w-full">
+                    <span className={`text-[10px] uppercase tracking-[0.15em] font-extrabold transition-colors ${
+                      isActive ? 'text-indigo-400' : 'text-gray-500 group-hover:text-gray-400'
+                    }`}>
+                      {name}
+                    </span>
+                    <span
+                      className={`text-lg font-black tabular-nums tracking-tight leading-none mt-1 ${
+                        stat.tradesCount > 0 ? (isProfit ? 'text-emerald-400' : 'text-red-400') : 'text-gray-500'
+                      }`}
+                      style={{
+                        textShadow: stat.tradesCount > 0
+                          ? isProfit
+                            ? '0 0 20px rgba(16,185,129,0.3)'
+                            : isLoss
+                              ? '0 0 20px rgba(239,68,68,0.22)'
+                              : 'none'
+                          : 'none',
+                      }}
+                    >
+                      {stat.tradesCount > 0 ? (isProfit ? '+' : '') + fmt(stat.pnl) : '—'}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex flex-col gap-1.5 items-start w-full">
+                    <span className="text-[10px] text-gray-500 font-semibold lowercase tracking-wide">
+                      {stat.tradesCount} {stat.tradesCount === 1 ? 'trade' : 'trades'}
+                    </span>
+                    {stat.tradesCount > 0 ? (
+                      <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-lg border ${
+                        stat.winRate >= 50
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 shadow-[0_0_8px_rgba(16,185,129,0.1)]'
+                          : 'bg-red-500/10 text-red-400 border-red-500/25 shadow-[0_0_8px_rgba(239,68,68,0.08)]'
+                      }`}>
+                        {stat.winRate}% WR
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-lg border border-white/[0.04] bg-white/[0.02] text-gray-600">
+                        — WR
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })}
