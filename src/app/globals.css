@@ -16,6 +16,8 @@
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.08);
   --tooltip-bg: #ffffff;
+  --table-header-bg: rgba(241, 245, 249, 0.95);
+  --table-header-border: rgba(0, 0, 0, 0.08);
 
   --calendar-empty-bg: rgba(241, 245, 249, 0.5);
   --calendar-cell-border: rgba(0, 0, 0, 0.06);
@@ -59,6 +61,8 @@
   --card-bg: #0d0e16;
   --card-border: rgba(255, 255, 255, 0.06);
   --tooltip-bg: #0f1117;
+  --table-header-bg: rgba(10, 11, 18, 0.95);
+  --table-header-border: rgba(255, 255, 255, 0.06);
 
   --calendar-empty-bg: rgba(10, 11, 18, 0.5);
   --calendar-cell-border: rgba(255, 255, 255, 0.04);
@@ -1158,6 +1162,14 @@
 :root:not(.dark) [class*="divide-white/"] {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
-
-
-
+/* Checkbox overrides in light mode */
+:root:not(.dark) input[type="checkbox"].bg-gray-800 {
+  background-color: #ffffff !important;
+}
+:root:not(.dark) input[type="checkbox"].bg-gray-800:checked {
+  background-color: #6366f1 !important;
+  border-color: #6366f1 !important;
+}
+:root:not(.dark) input[type="checkbox"].border-gray-700 {
+  border-color: rgba(0, 0, 0, 0.25) !important;
+}

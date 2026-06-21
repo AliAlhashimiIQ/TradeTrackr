@@ -971,8 +971,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left"
             style={{
               gridTemplateColumns: 'var(--grid-template-columns)',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-              background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.9)',
+              borderBottom: '1px solid var(--table-header-border)',
+              background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), var(--table-header-bg)',
             }}
           >
             <div className="relative group/header flex items-center justify-center h-full">
