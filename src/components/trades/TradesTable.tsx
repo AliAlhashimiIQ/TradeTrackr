@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trade, TradingAccount } from '@/lib/types';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
@@ -213,6 +213,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   onLoadDemoClick,
   isDemoLoading = false
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const { colorblindMode } = useSettings();
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
@@ -235,46 +236,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent, colKey: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const startX = e.clientX;
-    const startWidth = columnWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey];
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      const deltaX = moveEvent.clientX - startX;
-      const minW = MIN_COLUMN_WIDTHS[colKey] || 50;
-      const newWidth = Math.max(minW, startWidth + deltaX);
-      onColumnWidthChange(colKey, newWidth);
-    };
-
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const renderResizeHandle = (colKey: string) => {
-    return (
-      <div
-        onMouseDown={(e) => handleMouseDown(e, colKey)}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          onResetColumnWidth(colKey);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-indigo-500/80 active:bg-indigo-500 z-20 group-hover/header:bg-white/[0.08] transition-colors"
-        title="Drag to resize, double-click to reset"
-      />
-    );
-  };
-
-  const getGridTemplateColumns = () => {
+  const getGridTemplateColumns = (overrideKey?: string, overrideWidth?: number) => {
     const getWidth = (key: string, def: string) => {
-      let w = columnWidths[key];
+      let w = key === overrideKey ? overrideWidth : columnWidths[key];
       if (key === 'actions') {
         w = Math.max(140, w || 140);
       }
@@ -307,6 +271,50 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       getWidth('actions', '100px'),
     ];
     return cols.filter(Boolean).join(' ');
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, colKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startWidth = columnWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey];
+    let latestWidth = startWidth;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const minW = MIN_COLUMN_WIDTHS[colKey] || 50;
+      const newWidth = Math.max(minW, startWidth + deltaX);
+      latestWidth = newWidth;
+
+      if (containerRef.current) {
+        const newTemplate = getGridTemplateColumns(colKey, newWidth);
+        containerRef.current.style.setProperty('--grid-template-columns', newTemplate);
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      onColumnWidthChange(colKey, latestWidth);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const renderResizeHandle = (colKey: string) => {
+    return (
+      <div
+        onMouseDown={(e) => handleMouseDown(e, colKey)}
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          onResetColumnWidth(colKey);
+        }}
+        onClick={(e) => e.stopPropagation()}
+        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-indigo-500/80 active:bg-indigo-500 z-20 group-hover/header:bg-white/[0.08] transition-colors"
+        title="Drag to resize, double-click to reset"
+      />
+    );
   };
 
   const totals = useMemo(() => {
@@ -366,7 +374,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     return (
       <div
         className="grid gap-4 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full w-max text-left"
-        style={{ gridTemplateColumns: getGridTemplateColumns() }}
+        style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
       >
         <div />
         <div />
@@ -478,7 +486,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       <div
         className="grid gap-4 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full w-max text-left"
         style={{
-          gridTemplateColumns: getGridTemplateColumns(),
+          gridTemplateColumns: 'var(--grid-template-columns)',
           backgroundColor: '#0d0e16',
           backgroundImage: 'linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 50%, rgba(99, 102, 241, 0.08) 100%)',
           borderTop: '1px solid rgba(99, 102, 241, 0.25)',
@@ -950,12 +958,19 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       {/* Desktop view */}
       <div className="hidden md:block card rounded-2xl min-h-[450px] overflow-hidden flex flex-col">
         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent flex-grow">
-          <div style={{ minWidth: '1100px' }} className="min-w-full w-max text-left">
+          <div 
+            ref={containerRef}
+            style={{ 
+              minWidth: '1100px',
+              '--grid-template-columns': getGridTemplateColumns()
+            } as React.CSSProperties} 
+            className="min-w-full w-max text-left"
+          >
           {/* Table Header */}
           <div
             className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left"
             style={{
-              gridTemplateColumns: getGridTemplateColumns(),
+              gridTemplateColumns: 'var(--grid-template-columns)',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
               background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), rgba(10,11,18,0.9)',
             }}
@@ -1162,7 +1177,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                   <div
                     className={`grid gap-4 px-5 ${tableDensity === 'compact' ? 'py-3' : 'py-4'} items-center hover:bg-indigo-500/[0.03] transition-all duration-200 ${idx % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.015]'} ${idx !== filteredTrades.length - 1 ? 'border-b border-white/[0.04]' : ''} group/row min-w-full w-max text-left`}
-                    style={{ gridTemplateColumns: getGridTemplateColumns() }}
+                    style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
                   >
                     {/* Checkbox + inline add button */}
                     <div className="hidden md:flex items-center justify-center gap-1.5">
