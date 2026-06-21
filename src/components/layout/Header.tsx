@@ -95,10 +95,10 @@ export default function Header() {
                       e.currentTarget.value = ''
                     }
                   }}
-                  className="block w-full pl-10 pr-3 py-2 bg-white/[0.03] border border-white/[0.06] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:bg-white/[0.06] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                  className="block w-full pl-10 pr-10 py-2 bg-white/[0.03] border border-white/[0.06] rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:bg-white/[0.06] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                 />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <span className="text-[10px] font-bold text-gray-700 border border-white/[0.06] px-1.5 py-0.5 rounded-md">↵</span>
+                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/[0.08] px-1.5 py-0.5 rounded-md">↵</span>
                 </div>
               </div>
             </div>

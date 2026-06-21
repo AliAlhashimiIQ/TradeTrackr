@@ -1102,10 +1102,16 @@
 :root:not(.dark) [class*="bg-[#131825]"],
 :root:not(.dark) [class*="bg-[#0a0b12]"],
 :root:not(.dark) [class*="bg-[#0d0e16]"],
+:root:not(.dark) [class*="bg-[#0e1017]"],
+:root:not(.dark) [class*="bg-[#12141d]"],
 :root:not(.dark) [class*="bg-[#0f1117]"],
 :root:not(.dark) [class*="bg-[#0F1117]"],
 :root:not(.dark) [class*="bg-[#151823]"] {
   background-color: #ffffff !important;
+}
+
+:root:not(.dark) [class*="bg-[#0a0b0f]"] {
+  background-color: #f8fafc !important;
 }
 
 /* Hover background utility overrides */
@@ -1148,8 +1154,10 @@
 :root:not(.dark) .border-white\/\[0\.05\],
 :root:not(.dark) .border-white\/\[0\.06\],
 :root:not(.dark) .border-white\/\[0\.08\],
-:root:not(.dark) .border-white\/10 {
+:root:not(.dark) .border-white\/10,
+:root:not(.dark) [class*="divide-white/"] {
   border-color: rgba(0, 0, 0, 0.08) !important;
 }
+
 
 
