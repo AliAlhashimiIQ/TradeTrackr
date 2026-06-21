@@ -333,7 +333,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       totalPnL += (t.profit_loss ?? 0);
       totalLots += (t.lots !== undefined && t.lots !== null ? Number(t.lots) : Number(t.quantity || 0));
       
-      if (isForexPair(t.symbol) && t.pips !== undefined && t.pips !== null) {
+      if (t.pips !== undefined && t.pips !== null) {
         totalPips += Number(t.pips);
         forexCount++;
       }
@@ -1296,10 +1296,11 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Pips */}
                     {visibleColumns.pips && (() => {
+                      const hasPips = trade.pips !== undefined && trade.pips !== null;
                       const pipColors = getPLColorClasses(trade.pips ?? 0, colorblindMode);
                       return (
-                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!isForexPair(trade.symbol) ? 'text-gray-400' : pipColors.text70}`}>
-                          {isForexPair(trade.symbol) ? formatPips(trade.pips) : '--'}
+                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!hasPips ? 'text-gray-400' : pipColors.text70}`}>
+                          {hasPips ? formatPips(trade.pips) : '--'}
                         </div>
                       );
                     })()}
@@ -1781,7 +1782,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     <div className="flex justify-between">
                       <span className="text-gray-400">Pips / Duration</span>
                       <span className="text-gray-300">
-                        {isForexPair(trade.symbol) ? `${formatPips(trade.pips)} pips` : durationStr}
+                        {trade.pips !== undefined && trade.pips !== null ? `${formatPips(trade.pips)} pips (${durationStr})` : durationStr}
                       </span>
                     </div>
                   </div>

@@ -724,7 +724,10 @@ export async function getTradeTagsById(tradeId: string): Promise<any[]> {
 }
 
 // Function to update a tag
-export async function updateTag(tagId: string, updates: { name?: string; color?: string }): Promise<boolean> {
+export async function updateTag(
+  tagId: string, 
+  updates: { name?: string; color?: string; description?: string | null; rules?: string | null }
+): Promise<boolean> {
   try {
     const { error } = await supabase
       .from('tags')

@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
-import { isForexPair, calculatePips, getSymbolMultiplier } from '@/lib/forexUtils';
+import { isForexPair, calculatePips, getSymbolMultiplier, usesLots } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, toLocalYMD, toLocalISOString, toLocalDatetimeLocal, fromLocalDatetimeLocal, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
 import { useAccount } from '@/hooks/useAccount';
@@ -97,7 +97,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
   useEffect(() => {
     if (formData.symbol) {
-      setIsForex(isForexPair(formData.symbol));
+      setIsForex(usesLots(formData.symbol));
     }
   }, [formData.symbol]);
 
@@ -791,13 +791,13 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     <div>
                       <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">Entry</div>
                       <div className="text-lg font-bold text-white">
-                        {formatPreviewNumber(formData.entry_price, isForex ? 5 : 2)}
+                        {formatPreviewNumber(formData.entry_price, isForexPair(formData.symbol || '') ? 5 : 2)}
                       </div>
                     </div>
                     <div>
                       <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">Exit</div>
                       <div className="text-lg font-bold text-white">
-                        {formatPreviewNumber(formData.exit_price, isForex ? 5 : 2)}
+                        {formatPreviewNumber(formData.exit_price, isForexPair(formData.symbol || '') ? 5 : 2)}
                       </div>
                     </div>
                     <div>
@@ -807,11 +807,19 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">{isForex ? 'Pips' : 'R-Multiple'}</div>
-                      <div className={`text-lg font-bold ${isForex ? getPLColorClasses(displayPips, colorblindMode).text : 'text-white'}`}>
-                        {isForex ? `${displayPips >= 0 ? '+' : ''}${displayPips.toFixed(1)}` : (initialTrade?.r_multiple?.toFixed(2) || '—')}
+                      <div className="text-xs font-bold text-gray-600 uppercase tracking-widest mb-1">Pips / Points</div>
+                      <div className={`text-lg font-bold ${getPLColorClasses(displayPips, colorblindMode).text}`}>
+                        {displayPips >= 0 ? '+' : ''}{displayPips.toFixed(1)}
                       </div>
                     </div>
+                    {initialTrade?.r_multiple !== undefined && initialTrade?.r_multiple !== null && (
+                      <div className="col-span-2 mt-1 border-t border-white/[0.04] pt-2 flex justify-between items-center">
+                        <span className="text-xs font-bold text-gray-600 uppercase tracking-widest">R-Multiple</span>
+                        <span className={`text-sm font-bold ${getPLColorClasses(initialTrade.r_multiple, colorblindMode).text}`}>
+                          {initialTrade.r_multiple > 0 ? '+' : ''}{initialTrade.r_multiple.toFixed(2)}R
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* P&L Display */}

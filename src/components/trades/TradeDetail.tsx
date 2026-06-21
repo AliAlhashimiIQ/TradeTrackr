@@ -230,9 +230,9 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                         {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
                       </div>
                     </div>
-                     {isForex && trade.pips !== undefined && trade.pips !== null && (
+                     {trade.pips !== undefined && trade.pips !== null && (
                       <div>
-                        <div className="text-gray-400 text-xs">Pips</div>
+                        <div className="text-gray-400 text-xs">Pips / Points</div>
                         <div className={`font-mono text-lg ${getPLColorClasses(trade.pips ?? 0, colorblindMode).text}`}>
                           {formatPips(trade.pips)}
                         </div>

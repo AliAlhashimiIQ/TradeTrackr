@@ -18,6 +18,62 @@ export const isJpyPair = (symbol: string): boolean => {
 };
 
 /**
+ * Gets the pip/point multiplier for a given symbol
+ */
+export const getPipMultiplier = (symbol: string): number => {
+  if (!symbol) return 10000;
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  // Gold
+  if (cleanSymbol === 'XAUUSD' || cleanSymbol === 'GOLD') {
+    return 10; // 1 pip = 0.1 price move
+  }
+  // Silver
+  if (cleanSymbol === 'XAGUSD' || cleanSymbol === 'SILVER') {
+    return 100; // 1 pip = 0.01 price move
+  }
+  // Cryptos
+  const cryptos = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'DOGE', 'XRP', 'LTC', 'LINK', 'BNB', 'SHIB', 'AVAX', 'MATIC'];
+  if (cryptos.some(crypto => cleanSymbol.startsWith(crypto))) {
+    return 1; // 1 point = 1.0 price move
+  }
+  // Indices / Futures
+  const indices = ['US30', 'NAS100', 'NDX', 'SPX500', 'SPX', 'GER30', 'DE30', 'UK100', 'JPN225', 'HK50', 'US100'];
+  if (indices.some(index => cleanSymbol.includes(index))) {
+    return 1; // 1 point = 1.0 price move
+  }
+  
+  if (isJpyPair(symbol)) {
+    return 100; // 1 pip = 0.01 price move
+  }
+  
+  if (isForexPair(symbol)) {
+    return 10000; // 1 pip = 0.0001 price move
+  }
+
+  return 1;
+};
+
+/**
+ * Checks if a symbol uses Lots instead of Quantity (for Forex, Commodities, Crypto, and Indices CFDs)
+ */
+export const usesLots = (symbol: string): boolean => {
+  if (!symbol) return false;
+  const cleanSymbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  
+  if (isForexPair(symbol)) return true;
+  if (['XAUUSD', 'GOLD', 'XAGUSD', 'SILVER'].includes(cleanSymbol)) return true;
+  
+  const cryptos = ['BTC', 'ETH', 'SOL', 'ADA', 'DOT', 'DOGE', 'XRP', 'LTC', 'LINK', 'BNB', 'SHIB', 'AVAX', 'MATIC'];
+  if (cryptos.some(crypto => cleanSymbol.startsWith(crypto))) return true;
+  
+  const indices = ['US30', 'NAS100', 'NDX', 'SPX500', 'SPX', 'GER30', 'DE30', 'UK100', 'JPN225', 'HK50', 'US100'];
+  if (indices.some(index => cleanSymbol.includes(index))) return true;
+  
+  return false;
+};
+
+/**
  * Calculates pips for a trade
  */
 export const calculatePips = (
@@ -29,14 +85,9 @@ export const calculatePips = (
   if (!entryPrice || !exitPrice) return 0;
   
   const diff = type === 'Long' ? exitPrice - entryPrice : entryPrice - exitPrice;
+  const multiplier = getPipMultiplier(symbol);
   
-  if (isJpyPair(symbol)) {
-    // JPY pairs: 1 pip = 0.01
-    return Number((diff * 100).toFixed(1));
-  } else {
-    // Standard pairs: 1 pip = 0.0001
-    return Number((diff * 10000).toFixed(1));
-  }
+  return Number((diff * multiplier).toFixed(1));
 };
 
 /**

@@ -74,7 +74,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
       const symbols = [...new Set(trades.map(trade => trade.symbol))];
       setAvailableSymbols(symbols);
 
-      const strategies = [...new Set(trades.map(trade => trade.strategy).filter(Boolean) as string[])];
+      const strategies = [...new Set(trades.flatMap(trade => trade.tags || []))];
       setAvailableStrategies(strategies);
 
       const tags = [...new Set(trades.flatMap(trade => trade.tags || []))];
