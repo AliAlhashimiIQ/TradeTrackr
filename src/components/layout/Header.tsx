@@ -72,8 +72,8 @@ export default function Header() {
           <div className="max-w-screen-xl mx-auto flex justify-between items-center">
             {/* Logo */}
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/30 transition-shadow">
-                <Logo className="w-4.5 h-4.5 text-white" />
+              <div className="w-8 h-8 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25 group-hover:border-indigo-500/30 transition-all">
+                <Logo className="w-5.5 h-5.5" />
               </div>
               <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
             </Link>

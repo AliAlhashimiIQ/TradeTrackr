@@ -71,8 +71,8 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
-              <Logo className="w-9 h-9 text-white animate-pulse" />
+            <div className="w-16 h-16 bg-slate-950 border border-white/[0.08] rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-11 h-11 animate-pulse" />
             </div>
           </div>
           <div className="flex items-center gap-2">

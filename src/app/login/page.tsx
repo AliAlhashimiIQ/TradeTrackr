@@ -118,8 +118,8 @@ function LoginContent() {
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
-              <Logo className="w-9 h-9 text-white animate-pulse" />
+            <div className="w-16 h-16 bg-slate-950 border border-white/[0.08] rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-11 h-11 animate-pulse" />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -144,8 +144,8 @@ function LoginContent() {
       <div className="hidden lg:flex lg:w-[45%] relative items-center justify-center p-12">
         <div className="relative z-10 max-w-md">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <Logo className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-lg shadow-black/35">
+              <Logo className="w-6 h-6" />
             </div>
             <span className="text-2xl font-bold text-white tracking-tight">TradeTrackr</span>
           </div>
@@ -190,8 +190,8 @@ function LoginContent() {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Logo className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-lg flex items-center justify-center shadow-md shadow-black/25">
+              <Logo className="w-5.5 h-5.5" />
             </div>
             <span className="text-xl font-bold text-white">TradeTrackr</span>
           </div>

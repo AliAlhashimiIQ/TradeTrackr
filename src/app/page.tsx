@@ -141,8 +141,8 @@ export default function Home() {
           <div className="relative">
             {/* Pulsing ring background */}
             <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
-            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-500/30 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
-              <Logo className="w-9 h-9 text-white animate-pulse" />
+            <div className="w-16 h-16 bg-slate-950 border border-white/[0.08] rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
+              <Logo className="w-10 h-10 animate-pulse" />
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -170,8 +170,8 @@ export default function Home() {
       <nav className="relative z-10 border-b border-white/5">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <Logo className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-lg flex items-center justify-center shadow-md shadow-black/20">
+              <Logo className="w-5.5 h-5.5" />
             </div>
             <span className="text-xl font-bold tracking-tight">TradeTrackr</span>
           </div>
@@ -494,8 +494,8 @@ export default function Home() {
       <footer className="relative z-10 border-t border-white/5 py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-md flex items-center justify-center">
-              <Logo className="w-4 h-4 text-white" />
+            <div className="w-7 h-7 bg-slate-950 border border-white/[0.08] rounded-md flex items-center justify-center shadow">
+              <Logo className="w-4.5 h-4.5" />
             </div>
             <span className="text-sm font-semibold text-gray-400">TradeTrackr</span>
           </div>
