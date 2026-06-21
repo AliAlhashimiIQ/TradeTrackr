@@ -91,7 +91,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
 
   return (
     <div className="liquid-bg flex-1 flex flex-col relative bg-[#06070b]">
-      <main className="flex-1 py-4 relative z-10">
+      <main className="flex-1 py-4 relative z-10 w-full overflow-x-auto">
         {children}
       </main>
       <footer className="py-4 px-6 text-center border-t border-white/[0.04] relative z-10">

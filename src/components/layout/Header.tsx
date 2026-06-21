@@ -21,6 +21,23 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar_collapsed') === 'true'
+      setSidebarCollapsed(saved)
+    }
+  }, [])
+
+  const toggleSidebar = () => {
+    const nextVal = !sidebarCollapsed
+    setSidebarCollapsed(nextVal)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sidebar_collapsed', String(nextVal))
+      window.dispatchEvent(new Event('sidebar_collapse_changed'))
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -106,16 +123,30 @@ export default function Header() {
       </header>
 
       {/* Desktop Left Sidebar */}
-      <aside className="fixed top-0 bottom-0 left-0 w-64 bg-[#0a0b12]/95 border-r border-white/[0.06] backdrop-blur-md hidden lg:flex flex-col justify-between p-5 z-40">
+      <aside className={`fixed top-0 bottom-0 left-0 w-64 bg-[#0a0b12]/95 border-r border-white/[0.06] backdrop-blur-md hidden lg:flex flex-col justify-between p-5 z-40 transition-all duration-300 ease-in-out ${
+        sidebarCollapsed ? 'translate-x-[-100%] opacity-0 pointer-events-none' : 'translate-x-0'
+      }`}>
         {/* Top: Logo, search, and nav */}
         <div className="flex flex-col gap-6">
-          {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2.5 group px-2">
-            <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25 group-hover:border-indigo-500/30 transition-all">
-              <Logo className="w-6.5 h-6.5" />
-            </div>
-            <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
-          </Link>
+          {/* Logo & Collapse Button */}
+          <div className="flex items-center justify-between px-2">
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25 group-hover:border-indigo-500/30 transition-all">
+                <Logo className="w-6.5 h-6.5" />
+              </div>
+              <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
+            </Link>
+            
+            <button
+              onClick={toggleSidebar}
+              className="p-1.5 text-gray-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors duration-200"
+              title="Collapse Sidebar"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7M17 19l-7-7 7-7" />
+              </svg>
+            </button>
+          </div>
 
           {/* Search bar */}
           <div className="relative w-full group px-1">
@@ -352,6 +383,18 @@ export default function Header() {
           </>
         )}
       </AnimatePresence>
+
+      {sidebarCollapsed && (
+        <button
+          onClick={toggleSidebar}
+          className="fixed left-0 top-6 z-50 p-2.5 bg-[#0a0b12]/90 border-r border-y border-white/[0.08] hover:border-indigo-500/30 rounded-r-xl text-gray-400 hover:text-white shadow-lg backdrop-blur-md transition-all duration-300 hover:pr-3.5 hidden lg:flex items-center justify-center"
+          title="Expand Sidebar"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M6 5l7 7-7 7" />
+          </svg>
+        </button>
+      )}
     </>
   )
 }
