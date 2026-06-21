@@ -158,7 +158,7 @@ export default function Header() {
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/80 to-blue-600/80 rounded-xl shadow-lg shadow-indigo-500/20 pointer-events-none" />
                   )}
                   <span className="relative z-10 flex items-center gap-3 w-full">
-                    <svg className="w-4.5 h-4.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
                     </svg>
                     <span>{item.label}</span>
