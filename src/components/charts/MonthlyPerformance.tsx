@@ -130,7 +130,10 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             hide={activeMetric === 'pnL'}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
+            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#334155', borderRadius: '12px' }}
+            itemStyle={{ color: '#e2e8f0' }}
+            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
+            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
             formatter={(value: number, name: string) => {
               if (name === 'P&L') return [formatCurrency(value), name];
               if (name === 'Win Rate') return [`${value.toFixed(1)}%`, name];

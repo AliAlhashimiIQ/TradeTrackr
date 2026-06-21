@@ -255,7 +255,10 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                     if (metric.unit === '$') return [formatCurrency(value as number), name];
                     return [value, name];
                   }}
-                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+                  contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
+                  itemStyle={{ color: '#e2e8f0' }}
+                  labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                 />
                 <Legend />
                 <Bar dataKey="Long" fill={COLORS.Long} name="Long Trades">
@@ -328,7 +331,9 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                     }
                     return [value, name];
                   }}
-                  contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+                  contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
+                  itemStyle={{ color: '#e2e8f0' }}
+                  labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
                 />
               </RadarChart>
             </ResponsiveContainer>
@@ -366,7 +371,9 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
               formatCurrency(props.payload.pnL),
               props.payload.type
             ]}
-            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
+            itemStyle={{ color: '#e2e8f0' }}
+            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
           />
         </PieChart>
       </ResponsiveContainer>

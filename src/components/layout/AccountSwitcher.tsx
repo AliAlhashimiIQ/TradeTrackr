@@ -71,11 +71,11 @@ export default function AccountSwitcher() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.95 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full mt-2 left-0 w-64 bg-[#0f1117] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100] backdrop-blur-md"
+            className="absolute bottom-full mb-2 left-0 w-64 bg-[#0f1117] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100] backdrop-blur-md"
           >
             {/* Header */}
             <div className="px-4 py-2 border-b border-white/[0.04]">

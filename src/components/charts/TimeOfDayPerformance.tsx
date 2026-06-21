@@ -111,7 +111,10 @@ const TimeOfDayPerformance: React.FC<TimeOfDayPerformanceProps> = ({
               if (name === 'Win Rate') return [formatPercent(value as number), name];
               return [value, name];
             }}
-            contentStyle={{ backgroundColor: '#1f2937', borderColor: '#374151', color: 'white' }}
+            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
+            itemStyle={{ color: '#e2e8f0' }}
+            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
+            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
             labelFormatter={(label) => {
               const item = chartData.find(d => d.timeSlot === label);
               return item ? item.fullName : label;

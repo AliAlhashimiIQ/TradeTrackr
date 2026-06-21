@@ -83,7 +83,10 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
             domain={[0, Math.ceil(maxDrawdownPercent * 1.2)]}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: 'rgba(2,6,23,0.95)', borderColor: '#334155', color: '#e2e8f0', borderRadius: '12px' }}
+            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#334155', borderRadius: '12px' }}
+            itemStyle={{ color: '#e2e8f0' }}
+            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
+            cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1 }}
             formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
             labelFormatter={(label) => formatDate(label)}
           />
