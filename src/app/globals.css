@@ -642,3 +642,253 @@
   border-color: rgba(249, 115, 22, 0.25) !important;
 }
 
+/* ==========================================================================
+   LIGHT MODE UNIVERSAL OVERRIDES
+   Automatically applied when root HTML element is not in .dark mode
+   ========================================================================== */
+:root:not(.dark) {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card-bg: #ffffff;
+  --card-border: rgba(0, 0, 0, 0.08);
+  --tooltip-bg: #ffffff;
+}
+
+/* Background overrides */
+:root:not(.dark) body,
+:root:not(.dark) .liquid-bg,
+:root:not(.dark) [class*="bg-[#06070b]"],
+:root:not(.dark) [class*="bg-[#050608]"] {
+  background-color: #f8fafc !important;
+  background-image: none !important;
+}
+
+/* Background ambient blobs in light mode */
+:root:not(.dark) .liquid-bg::before {
+  background: radial-gradient(ellipse, rgba(99, 102, 241, 0.04) 0%, transparent 65%) !important;
+}
+:root:not(.dark) .liquid-bg::after {
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.03) 0%, transparent 65%) !important;
+}
+
+/* Sidebar and Topbar */
+:root:not(.dark) .sidebar-liquid,
+:root:not(.dark) nav {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 2px 0 16px rgba(0, 0, 0, 0.03) !important;
+}
+:root:not(.dark) .topbar-liquid,
+:root:not(.dark) header {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Cards & containers */
+:root:not(.dark) .card,
+:root:not(.dark) [class*="bg-[#0d0e16]"],
+:root:not(.dark) [class*="bg-[#0D0E16]"],
+:root:not(.dark) [class*="bg-[#151823]"],
+:root:not(.dark) [class*="bg-[#131825]"],
+:root:not(.dark) [class*="bg-[#0f1117]"],
+:root:not(.dark) [class*="bg-[#0a0b12]"],
+:root:not(.dark) [class*="bg-[#0a0a10]"],
+:root:not(.dark) [class*="bg-[#1a1f2c]"],
+:root:not(.dark) [class*="bg-slate-950"],
+:root:not(.dark) [class*="bg-slate-900"],
+:root:not(.dark) [class*="dark:bg-[#0d0e16]"],
+:root:not(.dark) [class*="dark:bg-slate-950"] {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  border-top-color: rgba(0, 0, 0, 0.06) !important;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.05),
+    0 10px 30px -10px rgba(0, 0, 0, 0.06) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Hover lift for light cards */
+:root:not(.dark) [class*="bg-[#0d0e16]"]:hover,
+:root:not(.dark) [class*="bg-[#151823]"]:hover,
+:root:not(.dark) [class*="dark:bg-slate-950"]:hover {
+  border-color: rgba(0, 0, 0, 0.12) !important;
+  box-shadow:
+    0 4px 20px -2px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Sub-panels (settings rows, tables) */
+:root:not(.dark) [class*="bg-white/[0.03]"],
+:root:not(.dark) [class*="bg-white/[0.04]"],
+:root:not(.dark) [class*="bg-white/[0.05]"],
+:root:not(.dark) [class*="bg-[#0d0e16]/"],
+:root:not(.dark) [class*="bg-[#0f1117]/"],
+:root:not(.dark) [class*="bg-white/[0.02]"] {
+  background: rgba(0, 0, 0, 0.02) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
+  box-shadow: none !important;
+}
+
+/* Inputs */
+:root:not(.dark) .input,
+:root:not(.dark) input[type="text"],
+:root:not(.dark) input[type="number"],
+:root:not(.dark) input[type="password"],
+:root:not(.dark) input[type="email"],
+:root:not(.dark) input[type="date"],
+:root:not(.dark) select,
+:root:not(.dark) textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+:root:not(.dark) .input:focus,
+:root:not(.dark) input:focus,
+:root:not(.dark) select:focus,
+:root:not(.dark) textarea:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+:root:not(.dark) input::placeholder,
+:root:not(.dark) textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Text overrides */
+:root:not(.dark) h1,
+:root:not(.dark) h2,
+:root:not(.dark) h3,
+:root:not(.dark) h4,
+:root:not(.dark) h5,
+:root:not(.dark) h6,
+:root:not(.dark) .text-white,
+:root:not(.dark) .dark\:text-white {
+  color: #0f172a !important;
+}
+
+:root:not(.dark) p,
+:root:not(.dark) label {
+  color: #334155 !important;
+}
+
+/* Text gray adjustments */
+:root:not(.dark) .text-gray-300,
+:root:not(.dark) .text-slate-300 {
+  color: #334155 !important;
+}
+:root:not(.dark) .text-gray-400,
+:root:not(.dark) .text-slate-400 {
+  color: #475569 !important;
+}
+:root:not(.dark) .text-gray-500,
+:root:not(.dark) .text-slate-500 {
+  color: #64748b !important;
+}
+:root:not(.dark) .text-gray-600,
+:root:not(.dark) .text-slate-600 {
+  color: #64748b !important;
+}
+
+/* Primary actions preservation */
+:root:not(.dark) button.btn-primary,
+:root:not(.dark) .btn-primary *,
+:root:not(.dark) button.bg-gradient-to-r,
+:root:not(.dark) button.bg-indigo-600,
+:root:not(.dark) button.bg-blue-600,
+:root:not(.dark) a.bg-gradient-to-r,
+:root:not(.dark) a.bg-indigo-600,
+:root:not(.dark) a.bg-blue-600,
+:root:not(.dark) .btn-primary span,
+:root:not(.dark) button.bg-gradient-to-r span,
+:root:not(.dark) button.bg-indigo-600 span {
+  color: #ffffff !important;
+}
+
+/* Secondary and ghost buttons */
+:root:not(.dark) .btn-secondary,
+:root:not(.dark) [class*="bg-gray-700/"],
+:root:not(.dark) [class*="bg-white/5"] {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+:root:not(.dark) .btn-secondary:hover,
+:root:not(.dark) [class*="bg-gray-700/"]:hover,
+:root:not(.dark) [class*="bg-white/5"]:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+:root:not(.dark) .btn-ghost {
+  color: #475569 !important;
+}
+:root:not(.dark) .btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #0f172a !important;
+}
+
+/* Table overrides */
+:root:not(.dark) table th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+:root:not(.dark) table td,
+:root:not(.dark) table tr {
+  border-color: rgba(0, 0, 0, 0.06) !important;
+}
+:root:not(.dark) table tr:hover {
+  background-color: rgba(0, 0, 0, 0.01) !important;
+}
+
+/* Dividers */
+:root:not(.dark) .liquid-divider,
+:root:not(.dark) .border-white\/5,
+:root:not(.dark) .border-white\/\[0\.05\],
+:root:not(.dark) .border-white\/\[0\.06\],
+:root:not(.dark) .border-white\/\[0\.07\],
+:root:not(.dark) .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.08) 30%,
+    rgba(0, 0, 0, 0.08) 70%,
+    transparent 100%
+  ) !important;
+}
+
+/* Recharts / tooltip text */
+:root:not(.dark) .recharts-default-legend {
+  fill: #0f172a !important;
+}
+:root:not(.dark) .recharts-legend-item-text {
+  color: #334155 !important;
+}
+
+/* Landing page gradient text stops */
+:root:not(.dark) .from-white {
+  --tw-gradient-from: #0f172a !important;
+  --tw-gradient-to: #475569 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+:root:not(.dark) .from-indigo-600\/20 {
+  --tw-gradient-from: rgba(99, 102, 241, 0.08) !important;
+}
+:root:not(.dark) .to-blue-600\/20 {
+  --tw-gradient-to: rgba(59, 130, 246, 0.08) !important;
+}
+
+/* Modals & Dialogs */
+:root:not(.dark) [role="dialog"],
+:root:not(.dark) .modal,
+:root:not(.dark) .absolute.bg-[#0f1117] {
+  background: #ffffff !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  color: #0f172a !important;
+}
+
+
