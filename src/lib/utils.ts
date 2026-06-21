@@ -88,12 +88,43 @@ export const TAG_COLORS = [
 ];
 
 export function getTagStyle(hexColor: string | null | undefined, isMistake = false) {
+  const isDark = typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true;
   const defaultHex = isMistake ? '#ef4444' : '#6366f1';
   const color = hexColor || defaultHex;
   const preset = TAG_COLORS.find(
     c => c.hex.toLowerCase() === color.toLowerCase() || c.name.toLowerCase() === color.toLowerCase()
   );
   
+  if (!isDark) {
+    // Light mode: use dark text color on light backgrounds for legibility
+    if (preset) {
+      const lightModeTextColors: Record<string, string> = {
+        'Default': '#374151',
+        'Gray': '#4b5563',
+        'Brown': '#713f12',
+        'Orange': '#c2410c',
+        'Yellow': '#a16207',
+        'Green': '#047857',
+        'Blue': '#1d4ed8',
+        'Purple': '#6d28d9',
+        'Pink': '#be185d',
+        'Red': '#b91c1c'
+      };
+      const textCol = lightModeTextColors[preset.name] || preset.hex;
+      return {
+        backgroundColor: preset.bg.replace('0.15', '0.08').replace('0.2', '0.08'),
+        color: textCol,
+        borderColor: preset.border.replace('0.3', '0.15').replace('0.4', '0.15')
+      };
+    }
+    return {
+      backgroundColor: color.startsWith('#') ? `${color}13` : 'rgba(99,102,241,0.08)',
+      color: color,
+      borderColor: color.startsWith('#') ? `${color}33` : 'rgba(99,102,241,0.15)'
+    };
+  }
+
+  // Dark mode
   if (preset) {
     return {
       backgroundColor: preset.bg,
@@ -126,7 +157,26 @@ export interface PLColors {
 
 export function getPLColorClasses(value: number, isColorblind = false): PLColors {
   const isPositive = value >= 0;
+  const isDark = typeof document !== 'undefined' ? document.documentElement.classList.contains('dark') : true;
+
   if (isColorblind) {
+    if (!isDark) {
+      return {
+        text: isPositive ? 'text-blue-600' : 'text-orange-600',
+        text70: isPositive ? 'text-blue-600/70' : 'text-orange-600/70',
+        bg10: isPositive ? 'bg-blue-600/10' : 'bg-orange-600/10',
+        ring20: isPositive ? 'ring-blue-600/20' : 'ring-orange-600/20',
+        bg15: isPositive ? 'bg-blue-600/15' : 'bg-orange-600/15',
+        border30: isPositive ? 'border-blue-600/30' : 'border-orange-600/30',
+        border50: isPositive ? 'border-blue-600/50' : 'border-orange-600/50',
+        shadow: isPositive 
+          ? 'shadow-[0_0_16px_rgba(37,99,235,0.08)]' 
+          : 'shadow-[0_0_16px_rgba(234,88,12,0.08)]',
+        hexColor: isPositive ? '#2563eb' : '#ea580c',
+        hexBg: isPositive ? 'rgba(37,99,235,0.05)' : 'rgba(234,88,12,0.05)',
+        hexShadow: isPositive ? 'rgba(37,99,235,0.1)' : 'rgba(234,88,12,0.1)'
+      };
+    }
     return {
       text: isPositive ? 'text-blue-400' : 'text-orange-400',
       text70: isPositive ? 'text-blue-500/70' : 'text-orange-500/70',
@@ -143,6 +193,23 @@ export function getPLColorClasses(value: number, isColorblind = false): PLColors
       hexShadow: isPositive ? 'rgba(59,130,246,0.2)' : 'rgba(249,115,22,0.2)'
     };
   } else {
+    if (!isDark) {
+      return {
+        text: isPositive ? 'text-emerald-600' : 'text-red-600',
+        text70: isPositive ? 'text-emerald-600/70' : 'text-red-600/70',
+        bg10: isPositive ? 'bg-emerald-600/10' : 'bg-red-600/10',
+        ring20: isPositive ? 'ring-emerald-600/20' : 'ring-red-600/20',
+        bg15: isPositive ? 'bg-emerald-600/15' : 'bg-red-600/15',
+        border30: isPositive ? 'border-emerald-600/30' : 'border-red-600/30',
+        border50: isPositive ? 'border-emerald-600/50' : 'border-red-600/50',
+        shadow: isPositive 
+          ? 'shadow-[0_0_16px_rgba(5,150,105,0.08)]' 
+          : 'shadow-[0_0_16px_rgba(220,38,38,0.08)]',
+        hexColor: isPositive ? '#059669' : '#dc2626',
+        hexBg: isPositive ? 'rgba(5,150,105,0.05)' : 'rgba(220,38,38,0.05)',
+        hexShadow: isPositive ? 'rgba(5,150,105,0.1)' : 'rgba(220,38,38,0.1)'
+      };
+    }
     return {
       text: isPositive ? 'text-emerald-400' : 'text-red-400',
       text70: isPositive ? 'text-emerald-500/70' : 'text-red-500/70',
@@ -152,11 +219,11 @@ export function getPLColorClasses(value: number, isColorblind = false): PLColors
       border30: isPositive ? 'border-emerald-500/30' : 'border-red-500/30',
       border50: isPositive ? 'border-emerald-500/50' : 'border-red-500/50',
       shadow: isPositive 
-        ? 'shadow-[0_0_16px_rgba(16,185,129,0.12)]' 
-        : 'shadow-[0_0_16px_rgba(239,68,68,0.12)]',
-      hexColor: isPositive ? '#34d399' : '#f87171', // emerald-400 / red-400 equivalent hex
+        ? 'shadow-[0_0_16px_rgba(16,185,129,0.15)]' 
+        : 'shadow-[0_0_16px_rgba(239,68,68,0.15)]',
+      hexColor: isPositive ? '#34d399' : '#f87171', // Emerald-400 / Red-400 hex
       hexBg: isPositive ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.06)',
-      hexShadow: isPositive ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.18)'
+      hexShadow: isPositive ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'
     };
   }
 }

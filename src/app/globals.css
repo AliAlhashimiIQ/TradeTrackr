@@ -16,6 +16,41 @@
   --card-bg: #ffffff;
   --card-border: rgba(0, 0, 0, 0.08);
   --tooltip-bg: #ffffff;
+
+  --calendar-empty-bg: rgba(241, 245, 249, 0.5);
+  --calendar-cell-border: rgba(0, 0, 0, 0.06);
+
+  --calendar-selected-bg: #e0e7ff;
+  --calendar-selected-bg-grad-start: rgba(99,102,241,0.12);
+  --calendar-selected-bg-grad-end: rgba(99,102,241,0.04);
+  --calendar-selected-border: rgba(99,102,241,0.3);
+  --calendar-selected-border-top: rgba(99,102,241,0.2);
+  --calendar-selected-shadow: 0 1px 0 0 rgba(99,102,241,0.15) inset, 0 0 16px rgba(99,102,241,0.08), 0 4px 12px rgba(0,0,0,0.05);
+
+  --calendar-profit-bg: #e6fbf4;
+  --calendar-profit-bg-grad-start: rgba(16,185,129,0.12);
+  --calendar-profit-bg-grad-end: rgba(16,185,129,0.03);
+  --calendar-profit-border: rgba(16,185,129,0.25);
+  --calendar-profit-border-top: rgba(16,185,129,0.15);
+  --calendar-profit-shadow: 0 1px 0 0 rgba(16,185,129,0.1) inset, 0 0 12px rgba(16,185,129,0.08), 0 4px 10px rgba(0,0,0,0.03);
+
+  --calendar-loss-bg: #fdf2f2;
+  --calendar-loss-bg-grad-start: rgba(239,68,68,0.1);
+  --calendar-loss-bg-grad-end: rgba(239,68,68,0.02);
+  --calendar-loss-border: rgba(239,68,68,0.25);
+  --calendar-loss-border-top: rgba(239,68,68,0.15);
+  --calendar-loss-shadow: 0 1px 0 0 rgba(239,68,68,0.1) inset, 0 0 12px rgba(239,68,68,0.08), 0 4px 10px rgba(0,0,0,0.03);
+
+  --calendar-base-bg: #ffffff;
+  --calendar-base-bg-grad-start: rgba(255,255,255,0.6);
+  --calendar-base-bg-grad-end: rgba(255,255,255,0.2);
+  --calendar-base-border: rgba(0, 0, 0, 0.05);
+  --calendar-base-border-top: rgba(0, 0, 0, 0.03);
+  --calendar-base-shadow: 0 1px 0 0 rgba(255,255,255,0.6) inset;
+
+  --calendar-weekly-card-bg: linear-gradient(160deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 100%), #ffffff;
+  --calendar-weekly-card-border: rgba(0, 0, 0, 0.06);
+  --calendar-weekly-card-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 2px 8px rgba(0,0,0,0.02);
 }
 
 .dark {
@@ -24,6 +59,41 @@
   --card-bg: #0d0e16;
   --card-border: rgba(255, 255, 255, 0.06);
   --tooltip-bg: #0f1117;
+
+  --calendar-empty-bg: rgba(10, 11, 18, 0.5);
+  --calendar-cell-border: rgba(255, 255, 255, 0.04);
+
+  --calendar-selected-bg: rgba(13, 14, 22, 0.9);
+  --calendar-selected-bg-grad-start: rgba(99, 102, 241, 0.12);
+  --calendar-selected-bg-grad-end: rgba(99, 102, 241, 0.04);
+  --calendar-selected-border: rgba(99, 102, 241, 0.25);
+  --calendar-selected-border-top: rgba(99, 102, 241, 0.15);
+  --calendar-selected-shadow: 0 1px 0 0 rgba(99, 102, 241, 0.15) inset, 0 0 24px rgba(99, 102, 241, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.4);
+
+  --calendar-profit-bg: rgba(10, 11, 18, 0.9);
+  --calendar-profit-bg-grad-start: rgba(16, 185, 129, 0.22);
+  --calendar-profit-bg-grad-end: rgba(16, 185, 129, 0.04);
+  --calendar-profit-border: rgba(16, 185, 129, 0.4);
+  --calendar-profit-border-top: rgba(16, 185, 129, 0.3);
+  --calendar-profit-shadow: 0 1px 0 0 rgba(16, 185, 129, 0.15) inset, 0 0 16px rgba(16, 185, 129, 0.18), 0 4px 16px -4px rgba(0, 0, 0, 0.3);
+
+  --calendar-loss-bg: rgba(10, 11, 18, 0.9);
+  --calendar-loss-bg-grad-start: rgba(239, 68, 68, 0.2);
+  --calendar-loss-bg-grad-end: rgba(239, 68, 68, 0.03);
+  --calendar-loss-border: rgba(239, 68, 68, 0.4);
+  --calendar-loss-border-top: rgba(239, 68, 68, 0.3);
+  --calendar-loss-shadow: 0 1px 0 0 rgba(239, 68, 68, 0.15) inset, 0 0 16px rgba(239, 68, 68, 0.15), 0 4px 16px -4px rgba(0, 0, 0, 0.3);
+
+  --calendar-base-bg: rgba(13, 14, 22, 0.8);
+  --calendar-base-bg-grad-start: rgba(255, 255, 255, 0.025);
+  --calendar-base-bg-grad-end: rgba(255, 255, 255, 0.008);
+  --calendar-base-border: rgba(255, 255, 255, 0.05);
+  --calendar-base-border-top: rgba(255, 255, 255, 0.035);
+  --calendar-base-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+
+  --calendar-weekly-card-bg: linear-gradient(160deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.005) 100%), rgba(10, 11, 18, 0.7);
+  --calendar-weekly-card-border: rgba(255, 255, 255, 0.06);
+  --calendar-weekly-card-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
 }
 
 @layer base {
@@ -889,6 +959,149 @@
   border-color: rgba(0, 0, 0, 0.08) !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
   color: #0f172a !important;
+}
+
+/* High-contrast text & background colors for light mode */
+:root:not(.dark) .text-gray-100,
+:root:not(.dark) .text-slate-100,
+:root:not(.dark) .text-gray-200,
+:root:not(.dark) .text-slate-200 {
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .text-emerald-400,
+:root:not(.dark) .text-green-400 {
+  color: #059669 !important; /* emerald-600 */
+}
+
+:root:not(.dark) .text-red-400 {
+  color: #dc2626 !important; /* red-600 */
+}
+
+:root:not(.dark) .text-yellow-400,
+:root:not(.dark) .text-amber-400 {
+  color: #d97706 !important; /* amber-600 */
+}
+
+:root:not(.dark) .text-blue-400 {
+  color: #2563eb !important; /* blue-600 */
+}
+
+:root:not(.dark) .text-indigo-400 {
+  color: #4f46e5 !important; /* indigo-600 */
+}
+
+:root:not(.dark) .text-purple-400 {
+  color: #7c3aed !important; /* purple-600 */
+}
+
+:root:not(.dark) .text-cyan-400 {
+  color: #0891b2 !important; /* cyan-600 */
+}
+
+:root:not(.dark) .text-teal-400 {
+  color: #0d9488 !important; /* teal-600 */
+}
+
+/* Dynamic status backgrounds */
+:root:not(.dark) .bg-emerald-500\/10,
+:root:not(.dark) .bg-green-500\/10,
+:root:not(.dark) .bg-emerald-600\/10 {
+  background-color: rgba(5, 150, 105, 0.08) !important;
+}
+
+:root:not(.dark) .bg-red-500\/10,
+:root:not(.dark) .bg-red-600\/10 {
+  background-color: rgba(220, 38, 38, 0.08) !important;
+}
+
+:root:not(.dark) .bg-yellow-500\/10,
+:root:not(.dark) .bg-yellow-600\/10,
+:root:not(.dark) .bg-amber-500\/10 {
+  background-color: rgba(217, 119, 6, 0.08) !important;
+}
+
+:root:not(.dark) .bg-blue-500\/10 {
+  background-color: rgba(37, 99, 235, 0.08) !important;
+}
+
+:root:not(.dark) .bg-indigo-500\/10 {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+}
+
+/* Hover text visibility fixes in light mode */
+:root:not(.dark) [class*="hover:text-white"]:hover,
+:root:not(.dark) [class*="hover\:text-white"]:hover {
+  color: #0f172a !important;
+}
+
+:root:not(.dark) [class*="group-hover:text-white"],
+:root:not(.dark) [class*="group-hover\:text-white"] {
+  color: #0f172a !important;
+}
+
+/* Background colors override for custom widgets and pages */
+:root:not(.dark) [class*="bg-[#0d1017]"],
+:root:not(.dark) [class*="bg-[#0D1017]"] {
+  background-color: #ffffff !important;
+}
+
+:root:not(.dark) [class*="bg-[#0a0c13]"],
+:root:not(.dark) [class*="bg-[#0A0C13]"] {
+  background-color: #f1f5f9 !important;
+}
+
+:root:not(.dark) [class*="bg-[#161b25]"],
+:root:not(.dark) [class*="bg-[#161B25]"] {
+  background-color: #f8fafc !important;
+}
+
+:root:not(.dark) [class*="bg-[#1a1f2c]"],
+:root:not(.dark) [class*="bg-[#1A1F2C]"],
+:root:not(.dark) [class*="bg-[#252a38]"],
+:root:not(.dark) [class*="bg-[#252a38]/"],
+:root:not(.dark) [class*="bg-[#1a202c]"],
+:root:not(.dark) [class*="bg-[#23273a]"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+:root:not(.dark) [class*="bg-[#0a0a10]"],
+:root:not(.dark) [class*="bg-[#10131c]"],
+:root:not(.dark) [class*="bg-[#06070b]"] {
+  background-color: #f8fafc !important;
+}
+
+:root:not(.dark) [class*="bg-[#181e2e]"],
+:root:not(.dark) [class*="bg-[#131825]"],
+:root:not(.dark) [class*="bg-[#0a0b12]"],
+:root:not(.dark) [class*="bg-[#0d0e16]"],
+:root:not(.dark) [class*="bg-[#151823]"] {
+  background-color: #ffffff !important;
+}
+
+/* Hover background utility overrides */
+:root:not(.dark) [class*="hover:bg-[#1a1f2c]"]:hover,
+:root:not(.dark) [class*="hover:bg-[#252a38]"]:hover,
+:root:not(.dark) [class*="hover:bg-white/"]:hover,
+:root:not(.dark) [class*="hover:bg-white/[0.04]"]:hover,
+:root:not(.dark) [class*="hover\:bg-\[\#1a1f2c\]"]:hover,
+:root:not(.dark) [class*="hover\:bg-\[\#252a38\]"]:hover,
+:root:not(.dark) [class*="hover\:bg-white\/"]:hover {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Borders and dividers overrides in light mode */
+:root:not(.dark) .border-gray-800,
+:root:not(.dark) .divide-gray-800,
+:root:not(.dark) .border-gray-700,
+:root:not(.dark) .divide-gray-700,
+:root:not(.dark) .border-white\/\[0\.04\],
+:root:not(.dark) .border-white\/\[0\.05\],
+:root:not(.dark) .border-white\/\[0\.06\],
+:root:not(.dark) .border-white\/\[0\.08\],
+:root:not(.dark) .border-white\/10 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 

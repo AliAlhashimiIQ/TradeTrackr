@@ -248,9 +248,9 @@ export default function CalendarPage() {
         <div
           className={`${large ? 'min-h-[140px]' : 'min-h-[110px]'}`}
           style={{
-            background: 'rgba(10, 11, 18, 0.5)',
-            borderRight: '1px solid rgba(255,255,255,0.04)',
-            borderBottom: '1px solid rgba(255,255,255,0.04)',
+            background: 'var(--calendar-empty-bg)',
+            borderRight: '1px solid var(--calendar-cell-border)',
+            borderBottom: '1px solid var(--calendar-cell-border)',
           }}
         />
       )
@@ -265,53 +265,41 @@ export default function CalendarPage() {
     const isProfit = pnl > 0
     const isLoss = pnl < 0
 
-    // Liquid glass cell styles with P&L tinting
+    // Liquid glass cell styles with P&L tinting using CSS variables
     const cellStyle: React.CSSProperties = isSelected
       ? {
-          background: `linear-gradient(160deg, rgba(99,102,241,0.12) 0%, rgba(99,102,241,0.04) 100%), rgba(13,14,22,0.9)`,
-          borderRight: '1px solid rgba(99,102,241,0.25)',
-          borderBottom: '1px solid rgba(99,102,241,0.25)',
-          borderTop: '1px solid rgba(99,102,241,0.15)',
-          borderLeft: '1px solid rgba(99,102,241,0.15)',
-          boxShadow: `
-            0 1px 0 0 rgba(99,102,241,0.15) inset,
-            0 0 24px rgba(99,102,241,0.08),
-            0 8px 32px -8px rgba(0,0,0,0.4)
-          `,
+          background: `linear-gradient(160deg, var(--calendar-selected-bg-grad-start) 0%, var(--calendar-selected-bg-grad-end) 100%), var(--calendar-selected-bg)`,
+          borderRight: '1px solid var(--calendar-selected-border)',
+          borderBottom: '1px solid var(--calendar-selected-border)',
+          borderTop: '1px solid var(--calendar-selected-border-top)',
+          borderLeft: '1px solid var(--calendar-selected-border-top)',
+          boxShadow: 'var(--calendar-selected-shadow)',
         }
       : isProfit
         ? {
-            background: `linear-gradient(160deg, rgba(16,185,129,0.22) 0%, rgba(16,185,129,0.04) 100%), rgba(10,11,18,0.9)`,
-            borderRight: '1px solid rgba(16,185,129,0.4)',
-            borderBottom: '1px solid rgba(16,185,129,0.4)',
-            borderTop: '1px solid rgba(16,185,129,0.3)',
-            borderLeft: '1px solid rgba(16,185,129,0.3)',
-            boxShadow: `
-              0 1px 0 0 rgba(16,185,129,0.15) inset,
-              0 0 16px rgba(16,185,129,0.18),
-              0 4px 16px -4px rgba(0,0,0,0.3)
-            `,
+            background: `linear-gradient(160deg, var(--calendar-profit-bg-grad-start) 0%, var(--calendar-profit-bg-grad-end) 100%), var(--calendar-profit-bg)`,
+            borderRight: '1px solid var(--calendar-profit-border)',
+            borderBottom: '1px solid var(--calendar-profit-border)',
+            borderTop: '1px solid var(--calendar-profit-border-top)',
+            borderLeft: '1px solid var(--calendar-profit-border-top)',
+            boxShadow: 'var(--calendar-profit-shadow)',
           }
         : isLoss
           ? {
-              background: `linear-gradient(160deg, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.03) 100%), rgba(10,11,18,0.9)`,
-              borderRight: '1px solid rgba(239,68,68,0.4)',
-              borderBottom: '1px solid rgba(239,68,68,0.4)',
-              borderTop: '1px solid rgba(239,68,68,0.3)',
-              borderLeft: '1px solid rgba(239,68,68,0.3)',
-              boxShadow: `
-                0 1px 0 0 rgba(239,68,68,0.15) inset,
-                0 0 16px rgba(239,68,68,0.15),
-                0 4px 16px -4px rgba(0,0,0,0.3)
-              `,
+              background: `linear-gradient(160deg, var(--calendar-loss-bg-grad-start) 0%, var(--calendar-loss-bg-grad-end) 100%), var(--calendar-loss-bg)`,
+              borderRight: '1px solid var(--calendar-loss-border)',
+              borderBottom: '1px solid var(--calendar-loss-border)',
+              borderTop: '1px solid var(--calendar-loss-border-top)',
+              borderLeft: '1px solid var(--calendar-loss-border-top)',
+              boxShadow: 'var(--calendar-loss-shadow)',
             }
           : {
-              background: `linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.008) 100%), rgba(13,14,22,0.8)`,
-              borderRight: '1px solid rgba(255,255,255,0.05)',
-              borderBottom: '1px solid rgba(255,255,255,0.05)',
-              borderTop: '1px solid rgba(255,255,255,0.035)',
-              borderLeft: '1px solid rgba(255,255,255,0.035)',
-              boxShadow: `0 1px 0 0 rgba(255,255,255,0.04) inset`,
+              background: `linear-gradient(160deg, var(--calendar-base-bg-grad-start) 0%, var(--calendar-base-bg-grad-end) 100%), var(--calendar-base-bg)`,
+              borderRight: '1px solid var(--calendar-base-border)',
+              borderBottom: '1px solid var(--calendar-base-border)',
+              borderTop: '1px solid var(--calendar-base-border-top)',
+              borderLeft: '1px solid var(--calendar-base-border-top)',
+              boxShadow: 'var(--calendar-base-shadow)',
             }
 
     return (
@@ -521,7 +509,8 @@ export default function CalendarPage() {
           <div
             className="card rounded-2xl overflow-hidden"
             style={{
-              background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
+              background: 'var(--card-bg)',
+              borderColor: 'var(--card-border)',
             }}
           >
             {/* Day headers */}
@@ -553,9 +542,9 @@ export default function CalendarPage() {
                 key={stat.row}
                 className="card p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
                 style={{
-                  background: `linear-gradient(160deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.005) 100%), rgba(10,11,18,0.7)`,
-                  borderBottom: '1px solid rgba(255,255,255,0.06)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.03) inset',
+                  background: 'var(--calendar-weekly-card-bg)',
+                  borderBottom: '1px solid var(--calendar-weekly-card-border)',
+                  boxShadow: 'var(--calendar-weekly-card-shadow)',
                 }}
               >
                 <span className="text-[10px] text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
@@ -608,7 +597,8 @@ export default function CalendarPage() {
       <div
         className="card rounded-2xl overflow-hidden"
         style={{
-          background: `linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16`,
+          background: 'var(--card-bg)',
+          borderColor: 'var(--card-border)',
         }}
       >
         {/* Day headers */}
@@ -638,9 +628,9 @@ export default function CalendarPage() {
         <div
           className="flex items-center justify-between px-5 py-4"
           style={{
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            background: `linear-gradient(160deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.008) 100%), rgba(10,11,18,0.6)`,
-            boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+            borderTop: '1px solid var(--calendar-weekly-card-border)',
+            background: 'var(--calendar-weekly-card-bg)',
+            boxShadow: 'var(--calendar-weekly-card-shadow)',
           }}
         >
           <div className="flex items-center gap-3">
@@ -704,9 +694,9 @@ export default function CalendarPage() {
             <div
               className="flex rounded-xl p-0.5"
               style={{
-                background: 'rgba(255,255,255,0.03)',
-                border: '1px solid rgba(255,255,255,0.07)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.25) inset, 0 1px 0 rgba(255,255,255,0.04)',
+                background: 'rgba(255, 255, 255, 0.03)',
+                border: '1px solid var(--card-border)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.05) inset',
               }}
             >
               {(['Week', 'Month'] as const).map((mode) => (
@@ -717,13 +707,13 @@ export default function CalendarPage() {
                   style={
                     viewMode === mode
                       ? {
-                          background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.08))',
-                          color: '#c7d2fe',
-                          border: '1px solid rgba(99,102,241,0.25)',
-                          boxShadow: '0 0 10px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.1) inset',
+                          background: 'rgba(99, 102, 241, 0.15)',
+                          color: 'var(--primary)',
+                          border: '1px solid rgba(99, 102, 241, 0.25)',
+                          boxShadow: '0 0 10px rgba(99, 102, 241, 0.1)',
                         }
                       : {
-                          color: '#6b7280',
+                          color: 'var(--secondary)',
                           border: '1px solid transparent',
                         }
                   }
@@ -739,10 +729,10 @@ export default function CalendarPage() {
                 onClick={goToPrevious}
                 className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
                 style={{
-                  color: '#9ca3af',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+                  color: 'var(--secondary)',
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: '0 1px 0 rgba(255, 255, 255, 0.05) inset',
                 }}
               >
                 <ChevronLeft />
@@ -757,10 +747,10 @@ export default function CalendarPage() {
                 onClick={goToNext}
                 className="p-2 rounded-lg transition-all duration-200 hover:scale-105"
                 style={{
-                  color: '#9ca3af',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
+                  color: 'var(--secondary)',
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--card-border)',
+                  boxShadow: '0 1px 0 rgba(255, 255, 255, 0.05) inset',
                 }}
               >
                 <ChevronRight />
@@ -775,42 +765,42 @@ export default function CalendarPage() {
             {
               label: 'Net P&L',
               value: (monthStats.pnl > 0 ? '+' : '') + fmt(monthStats.pnl),
-              color: monthStats.pnl > 0 ? '#34d399' : monthStats.pnl < 0 ? '#f87171' : '#9ca3af',
+              color: monthStats.pnl > 0 ? 'var(--success)' : monthStats.pnl < 0 ? 'var(--danger)' : 'var(--secondary)',
               icon: monthStats.pnl >= 0 ? <TrendUp /> : <TrendDown />,
-              iconColor: monthStats.pnl >= 0 ? '#10b981' : '#ef4444',
+              iconColor: monthStats.pnl >= 0 ? 'var(--success)' : 'var(--danger)',
               glow: monthStats.pnl > 0 ? 'rgba(16,185,129,0.06)' : monthStats.pnl < 0 ? 'rgba(239,68,68,0.05)' : undefined,
             },
             {
               label: 'Win Rate',
               value: `${monthStats.winRate}%`,
-              color: monthStats.winRate >= 50 ? '#34d399' : '#f87171',
+              color: monthStats.winRate >= 50 ? 'var(--success)' : 'var(--danger)',
               glow: monthStats.winRate >= 50 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
             },
             {
               label: 'Wins',
               value: monthStats.wins.toString(),
-              color: '#34d399',
+              color: 'var(--success)',
             },
             {
               label: 'Losses',
               value: monthStats.losses.toString(),
-              color: '#f87171',
+              color: 'var(--danger)',
             },
             {
               label: 'Total Trades',
               value: monthStats.totalTrades.toString(),
-              color: '#e5e7eb',
+              color: 'var(--foreground)',
             },
             {
               label: 'Best Day',
               value: monthStats.bestDay > 0 ? '+' + fmt(monthStats.bestDay) : '—',
-              color: '#34d399',
+              color: 'var(--success)',
               glow: monthStats.bestDay > 0 ? 'rgba(16,185,129,0.06)' : undefined,
             },
             {
               label: 'Worst Day',
               value: monthStats.worstDay < 0 ? fmt(monthStats.worstDay) : '—',
-              color: '#f87171',
+              color: 'var(--danger)',
               glow: monthStats.worstDay < 0 ? 'rgba(239,68,68,0.05)' : undefined,
             },
           ].map((stat, i) => (
@@ -839,7 +829,6 @@ export default function CalendarPage() {
                 className="text-lg font-bold tabular-nums relative z-10"
                 style={{
                   color: stat.color,
-                  textShadow: `0 0 20px ${stat.color}33`,
                 }}
               >
                 {stat.value}
@@ -903,12 +892,7 @@ export default function CalendarPage() {
                     <div
                       className="text-xl font-bold tabular-nums"
                       style={{
-                        color: selectedDayPnL > 0 ? '#34d399' : selectedDayPnL < 0 ? '#f87171' : '#9ca3af',
-                        textShadow: selectedDayPnL > 0
-                          ? '0 0 24px rgba(16,185,129,0.3)'
-                          : selectedDayPnL < 0
-                            ? '0 0 24px rgba(239,68,68,0.25)'
-                            : 'none',
+                        color: selectedDayPnL > 0 ? 'var(--success)' : selectedDayPnL < 0 ? 'var(--danger)' : 'var(--secondary)',
                       }}
                     >
                       {selectedDayPnL > 0 ? '+' : ''}{fmt(selectedDayPnL)}
@@ -920,13 +904,13 @@ export default function CalendarPage() {
                 {selectedDayTrades.length > 0 && (
                   <div
                     className="grid grid-cols-2 sm:grid-cols-4"
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+                    style={{ borderBottom: '1px solid var(--card-border)' }}
                   >
                     {[
                       {
                         label: 'Win Rate',
                         value: `${calcWinRate(selectedDayTrades)}%`,
-                        color: calcWinRate(selectedDayTrades) >= 50 ? '#34d399' : '#f87171',
+                        color: calcWinRate(selectedDayTrades) >= 50 ? 'var(--success)' : 'var(--danger)',
                       },
                       {
                         label: 'Avg Win',
@@ -934,7 +918,7 @@ export default function CalendarPage() {
                           const wins = selectedDayTrades.filter((t) => t.profit_loss > 0)
                           return wins.length ? '+' + fmt(calcPnL(wins) / wins.length) : '—'
                         })(),
-                        color: '#34d399',
+                        color: 'var(--success)',
                       },
                       {
                         label: 'Avg Loss',
@@ -942,7 +926,7 @@ export default function CalendarPage() {
                           const losses = selectedDayTrades.filter((t) => t.profit_loss < 0)
                           return losses.length ? fmt(calcPnL(losses) / losses.length) : '—'
                         })(),
-                        color: '#f87171',
+                        color: 'var(--danger)',
                       },
                       {
                         label: 'Largest',
@@ -953,14 +937,14 @@ export default function CalendarPage() {
                           )
                           return (max > 0 ? '+' : '') + fmt(max)
                         })(),
-                        color: '#e5e7eb',
+                        color: 'var(--foreground)',
                       },
                     ].map((s, i) => (
                       <div
                         key={i}
                         className="px-6 py-4 flex flex-col gap-1"
                         style={{
-                          borderRight: i < 3 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                          borderRight: i < 3 ? '1px solid var(--card-border)' : 'none',
                           background: 'rgba(255,255,255,0.01)',
                         }}
                       >
@@ -1000,7 +984,7 @@ export default function CalendarPage() {
                           style={{
                             borderBottom:
                               idx < selectedDayTrades.length - 1
-                                ? '1px solid rgba(255,255,255,0.04)'
+                                ? '1px solid var(--card-border)'
                                 : 'none',
                             background: 'transparent',
                           }}
@@ -1069,12 +1053,7 @@ export default function CalendarPage() {
                           <span
                             className="text-sm font-bold tabular-nums"
                             style={{
-                              color: trade.profit_loss > 0 ? '#34d399' : trade.profit_loss < 0 ? '#f87171' : '#6b7280',
-                              textShadow: trade.profit_loss > 0
-                                ? '0 0 16px rgba(16,185,129,0.2)'
-                                : trade.profit_loss < 0
-                                  ? '0 0 16px rgba(239,68,68,0.18)'
-                                  : 'none',
+                              color: trade.profit_loss > 0 ? 'var(--success)' : trade.profit_loss < 0 ? 'var(--danger)' : 'var(--secondary)',
                             }}
                           >
                             {trade.profit_loss > 0 ? '+' : ''}
