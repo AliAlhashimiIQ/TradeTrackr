@@ -839,6 +839,32 @@
   color: #0f172a !important;
 }
 
+/* Keep active navigation and primary button text white in light mode */
+:root:not(.dark) nav a.text-white,
+:root:not(.dark) nav a.text-white *,
+:root:not(.dark) .btn-primary,
+:root:not(.dark) .btn-primary * {
+  color: #ffffff !important;
+}
+
+/* High-contrast colors for warning, info, and streak alerts in light mode */
+:root:not(.dark) .text-blue-300,
+:root:not(.dark) .text-indigo-300 {
+  color: #1d4ed8 !important; /* blue-700 */
+}
+:root:not(.dark) .text-red-300 {
+  color: #b91c1c !important; /* red-700 */
+}
+:root:not(.dark) .text-emerald-300,
+:root:not(.dark) .text-green-300 {
+  color: #047857 !important; /* green-700 */
+}
+:root:not(.dark) .text-yellow-300,
+:root:not(.dark) .text-amber-300,
+:root:not(.dark) [class*="text-amber-"] {
+  color: #b45309 !important; /* amber-700 */
+}
+
 :root:not(.dark) p,
 :root:not(.dark) label {
   color: #334155 !important;
@@ -1076,6 +1102,8 @@
 :root:not(.dark) [class*="bg-[#131825]"],
 :root:not(.dark) [class*="bg-[#0a0b12]"],
 :root:not(.dark) [class*="bg-[#0d0e16]"],
+:root:not(.dark) [class*="bg-[#0f1117]"],
+:root:not(.dark) [class*="bg-[#0F1117]"],
 :root:not(.dark) [class*="bg-[#151823]"] {
   background-color: #ffffff !important;
 }
@@ -1087,8 +1115,28 @@
 :root:not(.dark) [class*="hover:bg-white/[0.04]"]:hover,
 :root:not(.dark) [class*="hover\:bg-\[\#1a1f2c\]"]:hover,
 :root:not(.dark) [class*="hover\:bg-\[\#252a38\]"]:hover,
-:root:not(.dark) [class*="hover\:bg-white\/"]:hover {
+:root:not(.dark) [class*="hover\:bg-white\/"]:hover,
+:root:not(.dark) [class*="hover:bg-gray-800"]:hover,
+:root:not(.dark) [class*="hover\:bg-gray-800"]:hover {
   background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Active tab backgrounds / red indicators in light mode */
+:root:not(.dark) [class*="bg-blue-900/30"],
+:root:not(.dark) [class*="bg-blue-900\/30"] {
+  background-color: rgba(99, 102, 241, 0.08) !important;
+  color: #4f46e5 !important;
+}
+:root:not(.dark) [class*="bg-red-900/30"],
+:root:not(.dark) [class*="bg-red-900\/30"] {
+  background-color: rgba(239, 68, 68, 0.08) !important;
+  color: #dc2626 !important;
+}
+
+/* Checkbox and toggle overrides inside popover-container in light mode */
+:root:not(.dark) .popover-container button > div:first-child:not([class*="bg-gradient"]) {
+  background-color: #f1f5f9 !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
 }
 
 /* Borders and dividers overrides in light mode */

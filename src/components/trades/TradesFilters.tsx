@@ -90,7 +90,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
     <>
       {/* Saved Views Panel */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex flex-wrap gap-1 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.2) inset' }}>
+        <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-black/5 dark:bg-white/[0.02] border border-black/10 dark:border-white/[0.05] shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.2)]">
           {[
             { id: 'all', label: 'All Trades', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg> },
             { id: 'forex', label: 'Forex', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
@@ -102,11 +102,11 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             <button
               key={view.id}
               onClick={() => onViewChange(view.id as SavedView)}
-              className="px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5"
-              style={activeView === view.id
-                ? { background: 'linear-gradient(135deg, rgba(99,102,241,0.18), rgba(99,102,241,0.06))', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.25)', boxShadow: '0 0 10px rgba(99,102,241,0.1), 0 1px 0 rgba(255,255,255,0.08) inset' }
-                : { color: '#6b7280', border: '1px solid transparent' }
-              }
+              className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                activeView === view.id
+                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
+              }`}
             >
               {view.icon}
               {view.label}
@@ -116,18 +116,24 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] uppercase tracking-wider text-gray-500">Density</span>
-          <div className="flex rounded-lg p-0.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 2px 8px rgba(0,0,0,0.25) inset' }}>
+          <div className="flex rounded-lg p-0.5 bg-black/5 dark:bg-white/[0.03] border border-black/10 dark:border-white/[0.07] shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]">
             <button
               onClick={() => onDensityChange('compact')}
-              className="px-2.5 py-1 text-xs rounded-md transition-all duration-200"
-              style={tableDensity === 'compact' ? { background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.08))', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.25)', boxShadow: '0 0 10px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.1) inset' } : { color: '#6b7280', border: '1px solid transparent' }}
+              className={`px-2.5 py-1 text-xs rounded-md transition-all duration-200 ${
+                tableDensity === 'compact'
+                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm font-semibold'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
+              }`}
             >
               Compact
             </button>
             <button
               onClick={() => onDensityChange('comfortable')}
-              className="px-2.5 py-1 text-xs rounded-md transition-all duration-200"
-              style={tableDensity === 'comfortable' ? { background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.08))', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.25)', boxShadow: '0 0 10px rgba(99,102,241,0.12), 0 1px 0 rgba(255,255,255,0.1) inset' } : { color: '#6b7280', border: '1px solid transparent' }}
+              className={`px-2.5 py-1 text-xs rounded-md transition-all duration-200 ${
+                tableDensity === 'comfortable'
+                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm font-semibold'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
+              }`}
             >
               Comfortable
             </button>
@@ -137,29 +143,20 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowColumnMenu(!showColumnMenu)}
-              className="popover-trigger px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5"
-              style={showColumnMenu
-                ? { background: 'linear-gradient(135deg, rgba(99,102,241,0.15), rgba(99,102,241,0.06))', color: '#c7d2fe', border: '1px solid rgba(99,102,241,0.3)', boxShadow: '0 0 12px rgba(99,102,241,0.1)' }
-                : { background: 'rgba(255,255,255,0.03)', color: '#9ca3af', border: '1px solid rgba(255,255,255,0.07)', boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset' }
-              }
+              className={`popover-trigger px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+                showColumnMenu
+                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25'
+                  : 'bg-black/5 dark:bg-white/[0.03] text-gray-500 dark:text-gray-400 border border-black/10 dark:border-white/[0.07] hover:bg-black/10 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white'
+              }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
               Columns
             </button>
             {showColumnMenu && (
               <div
-                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl overflow-hidden text-left"
-                style={{
-                  backgroundColor: '#0d0e16',
-                  backgroundImage: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderTopColor: 'rgba(255,255,255,0.12)',
-                  boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 48px -12px rgba(0,0,0,0.6), 0 4px 16px -4px rgba(0,0,0,0.4)',
-                  backdropFilter: 'blur(12px)',
-                  width: '220px',
-                }}
+                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl border bg-[#0d0e16] border-white/[0.08] shadow-2xl p-0.5 w-[220px] text-left backdrop-blur-md"
               >
-                <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="px-3 py-2.5 border-b border-white/[0.06]">
                   <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em]">Toggle Columns</div>
                 </div>
                 <div className="p-1.5 max-h-[380px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/[0.08]">
@@ -196,19 +193,19 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                     ]},
                   ].map(group => (
                     <div key={group.section}>
-                      <div className="px-2.5 py-1.5 text-[9px] font-bold text-gray-600 uppercase tracking-[0.12em]">{group.section}</div>
+                      <div className="px-2.5 py-1.5 text-[9px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-[0.12em]">{group.section}</div>
                       {group.items.map(col => (
                         <button
                           key={col.key}
                           onClick={() => onToggleColumn(col.key)}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] text-xs rounded-lg transition-all duration-150 hover:bg-white/[0.04] group/col text-left"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] text-xs rounded-lg transition-all duration-150 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group/col text-left text-gray-700 dark:text-gray-300"
                         >
                           <div
-                            className="w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all duration-200"
-                            style={visibleColumns[col.key]
-                              ? { background: 'linear-gradient(135deg, #6366f1, #4f46e5)', boxShadow: '0 0 8px rgba(99,102,241,0.3), 0 1px 0 rgba(255,255,255,0.15) inset' }
-                              : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }
-                            }
+                            className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all duration-200 ${
+                              visibleColumns[col.key]
+                                ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm shadow-indigo-500/20'
+                                : 'bg-black/5 dark:bg-white/[0.04] border border-black/10 dark:border-white/[0.1]'
+                            }`}
                           >
                             {visibleColumns[col.key] && (
                               <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +213,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               </svg>
                             )}
                           </div>
-                          <span className={`${visibleColumns[col.key] ? 'text-gray-200' : 'text-gray-500'} group-hover/col:text-gray-200 transition-colors`}>
+                          <span className={`${visibleColumns[col.key] ? 'text-gray-800 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-500'} group-hover/col:text-gray-900 dark:group-hover/col:text-gray-200 transition-colors`}>
                             {col.label}
                           </span>
                         </button>
@@ -225,24 +222,24 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                   ))}
                 </div>
                 {/* Wrap Tags */}
-                <div className="px-3 py-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="px-3 py-2 border-t border-white/[0.06]">
                   <button
                     onClick={onToggleWrapTags}
-                    className="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:bg-white/[0.04] transition-colors"
+                    className="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors"
                   >
                     <span>Wrap Tags & Cells</span>
                     <div
-                      className="w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0"
-                      style={{
-                        background: wrapTags ? '#4f46e5' : 'rgba(255,255,255,0.1)',
-                        border: '1px solid rgba(255,255,255,0.08)'
-                      }}
+                      className={`w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0 border ${
+                        wrapTags 
+                          ? 'bg-indigo-600 border-indigo-500' 
+                          : 'bg-black/10 dark:bg-white/10 border-black/10 dark:border-white/10'
+                      }`}
                     >
                       <div
                         className="w-3 h-3 rounded-full bg-white absolute top-[1px] transition-transform duration-200"
                         style={{
-                          left: '1px',
-                          transform: wrapTags ? 'translateX(16px)' : 'translateX(0px)',
+                          left: '1.5px',
+                          transform: wrapTags ? 'translateX(14px)' : 'translateX(0px)',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.4)'
                         }}
                       />
