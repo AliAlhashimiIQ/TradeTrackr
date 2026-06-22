@@ -185,6 +185,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                       { key: 'takeProfit', label: 'Take Profit' },
                     ]},
                     { section: 'Journal', items: [
+                      { key: 'strategy', label: 'Primary Strategy' },
                       { key: 'mindset', label: 'Mindset' },
                       { key: 'tags', label: 'Strategy Tags' },
                       { key: 'mistakes', label: 'Mistake Tags' },

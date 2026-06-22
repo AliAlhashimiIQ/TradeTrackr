@@ -156,38 +156,40 @@ export default function Trades() {
     }
     return 'comfortable'
   })
+const DEFAULT_VISIBLE_COLUMNS = {
+  side: true,
+  entry: true,
+  exit: true,
+  lots: true,
+  pips: true,
+  pnl: true,
+  date: true,
+  strategy: true,
+  mindset: true,
+  tags: true,
+  mistakes: true,
+  notes: true,
+  openTime: false,
+  closeTime: false,
+  commission: false,
+  netProfit: false,
+  percentGain: false,
+  holdTime: false,
+  stopLoss: false,
+  takeProfit: false,
+  account: false,
+};
+
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('trades.visibleColumns')
       if (saved) {
         try {
-          return JSON.parse(saved)
+          return { ...DEFAULT_VISIBLE_COLUMNS, ...JSON.parse(saved) };
         } catch {}
       }
     }
-    return {
-      side: true,
-      entry: true,
-      exit: true,
-      lots: true,
-      pips: true,
-      pnl: true,
-      date: true,
-      strategy: true,
-      mindset: true,
-      tags: true,
-      mistakes: true,
-      notes: true,
-      openTime: false,
-      closeTime: false,
-      commission: false,
-      netProfit: false,
-      percentGain: false,
-      holdTime: false,
-      stopLoss: false,
-      takeProfit: false,
-      account: false,
-    }
+    return DEFAULT_VISIBLE_COLUMNS;
   })
 
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
