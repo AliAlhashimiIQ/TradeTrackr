@@ -1131,7 +1131,11 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               </div>
             )}
             <div 
-              className="text-right flex items-center justify-end h-full pr-5 -mr-5"
+              className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
+              style={{
+                backgroundColor: '#0d0e16',
+                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+              }}
             >
               <span>Actions</span>
             </div>
@@ -1569,7 +1573,11 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Actions */}
                     <div 
-                      className="flex items-center justify-end gap-1 pr-5 -mr-5 h-full"
+                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full transition-colors group-hover/row:bg-[#131522]"
+                      style={{
+                        backgroundColor: idx % 2 === 0 ? '#0a0b12' : '#0d0e16',
+                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+                      }}
                     >
                       {trade.screenshot_url && (
                         <button

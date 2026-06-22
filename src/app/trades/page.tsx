@@ -876,12 +876,8 @@ export default function Trades() {
           filteredTradesCount={filteredTrades.length}
           filteredTrades={filteredTrades}
           onLogTradeClick={() => {
-            if (typeof window !== 'undefined' && window.innerWidth < 768) {
-              setSelectedTrade(null);
-              setShowForm(true);
-            } else {
-              handleStartInlineAdd(0);
-            }
+            setSelectedTrade(null);
+            setShowForm(true);
           }}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
@@ -997,7 +993,18 @@ export default function Trades() {
         </div>
       )}
       
-      {selectedDetailTrade && <TradeDetail trade={selectedDetailTrade} onClose={() => setSelectedDetailTrade(null)} />}
+      {selectedDetailTrade && (
+        <TradeDetail 
+          trade={selectedDetailTrade} 
+          onClose={() => setSelectedDetailTrade(null)} 
+          onEdit={() => {
+            setSelectedTrade(selectedDetailTrade);
+            setSelectedDetailTrade(null);
+            setShowForm(true);
+          }}
+          onDelete={() => handleDeleteTrade(selectedDetailTrade.id)}
+        />
+      )}
       <TagModal isOpen={showTagModal} onClose={() => setShowTagModal(false)} onConfirm={handleAddTag} isLoading={isProcessing} />
       <ExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} onConfirm={handleExport} isLoading={isProcessing} />
 
