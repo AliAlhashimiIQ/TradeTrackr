@@ -772,7 +772,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                             Strategy Entry Checklist
                           </span>
                           <span className="text-[10px] text-slate-500 font-medium">
-                            {formData.tags?.filter(t => strategyRules.includes(t)).length || 0} / {strategyRules.length} met
+                            {formData.tags?.filter(t => strategyRules.includes(t))?.length || 0} / {strategyRules.length} met
                           </span>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
