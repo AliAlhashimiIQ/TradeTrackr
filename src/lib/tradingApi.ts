@@ -249,6 +249,7 @@ export async function addTrade(trade: Trade): Promise<Trade> {
       take_profit: sanitized.take_profit,
       commission: sanitized.commission,
       swap: sanitized.swap,
+      strategy: sanitized.strategy || null,
     };
     
     // Only include optional fields if they have values
@@ -366,6 +367,7 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       take_profit: sanitized.take_profit,
       commission: sanitized.commission,
       swap: sanitized.swap,
+      strategy: sanitized.strategy || null,
     };
     
     if (sanitized.risk) tradeData.risk = sanitized.risk;

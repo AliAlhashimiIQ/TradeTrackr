@@ -59,14 +59,14 @@ export default function PlaybookPage() {
     try {
       setLoading(true);
 
-      // 1. Fetch tags
-      const { data: tagsData, error: tagsError } = await supabase
-        .from('tags')
+      // 1. Fetch strategies
+      const { data: strategiesData, error: strategiesError } = await supabase
+        .from('strategies')
         .select('*')
         .eq('user_id', user.id)
         .order('name');
       
-      if (tagsError) throw tagsError;
+      if (strategiesError) throw strategiesError;
 
       // 2. Fetch trades
       const { data: tradesData, error: tradesError } = await supabase
@@ -77,16 +77,22 @@ export default function PlaybookPage() {
 
       if (tradesError) throw tradesError;
 
-      // 3. Fetch trade-tag junction data
+      // 3. Fetch tags and junction so we can attach tags to trades for display
+      const { data: tagsData, error: tagsError } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('user_id', user.id);
+
+      if (tagsError) throw tagsError;
+
       const { data: junctionData, error: junctionError } = await supabase
         .from('trade_tags')
         .select('trade_id, tag_id');
 
       if (junctionError) throw junctionError;
 
-      // Map tags to trades in memory
-      const typedTagsData = (tagsData as unknown as StrategyTag[]) || [];
-      const tagMap = new Map(typedTagsData.map(t => [t.id, t]));
+      // Map tags to trades in memory for display
+      const tagMap = new Map((tagsData || []).map(t => [t.id, t]));
       const tradeTagsMap: Record<string, string[]> = {};
       
       (junctionData || []).forEach(row => {
@@ -106,12 +112,12 @@ export default function PlaybookPage() {
         tags: tradeTagsMap[trade.id] || []
       })) as unknown as Trade[];
 
-      setTags(typedTagsData);
+      setTags((strategiesData as unknown as StrategyTag[]) || []);
       setTrades(tradesWithTags);
 
       // Auto-select first strategy if none selected
-      if (tagsData && tagsData.length > 0 && !selectedTagId) {
-        setSelectedTagId(tagsData[0].id);
+      if (strategiesData && strategiesData.length > 0 && !selectedTagId) {
+        setSelectedTagId(strategiesData[0].id);
       }
     } catch (err) {
       console.error('Error loading playbook data:', err);
@@ -149,9 +155,9 @@ export default function PlaybookPage() {
     }
   }, [selectedTag]);
 
-  // Calculate stats for a given tag/strategy
-  const getStrategyStats = (tagName: string) => {
-    const strategyTrades = trades.filter(t => t.tags?.includes(tagName));
+  // Calculate stats for a given strategy
+  const getStrategyStats = (strategyName: string) => {
+    const strategyTrades = trades.filter(t => t.strategy === strategyName);
     
     if (strategyTrades.length === 0) {
       return {
@@ -203,7 +209,7 @@ export default function PlaybookPage() {
       const rulesString = JSON.stringify(rulesList);
 
       const { error } = await supabase
-        .from('tags')
+        .from('strategies')
         .update({
           description,
           rules: rulesString,
@@ -253,7 +259,7 @@ export default function PlaybookPage() {
       }
 
       const { data, error } = await supabase
-        .from('tags')
+        .from('strategies')
         .insert({
           name: newStratName.trim(),
           color: newStratColor,
@@ -281,13 +287,19 @@ export default function PlaybookPage() {
   // Handle Strategy Tag Deletion
   const handleDeleteStrategy = async () => {
     if (!selectedTagId) return;
-    if (!confirm('Are you sure you want to delete this strategy playbook? Linked trades will not be deleted, but the tag will be removed from them.')) return;
+    if (!confirm('Are you sure you want to delete this strategy playbook? Linked trades will not be deleted, but their strategy field will be cleared.')) return;
 
     try {
-      // 1. Delete trade associations
-      await supabase.from('trade_tags').delete().eq('tag_id', selectedTagId);
-      // 2. Delete tag itself
-      const { error } = await supabase.from('tags').delete().eq('id', selectedTagId);
+      // 1. Clear strategy from trades that had it
+      if (selectedTag) {
+        await supabase
+          .from('trades')
+          .update({ strategy: null })
+          .eq('strategy', selectedTag.name);
+      }
+      
+      // 2. Delete strategy itself
+      const { error } = await supabase.from('strategies').delete().eq('id', selectedTagId);
       
       if (error) throw error;
 

@@ -167,28 +167,67 @@ export type Database = {
         }
         Relationships: []
       }
+      strategies: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          rules: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          rules?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          rules?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tags: {
         Row: {
           color: string
           created_at: string
+          description: string | null
           id: string
           name: string
+          rules: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           color?: string
           created_at?: string
+          description?: string | null
           id?: string
           name: string
+          rules?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           color?: string
           created_at?: string
+          description?: string | null
           id?: string
           name?: string
+          rules?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -268,6 +307,7 @@ export type Database = {
       trades: {
         Row: {
           account_id: string | null
+          commission: number | null
           created_at: string | null
           emotional_state: string | null
           entry_price: number | null
@@ -284,7 +324,11 @@ export type Database = {
           r_multiple: number | null
           risk: number | null
           screenshot_url: string | null
+          stop_loss: number | null
+          strategy: string | null
+          swap: number | null
           symbol: string | null
+          take_profit: number | null
           type: string | null
           updated_at: string | null
           user_id: string | null
@@ -292,6 +336,7 @@ export type Database = {
         }
         Insert: {
           account_id?: string | null
+          commission?: number | null
           created_at?: string | null
           emotional_state?: string | null
           entry_price?: number | null
@@ -308,7 +353,11 @@ export type Database = {
           r_multiple?: number | null
           risk?: number | null
           screenshot_url?: string | null
+          stop_loss?: number | null
+          strategy?: string | null
+          swap?: number | null
           symbol?: string | null
+          take_profit?: number | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -316,6 +365,7 @@ export type Database = {
         }
         Update: {
           account_id?: string | null
+          commission?: number | null
           created_at?: string | null
           emotional_state?: string | null
           entry_price?: number | null
@@ -332,7 +382,11 @@ export type Database = {
           r_multiple?: number | null
           risk?: number | null
           screenshot_url?: string | null
+          stop_loss?: number | null
+          strategy?: string | null
+          swap?: number | null
           symbol?: string | null
+          take_profit?: number | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -404,7 +458,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_equity_curve: {
+        Args: {
+          p_end_date?: string
+          p_initial_capital: number
+          p_start_date?: string
+          p_user_id: string
+        }
+        Returns: {
+          date: string
+          equity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

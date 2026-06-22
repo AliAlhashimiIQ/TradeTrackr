@@ -46,20 +46,18 @@ const DashboardInsights: React.FC<DashboardInsightsProps> = ({
     // Process trade data
     trades.forEach(trade => {
       // Strategy
-      const strategyTags = trade.tags && trade.tags.length > 0 ? trade.tags : ['No Strategy'];
-      strategyTags.forEach(strategy => {
-        if (!strategyMap.has(strategy)) {
-          strategyMap.set(strategy, { trades: 0, winCount: 0, lossCount: 0, total: 0 });
-        }
-        const stratData = strategyMap.get(strategy)!;
-        stratData.trades += 1;
-        if (trade.profit_loss > 0) {
-          stratData.winCount += 1;
-        } else {
-          stratData.lossCount += 1;
-        }
-        stratData.total += trade.profit_loss;
-      });
+      const strategy = trade.strategy || 'No Strategy';
+      if (!strategyMap.has(strategy)) {
+        strategyMap.set(strategy, { trades: 0, winCount: 0, lossCount: 0, total: 0 });
+      }
+      const stratData = strategyMap.get(strategy)!;
+      stratData.trades += 1;
+      if (trade.profit_loss > 0) {
+        stratData.winCount += 1;
+      } else {
+        stratData.lossCount += 1;
+      }
+      stratData.total += trade.profit_loss;
       // Instrument
       if (!instrumentMap.has(trade.symbol)) {
         instrumentMap.set(trade.symbol, { trades: 0, winCount: 0, lossCount: 0, total: 0 });

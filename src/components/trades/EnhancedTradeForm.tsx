@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Trade } from '@/lib/types';
-import { uploadTradeScreenshot } from '@/lib/supabaseClient';
+import { uploadTradeScreenshot, supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -81,6 +81,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
     mistakes: [],
     lots: 0.01,
     pips: 0,
+    strategy: null,
     ...initialTrade
   });
   
@@ -94,6 +95,80 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   const [customMistake, setCustomMistake] = useState('');
   const [showOptional, setShowOptional] = useState(false);
   const [isForex, setIsForex] = useState(false);
+
+  const [userStrategies, setUserStrategies] = useState<{ id: string; name: string; rules?: string | null }[]>([]);
+  const [showAddStratForm, setShowAddStratForm] = useState(false);
+  const [newStratName, setNewStratName] = useState('');
+
+  useEffect(() => {
+    const fetchStrategies = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('strategies')
+        .select('id, name, rules')
+        .eq('user_id', user.id)
+        .order('name');
+      setUserStrategies(data || []);
+    };
+    fetchStrategies();
+  }, [user]);
+
+  const handleQuickCreateStrategy = async () => {
+    if (!newStratName.trim() || !user) return;
+    try {
+      const name = newStratName.trim();
+      const { data, error } = await supabase
+        .from('strategies')
+        .insert({ name, user_id: user.id })
+        .select('id, name, rules')
+        .single();
+      
+      if (error) throw error;
+      
+      setUserStrategies(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+      handleChange('strategy', name);
+      setNewStratName('');
+      setShowAddStratForm(false);
+      toast.success('Strategy created!');
+    } catch (e) {
+      toast.error('Strategy already exists or failed to create.');
+    }
+  };
+
+  const handleStrategyChange = (strategyName: string | null) => {
+    // 1. Find previous strategy rules to remove them from tags
+    const prevStrategy = userStrategies.find(s => s.name === formData.strategy);
+    let updatedTags = [...(formData.tags || [])];
+    
+    if (prevStrategy?.rules) {
+      try {
+        const prevRules = JSON.parse(prevStrategy.rules);
+        if (Array.isArray(prevRules)) {
+          updatedTags = updatedTags.filter(t => !prevRules.includes(t));
+        }
+      } catch (e) {}
+    }
+    
+    // 2. Set new strategy
+    handleChange('strategy', strategyName);
+    
+    // 3. Update tags (removing previous strategy's rules)
+    handleChange('tags', updatedTags);
+  };
+
+  const selectedStrategyDetails = useMemo(() => {
+    return userStrategies.find(s => s.name === formData.strategy) || null;
+  }, [userStrategies, formData.strategy]);
+
+  const strategyRules = useMemo<string[]>(() => {
+    if (!selectedStrategyDetails?.rules) return [];
+    try {
+      const parsed = JSON.parse(selectedStrategyDetails.rules);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }, [selectedStrategyDetails]);
 
   useEffect(() => {
     if (formData.symbol) {
@@ -281,6 +356,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         mistakes: formData.mistakes,
         lots: Number(formData.lots),
         pips: Number(formData.pips),
+        strategy: formData.strategy || null,
         stop_loss: formData.stop_loss !== undefined && formData.stop_loss !== null ? Number(formData.stop_loss) : undefined,
         take_profit: formData.take_profit !== undefined && formData.take_profit !== null ? Number(formData.take_profit) : undefined,
         commission: formData.commission !== undefined && formData.commission !== null ? Number(formData.commission) : undefined,
@@ -631,6 +707,102 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         </button>
                       ))}
                     </div>
+                  </div>
+
+                  {/* Primary Strategy */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                      <h2 className="text-base font-bold text-gray-300 uppercase tracking-wider">Primary Strategy</h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        value={formData.strategy || ''}
+                        onChange={e => handleStrategyChange(e.target.value || null)}
+                        className="flex-1 px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-white text-base focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                      >
+                        <option value="">No Strategy</option>
+                        {userStrategies.map(strat => (
+                          <option key={strat.id} value={strat.name}>
+                            {strat.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddStratForm(!showAddStratForm)}
+                        className="px-3.5 py-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-gray-300 hover:text-white text-base transition-colors"
+                      >
+                        {showAddStratForm ? 'Cancel' : 'New'}
+                      </button>
+                    </div>
+
+                    {showAddStratForm && (
+                      <div className="mt-3 p-4 bg-[#0d0e16] border border-white/[0.06] rounded-xl space-y-3">
+                        <input
+                          type="text"
+                          value={newStratName}
+                          onChange={e => setNewStratName(e.target.value)}
+                          placeholder="New strategy name..."
+                          className="w-full px-3.5 py-2 bg-[#06070a] border border-white/[0.06] rounded-lg text-sm text-white focus:outline-none"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => { setShowAddStratForm(false); setNewStratName(''); }}
+                            className="px-3 py-1.5 text-xs text-gray-400 hover:text-white"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleQuickCreateStrategy}
+                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg"
+                          >
+                            Create
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {strategyRules.length > 0 && (
+                      <div className="mt-3.5 p-4 bg-[#07080e] border border-white/[0.04] rounded-2xl space-y-3">
+                        <div className="flex items-center justify-between border-b border-white/[0.04] pb-2">
+                          <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                            Strategy Entry Checklist
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {formData.tags?.filter(t => strategyRules.includes(t)).length || 0} / {strategyRules.length} met
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {strategyRules.map((rule: string, idx: number) => {
+                            const isChecked = formData.tags?.includes(rule) ?? false;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => toggleTag(rule)}
+                                className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                                  isChecked
+                                    ? 'bg-indigo-500/10 border-indigo-500/40 text-white shadow-md shadow-indigo-950/20'
+                                    : 'bg-[#0d0e16]/40 border-white/[0.03] text-slate-400 hover:text-slate-200 hover:bg-[#0d0e16]/60'
+                                }`}
+                              >
+                                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
+                                  isChecked
+                                    ? 'bg-indigo-500 border-indigo-500 text-white'
+                                    : 'border-slate-700 text-transparent'
+                                }`}>
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg>
+                                </div>
+                                <span className="text-xs font-semibold select-none">{rule}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Tags */}

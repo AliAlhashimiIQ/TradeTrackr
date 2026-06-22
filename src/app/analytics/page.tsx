@@ -232,7 +232,7 @@ export default function AnalyticsPage() {
       }
       
       // Filter by strategies
-      if (filters.strategies.length > 0 && (!trade.tags || !trade.tags.some(tag => filters.strategies.includes(tag)))) {
+      if (filters.strategies.length > 0 && (!trade.strategy || !filters.strategies.includes(trade.strategy))) {
         return false;
       }
       

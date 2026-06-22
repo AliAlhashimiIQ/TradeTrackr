@@ -686,16 +686,15 @@ export function generateStrategyPerformanceData(trades: Trade[]): StrategyPerfor
   
   const strategyMap: Record<string, Trade[]> = {};
   
-  // Group trades by strategy tags
+  // Group trades by strategy
   trades.forEach(trade => {
-    const strategyTags = trade.tags && trade.tags.length > 0 ? trade.tags : ['No Strategy'];
+    const strategy = trade.strategy || 'No Strategy';
     
-    strategyTags.forEach(strategy => {
-      if (!strategyMap[strategy]) {
-        strategyMap[strategy] = [];
-      }
-      strategyMap[strategy].push(trade);
-    });
+    if (!strategyMap[strategy]) {
+      strategyMap[strategy] = [];
+    }
+    
+    strategyMap[strategy].push(trade);
   });
   
   // Calculate metrics for each strategy

@@ -249,6 +249,15 @@ export default function TradeDetail({ trade, onClose }: TradeDetailProps) {
                         {calculatePercentageChange(trade.entry_price, trade.exit_price)}
                       </div>
                     </div>
+                    {trade.strategy && (
+                      <div>
+                        <div className="text-gray-400 text-xs">Primary Strategy</div>
+                        <div className="text-indigo-400 font-bold text-base flex items-center gap-2 mt-1">
+                          <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+                          {trade.strategy}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
