@@ -173,6 +173,7 @@ export default function Trades() {
       pips: true,
       pnl: true,
       date: true,
+      strategy: true,
       mindset: true,
       tags: true,
       mistakes: true,
@@ -229,6 +230,7 @@ export default function Trades() {
   const [deletedMistakePresets, setDeletedMistakePresets] = useState<string[]>([]);
   const [notesModalTrade, setNotesModalTrade] = useState<Trade | null>(null);
   const [notesModalText, setNotesModalText] = useState('');
+  const [userStrategies, setUserStrategies] = useState<{ id: string; name: string; rules?: string | null }[]>([]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -290,6 +292,20 @@ export default function Trades() {
         }
       };
       loadProfileSettings();
+      // Fetch user strategies
+      const fetchStrategies = async () => {
+        try {
+          const { data } = await supabase
+            .from('strategies')
+            .select('id, name, rules')
+            .eq('user_id', user.id)
+            .order('name');
+          setUserStrategies(data || []);
+        } catch (err) {
+          console.error('Error fetching strategies:', err);
+        }
+      };
+      fetchStrategies();
     }
   }, [user?.id, fetchUserTags])
 
@@ -716,6 +732,32 @@ export default function Trades() {
     } catch (e) { console.error(e); toast.error('Failed to rename tag'); }
   };
 
+  const handleUpdateStrategy = async (trade: Trade, strategyName: string | null) => {
+    // Find previous strategy rules to remove them from tags
+    const prevStrategy = userStrategies.find(s => s.name === trade.strategy);
+    let updatedTags = [...(trade.tags || [])];
+    
+    if (prevStrategy?.rules) {
+      try {
+        const prevRules = JSON.parse(prevStrategy.rules);
+        if (Array.isArray(prevRules)) {
+          updatedTags = updatedTags.filter(t => !prevRules.includes(t));
+        }
+      } catch (e) {}
+    }
+    
+    const updated = trades.map(t => t.id === trade.id ? { ...t, strategy: strategyName, tags: updatedTags } : t);
+    setTrades(updated);
+    
+    try {
+      await updateTrade({ ...trade, strategy: strategyName, tags: updatedTags });
+      toast.success('Strategy updated');
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to update strategy');
+    }
+  };
+
   const handleToggleTag = async (trade: Trade, tag: string, isMistake = false) => {
     if (tag === 'EMOTION_UPDATE_DUMMY_TAG') {
       const updated = trades.map(t => t.id === trade.id ? trade : t);
@@ -876,8 +918,12 @@ export default function Trades() {
           filteredTradesCount={filteredTrades.length}
           filteredTrades={filteredTrades}
           onLogTradeClick={() => {
-            setSelectedTrade(null);
-            setShowForm(true);
+            if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+              handleStartInlineAdd(0);
+            } else {
+              setSelectedTrade(null);
+              setShowForm(true);
+            }
           }}
           showFilters={showFilters}
           onToggleFilters={() => setShowFilters(!showFilters)}
@@ -939,6 +985,8 @@ export default function Trades() {
           onInlineSave={handleInlineSave}
           onInlineCancel={handleInlineCancel}
           onToggleTag={handleToggleTag}
+          userStrategies={userStrategies}
+          onUpdateStrategy={handleUpdateStrategy}
           allExistingTags={allExistingTags}
           allExistingMistakes={allExistingMistakes}
           userTagsConfig={userTagsConfig}

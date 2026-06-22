@@ -28,6 +28,7 @@ export const DEFAULT_COLUMN_WIDTHS: Record<string, number> = {
   stopLoss: 100,
   takeProfit: 100,
   account: 110,
+  strategy: 130,
   mindset: 120,
   tags: 180,
   mistakes: 180,
@@ -55,6 +56,7 @@ export const MIN_COLUMN_WIDTHS: Record<string, number> = {
   stopLoss: 80,
   takeProfit: 80,
   account: 80,
+  strategy: 90,
   mindset: 95,
   tags: 120,
   mistakes: 120,
@@ -126,6 +128,8 @@ export interface TradesTableProps {
   onManualLogClick?: () => void;
   onLoadDemoClick?: () => Promise<void> | void;
   isDemoLoading?: boolean;
+  userStrategies?: { id: string; name: string; rules?: string | null }[];
+  onUpdateStrategy?: (trade: Trade, strategyName: string | null) => Promise<void>;
 }
 
 const getAccountSizeForTrade = (
@@ -211,11 +215,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   formatCurrency,
   onManualLogClick,
   onLoadDemoClick,
-  isDemoLoading = false
+  isDemoLoading = false,
+  userStrategies,
+  onUpdateStrategy
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { colorblindMode } = useSettings();
-  const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' } | null>(null);
+  const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' | 'strategy' } | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
   const [inlineScreenshotTab, setInlineScreenshotTab] = useState<'upload' | 'embed'>('upload');
   const [inlineScreenshotEmbedUrlInput, setInlineScreenshotEmbedUrlInput] = useState('');
@@ -264,6 +270,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       visibleColumns.stopLoss ? getWidth('stopLoss', '100px') : '',
       visibleColumns.takeProfit ? getWidth('takeProfit', '100px') : '',
       visibleColumns.account ? getWidth('account', '110px') : '',
+      visibleColumns.strategy ? getWidth('strategy', '130px') : '',
       visibleColumns.mindset ? getWidth('mindset', '120px') : '',
       visibleColumns.tags ? getWidth('tags', '180px') : '',
       visibleColumns.mistakes ? getWidth('mistakes', '180px') : '',
@@ -465,6 +472,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         user={user}
         onRenameTagGlobally={onRenameTagGlobally}
         onUpdateTagColor={onUpdateTagColor}
+        userStrategies={userStrategies}
       />
     );
   };
@@ -777,6 +785,38 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               <option value="">No Account</option>
               {userAccounts.map(acc => (
                 <option key={acc.id} value={acc.id}>{acc.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Strategy Dropdown */}
+        {visibleColumns.strategy && (
+          <div>
+            <select
+              value={inlineRowData.strategy || ''}
+              onChange={e => {
+                const stratName = e.target.value || null;
+                const prevStrategy = userStrategies?.find(s => s.name === inlineRowData.strategy);
+                let updatedTags = [...(inlineRowData.tags || [])];
+                
+                if (prevStrategy?.rules) {
+                  try {
+                    const prevRules = JSON.parse(prevStrategy.rules);
+                    if (Array.isArray(prevRules)) {
+                      updatedTags = updatedTags.filter(t => !prevRules.includes(t));
+                    }
+                  } catch (err) {}
+                }
+                
+                onInlineChange('strategy', stratName);
+                onInlineChange('tags', updatedTags);
+              }}
+              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+            >
+              <option value="">No Strategy</option>
+              {userStrategies?.map(strat => (
+                <option key={strat.id} value={strat.name}>{strat.name}</option>
               ))}
             </select>
           </div>
@@ -1106,6 +1146,15 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                 {renderResizeHandle('account')}
               </div>
             )}
+            {visibleColumns.strategy && (
+              <div
+                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full"
+                onClick={() => onSort('strategy')}
+              >
+                <span className="truncate">Strategy {sortField === 'strategy' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
+                {renderResizeHandle('strategy')}
+              </div>
+            )}
             {visibleColumns.mindset && (
               <div className="relative group/header text-left flex items-center h-full">
                 <span className="truncate">Mindset</span>
@@ -1406,6 +1455,75 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     {visibleColumns.account && (
                       <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left truncate`}>
                         {trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}
+                      </div>
+                    )}
+
+                    {/* Strategy Column (Inline Selection) */}
+                    {visibleColumns.strategy && (
+                      <div className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full">
+                        {trade.strategy ? (
+                          <button
+                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                            className="popover-trigger px-2.5 py-1 rounded-lg text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 text-xs font-semibold tracking-wide capitalize hover:bg-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all truncate"
+                          >
+                            {trade.strategy}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                            className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
+                          >
+                            +
+                          </button>
+                        )}
+
+                        <AnimatePresence>
+                          {activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                              exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                              className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[180px] space-y-1 text-left"
+                            >
+                              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Strategy</div>
+                              <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setActivePopover(null);
+                                    onUpdateStrategy?.(trade, null);
+                                  }}
+                                  className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    !trade.strategy ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
+                                  }`}
+                                >
+                                  <span>No Strategy</span>
+                                  {!trade.strategy && <span className="text-indigo-400 font-bold">✓</span>}
+                                </button>
+                                {userStrategies?.map(strat => {
+                                  const isSelected = trade.strategy === strat.name;
+                                  return (
+                                    <button
+                                      key={strat.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setActivePopover(null);
+                                        onUpdateStrategy?.(trade, strat.name);
+                                      }}
+                                      className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                        isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
+                                      }`}
+                                    >
+                                      <span>{strat.name}</span>
+                                      {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     )}
 

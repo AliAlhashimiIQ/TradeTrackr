@@ -15,7 +15,8 @@ export interface InlineTagPopoverProps {
   fetchUserTags: () => Promise<void>;
   user: any;
   onRenameTagGlobally: (oldName: string, newName: string, isMistake: boolean) => Promise<void>;
-  onUpdateTagColor: (tag: string, color: string, isMistake: boolean) => Promise<void>;
+  onUpdateTagColor: (tag: string, colorHex: string, isMistake: boolean) => Promise<void>;
+  userStrategies?: { id: string; name: string; rules?: string | null }[];
 }
 
 export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
@@ -29,6 +30,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
   userTagsConfig,
   onRenameTagGlobally,
   onUpdateTagColor,
+  userStrategies,
 }) => {
   const [searchTag, setSearchTag] = useState('');
   const [isAddingCustomTag, setIsAddingCustomTag] = useState(false);
@@ -39,6 +41,20 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
   const [tagBeingEdited, setTagBeingEdited] = useState<string>('');
 
   const currentList = isMistake ? (trade.mistakes || []) : (trade.tags || []);
+
+  const selectedStrategy = React.useMemo(() => {
+    return userStrategies?.find(s => s.name === trade.strategy) || null;
+  }, [userStrategies, trade.strategy]);
+
+  const strategyRules = React.useMemo<string[]>(() => {
+    if (!selectedStrategy?.rules) return [];
+    try {
+      const parsed = JSON.parse(selectedStrategy.rules);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }, [selectedStrategy]);
 
   const handleUpdateColor = async (colorHex: string) => {
     if (!editingTag) return;
@@ -242,6 +258,47 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
               </button>
             )}
           </div>
+
+          {/* Strategy Checklist Rules */}
+          {strategyRules.length > 0 && !isMistake && (
+            <>
+              <div className="border-t border-white/[0.06] my-2.5" />
+              <div className="p-3 bg-[#0d0e16]/60 border border-white/[0.04] rounded-xl space-y-2">
+                <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
+                  Strategy Checklist ({trade.strategy})
+                </div>
+                <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                  {strategyRules.map((rule) => {
+                    const isChecked = currentList.includes(rule);
+                    return (
+                      <button
+                        key={rule}
+                        type="button"
+                        onClick={() => onToggleTag(trade, rule, isMistake)}
+                        className="w-full flex items-center justify-between text-left p-1 rounded-lg text-xs font-medium hover:bg-white/[0.04] transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-all shrink-0 ${
+                            isChecked
+                              ? 'bg-indigo-500 border-indigo-500 text-white'
+                              : 'border-slate-700 text-transparent'
+                          }`}>
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg>
+                          </div>
+                          <span className="text-gray-300 text-[11px] truncate">{rule}</span>
+                        </div>
+                        {isChecked && <span className="text-indigo-400 font-bold text-[10px]">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="border-t border-white/[0.04] pt-1.5 flex justify-between text-[9px] text-gray-500">
+                  <span>Rules Met:</span>
+                  <span>{strategyRules.filter(r => currentList.includes(r)).length} / {strategyRules.length}</span>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="border-t border-white/[0.06] my-2.5" />
