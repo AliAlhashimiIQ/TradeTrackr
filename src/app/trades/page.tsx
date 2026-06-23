@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useAccount } from '@/hooks/useAccount'
@@ -75,6 +75,14 @@ const formatCurrency = (value: number): string => {
 };
 
 export default function Trades() {
+  return (
+    <Suspense fallback={<TradesListSkeleton />}>
+      <TradesContent />
+    </Suspense>
+  )
+}
+
+function TradesContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const [isDemoLoading, setIsDemoLoading] = useState(false)
