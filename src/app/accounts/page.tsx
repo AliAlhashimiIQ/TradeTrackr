@@ -312,7 +312,8 @@ export default function AccountsPage() {
   const connectedCount = accounts.filter(acc => acc.connection_status === 'CONNECTED').length
 
   return (
-    <AuthenticatedLayout>
+    <>
+      <AuthenticatedLayout>
       <div className="max-w-6xl mx-auto px-4 lg:px-6 py-8 space-y-8">
         
         {/* Top bar with tabs and buttons */}
@@ -718,6 +719,7 @@ export default function AccountsPage() {
           </p>
         </div>
       </div>
+      </AuthenticatedLayout>
 
       {/* Add Account Modal */}
       <AnimatePresence>
@@ -929,6 +931,6 @@ export default function AccountsPage() {
           </div>
         )}
       </AnimatePresence>
-    </AuthenticatedLayout>
+    </>
   )
 }

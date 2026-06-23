@@ -911,7 +911,8 @@ const DEFAULT_VISIBLE_COLUMNS = {
   }
 
   return (
-    <AuthenticatedLayout>
+    <>
+      <AuthenticatedLayout>
       {showConfetti && (
         <Confetti
           width={windowDimensions.width}
@@ -1043,6 +1044,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
           isDemoLoading={isDemoLoading}
         />
       </motion.div>
+      </AuthenticatedLayout>
 
       {/* Edit Trade Modal */}
       {showForm && (
@@ -1267,7 +1269,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
       )}
 
       <TradeAIChatBox selectedTrades={selectedTradesForAI.length > 0 ? selectedTradesForAI : filteredTrades} />
-    </AuthenticatedLayout>
+    </>
   )
 }
 
