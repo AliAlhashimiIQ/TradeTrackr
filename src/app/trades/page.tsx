@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { useAccount } from '@/hooks/useAccount'
 import { Trade, TradingAccount } from '@/lib/types'
@@ -101,10 +101,13 @@ export default function Trades() {
   const [selectedDetailTrade, setSelectedDetailTrade] = useState<Trade | null>(null)
   const [showFilters, setShowFilters] = useState(false)
   
-  const [searchTerm, setSearchTerm] = useState('')
+  const searchParams = useSearchParams()
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('search') || '')
   const [symbolFilter, setSymbolFilter] = useState<string | null>(null)
   const [typeFilter, setTypeFilter] = useState<'All' | 'Long' | 'Short'>('All')
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
+  const [startDate, setStartDate] = useState<string>('')
+  const [endDate, setEndDate] = useState<string>('')
   const { accounts, selectedAccountId, selectAccount } = useAccount()
   const accountFilter = selectedAccountId === 'all' ? null : selectedAccountId
   const setAccountFilter = (id: string | null) => selectAccount(id || 'all')
@@ -323,6 +326,8 @@ const DEFAULT_VISIBLE_COLUMNS = {
         symbol: symbolFilter || undefined,
         type: typeFilter,
         dateFilter,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         sortField: String(sortField),
         sortDirection,
         accountId: accountFilter || undefined,
@@ -342,7 +347,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
       setTotalPages(Math.ceil(total / pageSize));
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
-  }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, sortField, sortDirection, accountFilter]);
+  }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, sortField, sortDirection, accountFilter]);
 
   const fetchGlobalMetrics = useCallback(async () => {
     if (!user?.id) return;
@@ -353,6 +358,8 @@ const DEFAULT_VISIBLE_COLUMNS = {
         symbol: symbolFilter || undefined,
         type: typeFilter,
         dateFilter,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
         accountId: accountFilter || undefined,
       });
       
@@ -377,7 +384,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
         setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
       }
     } catch (err) { console.error(err); }
-  }, [user?.id, searchTerm, symbolFilter, typeFilter, dateFilter, activeView, accountFilter]);
+  }, [user?.id, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, activeView, accountFilter]);
 
   useEffect(() => { if (user?.id) fetchPagedTrades(); }, [fetchPagedTrades, user?.id]);
   useEffect(() => { if (user?.id) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user?.id]);
@@ -954,13 +961,17 @@ const DEFAULT_VISIBLE_COLUMNS = {
           accountFilter={accountFilter}
           uniqueSymbols={uniqueSymbols}
           userAccounts={userAccounts}
+          startDate={startDate}
+          endDate={endDate}
           onFilterChange={(field, val) => {
             if (field === 'symbolFilter') setSymbolFilter(val);
             else if (field === 'typeFilter') setTypeFilter(val);
-            else if (field === 'dateFilter') setDateFilter(val);
+            else if (field === 'dateFilter') { setDateFilter(val); if (val !== 'All') { setStartDate(''); setEndDate(''); } }
             else if (field === 'accountFilter') setAccountFilter(val);
+            else if (field === 'startDate') { setStartDate(val || ''); setDateFilter('All'); }
+            else if (field === 'endDate') { setEndDate(val || ''); setDateFilter('All'); }
           }}
-          onResetFilters={() => { setSearchTerm(''); setSymbolFilter(null); setTypeFilter('All'); setDateFilter('All'); setAccountFilter(null); }}
+          onResetFilters={() => { setSearchTerm(''); setSymbolFilter(null); setTypeFilter('All'); setDateFilter('All'); setStartDate(''); setEndDate(''); setAccountFilter(null); }}
           selectedTradeIds={selectedTradeIds}
           onBulkAction={handleBulkAction}
           onClearSelection={() => setSelectedTradeIds([])}

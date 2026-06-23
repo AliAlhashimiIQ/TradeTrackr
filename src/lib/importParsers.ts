@@ -60,10 +60,21 @@ function parseNum(s: string): number {
   return parseFloat(s.replace(/[^\d.,-]/g, '').replace(/,(\d{3})/g, '$1').replace(',', '.')) || 0
 }
 
-function parseMT5Date(s: string): string {
+/**
+ * Parse MT5 date string and convert from broker server time to UTC.
+ * brokerOffsetHours: The broker's UTC offset (e.g. +3 for UTC+3, -5 for UTC-5).
+ * MT5 reports times in the broker server's local time — we must shift to UTC.
+ */
+function parseMT5Date(s: string, brokerOffsetHours: number = 0): string {
   if (!s || s === '-') return new Date().toISOString()
-  const d = new Date(s.trim().replace(/\./g, '-').replace(' ', 'T'))
-  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString()
+  // Replace dots with dashes and space with T to form an ISO-like string
+  const cleaned = s.trim().replace(/\./g, '-').replace(' ', 'T')
+  // Parse as UTC (append Z), then subtract the broker's offset to get true UTC
+  const d = new Date(cleaned + 'Z')
+  if (isNaN(d.getTime())) return new Date().toISOString()
+  // Subtract broker offset: if broker is UTC+3, the time is 3h ahead of UTC
+  d.setTime(d.getTime() - brokerOffsetHours * 3_600_000)
+  return d.toISOString()
 }
 
 function makeKey(symbol: string, t: string, lots: number) {
@@ -94,7 +105,7 @@ function isJunk(sym: string): boolean {
 // MT5 header: Time|Position|Symbol|Type|Volume|Price|S/L|T/P|Time|Price|Commission|Swap|Profit
 // "Time" and "Price" appear TWICE → use first/second occurrence
 
-function parsePositions(rows: string[][]): ParsedTrade[] {
+function parsePositions(rows: string[][], brokerOffsetHours: number = 0): ParsedTrade[] {
   // Find header row (first row with ≥5 non-empty cells)
   let hdrIdx = -1
   let headers: string[] = []
@@ -145,8 +156,8 @@ function parsePositions(rows: string[][]): ParsedTrade[] {
     const rawType = (r[idx.type] ?? '').toLowerCase()
     const type: 'Long' | 'Short' = rawType.includes('sell') || rawType.includes('short') ? 'Short' : 'Long'
     const lots   = idx.vol    >= 0 ? parseNum(r[idx.vol])   : 0.01
-    const entryT = idx.openT  >= 0 ? parseMT5Date(r[idx.openT])  : new Date().toISOString()
-    const exitT  = idx.closeT >= 0 ? parseMT5Date(r[idx.closeT]) : entryT
+    const entryT = idx.openT  >= 0 ? parseMT5Date(r[idx.openT], brokerOffsetHours)  : new Date().toISOString()
+    const exitT  = idx.closeT >= 0 ? parseMT5Date(r[idx.closeT], brokerOffsetHours) : entryT
     const entryP = idx.openP  >= 0 ? parseNum(r[idx.openP])  : 0
     const exitP  = idx.closeP >= 0 ? parseNum(r[idx.closeP]) : 0
     const profit = idx.profit >= 0 ? parseNum(r[idx.profit]) : 0
@@ -167,7 +178,7 @@ function parsePositions(rows: string[][]): ParsedTrade[] {
 
 // ── Deals table parser (pairs IN/OUT by position ID) ─────────────────────────
 
-function parseDeals(rows: string[][]): ParsedTrade[] {
+function parseDeals(rows: string[][], brokerOffsetHours: number = 0): ParsedTrade[] {
   let hdrIdx = -1
   let headers: string[] = []
   for (let i = 0; i < rows.length; i++) {
@@ -227,7 +238,7 @@ function parseDeals(rows: string[][]): ParsedTrade[] {
     if (sym) d.sym = sym
 
     const price  = parseNum(r[idx.price]  ?? '')
-    const time   = parseMT5Date(r[idx.time] ?? '')
+    const time   = parseMT5Date(r[idx.time] ?? '', brokerOffsetHours)
     const lots   = parseNum(r[idx.vol]   ?? '')
     const profit = parseNum(r[idx.profit] ?? '')
     const comm   = parseNum(r[idx.comm]  ?? '')
@@ -259,7 +270,7 @@ function parseDeals(rows: string[][]): ParsedTrade[] {
 
 // ── Main MT5 Parser ───────────────────────────────────────────────────────────
 
-export function parseMT5Html(html: string): ParseResult {
+export function parseMT5Html(html: string, brokerOffsetHours: number = 0): ParseResult {
   const errors: string[] = []
   try {
     const cleanHtml = html.replace(/^\uFEFF/, '').replace(/\u0000/g, '')
@@ -272,13 +283,13 @@ export function parseMT5Html(html: string): ParseResult {
 
     // Try positions table first (closed trade summaries)
     for (const table of tables) {
-      const trades = parsePositions(table)
+      const trades = parsePositions(table, brokerOffsetHours)
       if (trades.length > 0) return { trades, errors, source: 'mt5' }
     }
 
     // Fallback: reconstruct from deals
     for (const table of tables) {
-      const trades = parseDeals(table)
+      const trades = parseDeals(table, brokerOffsetHours)
       if (trades.length > 0) return { trades, errors, source: 'mt5' }
     }
 

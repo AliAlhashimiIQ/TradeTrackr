@@ -111,6 +111,8 @@ export interface PagedTradesOptions {
   symbol?: string | null;
   type?: 'All' | 'Long' | 'Short';
   dateFilter?: 'All' | '7d' | '30d' | '90d' | '1y';
+  startDate?: string;   // YYYY-MM-DD custom range start (inclusive)
+  endDate?: string;     // YYYY-MM-DD custom range end (inclusive)
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   accountId?: string | null;
@@ -125,6 +127,8 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
     symbol,
     type,
     dateFilter,
+    startDate,
+    endDate,
     sortField = 'entry_time',
     sortDirection = 'desc',
     accountId,
@@ -143,10 +147,16 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 
-    if (dateFilter && dateFilter !== 'All') {
+    // Custom date range takes priority over preset dateFilter
+    if (startDate) {
+      query = query.gte('entry_time', startDate + 'T00:00:00.000Z');
+    } else if (dateFilter && dateFilter !== 'All') {
       const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter];
       const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
       query = query.gte('entry_time', cutoff);
+    }
+    if (endDate) {
+      query = query.lte('entry_time', endDate + 'T23:59:59.999Z');
     }
 
     if (search) {
@@ -180,6 +190,8 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
     symbol,
     type,
     dateFilter,
+    startDate,
+    endDate,
     accountId,
   } = opts;
 
@@ -193,12 +205,18 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 
-    if (dateFilter && dateFilter !== 'All') {
+    // Custom date range takes priority over preset dateFilter
+    if (startDate) {
+      query = query.gte('entry_time', startDate + 'T00:00:00.000Z');
+    } else if (dateFilter && dateFilter !== 'All') {
       const days = { '7d': 7, '30d': 30, '90d': 90, '1y': 365 }[dateFilter as string];
       if (days) {
         const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
         query = query.gte('entry_time', cutoff);
       }
+    }
+    if (endDate) {
+      query = query.lte('entry_time', endDate + 'T23:59:59.999Z');
     }
 
     if (search) {

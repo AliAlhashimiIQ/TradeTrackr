@@ -36,6 +36,8 @@ export interface TradesFiltersProps {
   symbolFilter: string | null;
   typeFilter: 'All' | 'Long' | 'Short';
   dateFilter: 'All' | '7d' | '30d' | '90d' | '1y';
+  startDate: string;
+  endDate: string;
   accountFilter: string | null;
   uniqueSymbols: string[];
   userAccounts: TradingAccount[];
@@ -64,6 +66,8 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
   symbolFilter,
   typeFilter,
   dateFilter,
+  startDate,
+  endDate,
   accountFilter,
   uniqueSymbols,
   userAccounts,
@@ -429,7 +433,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="mb-6 overflow-hidden text-left">
             <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Symbol</label>
                   <select value={symbolFilter || ''} onChange={e => onFilterChange('symbolFilter', e.target.value || null)}
@@ -446,11 +450,35 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Period</label>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">
+                    Period
+                    {(startDate || endDate) && (
+                      <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wide font-bold">Custom</span>
+                    )}
+                  </label>
                   <select value={dateFilter} onChange={e => onFilterChange('dateFilter', e.target.value)}
                     className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
                     <option value="All">All Time</option><option value="7d">7 Days</option><option value="30d">30 Days</option><option value="90d">90 Days</option><option value="1y">1 Year</option>
                   </select>
+                </div>
+                {/* Custom Date Range */}
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">From Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={e => onFilterChange('startDate', e.target.value)}
+                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">To Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={e => onFilterChange('endDate', e.target.value)}
+                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]"
+                  />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Account</label>
@@ -463,7 +491,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                 <div className="flex items-end">
                   <button onClick={onResetFilters}
                     className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white bg-[#151823] border border-white/[0.06] rounded-lg transition-colors">
-                    Reset
+                    Reset All
                   </button>
                 </div>
               </div>

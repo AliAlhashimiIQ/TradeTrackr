@@ -124,7 +124,7 @@ export default function Header() {
       </header>
 
       {/* Desktop Left Sidebar */}
-      <aside className={`fixed top-0 bottom-0 left-0 w-64 bg-[#0a0b12]/95 border-r border-white/[0.06] backdrop-blur-md hidden lg:flex flex-col justify-between p-5 z-40 transition-all duration-300 ease-in-out ${
+      <aside className={`fixed top-0 bottom-0 left-0 w-56 bg-[#0a0b12]/95 border-r border-white/[0.06] backdrop-blur-md hidden lg:flex flex-col justify-between p-5 z-30 transition-all duration-300 ease-in-out ${
         sidebarCollapsed ? 'translate-x-[-100%] opacity-0 pointer-events-none' : 'translate-x-0'
       }`}>
         {/* Top: Logo, search, and nav */}

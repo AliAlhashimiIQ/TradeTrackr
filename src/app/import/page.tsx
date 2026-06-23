@@ -60,6 +60,8 @@ export default function ImportPage() {
   const [result, setResult] = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
   const [history, setHistory] = useState<ImportRecord[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
+  // Broker server timezone offset — most MT5 brokers run UTC+2 or UTC+3
+  const [brokerOffsetHours, setBrokerOffsetHours] = useState<number>(3)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -116,7 +118,7 @@ export default function ImportPage() {
     const text = await readFileAsText(file)
 
     const result = detectedFormat === 'mt5'
-      ? parseMT5Html(text)
+      ? parseMT5Html(text, brokerOffsetHours)
       : parseCsv(text, csvMapping)
 
     // Filter out zero P&L trades (open positions, balance lines, etc.)
@@ -345,6 +347,41 @@ export default function ImportPage() {
                     <li className="flex gap-2"><span className="text-indigo-400 font-bold">3.</span> Select <span className="text-white font-medium">"Save as Detailed Report"</span></li>
                     <li className="flex gap-2"><span className="text-indigo-400 font-bold">4.</span> Save as HTML and drag it here</li>
                   </ol>
+                </div>
+              )}
+
+              {/* Broker Timezone Selector — MT5 only */}
+              {fileFormat === 'mt5' && (
+                <div className="card p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-white mb-0.5">Broker Server Timezone</h3>
+                      <p className="text-xs text-gray-500 mb-3">
+                        MT5 exports use your broker&apos;s server time. Select the correct offset so trade times are stored accurately.
+                        Most brokers use <span className="text-amber-400 font-medium">GMT+2</span> or <span className="text-amber-400 font-medium">GMT+3</span>.
+                      </p>
+                      <select
+                        value={brokerOffsetHours}
+                        onChange={(e) => setBrokerOffsetHours(Number(e.target.value))}
+                        className="input text-sm py-1.5 w-full sm:w-64 bg-[#0a0b0f] border-white/[0.06] focus:border-amber-500/50 [color-scheme:dark]"
+                      >
+                        <option value={-5}>GMT-5 (US Eastern, NYSE)</option>
+                        <option value={-4}>GMT-4 (US Eastern DST)</option>
+                        <option value={0}>GMT+0 (UTC)</option>
+                        <option value={1}>GMT+1 (CET)</option>
+                        <option value={2}>GMT+2 (EET — common broker)</option>
+                        <option value={3}>GMT+3 (EEST — common broker)</option>
+                        <option value={4}>GMT+4</option>
+                        <option value={5}>GMT+5</option>
+                        <option value={8}>GMT+8 (SGT/HKT)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
             </motion.div>

@@ -12,6 +12,31 @@ export interface StreakInfo {
   lastJournaledDate: string | null
 }
 
+/**
+ * Returns a YYYY-MM-DD string for a UTC timestamp (or now) in the given IANA timezone.
+ * Falls back to the system locale timezone if the provided timezone is invalid.
+ */
+function toLocalDateStr(date: Date, timezone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date)
+    const y = parts.find(p => p.type === 'year')?.value ?? ''
+    const m = parts.find(p => p.type === 'month')?.value ?? ''
+    const d = parts.find(p => p.type === 'day')?.value ?? ''
+    return `${y}-${m}-${d}`
+  } catch {
+    // Fallback to local system date
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, '0')
+    const d = String(date.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+}
+
 const countWeekdaysBetween = (d1: Date, d2: Date): number => {
   const start = new Date(d1)
   const end = new Date(d2)
@@ -38,7 +63,7 @@ const countWeekdaysBetween = (d1: Date, d2: Date): number => {
 export function useStreak() {
   const { user } = useAuth()
   const { trades, isLoading: tradesLoading } = useTrades('all')
-  const { streakFreezes, setStreakFreezes, frozenDates, setFrozenDates } = useSettings()
+  const { streakFreezes, setStreakFreezes, frozenDates, setFrozenDates, timezone } = useSettings()
 
   const streak = useMemo<StreakInfo>(() => {
     if (!user || !trades || trades.length === 0) {
@@ -50,18 +75,15 @@ export function useStreak() {
       }
     }
 
+    // Use the user's configured timezone (defaults to 'UTC' if not set)
+    const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+
     const validEntries = trades.filter((t): t is typeof t & { entry_time: string } => !!t.entry_time);
 
-    // Convert entry_times to local YYYY-MM-DD dates
+    // Convert entry_times to YYYY-MM-DD in the user's local timezone
     const tradeDates = Array.from(
       new Set(
-        validEntries.map((t) => {
-          const d = new Date(t.entry_time)
-          const year = d.getFullYear()
-          const month = String(d.getMonth() + 1).padStart(2, '0')
-          const day = String(d.getDate()).padStart(2, '0')
-          return `${year}-${month}-${day}`
-        })
+        validEntries.map((t) => toLocalDateStr(new Date(t.entry_time), tz))
       )
     )
 
@@ -79,13 +101,8 @@ export function useStreak() {
       }
     }
 
-    // Helper to get local date string YYYY-MM-DD
-    const getLocalDateString = (d: Date) => {
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    }
+    // Today's date string in the user's timezone
+    const todayStr = toLocalDateStr(new Date(), tz)
 
     const lastJournaledDate = activeDates[activeDates.length - 1]
     const lastActiveDate = new Date(lastJournaledDate + 'T00:00:00')
@@ -96,7 +113,6 @@ export function useStreak() {
     const weekdaysSinceLastActive = countWeekdaysBetween(lastActiveDate, todayDate)
     
     // Streak is active today if we active today, or if no weekdays have passed since last active
-    const todayStr = getLocalDateString(todayDate)
     const isStreakActiveToday = activeDates.includes(todayStr) || weekdaysSinceLastActive === 0
 
     // Calculate current streak
@@ -145,22 +161,21 @@ export function useStreak() {
       isStreakActiveToday,
       lastJournaledDate,
     }
-  }, [user, trades, frozenDates])
+  }, [user, trades, frozenDates, timezone])
 
   // Check for auto-freeze and milestones
   useEffect(() => {
     if (tradesLoading || !user || !trades.length) return
 
+    const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+
     const runChecks = async () => {
-      // Find trade dates
+      // Find trade dates in user's timezone
       const tradeDates = Array.from(
         new Set(
           trades
             .filter((t): t is typeof t & { entry_time: string } => !!t.entry_time)
-            .map((t) => {
-              const d = new Date(t.entry_time)
-              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-            })
+            .map((t) => toLocalDateStr(new Date(t.entry_time), tz))
         )
       ).sort()
 
@@ -175,14 +190,13 @@ export function useStreak() {
       // Calculate weekdays since last trade
       const weekdaysSinceLastTrade = countWeekdaysBetween(lastTradeDate, todayDate)
 
-      // Yesterday YYYY-MM-DD
+      // Yesterday's date in user's timezone (skip weekends going backwards)
       const getYesterdayWeekdayStr = () => {
         const d = new Date()
         d.setDate(d.getDate() - 1)
         if (d.getDay() === 0) d.setDate(d.getDate() - 2) // Sun -> Fri
         else if (d.getDay() === 6) d.setDate(d.getDate() - 1) // Sat -> Fri
-        
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+        return toLocalDateStr(d, tz)
       }
       const yesterdayStr = getYesterdayWeekdayStr()
 
@@ -237,7 +251,7 @@ export function useStreak() {
     }
 
     runChecks()
-  }, [user, trades, tradesLoading, frozenDates, streakFreezes, streak.currentStreak])
+  }, [user, trades, tradesLoading, frozenDates, streakFreezes, streak.currentStreak, timezone])
 
   return { streak, isLoading: tradesLoading, refetch: () => {} }
 }

@@ -53,7 +53,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen w-full bg-[#06070b]">
       {showHeader && <Header />}
-      <div className={`flex-1 flex flex-col w-full relative transition-all duration-300 ease-in-out ${showHeader ? (sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-64') : ''}`}>
+      <div className={`flex-1 flex flex-col w-full relative transition-all duration-300 ease-in-out ${showHeader ? (sidebarCollapsed ? 'lg:pl-0' : 'lg:pl-56') : ''}`}>
         {children}
       </div>
       {user && <CommandPalette />}
