@@ -94,7 +94,7 @@ const item = {
 export default function Dashboard() {
   const router = useRouter()
   const { user, loading: authLoading } = useAuth()
-  const { accounts, selectedAccountId } = useAccount()
+  const { accounts, selectedAccountIds } = useAccount()
   const [dateRange, setDateRange] = useState<DateRange>('30d')
   const [challengeStatus, setChallengeStatus] = useState<ChallengeStatus | null>(null)
   const { streak: journalStreak } = useStreak()
@@ -201,13 +201,18 @@ export default function Dashboard() {
         }
       ];
 
-      const targetAccountId = selectedAccountId !== 'all' ? selectedAccountId : (accounts[0]?.id || null)
+      const targetAccountId = (
+        selectedAccountIds !== 'all' && (selectedAccountIds as string[]).length === 1
+          ? (selectedAccountIds as string[])[0]
+          : (accounts[0]?.id || null)
+      )
       for (const t of demoTrades) {
         await addTrade({ ...t, user_id: user.id, account_id: targetAccountId } as Trade);
       }
       
-      await mutate(['dashboard', user.id, dateRange, selectedAccountId])
-      await mutate(['trades', user.id, 'all', selectedAccountId])
+      const selKey = selectedAccountIds === 'all' ? 'all' : (selectedAccountIds as string[]).slice().sort().join(',')
+      await mutate(['dashboard', user.id, dateRange, selKey])
+      await mutate(['trades', user.id, 'all', selKey])
       
       toast.success('Demo trades injected successfully!');
       setShowConfetti(true)
@@ -226,7 +231,7 @@ export default function Dashboard() {
 
 
 
-  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange, selectedAccountId)
+  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange, selectedAccountIds)
 
   const equityChartData = useMemo(() =>
     equityData.labels.map((d, i) => ({ date: d, equity: equityData.values[i] })),

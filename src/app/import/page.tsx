@@ -34,18 +34,18 @@ export default function ImportPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
 
-  const { accounts, selectedAccountId } = useAccount()
+  const { accounts, selectedAccountIds } = useAccount()
   const [targetAccountId, setTargetAccountId] = useState<string>('all')
 
   useEffect(() => {
-    if (selectedAccountId && selectedAccountId !== 'all') {
-      setTargetAccountId(selectedAccountId)
+    if (selectedAccountIds !== 'all' && (selectedAccountIds as string[]).length === 1) {
+      setTargetAccountId((selectedAccountIds as string[])[0])
     } else if (accounts.length > 0) {
       setTargetAccountId(accounts[0].id)
     } else {
       setTargetAccountId('all')
     }
-  }, [selectedAccountId, accounts])
+  }, [selectedAccountIds, accounts])
 
   const [step, setStep] = useState<ImportStep>('upload')
   const [dragging, setDragging] = useState(false)

@@ -50,8 +50,8 @@ type TimePeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 export default function AnalyticsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { selectedAccountId } = useAccount();
-  const { trades: cachedTrades, initialCapital = 10000, isLoading: tradesLoading } = useTrades('all', selectedAccountId);
+  const { selectedAccountIds } = useAccount();
+  const { trades: cachedTrades, initialCapital = 10000, isLoading: tradesLoading } = useTrades('all', selectedAccountIds);
   const [loading, setLoading] = useState(true);
   const [isCalculating, setIsCalculating] = useState(false);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');

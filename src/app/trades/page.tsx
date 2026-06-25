@@ -116,8 +116,13 @@ function TradesContent() {
   const [dateFilter, setDateFilter] = useState<'All' | '7d' | '30d' | '90d' | '1y'>('All')
   const [startDate, setStartDate] = useState<string>('')
   const [endDate, setEndDate] = useState<string>('')
-  const { accounts, selectedAccountId, selectAccount } = useAccount()
-  const accountFilter = selectedAccountId === 'all' ? null : selectedAccountId
+  const { accounts, selectedAccountIds, selectAccount } = useAccount()
+  // Derive accountIds array for API calls: undefined means 'all'
+  const accountIds: string[] | undefined =
+    selectedAccountIds === 'all' ? undefined : selectedAccountIds as string[]
+  // Derived single-string for legacy TradesFilters dropdown: null = all, string = one account selected
+  const accountFilter: string | null =
+    accountIds && accountIds.length === 1 ? accountIds[0] : null
   const setAccountFilter = (id: string | null) => selectAccount(id || 'all')
   const [userAccounts, setUserAccounts] = useState<TradingAccount[]>([])
   const [startingBalance, setStartingBalance] = useState<number>(10000)
@@ -338,7 +343,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
         endDate: endDate || undefined,
         sortField: String(sortField),
         sortDirection,
-        accountId: accountFilter || undefined,
+        accountIds,
       });
       const enrichedPage = page.map(t => {
         return {
@@ -355,7 +360,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
       setTotalPages(Math.ceil(total / pageSize));
     } catch (err) { console.error(err); }
     finally { setIsLoading(false); }
-  }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, sortField, sortDirection, accountFilter]);
+  }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, sortField, sortDirection, accountIds]);
 
   const fetchGlobalMetrics = useCallback(async () => {
     if (!user?.id) return;
@@ -368,7 +373,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
         dateFilter,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
-        accountId: accountFilter || undefined,
+        accountIds,
       });
       
       let result = [...fullTrades];
@@ -392,7 +397,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
         setQuickMetrics({ winRate: 0, profitFactor: 0, totalPnL: 0, avgWin: 0, avgLoss: 0, tradesPerWeek: 0 });
       }
     } catch (err) { console.error(err); }
-  }, [user?.id, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, activeView, accountFilter]);
+  }, [user?.id, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, activeView, accountIds]);
 
   useEffect(() => { if (user?.id) fetchPagedTrades(); }, [fetchPagedTrades, user?.id]);
   useEffect(() => { if (user?.id) fetchGlobalMetrics(); }, [fetchGlobalMetrics, user?.id]);
@@ -551,7 +556,11 @@ const DEFAULT_VISIBLE_COLUMNS = {
         }
       ];
 
-      const targetAccountId = selectedAccountId !== 'all' ? selectedAccountId : (accounts[0]?.id || null);
+      const targetAccountId = (
+        selectedAccountIds !== 'all' && (selectedAccountIds as string[]).length === 1
+          ? (selectedAccountIds as string[])[0]
+          : (accounts[0]?.id || null)
+      );
       for (const t of demoTrades) {
         await addTrade({ ...t, user_id: user.id, account_id: targetAccountId } as Trade);
       }

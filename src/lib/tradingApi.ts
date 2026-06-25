@@ -56,7 +56,10 @@ export async function getRecentTrades(userId: string, limit: number = 5): Promis
 interface GetAllTradesOptions {
   startDate?: string;
   endDate?: string;
+  /** Single account filter (legacy). Use accountIds for multi-select. */
   accountId?: string | null;
+  /** Multiple account filter — pass an array of IDs to filter to those accounts only. */
+  accountIds?: string[];
 }
 
 // Function to get all trades (used for analytics, dashboard — full dataset needed)
@@ -79,7 +82,10 @@ export async function getAllTrades(userId?: string, options?: GetAllTradesOption
       query = query.lte('entry_time', options.endDate);
     }
 
-    if (options?.accountId) {
+    // Multi-account filter takes priority over single accountId
+    if (options?.accountIds && options.accountIds.length > 0) {
+      query = query.in('account_id', options.accountIds);
+    } else if (options?.accountId) {
       query = query.eq('account_id', options.accountId);
     }
 
@@ -116,6 +122,8 @@ export interface PagedTradesOptions {
   sortField?: string;
   sortDirection?: 'asc' | 'desc';
   accountId?: string | null;
+  /** Multiple account IDs — when set, overrides accountId and uses .in() filter */
+  accountIds?: string[];
 }
 
 export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTradesResult> {
@@ -132,6 +140,7 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
     sortField = 'entry_time',
     sortDirection = 'desc',
     accountId,
+    accountIds,
   } = opts;
 
   try {
@@ -142,8 +151,12 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
       .eq('user_id', userId)
       .order(sortField, { ascending: sortDirection === 'asc' });
 
-    // Filters
-    if (accountId) query = query.eq('account_id', accountId);
+    // Multi-account filter takes priority over single accountId
+    if (accountIds && accountIds.length > 0) {
+      query = query.in('account_id', accountIds);
+    } else if (accountId) {
+      query = query.eq('account_id', accountId);
+    }
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 
@@ -193,6 +206,7 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
     startDate,
     endDate,
     accountId,
+    accountIds,
   } = opts;
 
   try {
@@ -201,7 +215,11 @@ export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'pa
       .select('profit_loss, entry_time')
       .eq('user_id', userId);
 
-    if (accountId) query = query.eq('account_id', accountId);
+    if (accountIds && accountIds.length > 0) {
+      query = query.in('account_id', accountIds);
+    } else if (accountId) {
+      query = query.eq('account_id', accountId);
+    }
     if (symbol) query = query.eq('symbol', symbol);
     if (type && type !== 'All') query = query.eq('type', type);
 

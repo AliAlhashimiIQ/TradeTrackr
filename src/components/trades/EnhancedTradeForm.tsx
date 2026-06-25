@@ -65,7 +65,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 }) => {
   const { user } = useAuth();
   const { colorblindMode } = useSettings();
-  const { accounts, selectedAccountId } = useAccount();
+  const { accounts, selectedAccountIds } = useAccount();
   const isEditing = !!initialTrade;
   
   const [formData, setFormData] = useState<Partial<Trade>>({
@@ -237,13 +237,17 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
   useEffect(() => {
     if (!isEditing && !formData.account_id) {
-      if (selectedAccountId && selectedAccountId !== 'all') {
-        setFormData(prev => ({ ...prev, account_id: selectedAccountId }));
+      const singleId =
+        selectedAccountIds !== 'all' && (selectedAccountIds as string[]).length === 1
+          ? (selectedAccountIds as string[])[0]
+          : null;
+      if (singleId) {
+        setFormData(prev => ({ ...prev, account_id: singleId }));
       } else if (accounts.length > 0) {
         setFormData(prev => ({ ...prev, account_id: accounts[0].id }));
       }
     }
-  }, [selectedAccountId, accounts, isEditing, formData.account_id]);
+  }, [selectedAccountIds, accounts, isEditing, formData.account_id]);
 
   // P&L calculation
   const pnl = (() => {

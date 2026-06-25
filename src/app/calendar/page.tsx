@@ -111,7 +111,7 @@ const TrendDown = () => (
 export default function CalendarPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  const { selectedAccountId } = useAccount()
+  const { selectedAccountIds } = useAccount()
   const [trades, setTrades] = useState<Trade[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Month')
@@ -132,7 +132,7 @@ export default function CalendarPage() {
       if (!user) { setIsLoading(false); return }
       try {
         const all = await getAllTrades(user.id, {
-          accountId: selectedAccountId === 'all' ? undefined : selectedAccountId
+          accountIds: selectedAccountIds === 'all' ? undefined : selectedAccountIds as string[]
         })
         setTrades(all)
       } finally {
@@ -140,7 +140,7 @@ export default function CalendarPage() {
       }
     }
     fetch()
-  }, [user, selectedAccountId])
+  }, [user, selectedAccountIds])
 
   const tradesByDate = useMemo(() => groupTradesByDate(trades), [trades])
 
