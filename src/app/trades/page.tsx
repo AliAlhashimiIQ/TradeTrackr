@@ -1059,9 +1059,11 @@ const DEFAULT_VISIBLE_COLUMNS = {
       {showForm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 overflow-auto flex items-start justify-center p-4 pt-20">
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#0a0b12] rounded-2xl border border-white/[0.08] w-full max-w-4xl max-h-[80vh] overflow-auto">
-            <div className="p-4 border-b border-white/[0.06] flex justify-between items-center sticky top-0 bg-[#0a0b12] z-10">
-              <h2 className="text-lg font-bold text-white">{selectedTrade ? 'Edit Trade' : 'Add Trade'}</h2>
+            className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] w-full max-w-4xl max-h-[80vh] overflow-auto"
+            style={{ backgroundColor: 'var(--card-bg)' }}>
+            <div className="p-4 border-b border-black/[0.06] dark:border-white/[0.06] flex justify-between items-center sticky top-0 z-10"
+              style={{ backgroundColor: 'var(--card-bg)' }}>
+              <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>{selectedTrade ? 'Edit Trade' : 'Add Trade'}</h2>
               <button onClick={() => { setShowForm(false); setSelectedTrade(null); }} className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -1107,10 +1109,12 @@ const DEFAULT_VISIBLE_COLUMNS = {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={e => e.stopPropagation()}
-            className="bg-[#0d0e16] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
+            className="rounded-2xl border border-black/[0.08] dark:border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
+            style={{ backgroundColor: 'var(--card-bg)' }}
           >
-            <div className="p-5 border-b border-white/[0.06] flex justify-between items-center bg-[#0d0e16]">
-              <h2 className="text-base font-bold text-white">Add Screenshot to {screenshotEditTrade.symbol}</h2>
+            <div className="p-5 border-b border-black/[0.06] dark:border-white/[0.06] flex justify-between items-center"
+                style={{ backgroundColor: 'var(--card-bg)' }}>
+              <h2 className="text-base font-bold" style={{ color: 'var(--foreground)' }}>Add Screenshot to {screenshotEditTrade.symbol}</h2>
               <button onClick={() => setScreenshotEditTrade(null)} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>

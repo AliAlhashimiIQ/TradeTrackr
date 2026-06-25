@@ -34,7 +34,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
       {/* Page Title & Log Trade Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-extrabold text-white tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">
             Trading Journal
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -47,7 +47,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
             className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
               showFilters
                 ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.12)]'
-                : 'bg-[#0d0e16] text-gray-400 border-white/[0.06] hover:text-white hover:border-white/[0.12]'
+                : 'bg-black/[0.04] dark:bg-[#0d0e16] text-gray-500 dark:text-gray-400 border-black/[0.08] dark:border-white/[0.06] hover:text-gray-700 dark:hover:text-white hover:border-black/[0.15] dark:hover:border-white/[0.12]'
             }`}
             title="Toggle Filter Panel"
           >
@@ -128,12 +128,12 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
 
             {/* Custom Visual Mini Charts */}
             {m.label === 'Total P&L' && (
-              <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+              <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.04] space-y-2 relative z-10">
                 <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
                   <span>Avg Win</span>
                   <span>Avg Loss</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                <div className="h-2 w-full rounded-full bg-black/[0.06] dark:bg-white/[0.04] overflow-hidden flex">
                   <div
                     style={{
                       width: `${(quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss)) > 0 ? (quickMetrics.avgWin / (quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss))) * 100 : 50}%`,
@@ -157,7 +157,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
             )}
 
             {m.label === 'Win Rate' && (
-              <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
+              <div className="mt-3 pt-2 border-t border-black/[0.06] dark:border-white/[0.04] relative z-10 space-y-1.5">
                 <div className="flex justify-center">
                   <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
                     <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />

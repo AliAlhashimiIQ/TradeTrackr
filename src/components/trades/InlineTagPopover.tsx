@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Trade } from '@/lib/types';
 import { getTagStyle, TAG_COLORS } from '@/lib/utils';
 
@@ -10,6 +11,7 @@ export interface InlineTagPopoverProps {
   onToggleTag: (trade: Trade, tag: string, isMistake: boolean) => void;
   presetsList: string[];
   onDeleteTagGlobally: (tag: string, isMistake: boolean) => void;
+  /** @deprecated - kept for API compat, direction is now auto-calculated */
   renderUp?: boolean;
   userTagsConfig: any[];
   fetchUserTags: () => Promise<void>;
@@ -17,6 +19,85 @@ export interface InlineTagPopoverProps {
   onRenameTagGlobally: (oldName: string, newName: string, isMistake: boolean) => Promise<void>;
   onUpdateTagColor: (tag: string, colorHex: string, isMistake: boolean) => Promise<void>;
   userStrategies?: { id: string; name: string; rules?: string | null }[];
+  /** The trigger button element to anchor the portal popover */
+  anchorEl?: HTMLElement | null;
+}
+
+/** Renders the popover content into document.body via portal so it escapes overflow:hidden containers */
+function PortalPopover({
+  anchorEl,
+  onClose,
+  children,
+}: {
+  anchorEl: HTMLElement | null;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const [pos, setPos] = useState<{ top: number; left: number; renderUp: boolean } | null>(null);
+
+  const recalc = useCallback(() => {
+    if (!anchorEl) return;
+    const rect = anchorEl.getBoundingClientRect();
+    const POPOVER_WIDTH = 280;
+    const POPOVER_EST_HEIGHT = 420;
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceRight = window.innerWidth - rect.left;
+
+    const renderUp = spaceBelow < POPOVER_EST_HEIGHT && rect.top > POPOVER_EST_HEIGHT;
+    const left = spaceRight < POPOVER_WIDTH
+      ? Math.max(8, rect.right - POPOVER_WIDTH)
+      : rect.left;
+
+    setPos({
+      top: renderUp ? rect.top - 8 : rect.bottom + 8,
+      left,
+      renderUp,
+    });
+  }, [anchorEl]);
+
+  useEffect(() => {
+    recalc();
+    window.addEventListener('resize', recalc);
+    window.addEventListener('scroll', recalc, true);
+    return () => {
+      window.removeEventListener('resize', recalc);
+      window.removeEventListener('scroll', recalc, true);
+    };
+  }, [recalc]);
+
+  // Click-outside to close
+  useEffect(() => {
+    function handleMouseDown(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('.tag-popover-portal') ||
+        target.closest('.popover-trigger')
+      ) return;
+      onClose();
+    }
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [onClose]);
+
+  if (!pos) return null;
+
+  return createPortal(
+    <div
+      className="tag-popover-portal"
+      style={{
+        position: 'fixed',
+        top: pos.renderUp ? 'auto' : pos.top,
+        bottom: pos.renderUp ? window.innerHeight - pos.top - (anchorEl?.getBoundingClientRect().height ?? 0) : 'auto',
+        left: pos.left,
+        zIndex: 9999,
+        width: 280,
+        transformOrigin: pos.renderUp ? 'bottom left' : 'top left',
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
 }
 
 export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
@@ -31,6 +112,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
   onRenameTagGlobally,
   onUpdateTagColor,
   userStrategies,
+  anchorEl,
 }) => {
   const [searchTag, setSearchTag] = useState('');
   const [isAddingCustomTag, setIsAddingCustomTag] = useState(false);
@@ -76,19 +158,17 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
     setEditingTag(null);
   };
 
-  return (
-    <motion.div 
+  const content = (
+    <motion.div
       initial={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
       transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className={`popover-container absolute left-0 z-40 rounded-2xl p-4 text-left ${
-        renderUp ? 'bottom-full mb-2.5' : 'top-full mt-2.5'
-      }`}
+      className="popover-container rounded-2xl p-4 text-left"
       style={{
-        backgroundColor: 'var(--tooltip-bg)',
-        border: '1px solid var(--card-border)',
-        boxShadow: '0 10px 30px -10px rgba(0,0,0,0.15)',
+        backgroundColor: 'var(--tooltip-bg, #131520)',
+        border: '1px solid var(--card-border, rgba(255,255,255,0.07))',
+        boxShadow: '0 16px 40px -8px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.3)',
         backdropFilter: 'blur(12px)',
         width: '280px',
       }}
@@ -123,11 +203,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                 onChange={(e) => setEditingTag({ ...editingTag, name: e.target.value })}
                 className="flex-1 px-2.5 py-1.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="Tag name"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleRenameTag();
-                  }
-                }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleRenameTag(); }}
               />
               <button
                 type="button"
@@ -139,7 +215,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
             </div>
           </div>
 
-          {/* Color Palette Choice */}
+          {/* Color Palette */}
           <div className="mb-4">
             <label className="text-[9px] font-bold text-gray-500 uppercase tracking-[0.08em] block mb-2">Color</label>
             <div className="grid grid-cols-5 gap-2">
@@ -150,7 +226,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                     key={colorPreset.name}
                     type="button"
                     onClick={() => handleUpdateColor(colorPreset.hex)}
-                    className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all hover:scale-110 active:scale-95`}
+                    className="w-6 h-6 rounded-full border flex items-center justify-center transition-all hover:scale-110 active:scale-95"
                     style={{
                       backgroundColor: colorPreset.bg,
                       borderColor: isSelected ? '#ffffff' : colorPreset.border,
@@ -158,20 +234,15 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                     }}
                     title={colorPreset.name}
                   >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: colorPreset.hex }}
-                    />
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colorPreset.hex }} />
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Divider */}
           <div className="border-t border-white/[0.06] my-3" />
 
-          {/* Delete tag globally */}
           <button
             type="button"
             onClick={handleDeleteTag}
@@ -188,7 +259,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-bold text-gray-200">{isMistake ? 'Mistakes' : 'Tags'}</span>
-            <button 
+            <button
               type="button"
               onClick={onClose}
               className="p-1 rounded-lg hover:bg-white/5 text-gray-500 hover:text-white transition-all active:scale-95"
@@ -230,9 +301,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                 placeholder="New Tag..."
                 value={newTagNameInput}
                 onChange={e => setNewTagNameInput(e.target.value)}
-                onBlur={() => {
-                  if (!newTagNameInput.trim()) setIsAddingCustomTag(false);
-                }}
+                onBlur={() => { if (!newTagNameInput.trim()) setIsAddingCustomTag(false); }}
                 onKeyDown={e => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -279,9 +348,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                       >
                         <div className="flex items-center gap-2">
                           <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-all shrink-0 ${
-                            isChecked
-                              ? 'bg-indigo-500 border-indigo-500 text-white'
-                              : 'border-slate-700 text-transparent'
+                            isChecked ? 'bg-indigo-500 border-indigo-500 text-white' : 'border-slate-700 text-transparent'
                           }`}>
                             <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg>
                           </div>
@@ -300,7 +367,6 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
             </>
           )}
 
-          {/* Divider */}
           <div className="border-t border-white/[0.06] my-2.5" />
 
           {/* Select a Tag */}
@@ -326,7 +392,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                     className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.04] transition-colors group/item cursor-pointer"
                     onClick={() => onToggleTag(trade, tag, isMistake)}
                   >
-                    <span style={style} className={`text-[11px] px-2.5 py-0.5 rounded-full border font-medium`}>
+                    <span style={style} className="text-[11px] px-2.5 py-0.5 rounded-full border font-medium">
                       {tag}
                     </span>
                     <div className="flex items-center gap-1.5">
@@ -354,7 +420,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                   </div>
                 );
               })}
-            
+
             {searchTag.trim() && !presetsList.some(t => t.toLowerCase() === searchTag.trim().toLowerCase()) && (
               <button
                 type="button"
@@ -370,6 +436,39 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
           </div>
         </>
       )}
+    </motion.div>
+  );
+
+  // If anchorEl is provided render via portal, otherwise fall back to old absolute positioning
+  if (anchorEl) {
+    return (
+      <PortalPopover anchorEl={anchorEl} onClose={onClose}>
+        <AnimatePresence mode="wait">
+          {content}
+        </AnimatePresence>
+      </PortalPopover>
+    );
+  }
+
+  // Legacy fallback (absolute positioned inside relative parent)
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: renderUp ? -6 : 6, scale: 0.95 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      className={`popover-container absolute left-0 z-40 rounded-2xl p-4 text-left ${
+        renderUp ? 'bottom-full mb-2.5' : 'top-full mt-2.5'
+      }`}
+      style={{
+        backgroundColor: 'var(--tooltip-bg)',
+        border: '1px solid var(--card-border)',
+        boxShadow: '0 10px 30px -10px rgba(0,0,0,0.15)',
+        backdropFilter: 'blur(12px)',
+        width: '280px',
+      }}
+    >
+      {content}
     </motion.div>
   );
 };

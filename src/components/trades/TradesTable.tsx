@@ -222,6 +222,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { colorblindMode } = useSettings();
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' | 'strategy' } | null>(null);
+  const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
   const [inlineScreenshotTab, setInlineScreenshotTab] = useState<'upload' | 'embed'>('upload');
   const [inlineScreenshotEmbedUrlInput, setInlineScreenshotEmbedUrlInput] = useState('');
@@ -462,7 +463,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       <InlineTagPopover
         trade={trade}
         isMistake={isMistake}
-        onClose={() => setActivePopover(null)}
+        onClose={() => { setActivePopover(null); setPopoverAnchorEl(null); }}
         onToggleTag={(t, tag, isM) => onToggleTag(t, tag, isM)}
         presetsList={isMistake ? allExistingMistakes : allExistingTags}
         onDeleteTagGlobally={onDeleteTagGlobally}
@@ -473,6 +474,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         onRenameTagGlobally={onRenameTagGlobally}
         onUpdateTagColor={onUpdateTagColor}
         userStrategies={userStrategies}
+        anchorEl={popoverAnchorEl}
       />
     );
   };
@@ -904,7 +906,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' ? null : { tradeId: 'new-row', type: 'tags' })}
+              onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'tags' ? null : { tradeId: 'new-row', type: 'tags' }) }}
               className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] shrink-0"
             >
               +
@@ -938,7 +940,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </div>
             <button
               type="button"
-              onClick={() => setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' ? null : { tradeId: 'new-row', type: 'mistakes' })}
+              onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === 'new-row' && activePopover?.type === 'mistakes' ? null : { tradeId: 'new-row', type: 'mistakes' }) }}
               className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-red-500/20 border border-white/[0.06] hover:border-red-500/40 text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)] shrink-0"
             >
               +
@@ -1182,8 +1184,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <div 
               className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
               style={{
-                backgroundColor: '#0d0e16',
-                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+                backgroundColor: 'var(--table-header-bg)',
+                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.3)',
               }}
             >
               <span>Actions</span>
@@ -1625,7 +1627,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           })}
                         </div>
                         <button
-                          onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' })}
+                          onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
                           className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
                         >
                           +
@@ -1662,7 +1664,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           })}
                         </div>
                         <button
-                          onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' })}
+                          onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
                           className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
                         >
                           +
@@ -1691,10 +1693,10 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                     {/* Actions */}
                     <div 
-                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full transition-colors group-hover/row:bg-[#131522]"
+                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full transition-colors"
                       style={{
-                        backgroundColor: idx % 2 === 0 ? '#0a0b12' : '#0d0e16',
-                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
+                        backgroundColor: 'var(--card-bg)',
+                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.2)',
                       }}
                     >
                       {trade.screenshot_url && (
@@ -1763,7 +1765,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
       {/* Desktop Pagination */}
         {filteredTrades.length > 0 && (
-          <div className="px-5 py-4 border-t border-white/[0.06] flex items-center justify-between bg-[#0a0b12]/50">
+          <div className="px-5 py-4 border-t border-black/[0.06] dark:border-white/[0.06] flex items-center justify-between"
+            style={{ backgroundColor: 'var(--table-header-bg)' }}
+          >
             <span className="text-xs text-gray-500">
               Showing <span className="text-gray-300 font-medium">{((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, filteredTrades.length)}</span> of <span className="text-gray-300 font-medium">{filteredTrades.length}</span> trades
             </span>
@@ -1771,13 +1775,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               <select
                 value={pageSize}
                 onChange={e => onPageSizeChange(Number(e.target.value))}
-                className="px-2.5 py-1.5 bg-[#151823] border border-white/[0.06] rounded-lg text-gray-400 text-xs focus:outline-none hover:border-white/[0.12] transition-colors [color-scheme:dark]"
+                className="px-2.5 py-1.5 bg-black/[0.04] dark:bg-[#151823] border border-black/[0.08] dark:border-white/[0.06] rounded-lg text-gray-500 dark:text-gray-400 text-xs focus:outline-none transition-colors [color-scheme:light] dark:[color-scheme:dark]"
               >
                 <option value="10">10 / page</option>
                 <option value="25">25 / page</option>
                 <option value="50">50 / page</option>
               </select>
-              <div className="flex items-center gap-1 bg-[#151823] rounded-lg border border-white/[0.06] p-0.5">
+              <div className="flex items-center gap-1 bg-black/[0.04] dark:bg-[#151823] rounded-lg border border-black/[0.08] dark:border-white/[0.06] p-0.5">
                 <button
                   onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
