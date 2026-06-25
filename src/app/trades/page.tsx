@@ -22,7 +22,7 @@ import Confetti from 'react-confetti'
 // Extracted Subcomponents
 import TradesHeader from '@/components/trades/TradesHeader'
 import TradesFilters from '@/components/trades/TradesFilters'
-import TradesTable, { DEFAULT_COLUMN_WIDTHS } from '@/components/trades/TradesTable'
+import TradesTable, { DEFAULT_COLUMN_WIDTHS, DEFAULT_COLUMN_ORDER } from '@/components/trades/TradesTable'
 import { motion } from 'framer-motion'
 import { isForexPair, getSymbolMultiplier } from '@/lib/forexUtils'
 
@@ -220,6 +220,24 @@ const DEFAULT_VISIBLE_COLUMNS = {
     return DEFAULT_COLUMN_WIDTHS
   })
 
+  const [columnOrder, setColumnOrder] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = window.localStorage.getItem('trades.columnOrder')
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as string[];
+          // Merge: keep saved order but add any new columns from DEFAULT that are missing
+          const merged = [...parsed];
+          for (const col of DEFAULT_COLUMN_ORDER) {
+            if (!merged.includes(col)) merged.push(col);
+          }
+          return merged;
+        } catch {}
+      }
+    }
+    return DEFAULT_COLUMN_ORDER;
+  })
+
   const [wrapTags, setWrapTags] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const saved = window.localStorage.getItem('trades.wrapTags')
@@ -233,6 +251,12 @@ const DEFAULT_VISIBLE_COLUMNS = {
       window.localStorage.setItem('trades.columnWidths', JSON.stringify(columnWidths))
     }
   }, [columnWidths])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('trades.columnOrder', JSON.stringify(columnOrder))
+    }
+  }, [columnOrder])
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -1004,6 +1028,8 @@ const DEFAULT_VISIBLE_COLUMNS = {
           columnWidths={columnWidths}
           onColumnWidthChange={(col, val) => setColumnWidths(prev => ({ ...prev, [col]: val }))}
           onResetColumnWidth={col => setColumnWidths(prev => ({ ...prev, [col]: DEFAULT_COLUMN_WIDTHS[col] }))}
+          columnOrder={columnOrder}
+          onColumnOrderChange={setColumnOrder}
           selectedTradeIds={selectedTradeIds}
           onToggleSelectAll={checked => setSelectedTradeIds(checked ? filteredTrades.map(t => t.id) : [])}
           onToggleSelectTrade={(id, checked) => setSelectedTradeIds(checked ? [...selectedTradeIds, id] : selectedTradeIds.filter(x => x !== id))}

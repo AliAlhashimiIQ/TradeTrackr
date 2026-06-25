@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trade, TradingAccount } from '@/lib/types';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
@@ -75,6 +75,14 @@ export const EMOTIONS = [
   { value: 'greed', label: 'Greed', bg: 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' },
 ];
 
+export const DEFAULT_COLUMN_ORDER = [
+  'side', 'entry', 'exit', 'lots', 'pips', 'pnl',
+  'percentGain', 'commission', 'netProfit', 'date',
+  'openTime', 'closeTime', 'holdTime', 'stopLoss',
+  'takeProfit', 'account', 'strategy', 'mindset',
+  'tags', 'mistakes', 'notes'
+];
+
 export interface TradesTableProps {
   filteredTrades: Trade[];
   tableDensity: 'compact' | 'comfortable';
@@ -83,6 +91,8 @@ export interface TradesTableProps {
   columnWidths: Record<string, number>;
   onColumnWidthChange: (colKey: string, width: number) => void;
   onResetColumnWidth: (colKey: string) => void;
+  columnOrder: string[];
+  onColumnOrderChange: (newOrder: string[]) => void;
   selectedTradeIds: string[];
   onToggleSelectAll: (checked: boolean) => void;
   onToggleSelectTrade: (id: string, checked: boolean) => void;
@@ -171,6 +181,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   columnWidths,
   onColumnWidthChange,
   onResetColumnWidth,
+  columnOrder,
+  onColumnOrderChange,
   selectedTradeIds,
   onToggleSelectAll,
   onToggleSelectTrade,
@@ -224,6 +236,15 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' | 'strategy' } | null>(null);
   const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
+
+  // Column drag-reorder state
+  const dragColRef = useRef<string | null>(null);
+  const dragOverColRef = useRef<string | null>(null);
+  const [dragCol, setDragCol] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+  const [dragSide, setDragSide] = useState<'left' | 'right'>('right');
+  // rAF ref for smooth resize
+  const resizeRafRef = useRef<number>(0);
   const [inlineScreenshotTab, setInlineScreenshotTab] = useState<'upload' | 'embed'>('upload');
   const [inlineScreenshotEmbedUrlInput, setInlineScreenshotEmbedUrlInput] = useState('');
 
@@ -243,87 +264,134 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const getGridTemplateColumns = (overrideKey?: string, overrideWidth?: number) => {
+  // Build grid template from columnOrder
+  const getGridTemplateColumns = useCallback((overrideKey?: string, overrideWidth?: number) => {
     const getWidth = (key: string, def: string) => {
-      let w = key === overrideKey ? overrideWidth : columnWidths[key];
-      if (key === 'actions') {
-        w = Math.max(140, w || 140);
-      }
+      const w = key === overrideKey ? overrideWidth : columnWidths[key];
       return w ? `${w}px` : def;
     };
-    const cols = [
+    const cols: string[] = [
       getWidth('checkbox', '52px'),
       getWidth('screenshot', '55px'),
       getWidth('symbol', '110px'),
-      visibleColumns.side ? getWidth('side', '80px') : '',
-      visibleColumns.entry ? getWidth('entry', '100px') : '',
-      visibleColumns.exit ? getWidth('exit', '100px') : '',
-      visibleColumns.lots ? getWidth('lots', '90px') : '',
-      visibleColumns.pips ? getWidth('pips', '80px') : '',
-      visibleColumns.pnl ? getWidth('pnl', '110px') : '',
-      visibleColumns.percentGain ? getWidth('percentGain', '90px') : '',
-      visibleColumns.commission ? getWidth('commission', '95px') : '',
-      visibleColumns.netProfit ? getWidth('netProfit', '110px') : '',
-      visibleColumns.date ? getWidth('date', '95px') : '',
-      visibleColumns.openTime ? getWidth('openTime', '140px') : '',
-      visibleColumns.closeTime ? getWidth('closeTime', '140px') : '',
-      visibleColumns.holdTime ? getWidth('holdTime', '90px') : '',
-      visibleColumns.stopLoss ? getWidth('stopLoss', '100px') : '',
-      visibleColumns.takeProfit ? getWidth('takeProfit', '100px') : '',
-      visibleColumns.account ? getWidth('account', '110px') : '',
-      visibleColumns.strategy ? getWidth('strategy', '130px') : '',
-      visibleColumns.mindset ? getWidth('mindset', '120px') : '',
-      visibleColumns.tags ? getWidth('tags', '180px') : '',
-      visibleColumns.mistakes ? getWidth('mistakes', '180px') : '',
-      visibleColumns.notes ? getWidth('notes', '240px') : '',
-      getWidth('actions', '100px'),
     ];
-    return cols.filter(Boolean).join(' ');
-  };
+    for (const key of columnOrder) {
+      if (!visibleColumns[key]) continue;
+      const defaults: Record<string, string> = {
+        side: '80px', entry: '100px', exit: '100px', lots: '90px', pips: '80px',
+        pnl: '110px', percentGain: '90px', commission: '95px', netProfit: '110px',
+        date: '95px', openTime: '140px', closeTime: '140px', holdTime: '90px',
+        stopLoss: '100px', takeProfit: '100px', account: '110px', strategy: '130px',
+        mindset: '120px', tags: '180px', mistakes: '180px', notes: '240px',
+      };
+      cols.push(getWidth(key, defaults[key] || '100px'));
+    }
+    cols.push(getWidth('actions', '140px'));
+    return cols.join(' ');
+  }, [columnWidths, columnOrder, visibleColumns]);
 
-  const handleMouseDown = (e: React.MouseEvent, colKey: string) => {
+  // RAF-throttled resize — zero React re-renders during drag
+  const handleMouseDown = useCallback((e: React.MouseEvent, colKey: string) => {
     e.preventDefault();
     e.stopPropagation();
     const startX = e.clientX;
     const startWidth = columnWidths[colKey] || DEFAULT_COLUMN_WIDTHS[colKey];
     let latestWidth = startWidth;
+    let pending = false;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const minW = MIN_COLUMN_WIDTHS[colKey] || 50;
-      const newWidth = Math.max(minW, startWidth + deltaX);
-      latestWidth = newWidth;
-
-      if (containerRef.current) {
-        const newTemplate = getGridTemplateColumns(colKey, newWidth);
-        containerRef.current.style.setProperty('--grid-template-columns', newTemplate);
-      }
+      latestWidth = Math.max(minW, startWidth + deltaX);
+      if (pending) return;
+      pending = true;
+      resizeRafRef.current = requestAnimationFrame(() => {
+        if (containerRef.current) {
+          const newTemplate = getGridTemplateColumns(colKey, latestWidth);
+          containerRef.current.style.setProperty('--grid-template-columns', newTemplate);
+        }
+        pending = false;
+      });
     };
 
     const handleMouseUp = () => {
+      cancelAnimationFrame(resizeRafRef.current);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       onColumnWidthChange(colKey, latestWidth);
     };
 
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-  };
+  }, [columnWidths, getGridTemplateColumns, onColumnWidthChange]);
 
-  const renderResizeHandle = (colKey: string) => {
-    return (
-      <div
-        onMouseDown={(e) => handleMouseDown(e, colKey)}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          onResetColumnWidth(colKey);
-        }}
-        onClick={(e) => e.stopPropagation()}
-        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-indigo-500/80 active:bg-indigo-500 z-20 group-hover/header:bg-white/[0.08] transition-colors"
-        title="Drag to resize, double-click to reset"
-      />
-    );
-  };
+  // Column drag-to-reorder
+  const FIXED_COLS = new Set(['checkbox', 'screenshot', 'symbol', 'actions']);
+
+  const handleDragStart = useCallback((e: React.DragEvent, colKey: string) => {
+    if (FIXED_COLS.has(colKey)) { e.preventDefault(); return; }
+    dragColRef.current = colKey;
+    setDragCol(colKey);
+    e.dataTransfer.effectAllowed = 'move';
+    // Ghost label
+    const ghost = document.createElement('div');
+    ghost.textContent = colKey.toUpperCase();
+    ghost.style.cssText = 'position:fixed;top:-100px;padding:4px 10px;background:#6366f1;color:#fff;border-radius:6px;font-size:11px;font-weight:700;pointer-events:none;letter-spacing:0.05em';
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, ghost.offsetWidth / 2, 14);
+    setTimeout(() => document.body.removeChild(ghost), 0);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, colKey: string) => {
+    if (FIXED_COLS.has(colKey) || !dragColRef.current || dragColRef.current === colKey) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const side = e.clientX < rect.left + rect.width / 2 ? 'left' : 'right';
+    dragOverColRef.current = colKey;
+    setDragOverCol(colKey);
+    setDragSide(side);
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    dragColRef.current = null;
+    dragOverColRef.current = null;
+    setDragCol(null);
+    setDragOverCol(null);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent, targetKey: string) => {
+    e.preventDefault();
+    const srcKey = dragColRef.current;
+    if (!srcKey || srcKey === targetKey || FIXED_COLS.has(targetKey)) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const insertAfter = e.clientX >= rect.left + rect.width / 2;
+    const newOrder = columnOrder.filter(k => k !== srcKey);
+    const targetIdx = newOrder.indexOf(targetKey);
+    const insertAt = insertAfter ? targetIdx + 1 : targetIdx;
+    newOrder.splice(insertAt, 0, srcKey);
+    onColumnOrderChange(newOrder);
+    dragColRef.current = null;
+    dragOverColRef.current = null;
+    setDragCol(null);
+    setDragOverCol(null);
+  }, [columnOrder, onColumnOrderChange]);
+
+  const renderResizeHandle = (colKey: string) => (
+    <div
+      onMouseDown={(e) => handleMouseDown(e, colKey)}
+      onDoubleClick={(e) => { e.stopPropagation(); onResetColumnWidth(colKey); }}
+      onClick={(e) => e.stopPropagation()}
+      className="absolute right-0 top-0 bottom-0 w-[5px] cursor-col-resize z-20 flex items-center justify-center group/resize"
+      title="Drag to resize · Double-click to reset"
+    >
+      <div className="w-[2px] h-4 rounded-full bg-transparent group-hover/resize:bg-indigo-500 transition-colors duration-150" />
+    </div>
+  );
 
   const totals = useMemo(() => {
     if (filteredTrades.length === 0) return null;
@@ -1008,7 +1076,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             } as React.CSSProperties} 
             className="min-w-full w-max text-left"
           >
-          {/* Table Header */}
+          {/* Table Header — columns driven by columnOrder for drag-to-reorder */}
           <div
             className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left"
             style={{
@@ -1017,6 +1085,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               background: 'linear-gradient(160deg, rgba(255,255,255,0.02) 0%, transparent 100%), var(--table-header-bg)',
             }}
           >
+            {/* Fixed: checkbox */}
             <div className="relative group/header flex items-center justify-center h-full">
               <input
                 type="checkbox"
@@ -1026,10 +1095,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               />
               {renderResizeHandle('checkbox')}
             </div>
+            {/* Fixed: trade/screenshot */}
             <div className="relative group/header text-center flex items-center justify-center h-full">
               <span className="truncate">Trade</span>
               {renderResizeHandle('screenshot')}
             </div>
+            {/* Fixed: symbol */}
             <div
               className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full"
               onClick={() => onSort('symbol')}
@@ -1037,150 +1108,57 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               <span className="truncate">Symbol {sortField === 'symbol' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
               {renderResizeHandle('symbol')}
             </div>
-            {visibleColumns.side && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full"
-                onClick={() => onSort('type')}
-              >
-                <span className="truncate">Side</span>
-                {renderResizeHandle('side')}
-              </div>
-            )}
-            {visibleColumns.entry && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full"
-                onClick={() => onSort('entry_price')}
-              >
-                <span className="truncate">Entry {sortField === 'entry_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
-                {renderResizeHandle('entry')}
-              </div>
-            )}
-            {visibleColumns.exit && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full"
-                onClick={() => onSort('exit_price')}
-              >
-                <span className="truncate">Exit {sortField === 'exit_price' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
-                {renderResizeHandle('exit')}
-              </div>
-            )}
-            {visibleColumns.lots && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Lots / Qty</span>
-                {renderResizeHandle('lots')}
-              </div>
-            )}
-            {visibleColumns.pips && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Pips</span>
-                {renderResizeHandle('pips')}
-              </div>
-            )}
-            {visibleColumns.pnl && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center justify-end gap-1 text-right h-full w-full"
-                onClick={() => onSort('profit_loss')}
-              >
-                <span className="truncate">P&L {sortField === 'profit_loss' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
-                {renderResizeHandle('pnl')}
-              </div>
-            )}
-            {visibleColumns.percentGain && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">% Gain</span>
-                {renderResizeHandle('percentGain')}
-              </div>
-            )}
-            {visibleColumns.commission && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Commission</span>
-                {renderResizeHandle('commission')}
-              </div>
-            )}
-            {visibleColumns.netProfit && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Net Profit</span>
-                {renderResizeHandle('netProfit')}
-              </div>
-            )}
-            {visibleColumns.date && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full"
-                onClick={() => onSort('entry_time')}
-              >
-                <span className="truncate">Date {sortField === 'entry_time' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
-                {renderResizeHandle('date')}
-              </div>
-            )}
-            {visibleColumns.openTime && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Open Time</span>
-                {renderResizeHandle('openTime')}
-              </div>
-            )}
-            {visibleColumns.closeTime && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Close Time</span>
-                {renderResizeHandle('closeTime')}
-              </div>
-            )}
-            {visibleColumns.holdTime && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Hold Time</span>
-                {renderResizeHandle('holdTime')}
-              </div>
-            )}
-            {visibleColumns.stopLoss && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Stop Loss</span>
-                {renderResizeHandle('stopLoss')}
-              </div>
-            )}
-            {visibleColumns.takeProfit && (
-              <div className="relative group/header text-right flex items-center justify-end h-full w-full">
-                <span className="truncate">Take Profit</span>
-                {renderResizeHandle('takeProfit')}
-              </div>
-            )}
-            {visibleColumns.account && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Account</span>
-                {renderResizeHandle('account')}
-              </div>
-            )}
-            {visibleColumns.strategy && (
-              <div
-                className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full"
-                onClick={() => onSort('strategy')}
-              >
-                <span className="truncate">Strategy {sortField === 'strategy' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
-                {renderResizeHandle('strategy')}
-              </div>
-            )}
-            {visibleColumns.mindset && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Mindset</span>
-                {renderResizeHandle('mindset')}
-              </div>
-            )}
-            {visibleColumns.tags && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Strategy Tags</span>
-                {renderResizeHandle('tags')}
-              </div>
-            )}
-            {visibleColumns.mistakes && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Mistake Tags</span>
-                {renderResizeHandle('mistakes')}
-              </div>
-            )}
-            {visibleColumns.notes && (
-              <div className="relative group/header text-left flex items-center h-full">
-                <span className="truncate">Learnings</span>
-                {renderResizeHandle('notes')}
-              </div>
-            )}
+
+            {/* Reorderable columns */}
+            {columnOrder.filter(k => visibleColumns[k]).map(colKey => {
+              const isDragging = dragCol === colKey;
+              const isTarget = dragOverCol === colKey;
+              const SORT_MAP: Record<string, keyof Trade> = {
+                side: 'type', entry: 'entry_price', exit: 'exit_price',
+                pnl: 'profit_loss', date: 'entry_time', strategy: 'strategy'
+              };
+              const LABEL_MAP: Record<string, string> = {
+                side: 'Side', entry: 'Entry', exit: 'Exit', lots: 'Lots / Qty',
+                pips: 'Pips', pnl: 'P&L', percentGain: '% Gain', commission: 'Commission',
+                netProfit: 'Net Profit', date: 'Date', openTime: 'Open Time',
+                closeTime: 'Close Time', holdTime: 'Hold Time', stopLoss: 'Stop Loss',
+                takeProfit: 'Take Profit', account: 'Account', strategy: 'Strategy',
+                mindset: 'Mindset', tags: 'Strategy Tags', mistakes: 'Mistake Tags',
+                notes: 'Learnings'
+              };
+              const ALIGN_RIGHT = new Set(['entry','exit','lots','pips','pnl','percentGain','commission','netProfit','holdTime','stopLoss','takeProfit']);
+              const sortField_ = SORT_MAP[colKey];
+              return (
+                <div
+                  key={colKey}
+                  draggable
+                  onDragStart={e => handleDragStart(e, colKey)}
+                  onDragOver={e => handleDragOver(e, colKey)}
+                  onDrop={e => handleDrop(e, colKey)}
+                  onDragEnd={handleDragEnd}
+                  onClick={() => sortField_ && onSort(sortField_)}
+                  className={`relative group/header flex items-center h-full select-none transition-all duration-150
+                    ${ALIGN_RIGHT.has(colKey) ? 'justify-end text-right' : 'justify-start text-left'}
+                    ${sortField_ ? 'cursor-pointer hover:text-indigo-400' : 'cursor-grab active:cursor-grabbing'}
+                    ${isDragging ? 'opacity-40' : 'opacity-100'}
+                    ${isTarget ? (dragSide === 'left' ? 'border-l-2 border-indigo-500' : 'border-r-2 border-indigo-500') : ''}
+                  `}
+                  title={`Drag to reorder · ${sortField_ ? 'Click to sort' : ''}`}
+                >
+                  {/* Drag handle icon (shows on hover for non-sortable) */}
+                  {!sortField_ && (
+                    <span className="mr-1 text-gray-600 group-hover/header:text-gray-400 transition-colors cursor-grab" style={{ fontSize: 9 }}>⣿</span>
+                  )}
+                  <span className="truncate gap-1 flex items-center">
+                    {LABEL_MAP[colKey] || colKey}
+                    {sortField_ && sortField === sortField_ && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                  </span>
+                  {renderResizeHandle(colKey)}
+                </div>
+              );
+            })}
+
+            {/* Fixed: Actions */}
             <div 
               className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
               style={{
@@ -1322,374 +1300,182 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       </div>
                     </div>
 
-                    {/* Side */}
-                    {visibleColumns.side && (
-                      <div className="flex items-center">
-                        <span
-                          className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg inline-flex items-center"
-                          style={trade.type === 'Long'
-                            ? { background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.04))', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)', boxShadow: '0 0 8px rgba(16,185,129,0.08)' }
-                            : { background: 'linear-gradient(135deg, rgba(239,68,68,0.1), rgba(239,68,68,0.04))', color: '#f87171', border: '1px solid rgba(239,68,68,0.2)', boxShadow: '0 0 8px rgba(239,68,68,0.08)' }
-                          }
-                        >
-                          {trade.type === 'Long' ? 'BUY' : 'SELL'}
-                        </span>
-                      </div>
-                    )}
-
-                        {visibleColumns.entry && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-300 text-right tabular-nums`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
-
-                    {/* Exit */}
-                    {visibleColumns.exit && <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-300 text-right tabular-nums`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>}
-
-                    {/* Lots / Qty */}
-                    {visibleColumns.lots && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
-                        {trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}
-                      </div>
-                    )}
-
-                    {/* Pips */}
-                    {visibleColumns.pips && (() => {
-                      const hasPips = trade.pips !== undefined && trade.pips !== null;
-                      const pipColors = getPLColorClasses(trade.pips ?? 0, colorblindMode);
-                      return (
-                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${!hasPips ? 'text-gray-400' : pipColors.text70}`}>
-                          {hasPips ? formatPips(trade.pips) : '--'}
-                        </div>
-                      );
-                    })()}
-
-                    {/* P&L */}
-                    {visibleColumns.pnl && (() => {
-                      const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
-                      return (
-                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold tabular-nums text-right`}>
-                          <span
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg"
-                            style={{
-                              color: pnlColors.hexColor,
-                              background: pnlColors.hexBg,
-                              textShadow: (trade.profit_loss ?? 0) !== 0 ? `0 0 12px ${pnlColors.hexShadow}` : 'none',
-                            }}
-                          >
-                            {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
-                          </span>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Percent Gain */}
-                    {visibleColumns.percentGain && (() => {
-                      const gainColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
-                      return (
-                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${gainColors.text70}`}>
-                          {trade.profit_loss !== undefined && trade.profit_loss !== null ? (
-                            (() => {
-                              const pct = getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance);
-                              return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
-                            })()
-                          ) : '--'}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Commission */}
-                    {visibleColumns.commission && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
-                        {(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}
-                      </div>
-                    )}
-
-                    {/* Net Profit */}
-                    {visibleColumns.netProfit && (() => {
-                      const netColors = getPLColorClasses((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0), colorblindMode);
-                      return (
-                        <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-right tabular-nums ${netColors.text}`}>
-                          {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency((trade.profit_loss ?? 0) - ((trade as any).commission ?? 0))}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Date */}
-                    {visibleColumns.date && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left`}>
-                        {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </div>
-                    )}
-
-                    {/* Open Time */}
-                    {visibleColumns.openTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left tabular-nums`}>
-                        {new Date(trade.entry_time).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    )}
-
-                    {/* Close Time */}
-                    {visibleColumns.closeTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left tabular-nums`}>
-                        {new Date(trade.exit_time).toLocaleString('en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    )}
-
-                    {/* Hold Time */}
-                    {visibleColumns.holdTime && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
-                        {(() => { const m = Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / 60000); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m}m`; })()}
-                      </div>
-                    )}
-
-                    {/* Stop Loss */}
-                    {visibleColumns.stopLoss && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
-                        {(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
-                      </div>
-                    )}
-
-                    {/* Take Profit */}
-                    {visibleColumns.takeProfit && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-right tabular-nums`}>
-                        {(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}
-                      </div>
-                    )}
-
-                    {/* Account */}
-                    {visibleColumns.account && (
-                      <div className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} text-gray-400 text-left truncate`}>
-                        {trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}
-                      </div>
-                    )}
-
-                    {/* Strategy Column (Inline Selection) */}
-                    {visibleColumns.strategy && (
-                      <div className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full">
-                        {trade.strategy ? (
-                          <button
-                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
-                            className="popover-trigger px-2.5 py-1 rounded-lg text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 text-xs font-semibold tracking-wide capitalize hover:bg-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all truncate"
-                          >
-                            {trade.strategy}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
-                            className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shadow-[0_2px_8px_rgba(0,0,0,0.2)]"
-                          >
-                            +
-                          </button>
-                        )}
-
-                        <AnimatePresence>
-                          {activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                              className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[180px] space-y-1 text-left"
-                            >
-                              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Strategy</div>
-                              <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setActivePopover(null);
-                                    onUpdateStrategy?.(trade, null);
-                                  }}
-                                  className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                    !trade.strategy ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
-                                  }`}
-                                >
-                                  <span>No Strategy</span>
-                                  {!trade.strategy && <span className="text-indigo-400 font-bold">✓</span>}
-                                </button>
-                                {userStrategies?.map(strat => {
-                                  const isSelected = trade.strategy === strat.name;
-                                  return (
-                                    <button
-                                      key={strat.id}
-                                      type="button"
-                                      onClick={() => {
-                                        setActivePopover(null);
-                                        onUpdateStrategy?.(trade, strat.name);
-                                      }}
-                                      className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                        isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
-                                      }`}
-                                    >
-                                      <span>{strat.name}</span>
-                                      {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                    {/* Reorderable cells — follow columnOrder exactly */}
+                    {columnOrder.filter(k => visibleColumns[k]).map(colKey => {
+                      const ds = tableDensity === 'compact' ? 'text-xs' : 'text-sm';
+                      switch (colKey) {
+                        case 'side': return (
+                          <div key={colKey} className="flex items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg inline-flex items-center"
+                              style={trade.type === 'Long'
+                                ? { background:'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.04))', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)', boxShadow:'0 0 8px rgba(16,185,129,0.08)' }
+                                : { background:'linear-gradient(135deg,rgba(239,68,68,0.1),rgba(239,68,68,0.04))', color:'#f87171', border:'1px solid rgba(239,68,68,0.2)', boxShadow:'0 0 8px rgba(239,68,68,0.08)' }
+                              }>{trade.type === 'Long' ? 'BUY' : 'SELL'}</span>
+                          </div>
+                        );
+                        case 'entry': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
+                        case 'exit': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
+                        case 'lots': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums`}>{trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}</div>;
+                        case 'pips': {
+                          const hasPips = trade.pips !== undefined && trade.pips !== null;
+                          const pipColors = getPLColorClasses(trade.pips ?? 0, colorblindMode);
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${!hasPips ? 'text-gray-400' : pipColors.text70}`}>{hasPips ? formatPips(trade.pips) : '--'}</div>;
+                        }
+                        case 'pnl': {
+                          const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                          return (
+                            <div key={colKey} className={`${ds} font-bold tabular-nums text-right`}>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ color:pnlColors.hexColor, background:pnlColors.hexBg, textShadow:(trade.profit_loss ?? 0) !== 0 ? `0 0 12px ${pnlColors.hexShadow}` : 'none' }}>
+                                {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
+                              </span>
+                            </div>
+                          );
+                        }
+                        case 'percentGain': {
+                          const gainColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                          const pct = trade.profit_loss != null ? getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance) : null;
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${gainColors.text70}`}>{pct != null ? `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%` : '--'}</div>;
+                        }
+                        case 'commission': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums`}>{(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}</div>;
+                        case 'netProfit': {
+                          const net = (trade.profit_loss ?? 0) - ((trade as any).commission ?? 0);
+                          const netColors = getPLColorClasses(net, colorblindMode);
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${netColors.text}`}>{net > 0 ? '+' : ''}{formatCurrency(net)}</div>;
+                        }
+                        case 'date': return <div key={colKey} className={`${ds} text-gray-400 text-left`}>{new Date(trade.entry_time).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</div>;
+                        case 'openTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums`}>{new Date(trade.entry_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
+                        case 'closeTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums`}>{new Date(trade.exit_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
+                        case 'holdTime': {
+                          const m = Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / 60000);
+                          return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums`}>{m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m`}</div>;
+                        }
+                        case 'stopLoss': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums`}>{(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
+                        case 'takeProfit': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums`}>{(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
+                        case 'account': return <div key={colKey} className={`${ds} text-gray-400 text-left truncate`}>{trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}</div>;
+                        case 'strategy': return (
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full">
+                            {trade.strategy ? (
+                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                                className="popover-trigger px-2.5 py-1 rounded-lg text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 text-xs font-semibold tracking-wide capitalize hover:bg-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all truncate">
+                                {trade.strategy}
+                              </button>
+                            ) : (
+                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                                className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95">+</button>
+                            )}
+                            <AnimatePresence>
+                              {activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' && (
+                                <motion.div initial={{ opacity:0, y:6, scale:0.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:6, scale:0.95 }} transition={{ duration:0.15, ease:[0.16,1,0.3,1] }}
+                                  className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[180px] space-y-1 text-left">
+                                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Strategy</div>
+                                  <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                                    <button type="button" onClick={() => { setActivePopover(null); onUpdateStrategy?.(trade, null); }}
+                                      className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${!trade.strategy ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'}`}>
+                                      <span>No Strategy</span>{!trade.strategy && <span className="text-indigo-400 font-bold">✓</span>}
                                     </button>
-                                  );
-                                })}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )}
-
-                    {/* Mindset Column (Inline Selection) */}
-                    {visibleColumns.mindset && (
-                      <div className="relative flex items-center gap-1 pr-4 min-w-0">
-                        {trade.emotional_state ? (
-                          <button
-                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
-                            className={`popover-trigger text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${
-                              EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                            }`}
-                          >
-                            {trade.emotional_state}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
-                            className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95"
-                            title="Set mindset"
-                          >
-                            +
-                          </button>
-                        )}
-
-                        <AnimatePresence>
-                          {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
-                            <motion.div
-                              initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              exit={{ opacity: 0, y: 6, scale: 0.95 }}
-                              transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                              className="popover-container absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1 text-left"
-                            >
-                              <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
-                              <div className="max-h-[200px] overflow-y-auto space-y-0.5">
-                                {EMOTIONS.map(emotion => {
-                                  const isSelected = trade.emotional_state === emotion.value;
-                                  return (
-                                    <button
-                                      key={emotion.value}
-                                      onClick={async () => {
-                                        setActivePopover(null);
-                                        // Trigger a callback that modifies the trade state and updates database
-                                        onInlineChange('emotional_state', emotion.value);
-                                        const updatedTrade = { ...trade, emotional_state: emotion.value };
-                                        onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false);
-                                      }}
-                                      className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                                        isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'
-                                      }`}
-                                    >
-                                      <span className="capitalize">{emotion.label}</span>
-                                      {isSelected && <span className="text-indigo-400 font-bold">✓</span>}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              {trade.emotional_state && (
-                                <button
-                                  onClick={async () => {
-                                    setActivePopover(null);
-                                    const updatedTrade = { ...trade, emotional_state: null as any };
-                                    onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false);
-                                  }}
-                                  className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors"
-                                >
-                                  Clear Mindset
-                                </button>
+                                    {userStrategies?.map(strat => {
+                                      const isSelected = trade.strategy === strat.name;
+                                      return (
+                                        <button key={strat.id} type="button" onClick={() => { setActivePopover(null); onUpdateStrategy?.(trade, strat.name); }}
+                                          className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'}`}>
+                                          <span>{strat.name}</span>{isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </motion.div>
                               )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    )}
-
-                    {/* Strategy Tags (Inline Selection) */}
-                    {visibleColumns.tags && (
-                      <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
-                        <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
-                          {trade.tags && trade.tags.map((tag) => {
-                            const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
-                            const style = getTagStyle(tc?.color, false);
-                            return (
-                              <span
-                                key={tag}
-                                style={style}
-                                className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                              >
-                                {tag}
-                                <button
-                                  onClick={() => onToggleTag(trade, tag, false)}
-                                  className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans"
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                        <button
-                          onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
-                          className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
-                        >
-                          +
-                        </button>
-                        
-                        <AnimatePresence>
-                          {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false, idx >= filteredTrades.length - 2)}
-                        </AnimatePresence>
-                      </div>
-                    )}
-
-                    {/* Mistake Tags (Inline Selection) */}
-                    {visibleColumns.mistakes && (
-                      <div className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
-                        <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
-                          {trade.mistakes && trade.mistakes.map((mistake) => {
-                            const tc = userTagsConfig.find(c => c.name.toLowerCase() === mistake.toLowerCase());
-                            const style = getTagStyle(tc?.color, true);
-                            return (
-                              <span
-                                key={mistake}
-                                style={style}
-                                className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0"
-                              >
-                                {mistake}
-                                <button
-                                  onClick={() => onToggleTag(trade, mistake, true)}
-                                  className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans"
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                        <button
-                          onClick={(e) => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
-                          className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0"
-                        >
-                          +
-                        </button>
-                        
-                        <AnimatePresence>
-                          {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}
-                        </AnimatePresence>
-                      </div>
-                    )}
-
-                    {/* Learnings / Notes (Modal trigger) */}
-                    {visibleColumns.notes && (
-                      <div className="relative pr-4 min-w-0 overflow-hidden text-left">
-                        <div
-                          onClick={() => {
-                            onNotesEditClick(trade);
-                          }}
-                          className="text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1.5 rounded-lg border border-transparent hover:border-white/[0.04] transition-all min-h-[24px]"
-                          title="Click to view/edit learnings"
-                        >
-                          {trade.notes || <span className="text-gray-600 italic text-[10px]">Click to add note...</span>}
-                        </div>
-                      </div>
-                    )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                        case 'mindset': return (
+                          <div key={colKey} className="relative flex items-center gap-1 pr-4 min-w-0">
+                            {trade.emotional_state ? (
+                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
+                                className={`popover-trigger text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                                {trade.emotional_state}
+                              </button>
+                            ) : (
+                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
+                                className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95" title="Set mindset">+</button>
+                            )}
+                            <AnimatePresence>
+                              {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
+                                <motion.div initial={{ opacity:0, y:6, scale:0.95 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:6, scale:0.95 }} transition={{ duration:0.15, ease:[0.16,1,0.3,1] }}
+                                  className="popover-container absolute left-0 top-full mt-1 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1 text-left">
+                                  <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
+                                  <div className="max-h-[200px] overflow-y-auto space-y-0.5">
+                                    {EMOTIONS.map(emotion => {
+                                      const isSelected = trade.emotional_state === emotion.value;
+                                      return (
+                                        <button key={emotion.value} onClick={async () => { setActivePopover(null); onInlineChange('emotional_state', emotion.value); const updatedTrade = { ...trade, emotional_state: emotion.value }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
+                                          className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'}`}>
+                                          <span className="capitalize">{emotion.label}</span>{isSelected && <span className="text-indigo-400 font-bold">✓</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {trade.emotional_state && (
+                                    <button onClick={async () => { setActivePopover(null); const updatedTrade = { ...trade, emotional_state: null as any }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
+                                      className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors">Clear Mindset</button>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                        case 'tags': return (
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+                            <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
+                              {trade.tags && trade.tags.map(tag => {
+                                const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
+                                const style = getTagStyle(tc?.color, false);
+                                return (
+                                  <span key={tag} style={style} className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0">
+                                    {tag}<button onClick={() => onToggleTag(trade, tag, false)} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
+                              className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
+                            <AnimatePresence>
+                              {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false, idx >= filteredTrades.length - 2)}
+                            </AnimatePresence>
+                          </div>
+                        );
+                        case 'mistakes': return (
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full">
+                            <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
+                              {trade.mistakes && trade.mistakes.map(mistake => {
+                                const tc = userTagsConfig.find(c => c.name.toLowerCase() === mistake.toLowerCase());
+                                const style = getTagStyle(tc?.color, true);
+                                return (
+                                  <span key={mistake} style={style} className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0">
+                                    {mistake}<button onClick={() => onToggleTag(trade, mistake, true)} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                            <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
+                              className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
+                            <AnimatePresence>
+                              {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}
+                            </AnimatePresence>
+                          </div>
+                        );
+                        case 'notes': return (
+                          <div key={colKey} className="relative pr-4 min-w-0 overflow-hidden text-left">
+                            <div onClick={() => onNotesEditClick(trade)}
+                              className="text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1.5 rounded-lg border border-transparent hover:border-white/[0.04] transition-all min-h-[24px]"
+                              title="Click to view/edit learnings">
+                              {trade.notes || <span className="text-gray-600 italic text-[10px]">Click to add note...</span>}
+                            </div>
+                          </div>
+                        );
+                        default: return <div key={colKey} />;
+                      }
+                    })}
 
                     {/* Actions */}
                     <div 
