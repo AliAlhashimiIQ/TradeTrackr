@@ -343,7 +343,7 @@ export default function PlaybookPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
             <svg className="w-7 h-7 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
@@ -364,13 +364,15 @@ export default function PlaybookPage() {
 
       {tags.length === 0 ? (
         // Empty State
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-slate-900/20 border border-slate-800 rounded-3xl p-8">
-          <div className="w-16 h-16 bg-slate-900 rounded-2xl border border-white/[0.06] flex items-center justify-center mb-5 text-slate-500 shadow-xl shadow-black/20">
+        <div className="flex flex-col items-center justify-center py-16 text-center border border-black/[0.06] dark:border-slate-800 rounded-3xl p-8"
+          style={{ backgroundColor: 'var(--card-bg)' }}>
+          <div className="w-16 h-16 rounded-2xl border border-black/[0.06] dark:border-white/[0.06] flex items-center justify-center mb-5 text-slate-500 shadow-xl shadow-black/10"
+            style={{ backgroundColor: 'var(--table-header-bg)' }}>
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-white">Create your first strategy</h3>
+          <h3 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Create your first strategy</h3>
           <p className="text-sm text-slate-500 max-w-sm mt-2 mb-6">
             Document your playbook strategies (like Breakouts, Trend trades, or Range reversals) to track their win rate and check off rules before entering.
           </p>
@@ -400,9 +402,14 @@ export default function PlaybookPage() {
                     onClick={() => setSelectedTagId(tag.id)}
                     className={`w-full text-left p-4 rounded-2xl border transition-all relative overflow-hidden group ${
                       isSelected
-                        ? 'bg-slate-900/80 border-indigo-500/50 shadow-lg shadow-indigo-950/20'
-                        : 'bg-slate-950 border-white/[0.04] hover:bg-[#0d0e16] hover:border-white/[0.08]'
+                        ? 'border-indigo-500/50 shadow-lg shadow-indigo-950/10'
+                        : 'border-black/[0.06] dark:border-white/[0.04] hover:border-indigo-300/50 dark:hover:border-white/[0.08]'
                     }`}
+                    style={{
+                      backgroundColor: isSelected
+                        ? 'var(--table-header-bg)'
+                        : 'var(--card-bg)',
+                    }}
                   >
                     {/* Tag Indicator Line */}
                     <div 
@@ -412,18 +419,18 @@ export default function PlaybookPage() {
                     
                     <div className="pl-2">
                       <div className="flex justify-between items-start gap-2 mb-3">
-                        <span className="font-bold text-white text-base group-hover:text-indigo-400 transition-colors">
+                        <span className="font-bold text-base group-hover:text-indigo-500 transition-colors" style={{ color: 'var(--foreground)' }}>
                           {tag.name}
                         </span>
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                          stats.winRate >= 60 ? 'bg-emerald-500/10 text-emerald-400' : stats.winRate >= 50 ? 'bg-indigo-500/10 text-indigo-400' : 'bg-red-500/10 text-red-400'
+                          stats.winRate >= 60 ? 'bg-emerald-500/10 text-emerald-500' : stats.winRate >= 50 ? 'bg-indigo-500/10 text-indigo-500' : 'bg-red-500/10 text-red-500'
                         }`}>
                           {stats.winRate.toFixed(0)}% WR
                         </span>
                       </div>
                       
                       <div className="flex justify-between items-end">
-                        <div className="text-xs text-slate-500">
+                        <div className="text-xs text-slate-400">
                           {stats.tradesCount} trades logged
                         </div>
                         <div className={`text-sm font-bold ${pnlColors.text}`}>
@@ -440,21 +447,22 @@ export default function PlaybookPage() {
           {/* Right strategy detail workspace */}
           <div className="lg:col-span-2">
             {selectedTag && activeStats ? (
-              <div className="bg-slate-950 border border-white/[0.04] rounded-3xl p-6 lg:p-8 shadow-xl shadow-black/40">
+              <div className="rounded-3xl p-6 lg:p-8 border border-black/[0.06] dark:border-white/[0.04] shadow-xl shadow-black/10"
+                style={{ backgroundColor: 'var(--card-bg)' }}>
                 
                 {/* Header Actions */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/[0.06] pb-5 mb-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-black/[0.06] dark:border-white/[0.06] pb-5 mb-6">
                   <div className="flex items-center gap-3">
                     <div 
                       className="w-4 h-4 rounded-full shadow" 
                       style={{ backgroundColor: selectedTag.color || '#3b82f6' }}
                     />
-                    <h2 className="text-xl font-bold text-white">{selectedTag.name} Workspace</h2>
+                    <h2 className="text-xl font-bold" style={{ color: 'var(--foreground)' }}>{selectedTag.name} Workspace</h2>
                   </div>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={handleDeleteStrategy}
-                      className="text-xs text-red-400/80 hover:text-red-400 px-3 py-2 bg-red-950/20 border border-red-900/30 rounded-xl transition-all"
+                      className="text-xs text-red-500 hover:text-red-600 px-3 py-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl transition-all"
                     >
                       Delete Playbook
                     </button>
@@ -475,57 +483,72 @@ export default function PlaybookPage() {
 
                 {/* Metrics Stats Banner */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="bg-[#0c0d14] border border-white/[0.04] p-4 rounded-2xl text-center">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Net Profit</div>
-                    <div className={`text-lg font-bold ${getPLColorClasses(activeStats.totalPnL, colorblindMode).text}`}>
-                      {activeStats.totalPnL > 0 ? '+' : ''}{formatCurrency(activeStats.totalPnL)}
+                  {[
+                    {
+                      label: 'Net Profit',
+                      value: <span className={getPLColorClasses(activeStats.totalPnL, colorblindMode).text}>
+                        {activeStats.totalPnL > 0 ? '+' : ''}{formatCurrency(activeStats.totalPnL)}
+                      </span>
+                    },
+                    {
+                      label: 'Win Rate',
+                      value: <span className="text-indigo-500">{activeStats.winRate.toFixed(1)}%</span>
+                    },
+                    {
+                      label: 'Profit Factor',
+                      value: <span style={{ color: 'var(--foreground)' }}>{activeStats.profitFactor.toFixed(2)}</span>
+                    },
+                    {
+                      label: 'Average P&L',
+                      value: <span style={{ color: 'var(--foreground)' }}>
+                        {activeStats.tradesCount > 0 ? formatCurrency(activeStats.totalPnL / activeStats.tradesCount) : '$0.00'}
+                      </span>
+                    },
+                  ].map((stat, i) => (
+                    <div key={i}
+                      className="border border-black/[0.06] dark:border-white/[0.04] p-4 rounded-2xl text-center"
+                      style={{ backgroundColor: 'var(--table-header-bg)' }}
+                    >
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">{stat.label}</div>
+                      <div className="text-lg font-bold">{stat.value}</div>
                     </div>
-                  </div>
-                  <div className="bg-[#0c0d14] border border-white/[0.04] p-4 rounded-2xl text-center">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Win Rate</div>
-                    <div className="text-lg font-bold text-indigo-400">{activeStats.winRate.toFixed(1)}%</div>
-                  </div>
-                  <div className="bg-[#0c0d14] border border-white/[0.04] p-4 rounded-2xl text-center">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Profit Factor</div>
-                    <div className="text-lg font-bold text-white">{activeStats.profitFactor.toFixed(2)}</div>
-                  </div>
-                  <div className="bg-[#0c0d14] border border-white/[0.04] p-4 rounded-2xl text-center">
-                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Average P&L</div>
-                    <div className="text-lg font-bold text-white">
-                      {activeStats.tradesCount > 0 ? formatCurrency(activeStats.totalPnL / activeStats.tradesCount) : '$0.00'}
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-8">
                   {/* Setup Rules List */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                         <div className="w-1 h-3 bg-indigo-500 rounded-full" />
                         Setup Rules / Checklist
                       </h3>
-                      <span className="text-[10px] text-slate-500 font-bold bg-[#0c0d14] px-2 py-0.5 rounded-full border border-white/[0.04]">
+                      <span className="text-[10px] text-slate-400 font-bold px-2 py-0.5 rounded-full border border-black/[0.06] dark:border-white/[0.04]"
+                        style={{ backgroundColor: 'var(--table-header-bg)' }}>
                         {rulesList.length} criteria
                       </span>
                     </div>
 
-                    <div className="bg-[#0c0d14] border border-white/[0.04] p-4 rounded-2xl space-y-3.5 min-h-[220px]">
+                    <div className="border border-black/[0.06] dark:border-white/[0.04] p-4 rounded-2xl space-y-3.5 min-h-[220px]"
+                      style={{ backgroundColor: 'var(--table-header-bg)' }}>
                       {rulesList.length === 0 ? (
-                        <p className="text-xs text-slate-600 italic py-8 text-center">No entry criteria documented yet. Add some rules below!</p>
+                        <p className="text-xs text-slate-400 italic py-8 text-center">No entry criteria documented yet. Add some rules below!</p>
                       ) : (
                         <div className="space-y-2.5">
                           {rulesList.map((rule, idx) => (
-                            <div key={idx} className="flex justify-between items-center bg-[#07080c] border border-white/[0.02] p-2.5 rounded-xl group/item">
+                            <div key={idx}
+                              className="flex justify-between items-center border border-black/[0.04] dark:border-white/[0.02] p-2.5 rounded-xl group/item"
+                              style={{ backgroundColor: 'var(--card-bg)' }}
+                            >
                               <div className="flex items-center gap-2.5">
-                                <div className="w-5 h-5 rounded-md border border-indigo-500/20 bg-indigo-500/5 flex items-center justify-center text-[10px] font-bold text-indigo-400">
+                                <div className="w-5 h-5 rounded-md border border-indigo-500/20 bg-indigo-500/5 flex items-center justify-center text-[10px] font-bold text-indigo-500">
                                   {idx + 1}
                                 </div>
-                                <span className="text-sm text-slate-300 font-medium">{rule}</span>
+                                <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>{rule}</span>
                               </div>
                               <button
                                 onClick={() => handleRemoveRule(idx)}
-                                className="text-slate-600 hover:text-red-400 p-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                className="text-slate-400 hover:text-red-500 p-1 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                 title="Remove rule"
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -536,19 +559,21 @@ export default function PlaybookPage() {
                       )}
 
                       {/* Rule Input */}
-                      <div className="flex gap-2 pt-3 border-t border-white/[0.04]">
+                      <div className="flex gap-2 pt-3 border-t border-black/[0.06] dark:border-white/[0.04]">
                         <input
                           type="text"
                           value={newRule}
                           onChange={e => setNewRule(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddRule(); } }}
                           placeholder="Add new rule..."
-                          className="flex-1 px-3 py-2 bg-[#06070a] border border-white/[0.06] rounded-xl text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
+                          className="flex-1 px-3 py-2 border border-black/[0.08] dark:border-white/[0.06] rounded-xl text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/40"
+                          style={{ backgroundColor: 'var(--card-bg)', color: 'var(--foreground)' }}
                         />
                         <button
                           type="button"
                           onClick={handleAddRule}
-                          className="px-3 py-2 bg-[#06070a] hover:bg-[#0c0e15] border border-white/[0.06] rounded-xl text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                          className="px-3 py-2 border border-black/[0.08] dark:border-white/[0.06] rounded-xl text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                          style={{ backgroundColor: 'var(--card-bg)' }}
                         >
                           Add
                         </button>
@@ -558,7 +583,7 @@ export default function PlaybookPage() {
 
                   {/* Strategy Description */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                       <div className="w-1 h-3 bg-indigo-500 rounded-full" />
                       Strategy Description
                     </h3>
@@ -566,26 +591,29 @@ export default function PlaybookPage() {
                       value={description}
                       onChange={e => setDescription(e.target.value)}
                       placeholder="Write notes about this strategy. When does it work best? What market conditions? What are the targets and invalidation points?"
-                      className="w-full h-[220px] bg-[#0c0d14] border border-white/[0.04] rounded-2xl p-4 text-sm text-slate-300 placeholder-slate-600 focus:outline-none focus:border-indigo-500/40 resize-none font-medium leading-relaxed"
+                      className="w-full h-[220px] border border-black/[0.08] dark:border-white/[0.04] rounded-2xl p-4 text-sm placeholder-slate-400 focus:outline-none focus:border-indigo-500/40 resize-none font-medium leading-relaxed"
+                      style={{ backgroundColor: 'var(--table-header-bg)', color: 'var(--foreground)' }}
                     />
                   </div>
                 </div>
 
                 {/* Logged Trades Table */}
                 <div className="space-y-4">
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <div className="w-1 h-3 bg-indigo-500 rounded-full" />
                     Strategy Trades ({activeStats.tradesList.length})
                   </h3>
 
-                  <div className="bg-[#0c0d14] border border-white/[0.04] rounded-2xl overflow-hidden">
+                  <div className="border border-black/[0.06] dark:border-white/[0.04] rounded-2xl overflow-hidden"
+                    style={{ backgroundColor: 'var(--card-bg)' }}>
                     {activeStats.tradesList.length === 0 ? (
-                      <div className="text-center py-8 text-xs text-slate-600 italic">No trades tagged with this strategy yet.</div>
+                      <div className="text-center py-8 text-xs text-slate-400 italic">No trades tagged with this strategy yet.</div>
                     ) : (
                       <div className="overflow-x-auto max-h-[300px]">
                         <table className="w-full text-left text-xs border-collapse">
                           <thead>
-                            <tr className="border-b border-white/[0.04] bg-[#07080e]/60 text-slate-500 font-bold uppercase tracking-wider">
+                            <tr className="border-b border-black/[0.06] dark:border-white/[0.04] text-slate-400 font-bold uppercase tracking-wider"
+                              style={{ backgroundColor: 'var(--table-header-bg)' }}>
                               <th className="py-3 px-4">Date</th>
                               <th className="py-3 px-4">Asset</th>
                               <th className="py-3 px-4 text-center">Type</th>
@@ -593,28 +621,28 @@ export default function PlaybookPage() {
                               <th className="py-3 px-4 text-right">P&L</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-white/[0.02]">
+                          <tbody className="divide-y divide-black/[0.04] dark:divide-white/[0.02]">
                             {activeStats.tradesList.map(trade => {
                               const tradePnL = trade.profit_loss ?? 0;
                               const pnlColors = getPLColorClasses(tradePnL, colorblindMode);
-                              const typeColors = trade.type === 'Long' ? 'text-emerald-400 bg-emerald-500/10' : 'text-red-400 bg-red-500/10';
+                              const typeColors = trade.type === 'Long' ? 'text-emerald-500 bg-emerald-500/10' : 'text-red-500 bg-red-500/10';
                               
                               return (
                                 <tr 
                                   key={trade.id} 
                                   onClick={() => setActiveTrade(trade)}
-                                  className="hover:bg-[#141624]/30 cursor-pointer transition-colors duration-150"
+                                  className="hover:bg-indigo-500/[0.03] cursor-pointer transition-colors duration-150"
                                 >
                                   <td className="py-3.5 px-4 font-medium text-slate-400">
                                     {new Date(trade.entry_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                   </td>
-                                  <td className="py-3.5 px-4 font-bold text-white">{trade.symbol}</td>
+                                  <td className="py-3.5 px-4 font-bold" style={{ color: 'var(--foreground)' }}>{trade.symbol}</td>
                                   <td className="py-3.5 px-4 text-center">
                                     <span className={`px-2 py-0.5 rounded font-semibold text-[10px] uppercase ${typeColors}`}>
                                       {trade.type}
                                     </span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-right font-semibold text-slate-300 font-mono">
+                                  <td className="py-3.5 px-4 text-right font-semibold text-slate-400 font-mono">
                                     {trade.pips !== undefined && trade.pips !== null ? formatPips(trade.pips) : '—'}
                                   </td>
                                   <td className="py-3.5 px-4 text-right font-bold font-mono">
@@ -637,7 +665,8 @@ export default function PlaybookPage() {
 
               </div>
             ) : (
-              <div className="flex items-center justify-center min-h-[50vh] text-slate-500 bg-slate-900/10 border border-slate-800 rounded-3xl border-dashed">
+              <div className="flex items-center justify-center min-h-[50vh] text-slate-400 border border-black/[0.06] dark:border-slate-800 rounded-3xl border-dashed"
+                style={{ backgroundColor: 'var(--card-bg)' }}>
                 Select a strategy to view playbook workspace
               </div>
             )}
@@ -663,51 +692,56 @@ export default function PlaybookPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#0f1118] border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+            className="border border-black/[0.08] dark:border-slate-700 rounded-2xl p-6 w-full max-w-md shadow-2xl relative"
+            style={{ backgroundColor: 'var(--card-bg)' }}
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-bold text-white">Create Strategy Playbook</h2>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-white transition-colors">
+              <h2 className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Create Strategy Playbook</h2>
+              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             </div>
             
             <form onSubmit={handleCreateStrategy} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Strategy Name</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Strategy Name</label>
                 <input
                   type="text"
                   required
                   value={newStratName}
                   onChange={e => setNewStratName(e.target.value)}
                   placeholder="e.g. Trendline Bounce, VWAP Break"
-                  className="w-full px-4 py-2.5 bg-[#07080d] border border-white/[0.06] rounded-xl text-base text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                  className="w-full px-4 py-2.5 border border-black/[0.08] dark:border-white/[0.06] rounded-xl text-base placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                  style={{ backgroundColor: 'var(--table-header-bg)', color: 'var(--foreground)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Color Code</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Color Code</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
                     value={newStratColor}
                     onChange={e => setNewStratColor(e.target.value)}
-                    className="w-12 h-10 bg-[#07080d] border border-white/[0.06] rounded-xl cursor-pointer p-1"
+                    className="w-12 h-10 border border-black/[0.08] dark:border-white/[0.06] rounded-xl cursor-pointer p-1"
+                    style={{ backgroundColor: 'var(--table-header-bg)' }}
                   />
                   <input
                     type="text"
                     value={newStratColor}
                     onChange={e => setNewStratColor(e.target.value)}
-                    className="flex-1 px-4 py-2.5 bg-[#07080d] border border-white/[0.06] rounded-xl text-base text-white font-mono focus:outline-none"
+                    className="flex-1 px-4 py-2.5 border border-black/[0.08] dark:border-white/[0.06] rounded-xl text-base font-mono focus:outline-none"
+                    style={{ backgroundColor: 'var(--table-header-bg)', color: 'var(--foreground)' }}
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-white/[0.04] flex justify-end gap-3">
+              <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.04] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-sm font-semibold rounded-xl transition-all"
+                  className="px-4 py-2.5 border border-black/[0.08] dark:border-white/[0.06] text-slate-500 dark:text-slate-300 text-sm font-semibold rounded-xl transition-all hover:bg-black/[0.04] dark:hover:bg-white/[0.04]"
+                  style={{ backgroundColor: 'var(--table-header-bg)' }}
                 >
                   Cancel
                 </button>
