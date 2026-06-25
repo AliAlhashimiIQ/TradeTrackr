@@ -124,23 +124,25 @@ export default function Header() {
       </header>
 
       {/* Desktop Left Sidebar */}
-      <aside className={`fixed top-0 bottom-0 left-0 w-56 bg-[#0a0b12]/95 border-r border-white/[0.06] backdrop-blur-md hidden lg:flex flex-col justify-between p-5 z-30 transition-all duration-300 ease-in-out ${
+      <aside className={`fixed top-0 bottom-0 left-0 w-56 border-r hidden lg:flex flex-col justify-between p-5 z-30 transition-all duration-300 ease-in-out ${
         sidebarCollapsed ? 'translate-x-[-100%] opacity-0 pointer-events-none' : 'translate-x-0'
-      }`}>
+      }`}
+        style={{ backgroundColor: 'var(--card-bg)', borderRightColor: 'var(--card-border)' }}
+      >
         {/* Top: Logo, search, and nav */}
         <div className="flex flex-col gap-6">
           {/* Logo & Collapse Button */}
           <div className="flex items-center justify-between px-2">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25 group-hover:border-indigo-500/30 transition-all">
+              <div className="w-9 h-9 bg-indigo-50 dark:bg-slate-950 border border-indigo-100 dark:border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/10 group-hover:border-indigo-500/30 transition-all">
                 <Logo className="w-6 h-6" />
               </div>
-              <span className="text-lg font-bold text-white tracking-tight">TradeTrackr</span>
+              <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>TradeTrackr</span>
             </Link>
             
             <button
               onClick={toggleSidebar}
-              className="p-1.5 text-gray-500 hover:text-white rounded-lg hover:bg-white/5 transition-colors duration-200"
+              className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-black/[0.05] dark:hover:bg-white/5 transition-colors duration-200"
               title="Collapse Sidebar"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +167,8 @@ export default function Header() {
                   e.currentTarget.value = ''
                 }
               }}
-              className="block w-full pl-10 pr-4 py-2 bg-white/[0.03] border border-white/[0.06] rounded-xl text-xs text-white placeholder-gray-600 focus:outline-none focus:bg-white/[0.06] focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              className="block w-full pl-10 pr-4 py-2 border border-black/[0.08] dark:border-white/[0.06] rounded-xl text-xs placeholder-gray-400 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              style={{ backgroundColor: 'var(--table-header-bg)', color: 'var(--foreground)' }}
             />
           </div>
 
@@ -180,7 +183,7 @@ export default function Header() {
                   className={`group relative px-4 py-3 rounded-xl flex items-center gap-3 text-xs font-semibold transition-colors duration-200 ${
                     isActive 
                       ? 'text-white font-semibold' 
-                      : 'text-gray-400 hover:text-white'
+                      : 'text-gray-400 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white'
                   }`}
                 >
                   {!isActive && (
@@ -259,14 +262,14 @@ export default function Header() {
           </div>
 
           {/* User profile details, theme switcher, settings, sign out */}
-          <div className="pt-4 border-t border-white/[0.06] flex flex-col gap-2.5">
+          <div className="pt-4 border-t border-black/[0.06] dark:border-white/[0.06] flex flex-col gap-2.5">
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500/20 to-blue-600/20 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold text-xs shrink-0">
                   {user?.email?.[0].toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white truncate leading-none mb-0.5">{user?.email?.split('@')[0]}</p>
+                  <p className="text-xs font-semibold truncate leading-none mb-0.5" style={{ color: 'var(--foreground)' }}>{user?.email?.split('@')[0]}</p>
                   <p className="text-[9px] text-gray-500 truncate leading-none">{user?.email}</p>
                 </div>
               </div>
@@ -274,7 +277,7 @@ export default function Header() {
               {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center shrink-0"
                 title="Toggle Theme"
               >
                 {!mounted || theme === 'dark' ? (
@@ -290,7 +293,7 @@ export default function Header() {
             </div>
 
             <div className="flex gap-1.5 px-1 mt-1">
-              <Link href="/settings" className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-white/[0.02] hover:bg-white/5 border border-white/[0.04] text-[10px] font-medium text-gray-400 hover:text-white transition-colors">
+              <Link href="/settings" className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg bg-black/[0.04] hover:bg-black/[0.07] dark:bg-white/[0.02] dark:hover:bg-white/5 border border-black/[0.06] dark:border-white/[0.04] text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white transition-colors">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 Settings
               </Link>
@@ -322,11 +325,12 @@ export default function Header() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[280px] bg-[#0a0b12] border-l border-white/[0.06] z-[1000] lg:hidden p-6 shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-[280px] border-l border-black/[0.08] dark:border-white/[0.06] z-[1000] lg:hidden p-6 shadow-2xl"
+              style={{ backgroundColor: 'var(--card-bg)' }}
             >
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-8">
-                  <span className="text-lg font-bold text-white">Menu</span>
+                  <span className="text-lg font-bold" style={{ color: 'var(--foreground)' }}>Menu</span>
                   <button onClick={() => setMobileMenuOpen(false)} className="p-2 text-gray-500 hover:text-white">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
@@ -388,7 +392,8 @@ export default function Header() {
       {sidebarCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="fixed left-0 top-6 z-50 p-2.5 bg-[#0a0b12]/90 border-r border-y border-white/[0.08] hover:border-indigo-500/30 rounded-r-xl text-gray-400 hover:text-white shadow-lg backdrop-blur-md transition-all duration-300 hover:pr-3.5 hidden lg:flex items-center justify-center"
+          className="fixed left-0 top-6 z-50 p-2.5 border-r border-y hover:border-indigo-500/30 rounded-r-xl text-gray-400 hover:text-gray-700 dark:hover:text-white shadow-lg backdrop-blur-md transition-all duration-300 hover:pr-3.5 hidden lg:flex items-center justify-center"
+          style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}
           title="Expand Sidebar"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
