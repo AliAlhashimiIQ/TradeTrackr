@@ -1,206 +1,127 @@
 # TradeTrackr — The Intelligent Trading Journal
 
-> Track every trade, uncover your edge, master your psychology. **Free forever.**
-
-<p align="center">
-  <a href="#features">Features</a> •
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#tech-stack">Tech Stack</a> •
-  <a href="#project-structure">Project Structure</a> •
-  <a href="#contributing">Contributing</a>
-</p>
+TradeTrackr is a modern, high-performance, and visually premium trading journal and analytics dashboard designed for retail and funded traders (prop firm challenge participants). It tracks not only execution statistics but also trader psychology, mapping emotional correlation to financial performance and displaying the exact dollar cost of trading mistakes.
 
 ---
 
-## Why TradeTrackr?
-
-Most trading journals make you enter data and give you a chart. TradeTrackr goes further — it tracks your **psychology**, detects **behavioral patterns** like revenge trading, shows you the **dollar cost of your mistakes**, and monitors your **prop firm challenge rules** in real time. All wrapped in a premium Liquid Glass UI. And it's **100% free**.
-
----
-
-## Features
-
-### 📊 Command Center Dashboard
-- Equity curve with real-time P&L tracking
-- Win/loss streak tracker with behavioral alerts
-- Max drawdown gauge with percentage visualization
-- Psychology score (% of trades without mistakes)
-- Best trading session detection
-- Forex pips tracking (auto-detects forex pairs)
-- Today's P&L with trade count
-- Behavior alert cards (revenge trading, overconfidence)
-
-### 🤖 AI-Powered Intelligence
-- **AI Trade Chat**: Ask questions about your trades in natural language
-- **Pattern Detection**: Identifies trading patterns across your history
-- **What-If Simulator**: "What if I removed all FOMO trades?" — simulates P&L impact
-- **Chart Screenshot OCR**: Upload chart screenshots, AI extracts symbol, entry/TP/SL levels, and chart patterns
-- **Train the AI**: Correct the AI's analysis to improve future accuracy
-- **Emotional Correlation**: Maps how your emotional state affects trade outcomes
-
-### 🏆 Prop Firm Challenge Tracker
-- **10 firms**: FTMO, E8, FundedNext, The5%ers, Apex, Topstep, Goat Funded, Funding Pips, MyFundedFX, True Forex Funds
-- Daily loss limit danger meter
-- Total drawdown tracking with trailing DD support
-- Profit target progress bar
-- Days remaining countdown
-- **Real-time violation alerts** when you approach or breach limits
-- Dedicated analytics tab for challenge performance
-
-### 📈 Advanced Analytics (4-Tab System)
-- **Overview**: Equity curve, P&L distribution, monthly performance, drawdown chart, cost of mistakes
-- **Detailed Breakdown**: Symbol performance, trade type analysis, time-of-day heatmap, strategy comparison
-- **Cost of Mistakes**: Aggregates how much each bad habit (FOMO, late entry, oversized) has cost you in real dollars
-- **Prop Firm**: Challenge-specific analytics
-- Advanced metrics: Sharpe ratio, Sortino ratio, Expected Value, Profit Factor
-- Advanced filters by symbol, strategy, tags, date range, profit range
-- CSV/JSON export
-
-### 📅 Trading Calendar
-- Monthly P&L heat map (green/red coloring per day)
-- Click any day to see that day's trades in a sidebar
-- Week and month view modes
-
-### 📝 Rich Trade Entry
-- Emotional State Selector (calm, confident, fearful, FOMO, etc.)
-- Mistake tagger (select common trading mistakes)
-- Strategy & tag system with autocomplete
-- Screenshot uploader with AI analysis
-- Pips and lots tracking for forex
-- Preset buttons for quick entry
-- Form validation with duplicate prevention
-
-### 📥 Trade Import System
-- **MT5 HTML parser**: Handles UTF-16 encoding, detailed reports, positions and deals tables
-- **CSV import**: Generic format with configurable column mapping
-- **Preset mappings**: cTrader, ThinkorSwim
-- Duplicate detection (symbol + entry time + lots)
-- Import history log with delete capability
-- Drag-and-drop file upload
-
-### 🎨 Liquid Glass Design System
-- Premium glassmorphism theme with backdrop-blur effects
-- Dynamic gradient borders and ambient neon glows
-- Framer Motion entry animations on all cards
-- Custom scrollbar, progress bars, tooltips
-- Skeleton loaders on all loading states
-- Light and dark mode support
-- Fully responsive with mobile slide-out navigation
-
-### 🔒 Security & Auth
-- Supabase Authentication (email + optional Google OAuth)
-- Row Level Security on database tables
-- 3-step onboarding wizard for new users
-- Profile management (display name, avatar)
+## 🚀 Overview
+TradeTrackr integrates a beautiful "Liquid Glass" design system with deep client-side revalidation caching (SWR), off-thread worker-driven mathematical analysis, and direct API broker synchronization (MetaApi). This enables real-time drawdown safety metering, calendar P&L heatmaps, and AI-driven trade audit chats without browser thread blocking.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|:---|:---|
-| **Framework** | Next.js 14 (App Router) |
-| **Language** | TypeScript (strict mode) |
-| **Styling** | TailwindCSS + Custom Liquid Glass CSS |
-| **Animation** | Framer Motion |
-| **Charts** | Recharts (11 chart types), Tremor, Chart.js |
-| **Backend** | Supabase (PostgreSQL + Auth + Storage) |
-| **AI** | OpenAI GPT-3.5/4 via API routes |
-| **Data Fetching** | SWR + React Context |
-| **Fonts** | Plus Jakarta Sans (Google Fonts) |
+## 🎨 Features
+- **📊 Command Center Dashboard**: Real-time equity curves, win/loss streak alerts, max drawdown safety gauges, psychology performance scores, and daily net P&L metrics.
+- **🏆 Prop Firm Challenge Tracker**: Live target indicators and drawdown meters supporting 10 leading prop firms (FTMO, E8, Apex, etc.), featuring trailing drawdown rules and daily safety locks.
+- **📈 Advanced Analytics (4-Tab System)**: P&L heatmaps, asset distributions, monthly breakdowns, strategy metrics, and "Cost of Mistakes" trackers.
+- **📅 Trading Calendar**: Monthly and weekly grid visualizations displaying daily net P&L with slide-out trade detail inspect drawers.
+- **🤖 AI Coaching Assistant**: Proxied GPT-3.5 pattern extraction chat boxes, emotional correlation charts, and OCR screenshot scan mock engines.
+- **📥 Import Wizard**: Streamlined parsers for MT5 detailed HTML exports and mapped CSV data.
+- **🎨 Liquid Glass UI**: Responsive glassmorphic layout animations built on Tailwind CSS and Framer Motion.
 
 ---
 
-## Getting Started
+## 🏗️ Architecture
+TradeTrackr utilizes Next.js App Router for server-rendered page frameworks.
+- **Client-First reads**: Client components read data directly from Supabase using user JWT tokens, verifying Row-Level Security (RLS) constraints.
+- **SWR caching**: Prevents database query waterfalls on client-side route navigation.
+- **API proxies**: Operations requiring third-party API keys (like MetaApi cloud provisioning and economic calendar feeds) are executed server-side via Next.js route handlers (`/api/accounts/sync`, `/api/calendar`) to protect secrets.
+- **Web Workers**: Heavy O(N) chart aggregations on the Analytics page are processed by `analytics.worker.ts` off the main UI rendering thread.
 
-1. **Clone the repository**:
+---
+
+## 📂 Folder Structure
+```
+src/
+├── app/               # App Router pages and API routes
+│   ├── (routes)/      # UI pages (dashboard, analytics, calendar, playbook)
+│   └── api/           # Server-side proxy endpoints (sync, upload, media)
+├── components/        # Layout & Visual Elements
+│   ├── common/        # Shared atoms (Form fields, Network indicators)
+│   ├── layout/        # Shell layouts (Header, Sidebar, CommandPalette)
+│   └── trades/        # Modules specific to the trade logging experience
+├── hooks/             # Custom SWR and auth hooks (useTrades, useStreak)
+├── lib/               # Utility functions (contract multipliers, metrics math)
+├── providers/         # Global React context providers
+└── types/             # Common TypeScript schema types
+```
+
+---
+
+## 🛠️ Tech Stack
+- **Framework**: Next.js 14.2.30 (App Router), React 18.2.0, TypeScript 5.3.3
+- **Styling**: Tailwind CSS 3.4.1, Framer Motion 11.0.3, Next-Themes 0.4.6
+- **Charts & Data**: Recharts 2.11.0, Chart.js 4.5.1, Tremor React 3.13.1
+- **Backend & Auth**: Supabase PostgreSQL 17.6, `@supabase/supabase-js` 2.39.3, SWR 2.3.3
+- **HTTP Client**: Axios 1.6.7
+
+---
+
+## ⚙️ Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+OPENAI_API_KEY=your-openai-key
+META_API_TOKEN=your-metaapi-cloud-token
+DB_ENCRYPTION_KEY=32-character-encryption-key-for-broker-passwords
+```
+
+---
+
+## 🚀 Installation & Local Development
+1. Clone the repository and install dependencies:
    ```bash
    git clone https://github.com/AliAlhashimiIQ/TradeTrackr.git
    cd TradeTrackr
-   ```
-
-2. **Install dependencies**:
-   ```bash
    npm install
    ```
-
-3. **Set up environment variables**:
-   ```bash
-   cp .env.example .env.local
-   ```
-   Fill in your Supabase URL, anon key, and OpenAI API key. See [SUPABASE_SETUP.md](SUPABASE_SETUP.md) for database setup.
-
-4. **Run the development server**:
+2. Setup database tables and RLS constraints by executing SQL from `supabase/schema.sql` in your Supabase SQL editor.
+3. Run the local development server:
    ```bash
    npm run dev
    ```
-
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
-
----
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── analytics/          # 4-tab analytics dashboard
-│   ├── api/                # API routes (AI, trade upload)
-│   ├── calendar/           # P&L heat calendar
-│   ├── dashboard/          # Command Center
-│   ├── import/             # MT5/CSV import wizard
-│   ├── login/              # Login page
-│   ├── signup/             # Signup page
-│   ├── profile/            # User profile
-│   ├── settings/           # App settings
-│   ├── trades/             # Trade list, detail, edit, new
-│   └── welcome/            # Onboarding wizard
-├── components/
-│   ├── ai/                 # AI analysis panel, trade insights
-│   ├── analytics/          # Advanced filters, export, prop firm tab
-│   ├── calendar/           # Calendar components
-│   ├── charts/             # 11 chart components (Recharts)
-│   ├── common/             # Error boundary, network wrapper
-│   ├── dashboard/          # 16 dashboard widgets
-│   ├── layout/             # Sidebar, header, authenticated layout
-│   ├── trades/             # Trade form, detail, tags, notes, chat
-│   └── ui/                 # Skeleton loader, empty state, toast
-├── hooks/                  # useAuth, useDashboardData, useTrades
-├── lib/
-│   ├── ai/                 # AI service (OpenAI integration)
-│   ├── importParsers.ts    # MT5 HTML + CSV parsers
-│   ├── propFirms.ts        # 10 prop firm presets
-│   ├── tradeMetrics.ts     # Performance calculations
-│   ├── tradingApi.ts       # Supabase CRUD operations
-│   └── types.ts            # TypeScript type definitions
-├── providers/              # Context providers (theme, auth, page transition)
-└── styles/                 # Global styles
-```
+4. Access the dashboard at `http://localhost:3000`.
 
 ---
 
-## Available Scripts
-
-| Command | Description |
-|:---|:---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run analyze` | Bundle analysis (requires `ANALYZE=true`) |
+## 📦 Build & Deployment
+- **Production Build**:
+  ```bash
+  npm run build
+  ```
+- **Deployment**: Optimized for one-click deployment on **Vercel** connected to your Supabase project.
 
 ---
 
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## 📜 Available Scripts
+- `npm run dev`: Starts local development server.
+- `npm run build`: Bundles the application for production.
+- `npm start`: Starts the built production server.
+- `npm run lint`: Performs ESLint syntax validation checks.
+- `npm run analyze`: Triggers bundle size analysis.
 
 ---
 
-## License
+## ⚠️ Known Issues
+- **Serverless API Timeout**: Provisioning MetaApi cloud accounts during sync requests can exceed Vercel's 10-second Hobby timeout limit (up to 22.5s loop). A fix to support polling is outlined in the refactoring roadmap.
+- **Mock Video Player**: Review videos can be uploaded to private buckets, but the Trade Details sidebar lacks a video rendering player.
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+---
+
+## 🗺️ Roadmap
+Check out [ROADMAP.md](ROADMAP.md) for milestones regarding asynchronous sync status polling, video player embeds, and multi-currency exchange engines.
+
+---
+
+## 🤝 Contributing
+1. Fork the project.
+2. Create your branch: `git checkout -b feature/AmazingFeature`.
+3. Commit your changes: `git commit -m 'Add some AmazingFeature'`.
+4. Push to the branch: `git push origin feature/AmazingFeature`.
+5. Open a Pull Request.
+
+---
+
+## 📝 License
+Distributed under the MIT License. See `LICENSE` for details.
