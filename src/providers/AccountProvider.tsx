@@ -70,9 +70,10 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const userId = user?.id
   useEffect(() => {
     refreshAccounts()
-  }, [user])
+  }, [userId])
 
   // Load persisted selection after accounts are loaded
   useEffect(() => {

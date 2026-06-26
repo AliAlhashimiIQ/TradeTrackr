@@ -140,7 +140,7 @@ export default function CalendarPage() {
       }
     }
     fetch()
-  }, [user, selectedAccountIds])
+  }, [user?.id, selectedAccountIds])
 
   const tradesByDate = useMemo(() => groupTradesByDate(trades), [trades])
 

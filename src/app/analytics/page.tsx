@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
     };
 
     processTrades();
-  }, [user, cachedTrades, tradesLoading]);
+  }, [user?.id, cachedTrades, tradesLoading]);
   
   // ── 6.3 Offload heavy chart data calculations to a Web Worker ────────────────
   // Prevents blocking/freezing the main UI thread when loading thousands of trades.

@@ -109,10 +109,10 @@ export default function AccountsPage() {
   }, [user, loading, router])
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       fetchAccounts()
     }
-  }, [user])
+  }, [user?.id])
 
   // Handle Add Account
   const handleAddAccount = async (e: React.FormEvent) => {

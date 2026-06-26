@@ -159,9 +159,10 @@ export const SettingsProvider = ({ children }: { children: React.ReactNode }) =>
     }
   }
 
+  const userId = user?.id
   useEffect(() => {
     loadSettings()
-  }, [user])
+  }, [userId])
 
   // Sync colorblind HTML class when colorblindMode changes
   useEffect(() => {

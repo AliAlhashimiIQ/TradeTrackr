@@ -161,11 +161,11 @@ export function useStreak() {
       isStreakActiveToday,
       lastJournaledDate,
     }
-  }, [user, trades, frozenDates, timezone])
+  }, [user?.id, trades, frozenDates, timezone])
 
   // Check for auto-freeze and milestones
   useEffect(() => {
-    if (tradesLoading || !user || !trades.length) return
+    if (tradesLoading || !user?.id || !trades.length) return
 
     const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
@@ -251,7 +251,7 @@ export function useStreak() {
     }
 
     runChecks()
-  }, [user, trades, tradesLoading, frozenDates, streakFreezes, streak.currentStreak, timezone])
+  }, [user?.id, trades, tradesLoading, frozenDates, streakFreezes, streak.currentStreak, timezone])
 
   return { streak, isLoading: tradesLoading, refetch: () => {} }
 }

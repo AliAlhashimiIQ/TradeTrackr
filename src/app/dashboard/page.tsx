@@ -307,7 +307,7 @@ export default function Dashboard() {
       setChallengeStatus(status);
     };
     loadChallenge();
-  }, [user, trades]);
+  }, [user?.id, trades]);
 
   if (isLoading) {
     return (

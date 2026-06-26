@@ -128,10 +128,10 @@ export default function PlaybookPage() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user?.id) {
       loadData();
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Selected strategy tag details
   const selectedTag = useMemo(() => {

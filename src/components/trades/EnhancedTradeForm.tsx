@@ -111,7 +111,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       setUserStrategies(data || []);
     };
     fetchStrategies();
-  }, [user]);
+  }, [user?.id]);
 
   const handleQuickCreateStrategy = async () => {
     if (!newStratName.trim() || !user) return;
@@ -233,7 +233,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         }
       }
     }
-  }, [initialTrade, user]);
+  }, [initialTrade, user?.id]);
 
   useEffect(() => {
     if (!isEditing && !formData.account_id) {
