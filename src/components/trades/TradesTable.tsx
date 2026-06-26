@@ -1159,13 +1159,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             })}
 
             {/* Fixed: Actions */}
-            <div 
-              className="sticky right-0 z-20 text-right flex items-center justify-end h-full pr-5 -mr-5"
-              style={{
-                backgroundColor: 'var(--table-header-bg)',
-                boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.3)',
-              }}
-            >
+            <div className="flex items-center justify-end h-full pr-2">
               <span>Actions</span>
             </div>
           </div>
@@ -1478,46 +1472,54 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     })}
 
                     {/* Actions */}
-                    <div 
-                      className="sticky right-0 z-10 flex items-center justify-end gap-1 pr-5 -mr-5 h-full transition-colors"
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.2)',
-                      }}
-                    >
+                    <div className="flex items-center justify-end gap-0.5 pr-2 opacity-0 group-hover/row:opacity-100 transition-opacity duration-150">
                       {trade.screenshot_url && (
                         <button
                           onClick={() => onScreenshotClick(trade.screenshot_url ?? '')}
-                          className="p-1.5 text-gray-600 hover:text-indigo-400 transition-colors rounded-lg hover:bg-white/[0.04]"
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ color: 'var(--muted-foreground, #6b7280)' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#818cf8')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground, #6b7280)')}
+                          title="View screenshot"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         </button>
                       )}
                       <button
                         onClick={() => onDetailTradeClick(trade)}
-                        className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]"
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{ color: 'var(--muted-foreground, #6b7280)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--foreground)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground, #6b7280)')}
+                        title="View details"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                       </button>
                       <button
                         onClick={() => onEditTradeClick(trade)}
-                        className="p-1.5 text-gray-600 hover:text-white transition-colors rounded-lg hover:bg-white/[0.04]"
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{ color: 'var(--muted-foreground, #6b7280)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--foreground)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground, #6b7280)')}
                         title="Edit trade"
                         data-testid="edit-trade-btn"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
                       <button
                         onClick={() => onDeleteTrade(trade.id)}
                         disabled={isDeleting === trade.id}
-                        className="p-1.5 text-gray-600 hover:text-red-400 transition-colors rounded-lg hover:bg-white/[0.04] disabled:opacity-50"
+                        className="p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                        style={{ color: 'var(--muted-foreground, #6b7280)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = '#f87171')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground, #6b7280)')}
                         title="Delete trade"
                         data-testid="delete-trade-btn"
                       >
                         {isDeleting === trade.id ? (
-                          <div className="w-4 h-4 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+                          <div className="w-3.5 h-3.5 border-2 border-gray-600 border-t-current rounded-full animate-spin" />
                         ) : (
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                         )}
                       </button>
                     </div>
