@@ -39,7 +39,7 @@ This document serves as the step-by-step sequential execution plan for refactori
   9. [MODIFY] [playbook/page.tsx](file:///c:/Users/PC/Desktop/finaltry/src/app/playbook/page.tsx) (Completed)
   10. [MODIFY] [EnhancedTradeForm.tsx](file:///c:/Users/PC/Desktop/finaltry/src/components/trades/EnhancedTradeForm.tsx) (Completed)
 
-### 2.2 API Layer Abstraction
+### 2.2 API Layer Abstraction (Completed)
 * **Goal**: Decouple database client invocations from UI logic.
 * **File Execution Order**:
   1. [NEW] `src/lib/services/tradeService.ts`
@@ -50,7 +50,7 @@ This document serves as the step-by-step sequential execution plan for refactori
 ---
 
 ## Phase 3 — Component Refactoring
-### 3.1 Embed Video Player in Trade Details
+### 3.1 Embed Video Player in Trade Details (Completed)
 * **Goal**: Enable video play reviews for logged trades.
 * **File Execution Order**:
   1. [MODIFY] [media/route.ts](file:///c:/Users/PC/Desktop/finaltry/src/app/api/media/route.ts)
@@ -58,7 +58,7 @@ This document serves as the step-by-step sequential execution plan for refactori
   2. [MODIFY] [TradeDetail.tsx](file:///c:/Users/PC/Desktop/finaltry/src/components/trades/TradeDetail.tsx)
      - Check if `trade.video_url` is present, resolve it through media route proxy, and render a high-aesthetic video player.
 
-### 3.2 Modularize EnhancedTradeForm
+### 3.2 Modularize EnhancedTradeForm (Completed)
 * **Goal**: Clean up monolithic 1,000+ line forms.
 * **File Execution Order**:
   1. [NEW] `src/components/trades/form/FormCalculators.tsx`
@@ -69,7 +69,7 @@ This document serves as the step-by-step sequential execution plan for refactori
 ---
 
 ## Phase 4 — Performance Optimization
-### 4.1 Fine-Tune SWR Settings
+### 4.1 Fine-Tune SWR Settings (Completed)
 * **Goal**: Lower background refetch counts.
 * **File Execution Order**:
   1. [MODIFY] [useTrades.ts](file:///c:/Users/PC/Desktop/finaltry/src/hooks/useTrades.ts)
@@ -78,7 +78,7 @@ This document serves as the step-by-step sequential execution plan for refactori
 ---
 
 ## Phase 5 — UI & UX Enhancements
-### 5.1 Colorblind Theme Presets
+### 5.1 Colorblind Theme Presets (Completed)
 * **Goal**: Support accessible layouts.
 * **File Execution Order**:
   1. [MODIFY] [colorSystem.ts](file:///c:/Users/PC/Desktop/finaltry/src/lib/colorSystem.ts)
@@ -89,7 +89,7 @@ This document serves as the step-by-step sequential execution plan for refactori
 ---
 
 ## Phase 6 — Testing Suite Setup
-### 6.1 Math Unit Testing
+### 6.1 Math Unit Testing (Completed)
 * **Goal**: Confirm symbol multiplier formulas are secure.
 * **File Execution Order**:
   1. [NEW] `vitest.config.ts`
