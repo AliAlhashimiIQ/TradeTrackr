@@ -565,11 +565,11 @@ export const TradesTable: React.FC<TradesTableProps> = ({
         className="grid gap-4 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full w-max text-left"
         style={{
           gridTemplateColumns: 'var(--grid-template-columns)',
-          backgroundColor: '#0d0e16',
-          backgroundImage: 'linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 50%, rgba(99, 102, 241, 0.08) 100%)',
-          borderTop: '1px solid rgba(99, 102, 241, 0.25)',
-          borderBottom: '1px solid rgba(99, 102, 241, 0.25)',
-          boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.8), 0 0 16px rgba(99, 102, 241, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)',
+          backgroundColor: 'var(--card-bg)',
+          backgroundImage: 'linear-gradient(90deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.03) 50%, rgba(99, 102, 241, 0.06) 100%)',
+          borderTop: '1px solid rgba(99, 102, 241, 0.3)',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
+          boxShadow: '0 4px 16px -4px rgba(99, 102, 241, 0.12)',
           zIndex: activePopover?.tradeId === 'new-row' ? 30 : 10,
         }}
       >
@@ -626,7 +626,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             value={inlineRowData.symbol || ''}
             onChange={e => onInlineChange('symbol', e.target.value.toUpperCase())}
             onKeyDown={handleKeyDown}
-            className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none font-bold uppercase transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/30 focus:border-indigo-500/70 rounded-xl px-3 py-1.5 text-xs placeholder-gray-400 focus:outline-none font-bold uppercase transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
             placeholder="EURUSD"
             autoFocus
           />
@@ -661,7 +662,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.entry_price || ''}
               onChange={e => onInlineChange('entry_price', parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.00"
             />
           </div>
@@ -676,7 +678,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.exit_price || ''}
               onChange={e => onInlineChange('exit_price', parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.00"
             />
           </div>
@@ -695,7 +698,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                 onInlineChange('quantity', val);
               }}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.10"
             />
           </div>
@@ -710,7 +714,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.pips !== undefined && inlineRowData.pips !== null ? inlineRowData.pips : ''}
               onChange={e => onInlineChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.0"
             />
           </div>
@@ -725,9 +730,10 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.profit_loss || ''}
               onChange={e => onInlineChange('profit_loss', parseFloat(e.target.value) || 0)}
               onKeyDown={handleKeyDown}
-              className={`w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-600 focus:outline-none font-mono font-bold transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset] ${
-                (inlineRowData.profit_loss || 0) !== 0 ? getPLColorClasses(inlineRowData.profit_loss || 0, colorblindMode).text : 'text-white'
+              className={`w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono font-bold transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 ${
+                (inlineRowData.profit_loss || 0) !== 0 ? getPLColorClasses(inlineRowData.profit_loss || 0, colorblindMode).text : ''
               }`}
+              style={{ background: 'var(--input-bg)', color: (inlineRowData.profit_loss || 0) === 0 ? 'var(--foreground)' : undefined }}
               placeholder="0.00"
             />
           </div>
@@ -754,7 +760,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.commission ?? ''}
               onChange={e => onInlineChange('commission', e.target.value === '' ? undefined : parseFloat(e.target.value))}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.00"
             />
           </div>
@@ -781,7 +788,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                 onInlineChange('exit_time', dateVal);
               }}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)', colorScheme: 'auto' }}
             />
           </div>
         )}
@@ -794,7 +802,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.entry_time ? toLocalDatetimeLocal(inlineRowData.entry_time) : ''}
               onChange={e => onInlineChange('entry_time', e.target.value ? fromLocalDatetimeLocal(e.target.value) : new Date().toISOString())}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)', colorScheme: 'auto' }}
             />
           </div>
         )}
@@ -805,7 +814,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.exit_time ? toLocalDatetimeLocal(inlineRowData.exit_time) : ''}
               onChange={e => onInlineChange('exit_time', e.target.value ? fromLocalDatetimeLocal(e.target.value) : new Date().toISOString())}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)', colorScheme: 'auto' }}
             />
           </div>
         )}
@@ -827,7 +837,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.stop_loss ?? ''}
               onChange={e => onInlineChange('stop_loss', e.target.value === '' ? undefined : parseFloat(e.target.value))}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.00"
             />
           </div>
@@ -840,7 +851,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.take_profit ?? ''}
               onChange={e => onInlineChange('take_profit', e.target.value === '' ? undefined : parseFloat(e.target.value))}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white text-right placeholder-gray-600 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="0.00"
             />
           </div>
@@ -850,7 +862,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <select
               value={inlineRowData.account_id || ''}
               onChange={e => onInlineChange('account_id', e.target.value || null)}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)', colorScheme: 'auto' }}
             >
               <option value="">No Account</option>
               {userAccounts.map(acc => (
@@ -882,7 +895,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                 onInlineChange('strategy', stratName);
                 onInlineChange('tags', updatedTags);
               }}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-2.5 py-1.5 text-xs text-white focus:outline-none [color-scheme:dark] transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-2 py-1.5 text-xs focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)', colorScheme: 'auto' }}
             >
               <option value="">No Strategy</option>
               {userStrategies?.map(strat => (
@@ -922,7 +936,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.95 }}
                   transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                  className="popover-container absolute left-0 top-full mt-1.5 z-30 bg-[#151823] border border-white/[0.08] rounded-xl shadow-2xl p-2 w-[160px] space-y-1 text-left"
+                  className="popover-container absolute left-0 top-full mt-1.5 z-30 border border-indigo-500/20 rounded-xl shadow-2xl p-2 w-[160px] space-y-1 text-left"
+                  style={{ background: 'var(--card-bg)' }}
                 >
                   <div className="text-[9px] font-bold text-gray-500 uppercase tracking-wider px-2 py-1">Set Mindset</div>
                   <div className="max-h-[200px] overflow-y-auto space-y-0.5">
@@ -1028,20 +1043,15 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               value={inlineRowData.notes || ''}
               onChange={e => onInlineChange('notes', e.target.value)}
               onKeyDown={handleKeyDown}
-              className="w-full bg-white/[0.02] hover:bg-white/[0.04] focus:bg-[#151823] border border-white/[0.08] focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 shadow-[0_2px_8px_rgba(0,0,0,0.4)_inset]"
+              className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs placeholder-gray-400 focus:outline-none transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
+              style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
               placeholder="Notes..."
             />
           </div>
         )}
 
         {/* Actions (Save / Cancel) */}
-        <div 
-          className="sticky right-0 z-20 flex items-center justify-end gap-2 pr-5 -mr-5 h-full"
-          style={{
-            backgroundColor: '#0d0e16',
-            boxShadow: '-8px 0 12px -4px rgba(0,0,0,0.5)',
-          }}
-        >
+        <div className="flex items-center justify-end gap-2 pr-2 h-full">
           <button
             type="button"
             onClick={onInlineSave}
