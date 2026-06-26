@@ -2,20 +2,22 @@
 
 import React, { useState } from 'react';
 import { Trade } from '@/lib/types';
-import TradeNotes from './TradeNotes';
+import { updateTrade } from '@/lib/tradingApi';
 import Image from 'next/image';
 import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
+import toast from 'react-hot-toast';
 
 interface TradeDetailProps {
   trade: Trade;
   onClose: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  onUpdateNotes?: (trade: Trade, notes: string) => void;
 }
 
-export default function TradeDetail({ trade, onClose, onEdit, onDelete }: TradeDetailProps) {
+export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdateNotes }: TradeDetailProps) {
   const { colorblindMode } = useSettings();
   const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots'>('details');
   const isForex = isForexPair(trade.symbol);
@@ -23,6 +25,10 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete }: TradeD
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  // Notes linked to trade.notes field
+  const [localNotes, setLocalNotes] = useState(trade.notes || '');
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesChanged, setNotesChanged] = useState(false);
 
   // Format currency
   const formatCurrency = (value: number): string => {
@@ -116,9 +122,26 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete }: TradeD
     setDragPosition({ x: 0, y: 0 });
   };
 
+  // Save notes handler
+  const handleSaveNotes = async () => {
+    if (!notesChanged || notesSaving) return;
+    try {
+      setNotesSaving(true);
+      await updateTrade({ ...trade, notes: localNotes });
+      onUpdateNotes?.(trade, localNotes);
+      setNotesChanged(false);
+      toast.success('Notes saved');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save notes');
+    } finally {
+      setNotesSaving(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-      <div className="card bg-[#0f1117] rounded-lg shadow-2xl border border-gray-800 w-full max-w-6xl max-h-[90vh] flex flex-col">
+      <div className="card rounded-lg shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)' }}>
         {/* Header */}
         <div className="p-4 border-b border-gray-800 flex justify-between items-center">
           <div>
@@ -419,8 +442,49 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete }: TradeD
           )}
 
           {activeTab === 'notes' && (
-            <div>
-              <TradeNotes tradeId={trade.id} userId={trade.user_id} />
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+                    <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Learnings &amp; Notes
+                  </h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>Linked to the Learnings column in the trades table</p>
+                </div>
+                {notesChanged && (
+                  <button
+                    onClick={handleSaveNotes}
+                    disabled={notesSaving}
+                    className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-semibold rounded-lg hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-60"
+                  >
+                    {notesSaving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                )}
+              </div>
+              {localNotes ? null : (
+                <div className="flex flex-col items-center justify-center py-6 mb-4">
+                  <svg className="w-10 h-10 mb-3" style={{ color: 'var(--muted-foreground, #6b7280)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  <p className="text-sm" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>No learnings yet. Start writing below.</p>
+                </div>
+              )}
+              <textarea
+                value={localNotes}
+                onChange={e => { setLocalNotes(e.target.value); setNotesChanged(true); }}
+                onBlur={handleSaveNotes}
+                rows={12}
+                placeholder="What did you learn from this trade? Describe your strategy, emotional state, entry/exit reasoning, and any mistakes..."
+                className="w-full p-4 rounded-xl text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition-colors font-sans"
+                style={{
+                  background: 'var(--table-header-bg)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--foreground)',
+                }}
+              />
+              <p className="text-[11px] mt-2" style={{ color: 'var(--muted-foreground, #6b7280)' }}>Auto-saves on blur · also editable via the Learnings column in the trades table</p>
             </div>
           )}
         </div>

@@ -1111,6 +1111,10 @@ const DEFAULT_VISIBLE_COLUMNS = {
             setShowForm(true);
           }}
           onDelete={() => handleDeleteTrade(selectedDetailTrade.id)}
+          onUpdateNotes={(t, notes) => {
+            setTrades(prev => prev.map(x => x.id === t.id ? { ...x, notes } : x));
+            setSelectedDetailTrade(prev => prev ? { ...prev, notes } : prev);
+          }}
         />
       )}
       <TagModal isOpen={showTagModal} onClose={() => setShowTagModal(false)} onConfirm={handleAddTag} isLoading={isProcessing} />
@@ -1233,9 +1237,9 @@ const DEFAULT_VISIBLE_COLUMNS = {
             onClick={e => e.stopPropagation()}
             className="w-full max-w-2xl rounded-2xl p-6 text-left border relative overflow-hidden"
             style={{
-              background: 'linear-gradient(160deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.01) 100%), #0d0e16',
-              borderColor: 'rgba(255,255,255,0.08)',
-              boxShadow: '0 1px 0 0 rgba(255,255,255,0.06) inset, 0 24px 48px -12px rgba(0,0,0,0.8), 0 4px 16px -4px rgba(0,0,0,0.5)',
+              background: 'var(--card-bg)',
+              borderColor: 'var(--border)',
+              boxShadow: '0 24px 48px -12px rgba(0,0,0,0.4), 0 4px 16px -4px rgba(0,0,0,0.3)',
             }}
           >
             <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
@@ -1244,7 +1248,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
             <div className="relative z-10 flex flex-col h-full">
               <div className="flex items-center justify-between border-b border-white/[0.06] pb-4 mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-lg font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
                     <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
@@ -1268,16 +1272,22 @@ const DEFAULT_VISIBLE_COLUMNS = {
                 <textarea
                   value={notesModalText}
                   onChange={e => setNotesModalText(e.target.value)}
-                  className="w-full h-64 p-4 bg-black/40 border border-white/[0.08] focus:border-indigo-500/50 rounded-xl text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 resize-none font-sans leading-relaxed"
+                  className="w-full h-64 p-4 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 resize-none font-sans leading-relaxed transition-colors"
+                  style={{
+                    background: 'var(--input-bg, var(--table-header-bg))',
+                    border: '1px solid var(--border)',
+                    color: 'var(--foreground)',
+                  }}
                   placeholder="What did you learn from this trade? Detail your strategy, emotional triggers, entry/exit criteria, and potential mistakes..."
                   autoFocus
                 />
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-white/[0.06] pt-4">
+              <div className="flex justify-end gap-3 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
                 <button
                   onClick={() => setNotesModalTrade(null)}
-                  className="px-4 py-2 bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] text-gray-400 hover:text-white rounded-xl text-xs font-semibold transition-all"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold transition-all"
+                  style={{ background: 'var(--table-header-bg)', border: '1px solid var(--border)', color: 'var(--muted-foreground, #9ca3af)' }}
                 >
                   Cancel
                 </button>
