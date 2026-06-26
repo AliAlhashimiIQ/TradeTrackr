@@ -15,6 +15,7 @@ import ExportModal from '@/components/trades/ExportModal'
 import TradeAIChatBox from '@/components/trades/TradeAIChatBox'
 import { calculatePerformanceMetrics } from '@/lib/tradeMetrics'
 import { TradesListSkeleton } from '@/components/ui/SkeletonLoader'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import toast from 'react-hot-toast'
 import { resolveTradingViewUrl } from '@/lib/utils'
 import Confetti from 'react-confetti'
@@ -103,8 +104,31 @@ function TradesContent() {
   const [trades, setTrades] = useState<Trade[]>([])
   const [filteredTrades, setFilteredTrades] = useState<Trade[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null)
+
+  const [confirmConfig, setConfirmConfig] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
+
+  const showConfirm = (config: Omit<typeof confirmConfig, 'isOpen'>) => {
+    setConfirmConfig({
+      ...config,
+      isOpen: true,
+    });
+  };
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [selectedDetailTrade, setSelectedDetailTrade] = useState<Trade | null>(null)
   const [showFilters, setShowFilters] = useState(false)
@@ -383,7 +407,10 @@ const DEFAULT_VISIBLE_COLUMNS = {
       setFilteredTrades(enrichedPage);
       setTotalPages(Math.ceil(total / pageSize));
     } catch (err) { console.error(err); }
-    finally { setIsLoading(false); }
+    finally {
+      setIsLoading(false);
+      setIsInitialLoading(false);
+    }
   }, [user?.id, currentPage, pageSize, searchTerm, symbolFilter, typeFilter, dateFilter, startDate, endDate, sortField, sortDirection, accountIds]);
 
   const fetchGlobalMetrics = useCallback(async () => {
@@ -461,15 +488,30 @@ const DEFAULT_VISIBLE_COLUMNS = {
     return Object.entries(mistakeCost).sort((a, b) => b[1] - a[1]).slice(0, 3);
   }, [trades]);
 
-  const handleDeleteTrade = async (tradeId: string) => {
-    if (!window.confirm('Delete this trade?')) return;
-    setIsDeleting(tradeId);
-    try {
-      await deleteTrade(tradeId);
-      await fetchPagedTrades();
-      await fetchGlobalMetrics();
-      toast.success('Trade deleted successfully');
-    } catch (e) { console.error(e); toast.error('Failed to delete trade'); } finally { setIsDeleting(null); }
+  const handleDeleteTrade = (tradeId: string): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      showConfirm({
+        title: 'Delete Trade',
+        description: 'Are you sure you want to delete this trade? This action cannot be undone.',
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        onConfirm: async () => {
+          setIsDeleting(tradeId);
+          try {
+            await deleteTrade(tradeId);
+            await fetchPagedTrades();
+            await fetchGlobalMetrics();
+            toast.success('Trade deleted successfully');
+          } catch (e) {
+            console.error(e);
+            toast.error('Failed to delete trade');
+          } finally {
+            setIsDeleting(null);
+            resolve();
+          }
+        }
+      });
+    });
   };
 
   const handleTradeFormSubmit = async (tradeData: Partial<Trade>) => {
@@ -667,9 +709,19 @@ const DEFAULT_VISIBLE_COLUMNS = {
     setIsLoading(true);
     try {
       const isFirst = trades.length === 0;
+      const rawData = inlineRowData as any;
       const newTrade = {
         ...inlineRowData,
         user_id: user.id,
+        entry_price: rawData.entry_price !== undefined && rawData.entry_price !== '' ? parseFloat(String(rawData.entry_price)) : 0,
+        exit_price: rawData.exit_price !== undefined && rawData.exit_price !== '' ? parseFloat(String(rawData.exit_price)) : 0,
+        lots: rawData.lots !== undefined && rawData.lots !== '' ? parseFloat(String(rawData.lots)) : undefined,
+        quantity: rawData.quantity !== undefined && rawData.quantity !== '' ? parseFloat(String(rawData.quantity)) : 1,
+        profit_loss: rawData.profit_loss !== undefined && rawData.profit_loss !== '' ? parseFloat(String(rawData.profit_loss)) : 0,
+        commission: rawData.commission !== undefined && rawData.commission !== '' ? parseFloat(String(rawData.commission)) : undefined,
+        stop_loss: rawData.stop_loss !== undefined && rawData.stop_loss !== '' ? parseFloat(String(rawData.stop_loss)) : undefined,
+        take_profit: rawData.take_profit !== undefined && rawData.take_profit !== '' ? parseFloat(String(rawData.take_profit)) : undefined,
+        pips: rawData.pips !== undefined && rawData.pips !== '' ? parseFloat(String(rawData.pips)) : undefined,
       } as Trade;
       
       const savedTrade = await addTrade(newTrade);
@@ -709,34 +761,48 @@ const DEFAULT_VISIBLE_COLUMNS = {
     setInlineScreenshotFile(null);
   };
 
-  const handleDeleteTagGlobally = async (tag: string, isMistake = false) => {
-    if (!window.confirm(`Delete tag "${tag}" globally?`)) return;
-    if (isMistake) setDeletedMistakePresets(prev => [...prev, tag]);
-    else setDeletedPresets(prev => [...prev, tag]);
+  const handleDeleteTagGlobally = (tag: string, isMistake = false): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      showConfirm({
+        title: 'Delete Tag Globally',
+        description: `Are you sure you want to delete the tag "${tag}" globally? It will be removed from all trades.`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+        onConfirm: async () => {
+          if (isMistake) setDeletedMistakePresets(prev => [...prev, tag]);
+          else setDeletedPresets(prev => [...prev, tag]);
 
-    const updated = trades.map(t => {
-      const current = isMistake ? (t.mistakes || []) : (t.tags || []);
-      const next = current.filter(x => x !== tag);
-      return { ...t, [isMistake ? 'mistakes' : 'tags']: next };
-    });
-    setTrades(updated);
+          const updated = trades.map(t => {
+            const current = isMistake ? (t.mistakes || []) : (t.tags || []);
+            const next = current.filter(x => x !== tag);
+            return { ...t, [isMistake ? 'mistakes' : 'tags']: next };
+          });
+          setTrades(updated);
 
-    try {
-      if (user) {
-        await supabase.from('tags').delete().eq('user_id', user.id).eq('name', tag);
-        if (isMistake) {
-          const { data } = await supabase.from('trades').select('id, mistakes').eq('user_id', user.id).contains('mistakes', [tag]);
-          if (data) {
-            for (const tradeRow of data) {
-              const updatedMistakes = (tradeRow.mistakes || []).filter((m: string) => m !== tag);
-              await supabase.from('trades').update({ mistakes: updatedMistakes }).eq('id', tradeRow.id);
+          try {
+            if (user) {
+              await supabase.from('tags').delete().eq('user_id', user.id).eq('name', tag);
+              if (isMistake) {
+                const { data } = await supabase.from('trades').select('id, mistakes').eq('user_id', user.id).contains('mistakes', [tag]);
+                if (data) {
+                  for (const tradeRow of data) {
+                    const updatedMistakes = (tradeRow.mistakes || []).filter((m: string) => m !== tag);
+                    await supabase.from('trades').update({ mistakes: updatedMistakes }).eq('id', tradeRow.id);
+                  }
+                }
+              }
             }
+            toast.success(`Tag "${tag}" deleted globally`);
+            await fetchUserTags();
+          } catch (e) {
+            console.error(e);
+            toast.error('Failed to delete tag');
+          } finally {
+            resolve();
           }
         }
-      }
-      toast.success(`Tag "${tag}" deleted globally`);
-      await fetchUserTags();
-    } catch (e) { console.error(e); toast.error('Failed to delete tag'); }
+      });
+    });
   };
 
   const handleUpdateTagColor = async (tag: string, colorHex: string, isMistake = false) => {
@@ -865,16 +931,30 @@ const DEFAULT_VISIBLE_COLUMNS = {
     } catch (error) { console.error(error); toast.error('Failed to update screenshot'); }
   };
 
-  const handleBulkAction = async (action: 'delete' | 'export' | 'tag') => {
+  const handleBulkAction = (action: 'delete' | 'export' | 'tag') => {
     if (!selectedTradeIds.length) return;
     if (action === 'delete') {
-      if (!window.confirm(`Delete ${selectedTradeIds.length} trades?`)) return;
-      setIsLoading(true);
-      await deleteTradesBulk(selectedTradeIds);
-      await fetchPagedTrades();
-      await fetchGlobalMetrics();
-      setSelectedTradeIds([]); setIsLoading(false);
-      toast.success(`${selectedTradeIds.length} trades deleted`);
+      showConfirm({
+        title: 'Delete Multiple Trades',
+        description: `Are you sure you want to delete the ${selectedTradeIds.length} selected trades? This action cannot be undone.`,
+        confirmLabel: 'Delete All',
+        variant: 'danger',
+        onConfirm: async () => {
+          setIsLoading(true);
+          try {
+            await deleteTradesBulk(selectedTradeIds);
+            await fetchPagedTrades();
+            await fetchGlobalMetrics();
+            toast.success(`${selectedTradeIds.length} trades deleted`);
+          } catch (e) {
+            console.error(e);
+            toast.error('Failed to delete selected trades');
+          } finally {
+            setSelectedTradeIds([]);
+            setIsLoading(false);
+          }
+        }
+      });
     } else if (action === 'export') setShowExportModal(true);
     else if (action === 'tag') setShowTagModal(true);
   };
@@ -935,7 +1015,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
 
   const selectedTradesForAI = trades.filter(t => selectedTradeIds.includes(t.id));
 
-  if (loading || isLoading) {
+  if (loading || isInitialLoading) {
     return (
       <AuthenticatedLayout>
         <TradesListSkeleton />
@@ -1021,6 +1101,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
 
         {/* Extracted Table Component */}
         <TradesTable
+          showConfirm={showConfirm}
           filteredTrades={filteredTrades}
           tableDensity={tableDensity}
           visibleColumns={visibleColumns}
@@ -1119,6 +1200,19 @@ const DEFAULT_VISIBLE_COLUMNS = {
       )}
       <TagModal isOpen={showTagModal} onClose={() => setShowTagModal(false)} onConfirm={handleAddTag} isLoading={isProcessing} />
       <ExportModal isOpen={showExportModal} onClose={() => setShowExportModal(false)} onConfirm={handleExport} isLoading={isProcessing} />
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={async () => {
+          setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+          await confirmConfig.onConfirm();
+        }}
+        title={confirmConfig.title}
+        description={confirmConfig.description}
+        confirmLabel={confirmConfig.confirmLabel}
+        cancelLabel={confirmConfig.cancelLabel}
+        variant={confirmConfig.variant}
+      />
 
       {/* Screenshot Preview Modal */}
       {selectedScreenshotUrl && (

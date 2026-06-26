@@ -31,7 +31,7 @@ export const FormCalculators: React.FC<FormCalculatorsProps> = ({
             type="number"
             step="any"
             value={formData.entry_price ?? ''}
-            onChange={e => handleChange('entry_price', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+            onChange={e => handleChange('entry_price', e.target.value)}
             placeholder="0.00"
             className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.entry_price ? 'text-red-400' : ''}`}
           />
@@ -43,7 +43,7 @@ export const FormCalculators: React.FC<FormCalculatorsProps> = ({
             type="number"
             step="any"
             value={formData.exit_price ?? ''}
-            onChange={e => handleChange('exit_price', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+            onChange={e => handleChange('exit_price', e.target.value)}
             placeholder="0.00"
             className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.exit_price ? 'text-red-400' : ''}`}
           />
@@ -55,7 +55,7 @@ export const FormCalculators: React.FC<FormCalculatorsProps> = ({
             type="number"
             step="any"
             value={isForex ? (formData.lots ?? '') : (formData.quantity ?? '')}
-            onChange={e => handleChange(isForex ? 'lots' : 'quantity', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+            onChange={e => handleChange(isForex ? 'lots' : 'quantity', e.target.value)}
             placeholder={isForex ? "0.01" : "1.0"}
             className={`w-full bg-transparent text-white text-xl font-bold placeholder-gray-700 focus:outline-none ${errors.quantity ? 'text-red-400' : ''}`}
           />
@@ -68,7 +68,7 @@ export const FormCalculators: React.FC<FormCalculatorsProps> = ({
               type="number"
               step="any"
               value={formData.pips ?? ''}
-              onChange={e => handleChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onChange={e => handleChange('pips', e.target.value)}
               placeholder="0.0"
               className="w-full bg-transparent text-indigo-400 text-xl font-bold placeholder-gray-700 focus:outline-none"
             />

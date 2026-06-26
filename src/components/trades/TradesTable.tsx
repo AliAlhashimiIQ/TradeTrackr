@@ -84,6 +84,14 @@ export const DEFAULT_COLUMN_ORDER = [
 ];
 
 export interface TradesTableProps {
+  showConfirm?: (config: {
+    title: string;
+    description: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    variant?: 'danger' | 'warning' | 'info';
+    onConfirm: () => void;
+  }) => void;
   filteredTrades: Trade[];
   tableDensity: 'compact' | 'comfortable';
   visibleColumns: Record<string, boolean>;
@@ -174,6 +182,7 @@ const getPercentGain = (
 };
 
 export const TradesTable: React.FC<TradesTableProps> = ({
+  showConfirm,
   filteredTrades,
   tableDensity,
   visibleColumns,
@@ -659,8 +668,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <input
               type="number"
               step="any"
-              value={inlineRowData.entry_price || ''}
-              onChange={e => onInlineChange('entry_price', parseFloat(e.target.value) || 0)}
+              value={inlineRowData.entry_price ?? ''}
+              onChange={e => onInlineChange('entry_price', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -675,8 +684,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <input
               type="number"
               step="any"
-              value={inlineRowData.exit_price || ''}
-              onChange={e => onInlineChange('exit_price', parseFloat(e.target.value) || 0)}
+              value={inlineRowData.exit_price ?? ''}
+              onChange={e => onInlineChange('exit_price', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -691,9 +700,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <input
               type="number"
               step="any"
-              value={inlineRowData.lots || ''}
+              value={inlineRowData.lots ?? ''}
               onChange={e => {
-                const val = parseFloat(e.target.value) || 0;
+                const val = e.target.value;
                 onInlineChange('lots', val);
                 onInlineChange('quantity', val);
               }}
@@ -712,7 +721,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               type="number"
               step="any"
               value={inlineRowData.pips !== undefined && inlineRowData.pips !== null ? inlineRowData.pips : ''}
-              onChange={e => onInlineChange('pips', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onChange={e => onInlineChange('pips', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -727,8 +736,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             <input
               type="number"
               step="any"
-              value={inlineRowData.profit_loss || ''}
-              onChange={e => onInlineChange('profit_loss', parseFloat(e.target.value) || 0)}
+              value={inlineRowData.profit_loss ?? ''}
+              onChange={e => onInlineChange('profit_loss', e.target.value)}
               onKeyDown={handleKeyDown}
               className={`w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono font-bold transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20 ${
                 (inlineRowData.profit_loss || 0) !== 0 ? getPLColorClasses(inlineRowData.profit_loss || 0, colorblindMode).text : ''
@@ -744,7 +753,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           <div className="text-right text-xs font-mono text-gray-400 font-sans">
             {inlineRowData.profit_loss !== undefined && inlineRowData.profit_loss !== null ? (
               (() => {
-                const pct = getPercentGain(inlineRowData.profit_loss, inlineRowData.account_id, userAccounts, startingBalance);
+                const pct = getPercentGain(Number(inlineRowData.profit_loss), inlineRowData.account_id, userAccounts, startingBalance);
                 return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`;
               })()
             ) : '--'}
@@ -758,7 +767,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               type="number"
               step="any"
               value={inlineRowData.commission ?? ''}
-              onChange={e => onInlineChange('commission', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onChange={e => onInlineChange('commission', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -835,7 +844,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               type="number"
               step="any"
               value={inlineRowData.stop_loss ?? ''}
-              onChange={e => onInlineChange('stop_loss', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onChange={e => onInlineChange('stop_loss', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -849,7 +858,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               type="number"
               step="any"
               value={inlineRowData.take_profit ?? ''}
-              onChange={e => onInlineChange('take_profit', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+              onChange={e => onInlineChange('take_profit', e.target.value)}
               onKeyDown={handleKeyDown}
               className="w-full border border-indigo-500/20 focus:border-indigo-500/60 rounded-xl px-3 py-1.5 text-xs text-right placeholder-gray-400 focus:outline-none font-mono transition-all duration-200 focus:ring-1 focus:ring-indigo-500/20"
               style={{ background: 'var(--input-bg)', color: 'var(--foreground)' }}
@@ -1257,10 +1266,20 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           </div>
                           <button
                             type="button"
-                            onClick={async (e) => {
+                            onClick={(e) => {
                               e.stopPropagation();
-                              if (window.confirm("Remove screenshot?")) {
-                                await onUpdateScreenshot(trade, "");
+                              if (showConfirm) {
+                                showConfirm({
+                                  title: "Remove Screenshot",
+                                  description: "Are you sure you want to remove the screenshot from this trade?",
+                                  confirmLabel: "Remove",
+                                  variant: "danger",
+                                  onConfirm: async () => {
+                                    await onUpdateScreenshot(trade, "");
+                                  }
+                                });
+                              } else if (window.confirm("Remove screenshot?")) {
+                                onUpdateScreenshot(trade, "");
                               }
                             }}
                             className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 hover:scale-110 active:scale-95"

@@ -319,13 +319,18 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
     e.preventDefault();
     if (isSubmitting) return; // prevent double-submit
     const newErrors: Record<string, string> = {};
+    const entryPriceNum = Number(formData.entry_price);
+    const exitPriceNum = Number(formData.exit_price);
+    const lotsNum = Number(formData.lots);
+    const qtyNum = Number(formData.quantity);
+
     if (!formData.symbol?.trim()) newErrors.symbol = 'Required';
-    if (!formData.entry_price || formData.entry_price <= 0) newErrors.entry_price = 'Required';
-    if (!formData.exit_price || formData.exit_price <= 0) newErrors.exit_price = 'Required';
+    if (!formData.entry_price || Number.isNaN(entryPriceNum) || entryPriceNum <= 0) newErrors.entry_price = 'Required';
+    if (!formData.exit_price || Number.isNaN(exitPriceNum) || exitPriceNum <= 0) newErrors.exit_price = 'Required';
     if (isForex) {
-      if (!formData.lots || formData.lots <= 0) newErrors.quantity = 'Required';
+      if (!formData.lots || Number.isNaN(lotsNum) || lotsNum <= 0) newErrors.quantity = 'Required';
     } else {
-      if (!formData.quantity || formData.quantity <= 0) newErrors.quantity = 'Required';
+      if (!formData.quantity || Number.isNaN(qtyNum) || qtyNum <= 0) newErrors.quantity = 'Required';
     }
     if (!formData.entry_time) newErrors.entry_time = 'Required';
     if (!formData.exit_time) newErrors.exit_time = 'Required';
@@ -340,10 +345,10 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
         const url = await uploadTradeScreenshot(screenshotFile, userId, tradeId);
         if (url) screenshotUrl = url;
       }
-      const effectiveQuantity = isForex ? (formData.lots || 0) * getSymbolMultiplier(formData.symbol || '') : (formData.quantity || 0);
+      const effectiveQuantity = isForex ? (Number(formData.lots) || 0) * getSymbolMultiplier(formData.symbol || '') : (Number(formData.quantity) || 0);
       const calculatedPnl = formData.type === 'Long'
-        ? ((formData.exit_price || 0) - (formData.entry_price || 0)) * effectiveQuantity
-        : ((formData.entry_price || 0) - (formData.exit_price || 0)) * effectiveQuantity;
+        ? ((Number(formData.exit_price) || 0) - (Number(formData.entry_price) || 0)) * effectiveQuantity
+        : ((Number(formData.entry_price) || 0) - (Number(formData.exit_price) || 0)) * effectiveQuantity;
       
       await onSubmit({
         user_id: userId,
@@ -671,7 +676,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                           type="number"
                           step="any"
                           value={formData.stop_loss ?? ''}
-                          onChange={e => handleChange('stop_loss', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onChange={e => handleChange('stop_loss', e.target.value)}
                           placeholder="0.00"
                           className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
                         />
@@ -682,7 +687,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                           type="number"
                           step="any"
                           value={formData.take_profit ?? ''}
-                          onChange={e => handleChange('take_profit', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onChange={e => handleChange('take_profit', e.target.value)}
                           placeholder="0.00"
                           className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
                         />
@@ -693,7 +698,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                           type="number"
                           step="any"
                           value={formData.commission ?? ''}
-                          onChange={e => handleChange('commission', e.target.value === '' ? undefined : parseFloat(e.target.value))}
+                          onChange={e => handleChange('commission', e.target.value)}
                           placeholder="0.00"
                           className="w-full bg-transparent text-white text-base font-bold placeholder-gray-700 focus:outline-none"
                         />
