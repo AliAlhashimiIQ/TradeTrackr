@@ -68,7 +68,7 @@ export function useTrades(dateRange: DateRange, accountSelection?: AccountSelect
     ? 'all'
     : (accountSelection as string[]).slice().sort().join(',')
 
-  const { data, error } = useSWR(
+  const { data, error, mutate } = useSWR(
     user ? ['trades', user.id, dateRange, selectionKey] : null,
     fetcher,
     {
@@ -82,5 +82,6 @@ export function useTrades(dateRange: DateRange, accountSelection?: AccountSelect
     initialCapital: data?.initialCapital ?? 10000,
     isLoading:      !data && !error,
     error:          error || null,
+    mutate,
   }
 }

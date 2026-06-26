@@ -57,6 +57,44 @@
   --calendar-weekly-card-shadow: 0 1px 0 rgba(255,255,255,0.5) inset, 0 2px 8px rgba(0,0,0,0.02);
 }
 
+.colorblind {
+  --success: #3b82f6;
+  --danger: #f97316;
+  
+  --calendar-profit-bg: #e0e7ff;
+  --calendar-profit-bg-grad-start: rgba(59, 130, 246, 0.12);
+  --calendar-profit-bg-grad-end: rgba(59, 130, 246, 0.04);
+  --calendar-profit-border: rgba(59, 130, 246, 0.25);
+  --calendar-profit-border-top: rgba(59, 130, 246, 0.15);
+  --calendar-profit-shadow: 0 1px 0 0 rgba(59, 130, 246, 0.1) inset, 0 0 12px rgba(59, 130, 246, 0.08), 0 4px 10px rgba(0,0,0,0.03);
+
+  --calendar-loss-bg: #fff7ed;
+  --calendar-loss-bg-grad-start: rgba(249, 115, 22, 0.1);
+  --calendar-loss-bg-grad-end: rgba(249, 115, 22, 0.02);
+  --calendar-loss-border: rgba(249, 115, 22, 0.25);
+  --calendar-loss-border-top: rgba(249, 115, 22, 0.15);
+  --calendar-loss-shadow: 0 1px 0 0 rgba(249, 115, 22, 0.1) inset, 0 0 12px rgba(249, 115, 22, 0.08), 0 4px 10px rgba(0,0,0,0.03);
+}
+
+.colorblind.dark, .colorblind .dark {
+  --success: #60a5fa;
+  --danger: #fb923c;
+
+  --calendar-profit-bg: rgba(10, 11, 18, 0.9);
+  --calendar-profit-bg-grad-start: rgba(59, 130, 246, 0.22);
+  --calendar-profit-bg-grad-end: rgba(59, 130, 246, 0.04);
+  --calendar-profit-border: rgba(59, 130, 246, 0.4);
+  --calendar-profit-border-top: rgba(59, 130, 246, 0.3);
+  --calendar-profit-shadow: 0 1px 0 0 rgba(59, 130, 246, 0.15) inset, 0 0 16px rgba(59, 130, 246, 0.18), 0 4px 16px -4px rgba(0, 0, 0, 0.3);
+
+  --calendar-loss-bg: rgba(10, 11, 18, 0.9);
+  --calendar-loss-bg-grad-start: rgba(249, 115, 22, 0.2);
+  --calendar-loss-bg-grad-end: rgba(249, 115, 22, 0.03);
+  --calendar-loss-border: rgba(249, 115, 22, 0.4);
+  --calendar-loss-border-top: rgba(249, 115, 22, 0.3);
+  --calendar-loss-shadow: 0 1px 0 0 rgba(249, 115, 22, 0.15) inset, 0 0 16px rgba(249, 115, 22, 0.15), 0 4px 16px -4px rgba(0, 0, 0, 0.3);
+}
+
 .dark {
   --background: #06070b;
   --foreground: #f1f5f9;

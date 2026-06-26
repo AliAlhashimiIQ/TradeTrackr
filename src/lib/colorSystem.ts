@@ -19,6 +19,16 @@ export const COLORS = {
   dangerHover: '#dc2626',
   dangerLight: '#f87171',
   
+  // Colorblind alternative brand/state colors
+  colorblind: {
+    success: '#3b82f6', // Blue
+    successHover: '#2563eb',
+    successLight: '#60a5fa',
+    danger: '#f97316', // Orange
+    dangerHover: '#ea580c',
+    dangerLight: '#fb923c',
+  },
+  
   warning: '#f59e0b', // Amber
   warningHover: '#d97706',
   warningLight: '#fbbf24',

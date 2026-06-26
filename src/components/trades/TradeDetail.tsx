@@ -19,7 +19,7 @@ interface TradeDetailProps {
 
 export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdateNotes }: TradeDetailProps) {
   const { colorblindMode } = useSettings();
-  const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots' | 'video'>('details');
   const isForex = isForexPair(trade.symbol);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -221,6 +221,18 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
             >
               Screenshots
             </button>
+            {trade.video_url && (
+              <button
+                onClick={() => setActiveTab('video')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'video'
+                    ? 'bg-blue-900/30 text-blue-400'
+                    : 'text-gray-400 hover:bg-gray-800'
+                }`}
+              >
+                Video Review
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('notes')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -371,6 +383,22 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                     <a href={resolveTradingViewUrl(trade.screenshot_url)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
                   </div>
                 )}
+
+                {trade.video_url && (
+                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                    <h3 className="text-gray-400 text-sm mb-3">Video Recording</h3>
+                    <button
+                      onClick={() => setActiveTab('video')}
+                      className="text-blue-400 hover:text-blue-300 font-medium flex items-center gap-2"
+                    >
+                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Play Video Review
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -485,6 +513,29 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                 }}
               />
               <p className="text-[11px] mt-2" style={{ color: 'var(--muted-foreground, #6b7280)' }}>Auto-saves on blur · also editable via the Learnings column in the trades table</p>
+            </div>
+          )}
+
+          {activeTab === 'video' && trade.video_url && (
+            <div className="p-6 flex flex-col items-center justify-center">
+              <div className="w-full flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="text-base font-bold flex items-center gap-2" style={{ color: 'var(--foreground)' }}>
+                    <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Video Review
+                  </h3>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>Play your recorded execution session for this trade</p>
+                </div>
+              </div>
+              <div className="w-full max-w-4xl relative aspect-video rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0d0e16] shadow-2xl">
+                <video
+                  src={`/api/media?url=${encodeURIComponent(trade.video_url)}`}
+                  controls
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
           )}
         </div>
