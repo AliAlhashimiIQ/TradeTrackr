@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       let skipped = 0;
       const errors: string[] = [];
       let newBalance = Number(account.balance);
+      let isConnected = false;
 
       try {
         let tradesToInsert: ParsedMT5Trade[] = [];
@@ -148,19 +149,22 @@ export async function POST(request: NextRequest) {
               console.log('[MetaApi Debug] Deploy status/error:', errMsg);
             }
 
-            // Wait until the account is deployed & connected
+            // Wait until the account is deployed & connected (max 2 attempts to avoid serverless timeout)
             let metaAccountData;
-            for (let attempt = 0; attempt < 15; attempt++) {
+            for (let attempt = 0; attempt < 2; attempt++) {
               const statusRes = await axios.get(
                 `https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts/${metaAccountId}`,
                 { headers: apiHeaders }
               );
               metaAccountData = statusRes.data;
-              if (metaAccountData.connectionStatus === 'CONNECTED') break;
+              isConnected = metaAccountData.connectionStatus === 'CONNECTED';
+              if (isConnected) break;
               await new Promise((r) => setTimeout(r, 1500));
             }
 
-            if (metaAccountData?.connectionStatus === 'CONNECTED') {
+            const isDeploying = metaAccountData?.connectionStatus === 'DEPLOYING' || metaAccountData?.connectionStatus === 'DEPLOYED';
+
+            if (isConnected) {
               const region = metaAccountData.region || 'new-york';
               const clientApiUrl = `https://mt-client-api-v1.${region}.agiliumtrade.ai`;
 
@@ -208,6 +212,9 @@ export async function POST(request: NextRequest) {
                   });
                 }
               });
+            } else if (isDeploying) {
+              // No-op: Not connected yet, but still provisioning cleanly.
+              // This is a DEPLOYING state, not a failure.
             } else {
               errors.push(`MetaApi account status: ${metaAccountData?.connectionStatus || 'DISCONNECTED'}`);
             }
@@ -279,12 +286,19 @@ export async function POST(request: NextRequest) {
 
         // 5. Update account details: balance, last_sync, connection_status
         const hasErrors = errors.length > 0;
+        let finalStatus = 'CONNECTED';
+        if (hasErrors) {
+          finalStatus = 'ERROR';
+        } else if (!isConnected) {
+          finalStatus = 'DEPLOYING';
+        }
+
         const { error: updateErr } = await supabase
           .from('trading_accounts')
           .update({
             balance: newBalance,
-            connection_status: hasErrors ? 'ERROR' : 'CONNECTED',
-            last_sync: new Date().toISOString(),
+            connection_status: finalStatus,
+            ...(finalStatus === 'CONNECTED' ? { last_sync: new Date().toISOString() } : {}),
             updated_at: new Date().toISOString(),
           })
           .eq('id', account.id);
@@ -294,7 +308,7 @@ export async function POST(request: NextRequest) {
         syncResults.push({
           accountId: account.id,
           name: account.name,
-          status: hasErrors ? 'ERROR' : 'CONNECTED',
+          status: finalStatus,
           imported,
           skipped,
           balance: newBalance,

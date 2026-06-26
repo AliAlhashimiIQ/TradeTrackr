@@ -167,6 +167,37 @@ export default function AccountsPage() {
     }
   }
 
+  // Helper to poll sync status of a deploying MetaApi account
+  const pollSyncStatus = async (accountId: string): Promise<boolean> => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    const headers: Record<string, string> = {}
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`
+    }
+
+    for (let i = 0; i < 20; i++) {
+      // Wait 3 seconds between polls
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
+      try {
+        const response = await fetch(`/api/accounts/sync/status?accountId=${accountId}`, { headers })
+        const result = await response.json()
+        if (response.ok && result.success) {
+          const status = result.account.connection_status
+          if (status === 'CONNECTED') {
+            return true
+          } else if (status === 'ERROR') {
+            return false
+          }
+        }
+      } catch (e) {
+        console.error('Polling error:', e)
+      }
+    }
+    return false
+  }
+
   // Sync Single Account
   const handleSyncAccount = async (accountId: string) => {
     setSyncingAccountId(accountId)
@@ -185,14 +216,12 @@ export default function AccountsPage() {
     }
 
     try {
-      await progressTimer('auth', 700, 40)
-      await progressTimer('fetch', 900, 70)
-      await progressTimer('db', 600, 90)
+      await progressTimer('auth', 700, 45)
 
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
 
-      const response = await fetch('/api/accounts/sync', {
+      let response = await fetch('/api/accounts/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,16 +230,46 @@ export default function AccountsPage() {
         body: JSON.stringify({ accountId }),
       })
 
-      const result = await response.json()
+      let result = await response.json()
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Sync request failed')
       }
 
+      let accountResult = result.results?.[0]
+      
+      if (accountResult?.status === 'DEPLOYING') {
+        // MetaApi cloud connection is still deploying. Start polling status.
+        setSyncStep('connect')
+        setSyncProgress(60)
+        
+        const pollSuccess = await pollSyncStatus(accountId)
+        if (!pollSuccess) {
+          throw new Error('MetaApi cloud account deployment failed or timed out. Please check server logs.')
+        }
+
+        setSyncStep('fetch')
+        setSyncProgress(80)
+
+        // Trigger sync again now that deployment is connected. This call will be fast.
+        response = await fetch('/api/accounts/sync', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ accountId }),
+        })
+        result = await response.json()
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || 'Failed to pull trades after connection established')
+        }
+        accountResult = result.results?.[0]
+      }
+
       setSyncStep('done')
       setSyncProgress(100)
       
-      const accountResult = result.results?.[0]
       if (accountResult?.status === 'ERROR') {
         throw new Error(accountResult.errors?.[0] || 'Sync failed')
       }
@@ -259,12 +318,11 @@ export default function AccountsPage() {
 
     try {
       await progressTimer('auth', 800, 50)
-      await progressTimer('fetch', 1000, 80)
       
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
 
-      const response = await fetch('/api/accounts/sync', {
+      let response = await fetch('/api/accounts/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -273,10 +331,42 @@ export default function AccountsPage() {
         body: JSON.stringify({ all: true }),
       })
 
-      const result = await response.json()
+      let result = await response.json()
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Sync request failed')
+      }
+
+      const deployingAccounts = result.results?.filter((r: any) => r.status === 'DEPLOYING') || []
+
+      if (deployingAccounts.length > 0) {
+        setSyncStep('connect')
+        setSyncProgress(70)
+        
+        toast.loading(`Deploying cloud connections for ${deployingAccounts.length} account(s)...`, { id: 'sync-all-toast' })
+        const pollPromises = deployingAccounts.map((acc: any) => pollSyncStatus(acc.accountId))
+        const pollResults = await Promise.all(pollPromises)
+        toast.dismiss('sync-all-toast')
+
+        const successCount = pollResults.filter(Boolean).length
+        if (successCount > 0) {
+          setSyncStep('fetch')
+          setSyncProgress(90)
+          
+          // Re-sync all to pull deals for those that successfully connected
+          response = await fetch('/api/accounts/sync', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ all: true }),
+          })
+          result = await response.json()
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to pull trades after connection established')
+          }
+        }
       }
 
       setSyncStep('done')
@@ -566,6 +656,12 @@ export default function AccountsPage() {
                                 <>
                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                                </>
+                              )}
+                              {acc.connection_status === 'DEPLOYING' && (
+                                <>
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500" title="Deploying cloud MT5 connection..."></span>
                                 </>
                               )}
                               {acc.connection_status === 'ERROR' && (

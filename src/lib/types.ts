@@ -127,7 +127,7 @@ export interface TradingAccount {
   type: 'LIVE' | 'DEMO';
   platform: string; // e.g. 'MT5', 'MT4', 'cTrader'
   balance: number;
-  connection_status: 'CONNECTED' | 'DISCONNECTED' | 'ERROR';
+  connection_status: 'CONNECTED' | 'DISCONNECTED' | 'ERROR' | 'DEPLOYING';
   connection_type: 'API' | 'EA';
   last_sync: string | null;
   created_at: string;
