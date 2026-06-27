@@ -40,6 +40,17 @@ function getSymbolDetails(symbol: string) {
   return { multiplier: 10000, contractSize: 100000, isForex: true };
 }
 
+interface DrawingItem {
+  type: 'horizontal' | 'trendline' | 'fvg' | 'planner';
+  ref?: any;
+  series?: any;
+  topRef?: any;
+  bottomRef?: any;
+  entryRef?: any;
+  slRef?: any;
+  tpRef?: any;
+}
+
 export default function BacktestSessionPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -64,16 +75,18 @@ export default function BacktestSessionPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed, setPlaySpeed] = useState(1000);
 
-  // Drawing tools state
-  const [isDrawingMode, setIsDrawingMode] = useState(false);
-  const [drawnLines, setDrawnLines] = useState<number[]>([]); // Array of price values
+  // Advanced drawing toolbar state
+  const [activeTool, setActiveTool] = useState<'cursor' | 'trendline' | 'horizontal' | 'fvg' | 'long' | 'short'>('cursor');
+  const [drawingState, setDrawingState] = useState<any>(null); // store first click values
+  const [drawnLines, setDrawnLines] = useState<DrawingItem[]>([]);
 
   // Inputs
   const [lots, setLots] = useState('1.0');
   const [slPips, setSlPips] = useState('');
   const [tpPips, setTpPips] = useState('');
 
-  // Chart Container Refs
+  // Layout Fullscreen and Chart Refs
+  const workspaceContainerRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
@@ -82,9 +95,6 @@ export default function BacktestSessionPage() {
   const entryLineRef = useRef<any>(null);
   const slLineRef = useRef<any>(null);
   const tpLineRef = useRef<any>(null);
-  
-  // Drawn lines refs (to remove them programmatically)
-  const drawnLinesRefs = useRef<any[]>([]);
 
   const autoplayTimerRef = useRef<any>(null);
 
@@ -126,7 +136,6 @@ export default function BacktestSessionPage() {
   }, [user, sessionId]);
 
   // Load candle data when symbol, start_date or activeTimeframe changes
-  // NOT depending on currentTimeUnix to prevent loop re-fetching
   const sessionSymbol = session?.symbol;
   const sessionStartDate = session?.start_date;
 
@@ -161,7 +170,7 @@ export default function BacktestSessionPage() {
           candleData = candleJson.data || [];
         }
 
-        // Fallback if Yahoo doesn't support short timeframes for this historic date
+        // Fallback hierarchy if timeframe is expired on Yahoo Finance
         if (candleData.length === 0) {
           const fallbacks = ['1h', '1d'];
           for (const fb of fallbacks) {
@@ -267,14 +276,104 @@ export default function BacktestSessionPage() {
 
     chart.timeScale().fitContent();
 
-    // Subscribe to clicks for custom drawings
+    // Chart Click Handler for drawings
     chart.subscribeClick((param) => {
-      if (!isDrawingMode || !param.point || !param.time) return;
-      const price = candlestickSeries.coordinateToPrice(param.point.y);
-      if (price) {
-        setDrawnLines((prev) => [...prev, price]);
-        setIsDrawingMode(false); // Reset drawing state after placing
-        toast.success(`Horizontal Line Placed at ${price.toFixed(5)}`);
+      if (activeTool === 'cursor' || !param.point || !param.time || !candleSeriesRef.current) return;
+      const price = candleSeriesRef.current.coordinateToPrice(param.point.y);
+      if (!price) return;
+      const time = param.time;
+
+      if (activeTool === 'horizontal') {
+        const line = candleSeriesRef.current.createPriceLine({
+          price,
+          color: '#6366f1',
+          lineWidth: 1.5,
+          axisLabelVisible: true,
+          title: 'LEVEL',
+        });
+        setDrawnLines((prev) => [...prev, { type: 'horizontal', ref: line }]);
+        setActiveTool('cursor');
+        toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
+      }
+      else if (activeTool === 'trendline') {
+        if (!drawingState) {
+          setDrawingState({ time, price });
+          toast.success('Start point set. Click on the chart again to draw trendline.');
+        } else {
+          const trendLineSeries = chart.addSeries(LineSeries, {
+            color: '#3b82f6',
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          trendLineSeries.setData([
+            { time: drawingState.time, value: drawingState.price },
+            { time: time, value: price }
+          ]);
+          setDrawnLines((prev) => [...prev, { type: 'trendline', series: trendLineSeries }]);
+          setDrawingState(null);
+          setActiveTool('cursor');
+          toast.success('Trendline drawn');
+        }
+      }
+      else if (activeTool === 'fvg') {
+        if (!drawingState) {
+          setDrawingState({ price });
+          toast.success('High boundary set. Click again to set low boundary.');
+        } else {
+          const topLine = candleSeriesRef.current.createPriceLine({
+            price: drawingState.price,
+            color: '#f59e0b',
+            lineWidth: 1.5,
+            lineStyle: 1,
+            title: 'FVG High',
+          });
+          const bottomLine = candleSeriesRef.current.createPriceLine({
+            price: price,
+            color: '#f59e0b',
+            lineWidth: 1.5,
+            lineStyle: 1,
+            title: 'FVG Low',
+          });
+          setDrawnLines((prev) => [...prev, { type: 'fvg', topRef: topLine, bottomRef: bottomLine }]);
+          setDrawingState(null);
+          setActiveTool('cursor');
+          toast.success('FVG boundaries placed');
+        }
+      }
+      else if (activeTool === 'long') {
+        const details = getSymbolDetails(sessionSymbol || 'EURUSD');
+        const slOffset = (parseFloat(slPips) || 20) / details.multiplier;
+        const tpOffset = (parseFloat(tpPips) || 40) / details.multiplier;
+
+        const entry = price;
+        const sl = entry - slOffset;
+        const tp = entry + tpOffset;
+
+        const entryLine = candleSeriesRef.current.createPriceLine({ price: entry, color: '#3b82f6', lineWidth: 1.5, lineStyle: 2, title: 'PLAN ENTRY' });
+        const slLine = candleSeriesRef.current.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 1.5, lineStyle: 2, title: 'PLAN SL' });
+        const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
+
+        setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
+        setActiveTool('cursor');
+        toast.success(`Long Plan placed: Entry ${entry.toFixed(5)}`);
+      }
+      else if (activeTool === 'short') {
+        const details = getSymbolDetails(sessionSymbol || 'EURUSD');
+        const slOffset = (parseFloat(slPips) || 20) / details.multiplier;
+        const tpOffset = (parseFloat(tpPips) || 40) / details.multiplier;
+
+        const entry = price;
+        const sl = entry + slOffset;
+        const tp = entry - tpOffset;
+
+        const entryLine = candleSeriesRef.current.createPriceLine({ price: entry, color: '#3b82f6', lineWidth: 1.5, lineStyle: 2, title: 'PLAN ENTRY' });
+        const slLine = candleSeriesRef.current.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 1.5, lineStyle: 2, title: 'PLAN SL' });
+        const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
+
+        setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
+        setActiveTool('cursor');
+        toast.success(`Short Plan placed: Entry ${entry.toFixed(5)}`);
       }
     });
 
@@ -316,9 +415,9 @@ export default function BacktestSessionPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
-  }, [loading, loadingChart, candles, isDrawingMode]);
+  }, [loading, loadingChart, candles, activeTool, drawingState]);
 
-  // Sync visible slice of candles instantly without recreating chart
+  // Sync visible slice of candles instantly when index updates
   useEffect(() => {
     if (!candleSeriesRef.current || candles.length === 0 || currentIndex >= candles.length) return;
 
@@ -332,29 +431,6 @@ export default function BacktestSessionPage() {
 
     updateChartPriceLines();
   }, [currentIndex, candles]);
-
-  // Render drawn lines whenever drawnLines state changes
-  useEffect(() => {
-    const series = candleSeriesRef.current;
-    if (!series) return;
-
-    // Clear old drawn lines
-    drawnLinesRefs.current.forEach((line) => series.removePriceLine(line));
-    drawnLinesRefs.current = [];
-
-    // Draw new ones
-    drawnLines.forEach((price) => {
-      const line = series.createPriceLine({
-        price,
-        color: '#6366f1',
-        lineWidth: 1.5,
-        lineStyle: 0, // Solid
-        axisLabelVisible: true,
-        title: 'LEVEL',
-      });
-      drawnLinesRefs.current.push(line);
-    });
-  }, [drawnLines]);
 
   const updateChartPriceLines = () => {
     const series = candleSeriesRef.current;
@@ -442,7 +518,6 @@ export default function BacktestSessionPage() {
     setCurrentIndex(nextIndex);
     setCurrentTimeUnix(nextCandle.time);
 
-    // Save timestamp progress to DB
     await updateSessionState(sessionId, nextCandle.time, balance, activeTrade);
 
     if (activeTrade) {
@@ -599,12 +674,37 @@ export default function BacktestSessionPage() {
     }
   };
 
+  const clearDrawings = () => {
+    const series = candleSeriesRef.current;
+    if (!series || !chartRef.current) return;
+
+    drawnLines.forEach((drawing) => {
+      if (drawing.type === 'horizontal') {
+        series.removePriceLine(drawing.ref);
+      } else if (drawing.type === 'trendline') {
+        chartRef.current.removeSeries(drawing.series);
+      } else if (drawing.type === 'fvg') {
+        series.removePriceLine(drawing.topRef);
+        series.removePriceLine(drawing.bottomRef);
+      } else if (drawing.type === 'planner') {
+        series.removePriceLine(drawing.entryRef);
+        series.removePriceLine(drawing.slRef);
+        series.removePriceLine(drawing.tpRef);
+      }
+    });
+
+    setDrawnLines([]);
+    setDrawingState(null);
+    setActiveTool('cursor');
+    toast.success('All drawings cleared');
+  };
+
   // Fullscreen toggle handler
   const handleFullscreenToggle = () => {
-    if (!chartContainerRef.current) return;
+    if (!workspaceContainerRef.current) return;
 
     if (!document.fullscreenElement) {
-      chartContainerRef.current.requestFullscreen().catch((err) => {
+      workspaceContainerRef.current.requestFullscreen().catch((err) => {
         toast.error(`Error enabling fullscreen: ${err.message}`);
       });
     } else {
@@ -694,7 +794,11 @@ export default function BacktestSessionPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative text-slate-800 dark:text-slate-100">
+      {/* Top-level Workspace Container for fullscreen execution */}
+      <div 
+        ref={workspaceContainerRef} 
+        className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#090a10] w-full h-full overflow-y-auto"
+      >
         
         {/* Floating Topbar Dashboard */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 bg-white dark:bg-[#0f111a]/85 backdrop-blur-lg border border-slate-200 dark:border-white/[0.06] px-6 py-4 rounded-3xl shadow-md dark:shadow-xl relative z-20">
@@ -785,6 +889,17 @@ export default function BacktestSessionPage() {
               <option value={1000}>1.0s Speed</option>
               <option value={500}>0.5s Speed</option>
             </select>
+
+            {/* Topbar Fullscreen Button */}
+            <button
+              onClick={handleFullscreenToggle}
+              className="p-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-155"
+              title="Toggle Fullscreen Workspace"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -915,45 +1030,111 @@ export default function BacktestSessionPage() {
           <div className="lg:col-span-3">
             <div className="relative w-full h-[500px] bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl">
               
-              {/* Fullscreen & Drawings toolbar controls */}
-              <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+              {/* Advanced Chart Drawing Toolbar overlay */}
+              <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 p-1 bg-white/95 dark:bg-[#0f111a]/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.08] shadow-lg">
+                
+                {/* Pointer / Cursor */}
                 <button
-                  onClick={() => setIsDrawingMode(!isDrawingMode)}
-                  className={`p-2 rounded-xl border text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shadow ${
-                    isDrawingMode
-                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/10'
-                      : 'bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5'
+                  onClick={() => { setActiveTool('cursor'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'cursor'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
                   }`}
-                  title="Draw Support/Resistance Line (Click on the chart afterwards)"
+                  title="Cursor / Selection"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.24 9.42L7 17.66m10.12-10.12a3 3 0 11-4.24-4.24 3 3 0 014.24 4.24z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6l4.982-1.66L7 7l1.66 11.623 3.323-2.908 3.061 5.357 2.058-1.4z" />
                   </svg>
-                  <span>Draw Line</span>
                 </button>
 
+                {/* Trendline */}
+                <button
+                  onClick={() => { setActiveTool('trendline'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'trendline'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                  title="Trend Line (Two Clicks)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 18.5l13-13m0 0h-4m4 0v4" />
+                  </svg>
+                </button>
+
+                {/* Horizontal level line */}
+                <button
+                  onClick={() => { setActiveTool('horizontal'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'horizontal'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                  title="Horizontal Level Line (One Click)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16" />
+                  </svg>
+                </button>
+
+                {/* FVG Box */}
+                <button
+                  onClick={() => { setActiveTool('fvg'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'fvg'
+                      ? 'bg-indigo-600 text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                  title="FVG Zone Box (Click top price, then bottom price)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 18h16M4 6v12m16-12v12" />
+                  </svg>
+                </button>
+
+                {/* Long planner */}
+                <button
+                  onClick={() => { setActiveTool('long'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'long'
+                      ? 'bg-emerald-600 text-white'
+                      : 'text-emerald-500 hover:bg-emerald-500/10'
+                  }`}
+                  title="Long Position Planner (One Click Entry)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
+                  </svg>
+                </button>
+
+                {/* Short planner */}
+                <button
+                  onClick={() => { setActiveTool('short'); setDrawingState(null); }}
+                  className={`p-2 rounded-xl transition-all ${
+                    activeTool === 'short'
+                      ? 'bg-rose-600 text-white'
+                      : 'text-rose-500 hover:bg-rose-500/10'
+                  }`}
+                  title="Short Position Planner (One Click Entry)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0-5a9 9 0 110 18 9 9 0 010-18z" />
+                  </svg>
+                </button>
+
+                {/* Clear all drawings */}
                 {drawnLines.length > 0 && (
                   <button
-                    onClick={() => {
-                      setDrawnLines([]);
-                      toast.success('Drawings cleared');
-                    }}
-                    className="p-2 rounded-xl border text-xs font-bold bg-white dark:bg-[#0f111a]/80 text-rose-500 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow"
-                    title="Clear All Lines"
+                    onClick={clearDrawings}
+                    className="p-2 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all border-t border-slate-100 dark:border-white/[0.04] mt-1"
+                    title="Clear All Drawings"
                   >
-                    Clear
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </button>
                 )}
-
-                <button
-                  onClick={handleFullscreenToggle}
-                  className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
-                  title="Toggle Fullscreen Chart"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-                  </svg>
-                </button>
               </div>
 
               {loadingChart && (
