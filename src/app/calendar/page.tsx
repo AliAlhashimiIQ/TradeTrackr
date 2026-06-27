@@ -531,11 +531,7 @@ export default function CalendarPage() {
         {/* Calendar Grid (7 columns - Sun to Sat) */}
         <div className="flex-1 min-w-0">
           <div
-            className="card rounded-2xl overflow-hidden"
-            style={{
-              background: 'var(--card-bg)',
-              borderColor: 'var(--card-border)',
-            }}
+            className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-2xl"
           >
             {/* Day headers */}
             <div
@@ -564,12 +560,7 @@ export default function CalendarPage() {
             {weeklyStatsList.map((stat) => (
               <div
                 key={stat.row}
-                className="card p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
-                style={{
-                  background: 'var(--calendar-weekly-card-bg)',
-                  borderBottom: '1px solid var(--calendar-weekly-card-border)',
-                  boxShadow: 'var(--calendar-weekly-card-shadow)',
-                }}
+                className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
               >
                 <span className="text-[10px] text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
                   Week {stat.row}
@@ -889,14 +880,10 @@ export default function CalendarPage() {
               transition={{ duration: 0.25 }}
               className="mt-6"
             >
-              <div className="card rounded-2xl overflow-hidden">
+              <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
                 {/* Day header */}
                 <div
-                  className="px-6 py-5 flex items-center justify-between"
-                  style={{
-                    borderBottom: '1px solid rgba(255,255,255,0.06)',
-                    background: 'linear-gradient(160deg, rgba(255,255,255,0.03) 0%, transparent 100%)',
-                  }}
+                  className="px-6 py-5 flex items-center justify-between border-b border-white/5 bg-white/[0.015]"
                 >
                   <div>
                     <h2 className="text-base font-semibold text-white">
@@ -927,8 +914,7 @@ export default function CalendarPage() {
                 {/* Day stats */}
                 {selectedDayTrades.length > 0 && (
                   <div
-                    className="grid grid-cols-2 sm:grid-cols-4"
-                    style={{ borderBottom: '1px solid var(--card-border)' }}
+                    className="grid grid-cols-2 sm:grid-cols-4 border-b border-white/5"
                   >
                     {[
                       {
@@ -966,11 +952,9 @@ export default function CalendarPage() {
                     ].map((s, i) => (
                       <div
                         key={i}
-                        className="px-6 py-4 flex flex-col gap-1"
-                        style={{
-                          borderRight: i < 3 ? '1px solid var(--card-border)' : 'none',
-                          background: 'rgba(255,255,255,0.01)',
-                        }}
+                        className={`px-6 py-4 flex flex-col gap-1 bg-white/[0.01] ${
+                          i < 3 ? 'border-r border-white/5' : ''
+                        }`}
                       >
                         <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
                           {s.label}
@@ -1004,20 +988,9 @@ export default function CalendarPage() {
                       return (
                         <div
                           key={trade.id}
-                          className="px-6 py-4 flex items-center gap-4 transition-all duration-200 group"
-                          style={{
-                            borderBottom:
-                              idx < selectedDayTrades.length - 1
-                                ? '1px solid var(--card-border)'
-                                : 'none',
-                            background: 'transparent',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'rgba(255,255,255,0.02)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent'
-                          }}
+                          className={`px-6 py-4 flex items-center gap-4 transition-all duration-200 bg-transparent hover:bg-white/[0.02] ${
+                            idx < selectedDayTrades.length - 1 ? 'border-b border-white/5' : ''
+                          }`}
                         >
                           {/* Side badge — liquid style */}
                           <span

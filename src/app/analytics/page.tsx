@@ -78,8 +78,8 @@ export default function AnalyticsPage() {
   const [timeOfDayData, setTimeOfDayData] = useState<TimeOfDayPerformanceType[]>([]);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [totalPips, setTotalPips] = useState(0);
-  const panelClass = 'card rounded-2xl border border-gray-200 dark:border-slate-800/80 bg-white dark:bg-slate-950/65 backdrop-blur-sm';
-  const subPanelClass = 'card rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50 dark:bg-slate-900/60';
+  const panelClass = 'card rounded-2xl border border-white/5 bg-slate-900/40 backdrop-blur-md shadow-2xl';
+  const subPanelClass = 'card rounded-xl border border-white/[0.04] bg-slate-950/50';
   
   // Auth check and redirect
   useEffect(() => {
