@@ -23,6 +23,28 @@ export default function TradingViewChart({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [interval, setInterval] = useState<string>('15m');
+
+  // Initialize optimal default interval when trade changes
+  useEffect(() => {
+    const entryDate = new Date(entryTime);
+    const exitDate = exitTime ? new Date(exitTime) : new Date();
+    const entryTimeUnix = Math.floor(entryDate.getTime() / 1000);
+    const exitTimeUnix = Math.floor(exitDate.getTime() / 1000);
+    const durationSeconds = exitTimeUnix - entryTimeUnix;
+
+    let defaultInterval = '15m';
+    if (durationSeconds < 4 * 3600) {
+      defaultInterval = '5m';
+    } else if (durationSeconds < 24 * 3600) {
+      defaultInterval = '15m';
+    } else if (durationSeconds < 7 * 24 * 3600) {
+      defaultInterval = '1h';
+    } else {
+      defaultInterval = '1d';
+    }
+    setInterval(defaultInterval);
+  }, [symbol, entryTime, exitTime]);
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
@@ -39,27 +61,16 @@ export default function TradingViewChart({
         const exitDate = exitTime ? new Date(exitTime) : new Date();
         const entryTimeUnix = Math.floor(entryDate.getTime() / 1000);
         const exitTimeUnix = Math.floor(exitDate.getTime() / 1000);
-        const durationSeconds = exitTimeUnix - entryTimeUnix;
 
-        // Determine optimal timeframe, interval, and range padding
-        let interval = '15m';
+        // Determine range padding based on selected timeframe
         let paddingSeconds = 12 * 3600; // 12 hours fallback
-
-        if (durationSeconds < 4 * 3600) {
-          // Under 4 hours: use 5m candles, 6 hours padding
-          interval = '5m';
+        if (interval === '5m') {
           paddingSeconds = 6 * 3600;
-        } else if (durationSeconds < 24 * 3600) {
-          // Under 24 hours: use 15m candles, 24 hours padding
-          interval = '15m';
+        } else if (interval === '15m') {
           paddingSeconds = 24 * 3600;
-        } else if (durationSeconds < 7 * 24 * 3600) {
-          // Under 1 week: use 1h candles, 5 days padding
-          interval = '1h';
+        } else if (interval === '1h') {
           paddingSeconds = 5 * 24 * 3600;
-        } else {
-          // Over 1 week: use 1d candles, 30 days padding
-          interval = '1d';
+        } else if (interval === '1d') {
           paddingSeconds = 30 * 24 * 3600;
         }
 
@@ -208,17 +219,36 @@ export default function TradingViewChart({
         chart.remove();
       }
     };
-  }, [symbol, entryTime, exitTime, entryPrice, exitPrice, type]);
+  }, [symbol, entryTime, exitTime, entryPrice, exitPrice, type, interval]);
 
   return (
     <div className="w-full flex flex-col h-[500px] bg-[#0d0e16] rounded-2xl border border-white/[0.08] relative overflow-hidden shadow-2xl">
       {/* Chart Header Info */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
-        <div className="flex items-center space-x-3">
-          <span className="text-white font-semibold tracking-wide text-sm">{symbol}</span>
-          <span className="px-2 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-400 font-medium font-mono uppercase">
-            Execution Map
-          </span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <span className="text-white font-semibold tracking-wide text-sm">{symbol}</span>
+            <span className="px-2 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-400 font-medium font-mono uppercase">
+              Execution Map
+            </span>
+          </div>
+
+          {/* Timeframe selector */}
+          <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.05]">
+            {['5m', '15m', '1h', '1d'].map((tf) => (
+              <button
+                key={tf}
+                onClick={() => setInterval(tf)}
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
+                  interval === tf
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="text-xs text-gray-400 font-medium">
           Powered by TradingView
