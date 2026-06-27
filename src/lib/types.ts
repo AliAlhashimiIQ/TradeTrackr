@@ -153,6 +153,16 @@ export interface BacktestingSession {
     sl?: number;
     tp?: number;
     entryTime: number; // Unix seconds
+    risk_percent?: number;
+    risk_amount?: number;
+  } | null;
+  drawings?: any[] | null;
+  pending_orders?: any[] | null;
+  indicators_config?: {
+    ema20: boolean;
+    ema50: boolean;
+    ema200: boolean;
+    rsi: boolean;
   } | null;
   created_at: string;
   updated_at: string;
@@ -176,6 +186,10 @@ export interface BacktestTrade {
   notes?: string;
   screenshot_url?: string | null;
   is_open?: boolean;
+  risk_percent?: number;
+  risk_amount?: number;
+  r_multiple?: number;
+  close_reason?: string;
   created_at: string;
   updated_at: string;
 }

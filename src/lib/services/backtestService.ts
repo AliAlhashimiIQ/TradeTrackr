@@ -39,17 +39,32 @@ export async function updateSessionState(
   id: string,
   currentIndex: number,
   currentBalance: number,
-  activeTrade: BacktestingSession['active_trade']
+  activeTrade: BacktestingSession['active_trade'],
+  drawings?: any[] | null,
+  pendingOrders?: any[] | null,
+  indicatorsConfig?: any | null
 ): Promise<void> {
   try {
+    const updateData: any = {
+      current_index: currentIndex,
+      current_balance: currentBalance,
+      active_trade: activeTrade,
+      updated_at: new Date().toISOString()
+    };
+
+    if (drawings !== undefined) {
+      updateData.drawings = drawings;
+    }
+    if (pendingOrders !== undefined) {
+      updateData.pending_orders = pendingOrders;
+    }
+    if (indicatorsConfig !== undefined) {
+      updateData.indicators_config = indicatorsConfig;
+    }
+
     const { error } = await (supabase as any)
       .from('backtest_sessions')
-      .update({
-        current_index: currentIndex,
-        current_balance: currentBalance,
-        active_trade: activeTrade,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id);
 
     if (error) throw error;
