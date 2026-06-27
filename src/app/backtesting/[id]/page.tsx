@@ -41,14 +41,19 @@ function getSymbolDetails(symbol: string) {
 }
 
 interface DrawingItem {
+  id: string;
   type: 'horizontal' | 'trendline' | 'fvg' | 'planner';
-  ref?: any;
-  series?: any;
-  topRef?: any;
-  bottomRef?: any;
-  entryRef?: any;
-  slRef?: any;
-  tpRef?: any;
+  price?: number;
+  time?: number;
+  p1?: { time: number; price: number };
+  p2?: { time: number; price: number };
+  startTime?: number;
+  high?: number;
+  low?: number;
+  entry?: number;
+  sl?: number;
+  tp?: number;
+  plannerType?: 'long' | 'short';
 }
 
 export default function BacktestSessionPage() {
@@ -90,7 +95,7 @@ export default function BacktestSessionPage() {
   const [drawnLines, setDrawnLines] = useState<DrawingItem[]>([]);
   
   // Custom toolbar utility options
-  const [isMagnetMode, setIsMagnetMode] = useState(true);
+  const [isMagnetMode, setIsMagnetMode] = useState(false); // Set Snapping default to false (off)
   const [areDrawingsHidden, setAreDrawingsHidden] = useState(false);
   const [isToolLocked, setIsToolLocked] = useState(false);
 
@@ -102,6 +107,7 @@ export default function BacktestSessionPage() {
   // Refs
   const chartWrapperRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
   
@@ -261,6 +267,7 @@ export default function BacktestSessionPage() {
   const tpPipsRef = useRef(tpPips);
   const sessionSymbolRef = useRef(sessionSymbol);
   const drawnLinesRef = useRef(drawnLines);
+  const areDrawingsHiddenRef = useRef(areDrawingsHidden);
 
   useEffect(() => { activeToolRef.current = activeTool; }, [activeTool]);
   useEffect(() => { drawingStateRef.current = drawingState; }, [drawingState]);
@@ -270,7 +277,142 @@ export default function BacktestSessionPage() {
   useEffect(() => { slPipsRef.current = slPips; }, [slPips]);
   useEffect(() => { tpPipsRef.current = tpPips; }, [tpPips]);
   useEffect(() => { sessionSymbolRef.current = sessionSymbol; }, [sessionSymbol]);
-  useEffect(() => { drawnLinesRef.current = drawnLines; }, [drawnLines]);
+  useEffect(() => { drawnLinesRef.current = drawnLines; drawShapes(); }, [drawnLines]);
+  useEffect(() => { areDrawingsHiddenRef.current = areDrawingsHidden; drawShapes(); }, [areDrawingsHidden]);
+
+  // Overlay Canvas Drawing Engine
+  const drawShapes = () => {
+    const canvas = drawingCanvasRef.current;
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    if (!canvas || !chart || !series) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Match dimensions to parent container
+    const container = chartContainerRef.current;
+    if (!container) return;
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (areDrawingsHiddenRef.current) return;
+
+    drawnLinesRef.current.forEach((drawing) => {
+      if (drawing.type === 'horizontal' && drawing.price) {
+        const y = series.priceToCoordinate(drawing.price);
+        if (y === null) return;
+        ctx.strokeStyle = '#6366f1';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Draw price tag
+        ctx.fillStyle = '#6366f1';
+        ctx.font = '10px monospace';
+        ctx.fillText(` ${drawing.price.toFixed(5)}`, canvas.width - 80, y - 4);
+      }
+      else if (drawing.type === 'trendline' && drawing.p1 && drawing.p2) {
+        const x1 = chart.timeScale().timeToCoordinate(drawing.p1.time);
+        const y1 = series.priceToCoordinate(drawing.p1.price);
+        const x2 = chart.timeScale().timeToCoordinate(drawing.p2.time);
+        const y2 = series.priceToCoordinate(drawing.p2.price);
+
+        if (x1 === null || y1 === null || x2 === null || y2 === null) return;
+
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        // Coordinate nodes
+        ctx.fillStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.arc(x1, y1, 4, 0, Math.PI * 2);
+        ctx.arc(x2, y2, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (drawing.type === 'fvg' && drawing.startTime && drawing.high && drawing.low) {
+        const xStart = chart.timeScale().timeToCoordinate(drawing.startTime);
+        const yHigh = series.priceToCoordinate(drawing.high);
+        const yLow = series.priceToCoordinate(drawing.low);
+
+        if (xStart === null || yHigh === null || yLow === null) return;
+
+        // Draw transparent shaded amber channel extending to right
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+        ctx.fillRect(xStart, yHigh, canvas.width - xStart, yLow - yHigh);
+
+        // Draw boundaries
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(xStart, yHigh);
+        ctx.lineTo(canvas.width, yHigh);
+        ctx.moveTo(xStart, yLow);
+        ctx.lineTo(canvas.width, yLow);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // FVG Marker label
+        ctx.fillStyle = '#f59e0b';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('FVG ZONE', xStart + 8, yHigh + 14);
+      }
+      else if (drawing.type === 'planner' && drawing.startTime && drawing.entry && drawing.sl && drawing.tp) {
+        const xStart = chart.timeScale().timeToCoordinate(drawing.startTime);
+        const yEntry = series.priceToCoordinate(drawing.entry);
+        const ySl = series.priceToCoordinate(drawing.sl);
+        const yTp = series.priceToCoordinate(drawing.tp);
+
+        if (xStart === null || yEntry === null || ySl === null || yTp === null) return;
+
+        const isLong = drawing.plannerType === 'long';
+
+        // Draw Target TP Box
+        ctx.fillStyle = isLong ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)';
+        const tpHeight = yEntry - yTp; 
+        ctx.fillRect(xStart, yTp, canvas.width - xStart, tpHeight);
+
+        // Draw Stop Loss Box
+        ctx.fillStyle = isLong ? 'rgba(239, 68, 68, 0.12)' : 'rgba(16, 185, 129, 0.12)';
+        const slHeight = ySl - yEntry;
+        ctx.fillRect(xStart, yEntry, canvas.width - xStart, slHeight);
+
+        // Boundaries lines
+        ctx.strokeStyle = 'rgba(128, 128, 128, 0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(xStart, yTp);
+        ctx.lineTo(canvas.width, yTp);
+        ctx.moveTo(xStart, ySl);
+        ctx.lineTo(canvas.width, ySl);
+        ctx.stroke();
+
+        // Entry border
+        ctx.strokeStyle = isLong ? '#10b981' : '#ef4444';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(xStart, yEntry);
+        ctx.lineTo(canvas.width, yEntry);
+        ctx.stroke();
+
+        // Tag label
+        ctx.fillStyle = isLong ? '#10b981' : '#ef4444';
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText(isLong ? 'LONG POSITION PLANNER' : 'SHORT POSITION PLANNER', xStart + 8, yEntry - 5);
+      }
+    });
+  };
 
   // Initialize and Render Chart
   useEffect(() => {
@@ -342,15 +484,10 @@ export default function BacktestSessionPage() {
         }
       }
 
+      const drawingId = Math.random().toString(36).substring(2, 9);
+
       if (activeToolVal === 'horizontal') {
-        const line = candleSeriesRef.current.createPriceLine({
-          price,
-          color: '#6366f1',
-          lineWidth: 1.5,
-          axisLabelVisible: true,
-          title: 'LEVEL',
-        });
-        setDrawnLines((prev) => [...prev, { type: 'horizontal', ref: line }]);
+        setDrawnLines((prev) => [...prev, { id: drawingId, type: 'horizontal', price, time: time as number }]);
         if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
       }
@@ -359,17 +496,7 @@ export default function BacktestSessionPage() {
           setDrawingState({ time, price });
           toast.success('Start point set. Click on the chart again to draw trendline.');
         } else {
-          const trendLineSeries = chart.addSeries(LineSeries, {
-            color: '#3b82f6',
-            lineWidth: 2,
-            priceLineVisible: false,
-            lastValueVisible: false,
-          });
-          trendLineSeries.setData([
-            { time: drawingStateVal.time, value: drawingStateVal.price },
-            { time: time, value: price }
-          ]);
-          setDrawnLines((prev) => [...prev, { type: 'trendline', series: trendLineSeries }]);
+          setDrawnLines((prev) => [...prev, { id: drawingId, type: 'trendline', p1: drawingStateVal, p2: { time: time as number, price } }]);
           setDrawingState(null);
           if (!isToolLockedVal) setActiveTool('cursor');
           toast.success('Trendline drawn');
@@ -377,27 +504,22 @@ export default function BacktestSessionPage() {
       }
       else if (activeToolVal === 'fvg') {
         if (!drawingStateVal) {
-          setDrawingState({ price });
+          setDrawingState({ price, time });
           toast.success('High boundary set. Click again to set low boundary.');
         } else {
-          const topLine = candleSeriesRef.current.createPriceLine({
-            price: drawingStateVal.price,
-            color: '#f59e0b',
-            lineWidth: 1.5,
-            lineStyle: 1,
-            title: 'FVG High',
-          });
-          const bottomLine = candleSeriesRef.current.createPriceLine({
-            price: price,
-            color: '#f59e0b',
-            lineWidth: 1.5,
-            lineStyle: 1,
-            title: 'FVG Low',
-          });
-          setDrawnLines((prev) => [...prev, { type: 'fvg', topRef: topLine, bottomRef: bottomLine }]);
+          setDrawnLines((prev) => [
+            ...prev,
+            {
+              id: drawingId,
+              type: 'fvg',
+              startTime: drawingStateVal.time,
+              high: Math.max(drawingStateVal.price, price),
+              low: Math.min(drawingStateVal.price, price),
+            }
+          ]);
           setDrawingState(null);
           if (!isToolLockedVal) setActiveTool('cursor');
-          toast.success('FVG boundaries placed');
+          toast.success('Fair Value Gap zone placed!');
         }
       }
       else if (activeToolVal === 'long') {
@@ -409,11 +531,7 @@ export default function BacktestSessionPage() {
         const sl = entry - slOffset;
         const tp = entry + tpOffset;
 
-        const entryLine = candleSeriesRef.current.createPriceLine({ price: entry, color: '#3b82f6', lineWidth: 1.5, lineStyle: 2, title: 'PLAN ENTRY' });
-        const slLine = candleSeriesRef.current.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 1.5, lineStyle: 2, title: 'PLAN SL' });
-        const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
-
-        setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
+        setDrawnLines((prev) => [...prev, { id: drawingId, type: 'planner', plannerType: 'long', startTime: time as number, entry, sl, tp }]);
         if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Long Plan placed: Entry ${entry.toFixed(5)}`);
       }
@@ -426,14 +544,15 @@ export default function BacktestSessionPage() {
         const sl = entry + slOffset;
         const tp = entry - tpOffset;
 
-        const entryLine = candleSeriesRef.current.createPriceLine({ price: entry, color: '#3b82f6', lineWidth: 1.5, lineStyle: 2, title: 'PLAN ENTRY' });
-        const slLine = candleSeriesRef.current.createPriceLine({ price: sl, color: '#ef4444', lineWidth: 1.5, lineStyle: 2, title: 'PLAN SL' });
-        const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
-
-        setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
+        setDrawnLines((prev) => [...prev, { id: drawingId, type: 'planner', plannerType: 'short', startTime: time as number, entry, sl, tp }]);
         if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Short Plan placed: Entry ${entry.toFixed(5)}`);
       }
+    });
+
+    // Timescale scroll/zoom listeners
+    chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+      drawShapes();
     });
 
     // Theme Mutation Observer
@@ -454,6 +573,7 @@ export default function BacktestSessionPage() {
           }
         });
       }
+      drawShapes();
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
@@ -464,8 +584,14 @@ export default function BacktestSessionPage() {
           chartContainerRef.current.clientHeight
         );
       }
+      drawShapes();
     };
     window.addEventListener('resize', handleResize);
+
+    // Initial drawing sync
+    setTimeout(() => {
+      drawShapes();
+    }, 150);
 
     return () => {
       window.removeEventListener('resize', handleResize);
@@ -489,27 +615,8 @@ export default function BacktestSessionPage() {
     }
 
     updateChartPriceLines();
+    drawShapes();
   }, [currentIndex, candles]);
-
-  // Handle drawings visibility hide/show toggle
-  useEffect(() => {
-    const series = candleSeriesRef.current;
-    if (!series) return;
-    drawnLines.forEach((drawing) => {
-      if (drawing.type === 'horizontal') {
-        drawing.ref.applyOptions({ lineVisible: !areDrawingsHidden });
-      } else if (drawing.type === 'trendline') {
-        drawing.series.applyOptions({ visible: !areDrawingsHidden });
-      } else if (drawing.type === 'fvg') {
-        drawing.topRef.applyOptions({ lineVisible: !areDrawingsHidden });
-        drawing.bottomRef.applyOptions({ lineVisible: !areDrawingsHidden });
-      } else if (drawing.type === 'planner') {
-        drawing.entryRef.applyOptions({ lineVisible: !areDrawingsHidden });
-        drawing.slRef.applyOptions({ lineVisible: !areDrawingsHidden });
-        drawing.tpRef.applyOptions({ lineVisible: !areDrawingsHidden });
-      }
-    });
-  }, [areDrawingsHidden, drawnLines]);
 
   const updateChartPriceLines = () => {
     const series = candleSeriesRef.current;
@@ -754,24 +861,6 @@ export default function BacktestSessionPage() {
   };
 
   const clearDrawings = () => {
-    const series = candleSeriesRef.current;
-    if (!series || !chartRef.current) return;
-
-    drawnLines.forEach((drawing) => {
-      if (drawing.type === 'horizontal') {
-        series.removePriceLine(drawing.ref);
-      } else if (drawing.type === 'trendline') {
-        chartRef.current.removeSeries(drawing.series);
-      } else if (drawing.type === 'fvg') {
-        series.removePriceLine(drawing.topRef);
-        series.removePriceLine(drawing.bottomRef);
-      } else if (drawing.type === 'planner') {
-        series.removePriceLine(drawing.entryRef);
-        series.removePriceLine(drawing.slRef);
-        series.removePriceLine(drawing.tpRef);
-      }
-    });
-
     setDrawnLines([]);
     setDrawingState(null);
     setActiveTool('cursor');
@@ -780,7 +869,6 @@ export default function BacktestSessionPage() {
 
   // Draggable Floating Panel mouse handlers
   const handleDragMouseDown = (e: React.MouseEvent) => {
-    // Only drag when clicking the top header bar
     isDraggingRef.current = true;
     dragStartRef.current = { x: e.clientX, y: e.clientY };
     panelOffsetRef.current = { ...panelPos };
@@ -840,6 +928,7 @@ export default function BacktestSessionPage() {
             container.clientWidth,
             container.clientHeight
           );
+          drawShapes();
         }, 100);
       }
     };
@@ -1048,7 +1137,7 @@ export default function BacktestSessionPage() {
 
                   <div className="space-y-3.5 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
                     <div>
-                      <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Lots size</label>
+                      <label className="block text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest mb-1.5">Lots size</label>
                       <input
                         type="text"
                         value={lots}
@@ -1059,7 +1148,7 @@ export default function BacktestSessionPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Stop Loss (Pips)</label>
+                        <label className="block text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest mb-1.5">Stop Loss (Pips)</label>
                         <input
                           type="number"
                           placeholder="e.g. 15"
@@ -1069,7 +1158,7 @@ export default function BacktestSessionPage() {
                       />
                       </div>
                       <div>
-                        <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Take Profit (Pips)</label>
+                        <label className="block text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest mb-1.5">Take Profit (Pips)</label>
                         <input
                           type="number"
                           placeholder="e.g. 30"
@@ -1153,7 +1242,7 @@ export default function BacktestSessionPage() {
                       <span className="ml-2 font-mono text-[10px] text-slate-400">{activeTimeframe}</span>
                     </div>
                     <button 
-                      onClick={handleFullscreenToggle} 
+                      onClick={(e) => { e.stopPropagation(); handleFullscreenToggle(); }}
                       className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/5 rounded font-semibold transition-all flex items-center justify-center text-slate-500 dark:text-gray-400"
                       title="Exit Fullscreen"
                     >
@@ -1168,7 +1257,7 @@ export default function BacktestSessionPage() {
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Replay</span>
                     <div className="flex items-center gap-1.5">
                       <button 
-                        onClick={handleStepBackward} 
+                        onClick={(e) => { e.stopPropagation(); handleStepBackward(); }}
                         disabled={currentIndex <= 50 || isPlaying} 
                         className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-600 dark:text-gray-300"
                         title="Step Backward"
@@ -1178,7 +1267,7 @@ export default function BacktestSessionPage() {
                         </svg>
                       </button>
                       <button 
-                        onClick={() => setIsPlaying(!isPlaying)} 
+                        onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }}
                         className="p-1 px-3 bg-indigo-600 text-white rounded text-[10px] font-bold flex items-center justify-center min-w-[55px]"
                         title={isPlaying ? 'Pause' : 'Play'}
                       >
@@ -1193,7 +1282,7 @@ export default function BacktestSessionPage() {
                         )}
                       </button>
                       <button 
-                        onClick={handleStepForward} 
+                        onClick={(e) => { e.stopPropagation(); handleStepForward(); }}
                         disabled={currentIndex >= candles.length - 1 || isPlaying} 
                         className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-600 dark:text-gray-300"
                         title="Step Forward"
@@ -1212,7 +1301,7 @@ export default function BacktestSessionPage() {
                       {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
                         <button
                           key={tf}
-                          onClick={() => setActiveTimeframe(tf)}
+                          onClick={(e) => { e.stopPropagation(); setActiveTimeframe(tf); }}
                           className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
                             activeTimeframe === tf ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
                           }`}
@@ -1234,10 +1323,10 @@ export default function BacktestSessionPage() {
                     {!activeTrade ? (
                       <div className="space-y-2.5">
                         <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => handleOpenPosition('Long')} className="py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-center rounded-lg">
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenPosition('Long'); }} className="py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-center rounded-lg">
                             Buy Mkt
                           </button>
-                          <button onClick={() => handleOpenPosition('Short')} className="py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-center rounded-lg">
+                          <button onClick={(e) => { e.stopPropagation(); handleOpenPosition('Short'); }} className="py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-center rounded-lg">
                             Sell Mkt
                           </button>
                         </div>
@@ -1268,7 +1357,7 @@ export default function BacktestSessionPage() {
                             {getFloatingPnL() >= 0 ? '+' : ''}{formatCurrency(getFloatingPnL())}
                           </span>
                         </div>
-                        <button onClick={handleManualClose} className="w-full py-1.5 bg-indigo-600 text-white rounded text-[10px] font-bold">
+                        <button onClick={(e) => { e.stopPropagation(); handleManualClose(); }} className="w-full py-1.5 bg-indigo-600 text-white rounded text-[10px] font-bold">
                           Close Position
                         </button>
                       </div>
@@ -1283,7 +1372,7 @@ export default function BacktestSessionPage() {
                 
                 {/* 1. Pointer / Selection Crosshair */}
                 <button
-                  onClick={() => { setActiveTool('cursor'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('cursor'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'cursor'
                       ? 'bg-indigo-600 text-white shadow-md'
@@ -1301,7 +1390,7 @@ export default function BacktestSessionPage() {
 
                 {/* 2. Trendline */}
                 <button
-                  onClick={() => { setActiveTool('trendline'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('trendline'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'trendline'
                       ? 'bg-indigo-600 text-white shadow-md'
@@ -1318,7 +1407,7 @@ export default function BacktestSessionPage() {
 
                 {/* 3. Horizontal Level */}
                 <button
-                  onClick={() => { setActiveTool('horizontal'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('horizontal'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'horizontal'
                       ? 'bg-indigo-600 text-white shadow-md'
@@ -1333,7 +1422,7 @@ export default function BacktestSessionPage() {
 
                 {/* 4. FVG Rectangle Zone */}
                 <button
-                  onClick={() => { setActiveTool('fvg'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('fvg'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'fvg'
                       ? 'bg-indigo-600 text-white shadow-md'
@@ -1351,7 +1440,7 @@ export default function BacktestSessionPage() {
 
                 {/* 5. Long Planner */}
                 <button
-                  onClick={() => { setActiveTool('long'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('long'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'long'
                       ? 'bg-emerald-600 text-white shadow-md'
@@ -1366,7 +1455,7 @@ export default function BacktestSessionPage() {
 
                 {/* 6. Short Planner */}
                 <button
-                  onClick={() => { setActiveTool('short'); setDrawingState(null); }}
+                  onClick={(e) => { e.stopPropagation(); setActiveTool('short'); setDrawingState(null); }}
                   className={`p-2 rounded-lg transition-all ${
                     activeTool === 'short'
                       ? 'bg-rose-600 text-white shadow-md'
@@ -1384,7 +1473,7 @@ export default function BacktestSessionPage() {
 
                 {/* 7. Magnet Mode Toggle */}
                 <button
-                  onClick={() => setIsMagnetMode(!isMagnetMode)}
+                  onClick={(e) => { e.stopPropagation(); setIsMagnetMode(!isMagnetMode); }}
                   className={`p-2 rounded-lg transition-all ${
                     isMagnetMode
                       ? 'bg-blue-600 text-white shadow-md'
@@ -1399,7 +1488,7 @@ export default function BacktestSessionPage() {
 
                 {/* 8. Stay in Drawing Mode Lock */}
                 <button
-                  onClick={() => setIsToolLocked(!isToolLocked)}
+                  onClick={(e) => { e.stopPropagation(); setIsToolLocked(!isToolLocked); }}
                   className={`p-2 rounded-lg transition-all ${
                     isToolLocked
                       ? 'bg-amber-600 text-white shadow-md'
@@ -1414,7 +1503,7 @@ export default function BacktestSessionPage() {
 
                 {/* 9. Hide / Show Drawings (Eye Icon) */}
                 <button
-                  onClick={() => setAreDrawingsHidden(!areDrawingsHidden)}
+                  onClick={(e) => { e.stopPropagation(); setAreDrawingsHidden(!areDrawingsHidden); }}
                   className={`p-2 rounded-lg transition-all ${
                     areDrawingsHidden
                       ? 'bg-slate-600 text-white'
@@ -1431,7 +1520,7 @@ export default function BacktestSessionPage() {
                 {/* 10. Delete All Drawings (Trash Can) */}
                 {drawnLines.length > 0 && (
                   <button
-                    onClick={clearDrawings}
+                    onClick={(e) => { e.stopPropagation(); clearDrawings(); }}
                     className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all border-t border-slate-100 dark:border-white/[0.04] mt-1 flex items-center justify-center"
                     title="Clear All Drawings"
                   >
@@ -1446,7 +1535,7 @@ export default function BacktestSessionPage() {
               {!isFullscreen && (
                 <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
                   <button
-                    onClick={handleFullscreenToggle}
+                    onClick={(e) => { e.stopPropagation(); handleFullscreenToggle(); }}
                     className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
                     title="Toggle Fullscreen Chart"
                   >
@@ -1465,6 +1554,13 @@ export default function BacktestSessionPage() {
                   </div>
                 </div>
               )}
+              
+              {/* Shaded Area Drawing Canvas Overlay */}
+              <canvas 
+                ref={drawingCanvasRef} 
+                className="absolute inset-0 pointer-events-none z-10 w-full h-full"
+              />
+              
               <div ref={chartContainerRef} className="w-full h-full" />
             </div>
           </div>
@@ -1527,7 +1623,7 @@ export default function BacktestSessionPage() {
             <h3 className="text-xs text-slate-800 dark:text-white font-bold uppercase tracking-widest mb-4 pb-2 border-b border-slate-100 dark:border-white/[0.04]">Logged Simulator Trades</h3>
             
             {trades.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 text-center">
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-gray-550 text-center">
                 <svg className="w-8 h-8 mb-3 text-slate-300 dark:text-slate-700" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
