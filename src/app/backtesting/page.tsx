@@ -13,12 +13,21 @@ import toast from 'react-hot-toast';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 
+interface SessionStats {
+  count: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalPips: number;
+}
+
 export default function BacktestingPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const { colorblindMode } = useSettings();
 
   const [sessions, setSessions] = useState<BacktestingSession[]>([]);
+  const [sessionStats, setSessionStats] = useState<Record<string, SessionStats>>({});
   const [strategies, setStrategies] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,10 +50,11 @@ export default function BacktestingPage() {
     }
   }, [user, authLoading, router]);
 
-  const loadData = async () => {
+  const loadData = async (isInitial = false) => {
     if (!user) return;
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
+      
       const data = await getBacktestSessions(user.id);
       setSessions(data);
 
@@ -55,17 +65,48 @@ export default function BacktestingPage() {
         .eq('user_id', user.id);
       
       setStrategies(stratData || []);
+
+      // Load trades to calculate per-session metrics
+      const { data: tradesData, error: tradesErr } = await (supabase as any)
+        .from('backtest_trades')
+        .select('session_id, profit_loss, pips');
+
+      if (!tradesErr && tradesData) {
+        const statsMap: Record<string, SessionStats> = {};
+        tradesData.forEach((t: any) => {
+          if (!statsMap[t.session_id]) {
+            statsMap[t.session_id] = { count: 0, wins: 0, losses: 0, winRate: 0, totalPips: 0 };
+          }
+          const s = statsMap[t.session_id];
+          s.count += 1;
+          s.totalPips += Number(t.pips || 0);
+          if (Number(t.profit_loss || 0) >= 0) {
+            s.wins += 1;
+          } else {
+            s.losses += 1;
+          }
+        });
+
+        // Compute win rates
+        Object.keys(statsMap).forEach((key) => {
+          const s = statsMap[key];
+          s.winRate = s.count > 0 ? (s.wins / s.count) * 100 : 0;
+        });
+
+        setSessionStats(statsMap);
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load backtest sessions');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
+  // Only run full-page loading spinner on initial mount
   useEffect(() => {
     if (user) {
-      loadData();
+      loadData(sessions.length === 0);
     }
   }, [user]);
 
@@ -132,7 +173,6 @@ export default function BacktestingPage() {
     }
   };
 
-  // Calculations for dashboard summary
   const totalSessions = sessions.length;
   const netProfit = sessions.reduce((sum, s) => sum + (s.current_balance - s.initial_balance), 0);
 
@@ -194,12 +234,12 @@ export default function BacktestingPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 relative z-10">
             <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Active Runs</div>
+              <div className="text-[10px] text-slate-500 dark:text-gray-550 font-bold uppercase tracking-widest">Active Runs</div>
               <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2 font-mono">{totalSessions}</div>
             </div>
             <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl group-hover:bg-green-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Total PnL Return</div>
+              <div className="text-[10px] text-slate-500 dark:text-gray-550 font-bold uppercase tracking-widest">Total PnL Return</div>
               <div className={`text-3xl font-extrabold mt-2 font-mono ${netProfit >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500'}`}>
                 {netProfit >= 0 ? '+' : ''}
                 {formatCurrency(netProfit)}
@@ -207,7 +247,7 @@ export default function BacktestingPage() {
             </div>
             <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Replay Data Feed</div>
+              <div className="text-[10px] text-slate-500 dark:text-gray-550 font-bold uppercase tracking-widest">Replay Data Feed</div>
               <div className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-2">All Timeframes</div>
             </div>
           </div>
@@ -237,11 +277,12 @@ export default function BacktestingPage() {
             {sessions.map((session) => {
               const sessionProfit = session.current_balance - session.initial_balance;
               const sessionProfitPercent = (sessionProfit / session.initial_balance) * 100;
+              const stats = sessionStats[session.id] || { count: 0, wins: 0, losses: 0, winRate: 0, totalPips: 0 };
 
               return (
                 <div
                   key={session.id}
-                  className="group relative bg-white dark:bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-md hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] cursor-pointer overflow-hidden"
+                  className="group relative bg-white dark:bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-md hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] cursor-pointer overflow-hidden flex flex-col justify-between"
                   onClick={() => router.push(`/backtesting/${session.id}`)}
                 >
                   <div className="p-6 flex-1">
@@ -273,22 +314,49 @@ export default function BacktestingPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8 pt-4 border-t border-slate-100 dark:border-white/[0.04]">
+                    {/* Rich Analytics Grid */}
+                    <div className="grid grid-cols-2 gap-y-4 gap-x-6 mt-6 pt-4 border-t border-slate-100 dark:border-white/[0.04] text-xs">
+                      
+                      {/* Column 1: Financials */}
                       <div>
-                        <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Initial Balance</div>
-                        <div className="text-sm font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{formatCurrency(session.initial_balance)}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Return</div>
-                        <div className={`text-sm font-bold mt-1.5 font-mono ${sessionProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-500'}`}>
-                          {sessionProfit >= 0 ? '+' : ''}
-                          {sessionProfitPercent.toFixed(2)}%
+                        <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Starting / Current</div>
+                        <div className="font-bold text-slate-800 dark:text-white mt-1 font-mono">
+                          {formatCurrency(session.initial_balance)} / {formatCurrency(session.current_balance)}
                         </div>
                       </div>
+                      
+                      {/* Column 2: Net Return */}
+                      <div>
+                        <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Net Return</div>
+                        <div className={`font-bold mt-1 font-mono ${sessionProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
+                          {sessionProfit >= 0 ? '+' : ''}{formatCurrency(sessionProfit)} ({sessionProfitPercent.toFixed(2)}%)
+                        </div>
+                      </div>
+
+                      {/* Column 3: Trades Count */}
+                      <div>
+                        <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Total Trades</div>
+                        <div className="font-bold text-slate-800 dark:text-white mt-1 font-mono">
+                          {stats.count} Trades <span className="text-[10px] text-slate-400 font-medium">({stats.wins} W - {stats.losses} L)</span>
+                        </div>
+                      </div>
+
+                      {/* Column 4: Performance */}
+                      <div>
+                        <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Win Rate & Pips</div>
+                        <div className="font-bold mt-1 font-mono flex items-center gap-1.5">
+                          <span className="text-slate-800 dark:text-white">{stats.winRate.toFixed(1)}% WR</span>
+                          <span className="text-slate-400 font-medium">|</span>
+                          <span className={stats.totalPips >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}>
+                            {stats.totalPips >= 0 ? '+' : ''}{stats.totalPips.toFixed(1)} Pips
+                          </span>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
-                  {/* Visual highlight line */}
+                  {/* Status Indicator */}
                   <div className={`h-1.5 w-full transition-all duration-300 ${sessionProfit >= 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-rose-500 to-pink-500'}`} />
                 </div>
               );
