@@ -50,6 +50,70 @@ function mapSymbol(symbol: string): string {
   return cleaned;
 }
 
+function mapTwelveSymbol(symbol: string): string {
+  const cleaned = symbol.replace(/\.[a-zA-Z0-9]+$/, '').trim().toUpperCase();
+
+  // 1. Direct index maps
+  const indexMap: Record<string, string> = {
+    'US30': 'DJI',
+    'DJ30': 'DJI',
+    'DOW30': 'DJI',
+    'NAS100': 'NDX',
+    'NDX100': 'NDX',
+    'USTEC': 'NDX',
+    'US100': 'NDX',
+    'NASDAQ': 'IXIC',
+    'SPX500': 'SPX',
+    'US500': 'SPX',
+    'SPX': 'SPX',
+    'GER30': 'DAX',
+    'GER40': 'DAX',
+    'DE30': 'DAX',
+    'DE40': 'DAX',
+    'DAX': 'DAX',
+    'UK100': 'FTSE',
+    'NQ=F': 'NDX',
+    'ES=F': 'SPX',
+    'YM=F': 'DJI',
+  };
+  if (indexMap[cleaned]) {
+    return indexMap[cleaned];
+  }
+
+  // 2. Spot Gold & Silver
+  if (cleaned === 'XAUUSD' || cleaned === 'XAU' || cleaned === 'XAUUSD=X') return 'XAU/USD';
+  if (cleaned === 'XAGUSD' || cleaned === 'XAG' || cleaned === 'XAGUSD=X') return 'XAG/USD';
+
+  // 3. Forex Pairs (e.g. EURUSD, GBPUSD, USDJPY)
+  if (/^[A-Z]{6}$/.test(cleaned)) {
+    return `${cleaned.slice(0, 3)}/${cleaned.slice(3)}`;
+  }
+  const forexMatch = cleaned.match(/^([A-Z]{3})([A-Z]{3})=X$/);
+  if (forexMatch) {
+    return `${forexMatch[1]}/${forexMatch[2]}`;
+  }
+
+  // 4. Crypto Pairs (e.g. BTCUSD, BTCUSDT)
+  if (cleaned.endsWith('USDT') || cleaned.endsWith('USD')) {
+    const base = cleaned.replace(/USD(T)?$/, '');
+    return `${base}/USD`;
+  }
+
+  return cleaned;
+}
+
+function mapInterval(interval: string): string {
+  const map: Record<string, string> = {
+    '1m': '1min',
+    '5m': '5min',
+    '15m': '15min',
+    '1h': '1h',
+    '4h': '4h',
+    '1d': '1day',
+  };
+  return map[interval] || interval;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -62,6 +126,63 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
     }
 
+    const apikey = process.env.TWELVE_DATA_API_KEY;
+    let twelveDataSuccess = false;
+    let formattedData: any[] = [];
+
+    // Try Twelve Data first if API key is provided
+    if (apikey && apikey !== 'your_api_key_here') {
+      try {
+        const twelveSymbol = mapTwelveSymbol(rawSymbol);
+        const twelveInterval = mapInterval(interval);
+        
+        let twelveUrl = `https://api.twelvedata.com/time_series?symbol=${twelveSymbol}&interval=${twelveInterval}&apikey=${apikey}&outputsize=5000`;
+        if (start) {
+          const startDateStr = new Date(Number(start) * 1000).toISOString().slice(0, 19).replace('T', ' ');
+          twelveUrl += `&start_date=${encodeURIComponent(startDateStr)}`;
+        }
+        if (end) {
+          const endDateStr = new Date(Number(end) * 1000).toISOString().slice(0, 19).replace('T', ' ');
+          twelveUrl += `&end_date=${encodeURIComponent(endDateStr)}`;
+        }
+
+        const tdRes = await fetch(twelveUrl, { next: { revalidate: 60 } });
+        if (tdRes.ok) {
+          const tdJson = await tdRes.json();
+          if (tdJson.status === 'ok' && Array.isArray(tdJson.values)) {
+            formattedData = tdJson.values.map((item: any) => {
+              const dt = item.datetime.includes(' ') ? item.datetime : `${item.datetime} 00:00:00`;
+              const time = Math.floor(new Date(dt + ' UTC').getTime() / 1000);
+              return {
+                time,
+                open: Number(item.open),
+                high: Number(item.high),
+                low: Number(item.low),
+                close: Number(item.close)
+              };
+            }).filter((item: any) => !isNaN(item.time) && !isNaN(item.open) && !isNaN(item.high) && !isNaN(item.low) && !isNaN(item.close));
+
+            // Sort ascending (oldest first)
+            formattedData.sort((a, b) => a.time - b.time);
+            twelveDataSuccess = true;
+            console.log(`Twelve Data: Loaded ${formattedData.length} candles for ${twelveSymbol}`);
+          } else {
+            console.warn(`Twelve Data API returned warning/error:`, tdJson);
+          }
+        } else {
+          console.warn(`Twelve Data HTTP error: Status ${tdRes.status}`);
+        }
+      } catch (tdErr) {
+        console.error(`Twelve Data fetch failed, falling back:`, tdErr);
+      }
+    }
+
+    // Return Twelve Data if successful
+    if (twelveDataSuccess && formattedData.length > 0) {
+      return NextResponse.json({ symbol: rawSymbol, data: formattedData });
+    }
+
+    // FALLBACK: Yahoo Finance
     const is4h = interval === '4h';
     const queryInterval = is4h ? '1h' : interval;
 
@@ -81,21 +202,21 @@ export async function GET(req: NextRequest) {
     if (!res.ok) {
       const errText = await res.text();
       console.error(`Yahoo Finance API error: Status ${res.status}, response: ${errText}`);
-      return NextResponse.json({ error: `Failed to fetch data from Yahoo Finance: Status ${res.status}` }, { status: res.status });
+      return NextResponse.json({ error: `Failed to fetch data: Status ${res.status}` }, { status: res.status });
     }
 
     const data = await res.json();
     const chartData = data.chart?.result?.[0];
 
     if (!chartData) {
-      return NextResponse.json({ error: 'No data returned from data source' }, { status: 404 });
+      return NextResponse.json({ error: 'No data returned from Yahoo fallback' }, { status: 404 });
     }
 
     const timestamps = chartData.timestamp || [];
     const quote = chartData.indicators?.quote?.[0] || {};
     const { open = [], high = [], low = [], close = [] } = quote;
 
-    const formattedData = [];
+    const yfFormattedData = [];
     for (let i = 0; i < timestamps.length; i++) {
       const t = timestamps[i];
       const o = open[i];
@@ -107,8 +228,8 @@ export async function GET(req: NextRequest) {
         t !== null && o !== null && h !== null && l !== null && c !== null &&
         t !== undefined && o !== undefined && h !== undefined && l !== undefined && c !== undefined
       ) {
-        formattedData.push({
-          time: t, // Unix timestamp in seconds
+        yfFormattedData.push({
+          time: t,
           open: Number(o),
           high: Number(h),
           low: Number(l),
@@ -117,16 +238,13 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Sort ascending by time
-    formattedData.sort((a, b) => a.time - b.time);
-
-    let finalData = formattedData;
+    yfFormattedData.sort((a, b) => a.time - b.time);
+    let finalData = yfFormattedData;
 
     if (is4h) {
-      const groups: Record<number, typeof formattedData> = {};
-      for (const candle of formattedData) {
+      const groups: Record<number, typeof yfFormattedData> = {};
+      for (const candle of yfFormattedData) {
         const date = new Date(candle.time * 1000);
-        // Align to UTC 4-hour boundaries (00:00, 04:00, 08:00, 12:00, 16:00, 20:00)
         date.setUTCHours(Math.floor(date.getUTCHours() / 4) * 4, 0, 0, 0);
         const groupTime = Math.floor(date.getTime() / 1000);
         if (!groups[groupTime]) {
@@ -149,6 +267,7 @@ export async function GET(req: NextRequest) {
       finalData = aggregated;
     }
 
+    console.log(`Yahoo Finance: Loaded fallback of ${finalData.length} candles for ${symbol}`);
     return NextResponse.json({ symbol, data: finalData });
   } catch (error: any) {
     console.error('Error fetching historical chart data:', error);
