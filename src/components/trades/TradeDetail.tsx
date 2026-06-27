@@ -8,6 +8,7 @@ import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
 import toast from 'react-hot-toast';
+import TradingViewChart from './TradingViewChart';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -19,7 +20,7 @@ interface TradeDetailProps {
 
 export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdateNotes }: TradeDetailProps) {
   const { colorblindMode } = useSettings();
-  const [activeTab, setActiveTab] = useState<'details' | 'notes' | 'screenshots' | 'video'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'chart' | 'notes' | 'screenshots' | 'video'>('details');
   const isForex = isForexPair(trade.symbol);
   const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -212,6 +213,16 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
               Details
             </button>
             <button
+              onClick={() => setActiveTab('chart')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === 'chart'
+                  ? 'bg-blue-900/30 text-blue-400'
+                  : 'text-gray-400 hover:bg-gray-800'
+              }`}
+            >
+              Execution Chart
+            </button>
+            <button
               onClick={() => setActiveTab('screenshots')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === 'screenshots'
@@ -400,6 +411,19 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'chart' && (
+            <div className="p-1">
+              <TradingViewChart
+                symbol={trade.symbol}
+                entryTime={trade.entry_time}
+                exitTime={trade.exit_time}
+                entryPrice={trade.entry_price}
+                exitPrice={trade.exit_price}
+                type={trade.type}
+              />
             </div>
           )}
 
