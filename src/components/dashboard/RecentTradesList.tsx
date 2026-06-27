@@ -21,11 +21,11 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
   // Handle loading state
   if (isLoading) {
     return (
-      <div className="bg-[#131825] rounded-lg p-4 animate-pulse">
-        <div className="h-6 w-24 bg-gray-700 rounded mb-4"></div>
+      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
+        <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-12 bg-gray-700 rounded"></div>
+            <div key={i} className="h-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
           ))}
         </div>
       </div>
@@ -35,45 +35,45 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
   // If no trades
   if (trades.length === 0) {
     return (
-      <div className="bg-[#131825] rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Trades</h3>
-        <div className="text-gray-400 text-center py-6">No trades found</div>
+      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Trades</h3>
+        <div className="text-gray-500 dark:text-gray-400 text-center py-6">No trades found</div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#131825] rounded-lg overflow-hidden">
-      <div className="p-4 border-b border-gray-700">
-        <h3 className="text-lg font-semibold text-white">Recent Trades</h3>
+    <div className="bg-white dark:bg-[#131825] rounded-lg overflow-hidden border border-black/5 dark:border-transparent">
+      <div className="p-4 border-b border-black/10 dark:border-gray-700">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Trades</h3>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-700">
-          <thead className="bg-[#0f1117]">
+        <table className="min-w-full divide-y divide-black/10 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-[#0f1117]">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Symbol</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Type</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Entry</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Exit</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">P/L</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Journal</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Time</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Symbol</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Entry</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Exit</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">P/L</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Journal</th>
             </tr>
           </thead>
-          <tbody className="bg-[#131825] divide-y divide-gray-700">
+          <tbody className="bg-white dark:bg-[#131825] divide-y divide-black/10 dark:divide-gray-700">
             {trades.map((trade) => (
-              <tr key={trade.id} className="hover:bg-[#1d2333]">
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{formatTime(trade.entry_time)}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-white">{trade.symbol}</td>
-                <td className={`px-4 py-3 whitespace-nowrap text-sm ${trade.type === 'Long' ? 'text-green-400' : 'text-red-400'}`}>
+              <tr key={trade.id} className="hover:bg-gray-50 dark:hover:bg-[#1d2333] transition-colors">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-650 dark:text-gray-300 font-mono">{formatTime(trade.entry_time)}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{trade.symbol}</td>
+                <td className={`px-4 py-3 whitespace-nowrap text-sm font-semibold ${trade.type === 'Long' ? 'text-green-600' : 'text-red-650'}`}>
                   {trade.type}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.entry_price != null ? trade.entry_price.toFixed(4) : '--'}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{trade.exit_price != null ? trade.exit_price.toFixed(4) : '--'}</td>
-                <td className={`px-4 py-3 whitespace-nowrap text-sm font-medium ${trade.profit_loss > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-650 dark:text-gray-300 font-mono">{trade.entry_price != null ? trade.entry_price.toFixed(4) : '--'}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-650 dark:text-gray-300 font-mono">{trade.exit_price != null ? trade.exit_price.toFixed(4) : '--'}</td>
+                <td className={`px-4 py-3 whitespace-nowrap text-sm font-bold ${trade.profit_loss > 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
                   {trade.profit_loss != null ? formatPnL(trade.profit_loss) : '--'}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-blue-400">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-600 dark:text-blue-400">
                   <button className="flex items-center space-x-1">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -87,4 +87,4 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
       </div>
     </div>
   );
-} 
+}

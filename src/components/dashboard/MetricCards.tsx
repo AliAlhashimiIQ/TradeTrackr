@@ -11,7 +11,7 @@ const MetricCard = ({
   title, 
   value, 
   isLoading, 
-  textColor = 'text-white' 
+  textColor = 'text-gray-900 dark:text-white' 
 }: { 
   title: string; 
   value: string | number; 
@@ -20,16 +20,16 @@ const MetricCard = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-[#131825] rounded-lg p-4 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-20 mb-2"></div>
-        <div className="h-8 bg-gray-700 rounded w-24"></div>
+      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#131825] rounded-lg p-4">
-      <h4 className="text-sm text-gray-400 font-medium mb-1">{title}</h4>
+    <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+      <h4 className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">{title}</h4>
       <div className={`text-xl font-bold ${textColor}`}>{value}</div>
     </div>
   );
@@ -56,7 +56,7 @@ export default function MetricCards({ metrics, isLoading }: MetricCardsProps) {
         title="Today's P/L" 
         value={formatCurrency(metrics.total_pnl)} 
         isLoading={isLoading}
-        textColor={metrics.total_pnl >= 0 ? 'text-green-400' : 'text-red-400'} 
+        textColor={metrics.total_pnl >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'} 
       />
       
       <MetricCard 
@@ -78,4 +78,4 @@ export default function MetricCards({ metrics, isLoading }: MetricCardsProps) {
       />
     </div>
   );
-} 
+}

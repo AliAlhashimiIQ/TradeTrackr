@@ -113,29 +113,29 @@ export default function PropFirmSimulator({
   }, [accountSize, winRate, stats.dailyExpectedProfit, stats.projectedDays, targetBalance, liquidationBalance])
 
   return (
-    <div className="card rounded-2xl border border-white/[0.07] bg-[#0d0e16] p-5 space-y-6">
-      <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
+    <div className="card rounded-2xl border border-black/5 dark:border-white/[0.07] bg-white dark:bg-[#0d0e16] p-5 space-y-6 transition-colors duration-300">
+      <div className="flex items-center justify-between border-b border-black/10 dark:border-white/[0.05] pb-4">
         <div className="flex items-center gap-2">
-          <Sliders className="w-5 h-5 text-indigo-400" />
-          <h2 className="text-white font-bold text-base">Interactive Challenge Projection Simulator</h2>
+          <Sliders className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+          <h2 className="text-gray-900 dark:text-white font-bold text-base">Interactive Challenge Projection Simulator</h2>
         </div>
-        <div className="text-[10px] bg-indigo-500/10 text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/25 uppercase tracking-wide">
+        <div className="text-[10px] bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/25 uppercase tracking-wide">
           Phase 1 Gating
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sliders Control Panel */}
-        <div className="space-y-4 lg:col-span-1 bg-white/[0.02] border border-white/[0.04] p-4 rounded-xl">
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+        <div className="space-y-4 lg:col-span-1 bg-gray-50 dark:bg-white/[0.02] border border-black/5 dark:border-white/[0.04] p-4 rounded-xl">
+          <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <span>Trading Parameters</span>
           </h3>
 
           {/* Win Rate */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-gray-400">Estimated Win Rate</span>
-              <span className="text-indigo-400">{winRate}%</span>
+              <span className="text-gray-500 dark:text-gray-400">Estimated Win Rate</span>
+              <span className="text-indigo-650 dark:text-indigo-400">{winRate}%</span>
             </div>
             <input 
               type="range" 
@@ -143,15 +143,15 @@ export default function PropFirmSimulator({
               max="85" 
               value={winRate} 
               onChange={(e) => setWinRate(Number(e.target.value))}
-              className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
             />
           </div>
 
           {/* Risk to Reward */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-gray-400">Risk-to-Reward Ratio</span>
-              <span className="text-indigo-400">{riskReward.toFixed(1)}:1</span>
+              <span className="text-gray-500 dark:text-gray-400">Risk-to-Reward Ratio</span>
+              <span className="text-indigo-650 dark:text-indigo-400">{riskReward.toFixed(1)}:1</span>
             </div>
             <input 
               type="range" 
@@ -160,15 +160,15 @@ export default function PropFirmSimulator({
               step="0.1"
               value={riskReward} 
               onChange={(e) => setRiskReward(Number(e.target.value))}
-              className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
             />
           </div>
 
           {/* Risk Per Trade */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-gray-400">Risk Per Trade</span>
-              <span className="text-indigo-400">{riskPerTrade.toFixed(1)}%</span>
+              <span className="text-gray-500 dark:text-gray-400">Risk Per Trade</span>
+              <span className="text-indigo-650 dark:text-indigo-400">{riskPerTrade.toFixed(1)}%</span>
             </div>
             <input 
               type="range" 
@@ -177,15 +177,15 @@ export default function PropFirmSimulator({
               step="0.1"
               value={riskPerTrade} 
               onChange={(e) => setRiskPerTrade(Number(e.target.value))}
-              className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
             />
           </div>
 
           {/* Frequency */}
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
-              <span className="text-gray-400">Trades Per Day</span>
-              <span className="text-indigo-400">{tradesPerDay.toFixed(1)}</span>
+              <span className="text-gray-500 dark:text-gray-400">Trades Per Day</span>
+              <span className="text-indigo-650 dark:text-indigo-400">{tradesPerDay.toFixed(1)}</span>
             </div>
             <input 
               type="range" 
@@ -194,7 +194,7 @@ export default function PropFirmSimulator({
               step="0.1"
               value={tradesPerDay} 
               onChange={(e) => setTradesPerDay(Number(e.target.value))}
-              className="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
             />
           </div>
         </div>
@@ -203,12 +203,12 @@ export default function PropFirmSimulator({
         <div className="lg:col-span-2 space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {/* Projected Days */}
-            <div className="bg-white/[0.03] border border-white/[0.05] p-3 rounded-xl">
+            <div className="bg-gray-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/[0.05] p-3 rounded-xl">
               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
                 Projected Days to Pass
               </span>
               <div className="flex items-baseline gap-1">
-                <span className={`text-2xl font-black ${stats.projectedDays > 0 && stats.projectedDays <= 30 ? 'text-emerald-400' : 'text-indigo-400'}`}>
+                <span className={`text-2xl font-black ${stats.projectedDays > 0 && stats.projectedDays <= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-650 dark:text-indigo-400'}`}>
                   {stats.projectedDays > 0 ? `${stats.projectedDays} Days` : 'Never'}
                 </span>
               </div>
@@ -218,11 +218,11 @@ export default function PropFirmSimulator({
             </div>
 
             {/* Expected Value */}
-            <div className="bg-white/[0.03] border border-white/[0.05] p-3 rounded-xl">
+            <div className="bg-gray-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/[0.05] p-3 rounded-xl">
               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
                 Expected Value (EV)
               </span>
-              <span className={`text-2xl font-black ${stats.expectedValue >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className={`text-2xl font-black ${stats.expectedValue >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-650 dark:text-red-400'}`}>
                 {stats.expectedValue >= 0 ? '+' : ''}${Math.round(stats.expectedValue)}
               </span>
               <span className="text-[9px] text-gray-500 mt-1 block">
@@ -231,16 +231,16 @@ export default function PropFirmSimulator({
             </div>
 
             {/* Ruin Probability */}
-            <div className="bg-white/[0.03] border border-white/[0.05] p-3 rounded-xl col-span-2 sm:col-span-1">
+            <div className="bg-gray-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/[0.05] p-3 rounded-xl col-span-2 sm:col-span-1">
               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
                 Drawdown Breach Risk
               </span>
               <div className="flex items-center gap-1.5">
-                <span className={`text-2xl font-black ${stats.riskOfDrawdown > 50 ? 'text-red-400' : stats.riskOfDrawdown > 20 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                <span className={`text-2xl font-black ${stats.riskOfDrawdown > 50 ? 'text-rose-650 dark:text-red-400' : stats.riskOfDrawdown > 20 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {stats.riskOfDrawdown.toFixed(1)}%
                 </span>
                 {stats.riskOfDrawdown > 30 && (
-                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                 )}
               </div>
               <span className="text-[9px] text-gray-500 mt-1 block">
@@ -250,7 +250,7 @@ export default function PropFirmSimulator({
           </div>
 
           {/* Projection Chart Container */}
-          <div className="h-[200px] w-full bg-white/[0.01] border border-white/[0.04] rounded-xl p-2 relative">
+          <div className="h-[200px] w-full bg-white/[0.01] border border-black/5 dark:border-white/[0.04] rounded-xl p-2 relative">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={pathData}>
                 <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.25} />
@@ -271,9 +271,9 @@ export default function PropFirmSimulator({
                   tickFormatter={(val) => `$${val.toLocaleString()}`}
                 />
                 <Tooltip 
-                  contentStyle={{ backgroundColor: '#0d0e16', border: '1px solid #1f2937', borderRadius: '8px' }}
-                  labelStyle={{ fontSize: 10, color: '#9ca3af' }}
-                  itemStyle={{ fontSize: 12, color: '#f3f4f6' }}
+                  contentStyle={{ backgroundColor: 'var(--tooltip-bg)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                  labelStyle={{ fontSize: 10, color: 'var(--foreground)' }}
+                  itemStyle={{ fontSize: 12, color: 'var(--foreground)' }}
                 />
                 <ReferenceLine y={targetBalance} stroke="#10b981" strokeDasharray="3 3" strokeOpacity={0.8} />
                 <ReferenceLine y={liquidationBalance} stroke="#ef4444" strokeDasharray="3 3" strokeOpacity={0.8} />
@@ -290,13 +290,13 @@ export default function PropFirmSimulator({
             
             {/* Legend Labels Overlaid */}
             <div className="absolute top-3 left-4 flex gap-4 text-[9px] font-bold tracking-wider uppercase">
-              <span className="text-indigo-400 flex items-center gap-1">
+              <span className="text-indigo-650 dark:text-indigo-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full inline-block" /> Projected Growth
               </span>
-              <span className="text-emerald-400 flex items-center gap-1">
+              <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block" /> Profit Target (${targetBalance.toLocaleString()})
               </span>
-              <span className="text-red-400 flex items-center gap-1">
+              <span className="text-red-650 dark:text-red-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block" /> Max Drawdown (${liquidationBalance.toLocaleString()})
               </span>
             </div>
@@ -304,8 +304,8 @@ export default function PropFirmSimulator({
           
           {/* Advice Warning */}
           {stats.riskOfDrawdown > 25 && (
-            <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-300 p-2.5 rounded-lg leading-relaxed">
-              <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-700 dark:text-amber-305 p-2.5 rounded-lg leading-relaxed">
+              <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <div>
                 <strong>High Drawdown Risk Warning:</strong> Your parameters have a {stats.riskOfDrawdown.toFixed(0)}% chance of breaching the maximum drawdown limit. Consider lowering your Risk Per Trade to <strong>0.5%</strong> or increasing your Win Rate / R:R ratio to ensure safety.
               </div>
