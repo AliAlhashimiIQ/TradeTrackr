@@ -251,6 +251,27 @@ export default function BacktestSessionPage() {
     fetchCandles();
   }, [sessionSymbol, sessionStartDate, activeTimeframe]);
 
+  // Synchronize state values into mutable refs for third-party chart callbacks to avoid destroying & recreating the canvas
+  const activeToolRef = useRef(activeTool);
+  const drawingStateRef = useRef(drawingState);
+  const isMagnetModeRef = useRef(isMagnetMode);
+  const isToolLockedRef = useRef(isToolLocked);
+  const candlesRef = useRef(candles);
+  const slPipsRef = useRef(slPips);
+  const tpPipsRef = useRef(tpPips);
+  const sessionSymbolRef = useRef(sessionSymbol);
+  const drawnLinesRef = useRef(drawnLines);
+
+  useEffect(() => { activeToolRef.current = activeTool; }, [activeTool]);
+  useEffect(() => { drawingStateRef.current = drawingState; }, [drawingState]);
+  useEffect(() => { isMagnetModeRef.current = isMagnetMode; }, [isMagnetMode]);
+  useEffect(() => { isToolLockedRef.current = isToolLocked; }, [isToolLocked]);
+  useEffect(() => { candlesRef.current = candles; }, [candles]);
+  useEffect(() => { slPipsRef.current = slPips; }, [slPips]);
+  useEffect(() => { tpPipsRef.current = tpPips; }, [tpPips]);
+  useEffect(() => { sessionSymbolRef.current = sessionSymbol; }, [sessionSymbol]);
+  useEffect(() => { drawnLinesRef.current = drawnLines; }, [drawnLines]);
+
   // Initialize and Render Chart
   useEffect(() => {
     if (loading || loadingChart || candles.length === 0 || !chartContainerRef.current) return;
@@ -290,29 +311,38 @@ export default function BacktestSessionPage() {
 
     chart.timeScale().fitContent();
 
-    // Chart Click Handler for drawings (includes Magnet Snapping option)
+    // Chart Click Handler for drawings (utilizes synced state refs to prevent re-running this hook)
     chart.subscribeClick((param) => {
-      if (activeTool === 'cursor' || !param.point || !param.time || !candleSeriesRef.current) return;
+      const activeToolVal = activeToolRef.current;
+      const drawingStateVal = drawingStateRef.current;
+      const isMagnetModeVal = isMagnetModeRef.current;
+      const isToolLockedVal = isToolLockedRef.current;
+      const candlesVal = candlesRef.current;
+      const slPipsVal = slPipsRef.current;
+      const tpPipsVal = tpPipsRef.current;
+      const sessionSymbolVal = sessionSymbolRef.current;
+
+      if (activeToolVal === 'cursor' || !param.point || !param.time || !candleSeriesRef.current) return;
       
       let price = candleSeriesRef.current.coordinateToPrice(param.point.y);
       if (!price) return;
       const time = param.time;
 
       // Magnet snapping mode logic
-      if (isMagnetMode && candles.length > 0) {
-        const closestCandle = candles.reduce((prev, curr) => {
+      if (isMagnetModeVal && candlesVal.length > 0) {
+        const closestCandle = candlesVal.reduce((prev: any, curr: any) => {
           return Math.abs(curr.time - (time as number)) < Math.abs(prev.time - (time as number)) ? curr : prev;
         });
         if (closestCandle) {
           const snaps = [closestCandle.open, closestCandle.high, closestCandle.low, closestCandle.close];
-          const closestSnap = snaps.reduce((prev, curr) => {
+          const closestSnap = snaps.reduce((prev: number, curr: number) => {
             return Math.abs(curr - price) < Math.abs(prev - price) ? curr : prev;
           });
           price = closestSnap;
         }
       }
 
-      if (activeTool === 'horizontal') {
+      if (activeToolVal === 'horizontal') {
         const line = candleSeriesRef.current.createPriceLine({
           price,
           color: '#6366f1',
@@ -321,11 +351,11 @@ export default function BacktestSessionPage() {
           title: 'LEVEL',
         });
         setDrawnLines((prev) => [...prev, { type: 'horizontal', ref: line }]);
-        if (!isToolLocked) setActiveTool('cursor');
+        if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
       }
-      else if (activeTool === 'trendline') {
-        if (!drawingState) {
+      else if (activeToolVal === 'trendline') {
+        if (!drawingStateVal) {
           setDrawingState({ time, price });
           toast.success('Start point set. Click on the chart again to draw trendline.');
         } else {
@@ -336,22 +366,22 @@ export default function BacktestSessionPage() {
             lastValueVisible: false,
           });
           trendLineSeries.setData([
-            { time: drawingState.time, value: drawingState.price },
+            { time: drawingStateVal.time, value: drawingStateVal.price },
             { time: time, value: price }
           ]);
           setDrawnLines((prev) => [...prev, { type: 'trendline', series: trendLineSeries }]);
           setDrawingState(null);
-          if (!isToolLocked) setActiveTool('cursor');
+          if (!isToolLockedVal) setActiveTool('cursor');
           toast.success('Trendline drawn');
         }
       }
-      else if (activeTool === 'fvg') {
-        if (!drawingState) {
+      else if (activeToolVal === 'fvg') {
+        if (!drawingStateVal) {
           setDrawingState({ price });
           toast.success('High boundary set. Click again to set low boundary.');
         } else {
           const topLine = candleSeriesRef.current.createPriceLine({
-            price: drawingState.price,
+            price: drawingStateVal.price,
             color: '#f59e0b',
             lineWidth: 1.5,
             lineStyle: 1,
@@ -366,14 +396,14 @@ export default function BacktestSessionPage() {
           });
           setDrawnLines((prev) => [...prev, { type: 'fvg', topRef: topLine, bottomRef: bottomLine }]);
           setDrawingState(null);
-          if (!isToolLocked) setActiveTool('cursor');
+          if (!isToolLockedVal) setActiveTool('cursor');
           toast.success('FVG boundaries placed');
         }
       }
-      else if (activeTool === 'long') {
-        const details = getSymbolDetails(sessionSymbol || 'EURUSD');
-        const slOffset = (parseFloat(slPips) || 20) / details.multiplier;
-        const tpOffset = (parseFloat(tpPips) || 40) / details.multiplier;
+      else if (activeToolVal === 'long') {
+        const details = getSymbolDetails(sessionSymbolVal || 'EURUSD');
+        const slOffset = (parseFloat(slPipsVal) || 20) / details.multiplier;
+        const tpOffset = (parseFloat(tpPipsVal) || 40) / details.multiplier;
 
         const entry = price;
         const sl = entry - slOffset;
@@ -384,13 +414,13 @@ export default function BacktestSessionPage() {
         const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
 
         setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
-        if (!isToolLocked) setActiveTool('cursor');
+        if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Long Plan placed: Entry ${entry.toFixed(5)}`);
       }
-      else if (activeTool === 'short') {
-        const details = getSymbolDetails(sessionSymbol || 'EURUSD');
-        const slOffset = (parseFloat(slPips) || 20) / details.multiplier;
-        const tpOffset = (parseFloat(tpPips) || 40) / details.multiplier;
+      else if (activeToolVal === 'short') {
+        const details = getSymbolDetails(sessionSymbolVal || 'EURUSD');
+        const slOffset = (parseFloat(slPipsVal) || 20) / details.multiplier;
+        const tpOffset = (parseFloat(tpPipsVal) || 40) / details.multiplier;
 
         const entry = price;
         const sl = entry + slOffset;
@@ -401,7 +431,7 @@ export default function BacktestSessionPage() {
         const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
 
         setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
-        if (!isToolLocked) setActiveTool('cursor');
+        if (!isToolLockedVal) setActiveTool('cursor');
         toast.success(`Short Plan placed: Entry ${entry.toFixed(5)}`);
       }
     });
@@ -444,7 +474,7 @@ export default function BacktestSessionPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
-  }, [loading, loadingChart, candles, activeTool, drawingState, isMagnetMode, isToolLocked]);
+  }, [loading, loadingChart]);
 
   // Sync visible slice of candles instantly when index updates
   useEffect(() => {
