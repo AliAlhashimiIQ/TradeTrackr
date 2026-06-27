@@ -133,24 +133,60 @@ export default function BacktestSessionPage() {
 
         const end = start + durationDays * 24 * 3600;
 
+        let candleData = [];
+        let fetchedTimeframe = activeTimeframe;
+
         const candleRes = await fetch(
           `/api/charts/history?symbol=${encodeURIComponent(
             session.symbol
           )}&interval=${activeTimeframe}&start=${start}&end=${end}`
         );
 
-        if (!candleRes.ok) {
-          throw new Error(`Failed to load historical charts for ${session.symbol}`);
+        if (candleRes.ok) {
+          const candleJson = await candleRes.json();
+          candleData = candleJson.data || [];
         }
 
-        const candleJson = await candleRes.json();
-        const candleData = candleJson.data || [];
+        // Fallback hierarchy if no data was found (e.g. expired timeframe on Yahoo Finance)
+        if (candleData.length === 0) {
+          const fallbacks = ['1h', '1d'];
+          for (const fb of fallbacks) {
+            if (fb === activeTimeframe) continue;
+            let fEnd = end;
+            if (fb === '1d') {
+              fEnd = start + 365 * 24 * 3600;
+            } else if (fb === '1h') {
+              fEnd = start + 120 * 24 * 3600;
+            }
+            const fbRes = await fetch(
+              `/api/charts/history?symbol=${encodeURIComponent(
+                session.symbol
+              )}&interval=${fb}&start=${start}&end=${fEnd}`
+            );
+            if (fbRes.ok) {
+              const fbJson = await fbRes.json();
+              const fbData = fbJson.data || [];
+              if (fbData.length > 0) {
+                candleData = fbData;
+                fetchedTimeframe = fb;
+                break;
+              }
+            }
+          }
+        }
 
         if (candleData.length === 0) {
           throw new Error('No historical price bars available for this date range.');
         }
 
         setCandles(candleData);
+
+        if (fetchedTimeframe !== activeTimeframe) {
+          setActiveTimeframe(fetchedTimeframe);
+          toast.error(`${activeTimeframe} timeframe data has expired for this historical date on Yahoo. Switched to ${fetchedTimeframe}.`, {
+            duration: 5000,
+          });
+        }
 
         let matchedIndex = 0;
         for (let i = 0; i < candleData.length; i++) {
@@ -589,8 +625,10 @@ export default function BacktestSessionPage() {
         {/* Floating Topbar Dashboard */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 bg-white dark:bg-[#0f111a]/85 backdrop-blur-lg border border-slate-200 dark:border-white/[0.06] px-6 py-4 rounded-3xl shadow-md dark:shadow-xl relative z-20">
           <div className="flex items-center gap-4">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-500 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
-              📈
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -873,8 +911,10 @@ export default function BacktestSessionPage() {
             <h3 className="text-xs text-slate-800 dark:text-white font-bold uppercase tracking-widest mb-4 pb-2 border-b border-slate-100 dark:border-white/[0.04]">Logged Simulator Trades</h3>
             
             {trades.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-gray-505 text-center">
-                <span className="text-2xl mb-2">📋</span>
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-gray-500 text-center">
+                <svg className="w-8 h-8 mb-3 text-slate-300 dark:text-slate-700" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
                 <p className="text-xs font-semibold">No simulation trades logged yet.</p>
                 <p className="text-[10px] text-slate-500 dark:text-gray-600 mt-1 max-w-[200px]">Launch a simulated order to record your first trade metrics.</p>
               </div>
@@ -912,10 +952,12 @@ export default function BacktestSessionPage() {
                         <td className="py-2.5 text-right">
                           <button
                             onClick={() => handleDeleteTrade(trade.id, trade.profit_loss || 0)}
-                            className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"
+                            className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1 flex justify-end w-full"
                             title="Delete log entry"
                           >
-                            🗑️
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </td>
                       </tr>

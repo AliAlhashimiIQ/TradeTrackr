@@ -55,31 +55,37 @@ export default function ConfirmModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-[#0d0e16] border border-white/[0.08] p-6 text-left align-middle shadow-[0_0_50px_rgba(99,102,241,0.15)] transition-all">
+              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.08] p-6 text-left align-middle shadow-xl dark:shadow-[0_0_50px_rgba(99,102,241,0.15)] transition-all">
                 <Dialog.Title
                   as="h3"
-                  className="text-base font-bold text-white uppercase tracking-wider flex items-center gap-2.5 mb-2"
+                  className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2.5 mb-2"
                 >
                   {isDanger && (
-                    <div className="w-6 h-6 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 flex items-center justify-center text-xs shadow-[0_0_12px_rgba(239,68,68,0.2)]">
-                      ⚠️
+                    <div className="w-6 h-6 rounded-lg bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 flex items-center justify-center shadow-[0_0_12px_rgba(239,68,68,0.1)]">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
                     </div>
                   )}
                   {isWarning && (
-                    <div className="w-6 h-6 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 flex items-center justify-center text-xs">
-                      ⚠️
+                    <div className="w-6 h-6 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-yellow-600 dark:text-yellow-400 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
                     </div>
                   )}
                   {!isDanger && !isWarning && (
-                    <div className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 flex items-center justify-center text-xs shadow-[0_0_12px_rgba(99,102,241,0.2)]">
-                      ℹ️
+                    <div className="w-6 h-6 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.1)]">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
                     </div>
                   )}
                   {title}
                 </Dialog.Title>
 
                 <div className="mt-2.5">
-                  <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                  <p className="text-xs text-slate-500 dark:text-gray-400 font-medium leading-relaxed">
                     {description}
                   </p>
                 </div>
