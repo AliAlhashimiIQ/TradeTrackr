@@ -1075,24 +1075,24 @@ export default function CalendarPage() {
             <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">
               Quick Month Select
             </span>
-            <div className="flex items-center gap-1.5 bg-white/[0.02] border border-white/[0.06] rounded-xl p-1">
+            <div className="flex items-center gap-1.5 bg-black/5 dark:bg-white/[0.02] border border-black/5 dark:border-white/[0.06] rounded-xl p-1">
               <button 
                 onClick={() => {
                   setCurrentDate(new Date(currentYear - 1, currentMonth, 1))
                   setSelectedDate(null)
                 }}
-                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
                 title="Previous Year"
               >
                 <ChevronLeft />
               </button>
-              <span className="text-xs font-bold text-white px-2.5 font-mono select-none">{currentYear}</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-white px-2.5 font-mono select-none">{currentYear}</span>
               <button 
                 onClick={() => {
                   setCurrentDate(new Date(currentYear + 1, currentMonth, 1))
                   setSelectedDate(null)
                 }}
-                className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-all duration-200"
+                className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all duration-200"
                 title="Next Year"
               >
                 <ChevronRight />
@@ -1114,15 +1114,11 @@ export default function CalendarPage() {
                     setCurrentDate(new Date(currentYear, stat.month, 1))
                     setSelectedDate(null)
                   }}
-                  className={`card p-4 rounded-xl flex flex-col justify-between text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] group ${
+                  className={`p-4 rounded-xl flex flex-col justify-between text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.99] group border ${
                     isActive 
-                      ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-500/[0.03]' 
-                      : 'border-white/[0.06] hover:border-white/[0.12] bg-[#0a0b12]/40'
+                      ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-500/10 dark:bg-indigo-500/[0.03] shadow-md shadow-indigo-500/5' 
+                      : 'card border-black/5 dark:border-white/[0.06] hover:border-black/15 dark:hover:border-white/[0.12] bg-[#0a0b12]/40'
                   }`}
-                  style={{
-                    background: isActive ? 'linear-gradient(160deg, rgba(99,102,241,0.06) 0%, rgba(99,102,241,0.01) 100%)' : 'var(--calendar-weekly-card-bg)',
-                    boxShadow: isActive ? '0 0 20px rgba(99,102,241,0.05), var(--calendar-weekly-card-shadow)' : 'var(--calendar-weekly-card-shadow)',
-                  }}
                 >
                   <div className="flex flex-col gap-1 w-full">
                     <span className={`text-[10px] uppercase tracking-[0.15em] font-extrabold transition-colors ${
