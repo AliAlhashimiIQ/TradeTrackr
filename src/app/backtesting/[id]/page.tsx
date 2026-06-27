@@ -371,7 +371,7 @@ export default function BacktestSessionPage() {
   const selectedDrawingIdRef = useRef(selectedDrawingId);
 
   useEffect(() => { activeToolRef.current = activeTool; }, [activeTool]);
-  useEffect(() => { drawingStateRef.current = drawingState; }, [drawingState]);
+  useEffect(() => { drawingStateRef.current = drawingState; drawShapes(); }, [drawingState]);
   useEffect(() => { isMagnetModeRef.current = isMagnetMode; }, [isMagnetMode]);
   useEffect(() => { isToolLockedRef.current = isToolLocked; }, [isToolLocked]);
   useEffect(() => { candlesRef.current = candles; }, [candles]);
@@ -585,7 +585,269 @@ export default function BacktestSessionPage() {
         ctx.fillText(isLong ? 'LONG POSITION PLANNER' : 'SHORT POSITION PLANNER', xStart + 8, yEntry - 5);
       }
     });
+
+    // Draw Live Drag Preview Shape
+    const drag = drawingStateRef.current;
+    if (drag && activeToolRef.current !== 'cursor') {
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+
+      const startX = drag.startX;
+      const startY = drag.startY;
+      const currentX = drag.currentX;
+      const currentY = drag.currentY;
+
+      if (activeToolRef.current === 'trendline') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(currentX, currentY);
+        ctx.stroke();
+
+        // draw endpoints nodes
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(startX, startY, 4, 0, Math.PI * 2);
+        ctx.arc(currentX, currentY, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      else if (activeToolRef.current === 'fvg') {
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+        ctx.fillRect(startX, startY, currentX - startX, currentY - startY);
+        ctx.strokeRect(startX, startY, currentX - startX, currentY - startY);
+      }
+      else if (activeToolRef.current === 'long' || activeToolRef.current === 'short') {
+        const isLong = activeToolRef.current === 'long';
+        const tpHeight = currentY - startY;
+        
+        ctx.fillStyle = isLong 
+          ? (tpHeight < 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)')
+          : (tpHeight > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)');
+        ctx.fillRect(startX, startY, currentX - startX, tpHeight);
+
+        ctx.fillStyle = isLong
+          ? (tpHeight < 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)')
+          : (tpHeight > 0 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)');
+        ctx.fillRect(startX, startY, currentX - startX, -tpHeight);
+
+        ctx.strokeStyle = isLong ? '#10b981' : '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(currentX, startY);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+    }
   };
+
+  // Click-and-drag drawing engine event handlers
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const activeToolVal = activeToolRef.current;
+    if (activeToolVal === 'cursor') return;
+
+    const canvas = drawingCanvasRef.current;
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    if (!canvas || !chart || !series) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    let price = series.coordinateToPrice(y);
+    let time = chart.timeScale().coordinateToTime(x);
+
+    if (price && time) {
+      // Snapping magnet snaps to candle boundaries
+      if (isMagnetModeRef.current && candlesRef.current.length > 0) {
+        const closestCandle = candlesRef.current.reduce((prev: any, curr: any) => {
+          return Math.abs(curr.time - (time as number)) < Math.abs(prev.time - (time as number)) ? curr : prev;
+        });
+        if (closestCandle) {
+          const snaps = [closestCandle.open, closestCandle.high, closestCandle.low, closestCandle.close];
+          const closestSnap = snaps.reduce((prev: number, curr: number) => {
+            return Math.abs(curr - price!) < Math.abs(prev - price!) ? curr : prev;
+          });
+          price = closestSnap;
+        }
+      }
+
+      // Horizontal line places immediately on MouseDown
+      if (activeToolVal === 'horizontal') {
+        const drawingId = Math.random().toString(36).substring(2, 9);
+        const updated: DrawingItem[] = [
+          ...drawnLinesRef.current,
+          { id: drawingId, type: 'horizontal' as const, price, time: time as number }
+        ];
+        setDrawnLines(updated);
+        saveDrawingsData(updated);
+        if (!isToolLockedRef.current) setActiveTool('cursor');
+        toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
+        return;
+      }
+
+      // Start drag coordinate tracking for other shapes
+      setDrawingState({
+        startX: x,
+        startY: y,
+        startTime: time as number,
+        startPrice: price,
+        currentX: x,
+        currentY: y
+      });
+    }
+  };
+
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeToolRef.current === 'cursor' || !drawingStateRef.current) return;
+    const canvas = drawingCanvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    setDrawingState((prev: any) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        currentX: x,
+        currentY: y
+      };
+    });
+  };
+
+  const handleCanvasMouseUp = async (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const activeToolVal = activeToolRef.current;
+    const drag = drawingStateRef.current;
+    if (activeToolVal === 'cursor' || !drag) return;
+
+    const canvas = drawingCanvasRef.current;
+    const chart = chartRef.current;
+    const series = candleSeriesRef.current;
+    if (!canvas || !chart || !series) {
+      setDrawingState(null);
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    let price = series.coordinateToPrice(y);
+    let time = chart.timeScale().coordinateToTime(x);
+
+    if (price && time) {
+      // Snapping magnet
+      if (isMagnetModeRef.current && candlesRef.current.length > 0) {
+        const closestCandle = candlesRef.current.reduce((prev: any, curr: any) => {
+          return Math.abs(curr.time - (time as number)) < Math.abs(prev.time - (time as number)) ? curr : prev;
+        });
+        if (closestCandle) {
+          const snaps = [closestCandle.open, closestCandle.high, closestCandle.low, closestCandle.close];
+          const closestSnap = snaps.reduce((prev: number, curr: number) => {
+            return Math.abs(curr - price!) < Math.abs(prev - price!) ? curr : prev;
+          });
+          price = closestSnap;
+        }
+      }
+
+      const drawingId = Math.random().toString(36).substring(2, 9);
+      let newDrawing: DrawingItem | null = null;
+
+      if (activeToolVal === 'trendline') {
+        newDrawing = {
+          id: drawingId,
+          type: 'trendline' as const,
+          p1: { time: drag.startTime, price: drag.startPrice },
+          p2: { time: time as number, price }
+        };
+      }
+      else if (activeToolVal === 'fvg') {
+        newDrawing = {
+          id: drawingId,
+          type: 'fvg' as const,
+          startTime: drag.startTime,
+          high: Math.max(drag.startPrice, price),
+          low: Math.min(drag.startPrice, price)
+        };
+      }
+      else if (activeToolVal === 'long' || activeToolVal === 'short') {
+        const isLong = activeToolVal === 'long';
+        const details = getSymbolDetails(sessionSymbolRef.current || 'EURUSD');
+        const entry = drag.startPrice;
+        const diffPrice = Math.abs(price - entry);
+
+        let sl = 0;
+        let tp = 0;
+
+        if (isLong) {
+          if (price < entry) {
+            // Dragged below entry: dragging SL boundary
+            const slOffset = diffPrice;
+            const tpOffset = diffPrice * 2;
+            sl = entry - slOffset;
+            tp = entry + tpOffset;
+          } else {
+            // Dragged above entry: dragging TP boundary
+            const tpOffset = diffPrice;
+            const slOffset = diffPrice / 2;
+            sl = entry - slOffset;
+            tp = entry + tpOffset;
+          }
+        } else {
+          if (price > entry) {
+            // Dragged above entry: dragging SL boundary
+            const slOffset = diffPrice;
+            const tpOffset = diffPrice * 2;
+            sl = entry + slOffset;
+            tp = entry - tpOffset;
+          } else {
+            // Dragged below entry: dragging TP boundary
+            const tpOffset = diffPrice;
+            const slOffset = diffPrice / 2;
+            sl = entry + slOffset;
+            tp = entry - tpOffset;
+          }
+        }
+
+        newDrawing = {
+          id: drawingId,
+          type: 'planner' as const,
+          plannerType: isLong ? 'long' as const : 'short' as const,
+          startTime: drag.startTime,
+          entry,
+          sl,
+          tp
+        };
+      }
+
+      if (newDrawing) {
+        const updated: DrawingItem[] = [...drawnLinesRef.current, newDrawing];
+        setDrawnLines(updated);
+        saveDrawingsData(updated);
+        toast.success(`${newDrawing.type.toUpperCase()} placed successfully!`);
+      }
+    }
+
+    setDrawingState(null);
+    if (!isToolLockedRef.current) {
+      setActiveTool('cursor');
+    }
+  };
+
+  // Reset drawing drag if mouse is released globally outside canvas boundaries
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (drawingStateRef.current) {
+        setDrawingState(null);
+      }
+    };
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, []);
 
   // Initialize and Render Chart
   useEffect(() => {
@@ -737,95 +999,6 @@ export default function BacktestSessionPage() {
           toast.success('Drawing selected. Press Backspace/Delete to remove.', { id: 'draw-select-notif' });
         }
         return;
-      }
-
-      // Magnet snapping mode logic
-      if (isMagnetModeVal && candlesVal.length > 0) {
-        const closestCandle = candlesVal.reduce((prev: any, curr: any) => {
-          return Math.abs(curr.time - (time as number)) < Math.abs(prev.time - (time as number)) ? curr : prev;
-        });
-        if (closestCandle) {
-          const snaps = [closestCandle.open, closestCandle.high, closestCandle.low, closestCandle.close];
-          const closestSnap = snaps.reduce((prev: number, curr: number) => {
-            return Math.abs(curr - price) < Math.abs(prev - price) ? curr : prev;
-          });
-          price = closestSnap;
-        }
-      }
-
-      const drawingId = Math.random().toString(36).substring(2, 9);
-
-      if (activeToolVal === 'horizontal') {
-        const updated: DrawingItem[] = [...drawnLinesRef.current, { id: drawingId, type: 'horizontal' as const, price, time: time as number }];
-        setDrawnLines(updated);
-        saveDrawingsData(updated);
-        if (!isToolLockedVal) setActiveTool('cursor');
-        toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
-      }
-      else if (activeToolVal === 'trendline') {
-        if (!drawingStateVal) {
-          setDrawingState({ time, price });
-          toast.success('Start point set. Click on the chart again to draw trendline.');
-        } else {
-          const updated: DrawingItem[] = [...drawnLinesRef.current, { id: drawingId, type: 'trendline' as const, p1: drawingStateVal, p2: { time: time as number, price } }];
-          setDrawnLines(updated);
-          saveDrawingsData(updated);
-          setDrawingState(null);
-          if (!isToolLockedVal) setActiveTool('cursor');
-          toast.success('Trendline drawn');
-        }
-      }
-      else if (activeToolVal === 'fvg') {
-        if (!drawingStateVal) {
-          setDrawingState({ price, time });
-          toast.success('High boundary set. Click again to set low boundary.');
-        } else {
-          const updated: DrawingItem[] = [
-            ...drawnLinesRef.current,
-            {
-              id: drawingId,
-              type: 'fvg' as const,
-              startTime: drawingStateVal.time,
-              high: Math.max(drawingStateVal.price, price),
-              low: Math.min(drawingStateVal.price, price),
-            }
-          ];
-          setDrawnLines(updated);
-          saveDrawingsData(updated);
-          setDrawingState(null);
-          if (!isToolLockedVal) setActiveTool('cursor');
-          toast.success('Fair Value Gap zone placed!');
-        }
-      }
-      else if (activeToolVal === 'long') {
-        const details = getSymbolDetails(sessionSymbolVal || 'EURUSD');
-        const slOffset = (parseFloat(slPipsVal) || 20) / details.multiplier;
-        const tpOffset = (parseFloat(tpPipsVal) || 40) / details.multiplier;
-
-        const entry = price;
-        const sl = entry - slOffset;
-        const tp = entry + tpOffset;
-
-        const updated: DrawingItem[] = [...drawnLinesRef.current, { id: drawingId, type: 'planner' as const, plannerType: 'long' as const, startTime: time as number, entry, sl, tp }];
-        setDrawnLines(updated);
-        saveDrawingsData(updated);
-        if (!isToolLockedVal) setActiveTool('cursor');
-        toast.success(`Long Plan placed: Entry ${entry.toFixed(5)}`);
-      }
-      else if (activeToolVal === 'short') {
-        const details = getSymbolDetails(sessionSymbolVal || 'EURUSD');
-        const slOffset = (parseFloat(slPipsVal) || 20) / details.multiplier;
-        const tpOffset = (parseFloat(tpPipsVal) || 40) / details.multiplier;
-
-        const entry = price;
-        const sl = entry + slOffset;
-        const tp = entry - tpOffset;
-
-        const updated: DrawingItem[] = [...drawnLinesRef.current, { id: drawingId, type: 'planner' as const, plannerType: 'short' as const, startTime: time as number, entry, sl, tp }];
-        setDrawnLines(updated);
-        saveDrawingsData(updated);
-        if (!isToolLockedVal) setActiveTool('cursor');
-        toast.success(`Short Plan placed: Entry ${entry.toFixed(5)}`);
       }
     });
 
@@ -2115,7 +2288,10 @@ export default function BacktestSessionPage() {
               {/* Shaded Area Drawing Canvas Overlay */}
               <canvas 
                 ref={drawingCanvasRef} 
-                className="absolute inset-0 pointer-events-none z-10 w-full h-full"
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+                className={`absolute inset-0 z-10 ${activeTool === 'cursor' ? 'pointer-events-none' : 'pointer-events-auto cursor-crosshair'}`}
               />
               
               {/* Chart component wrapper */}
