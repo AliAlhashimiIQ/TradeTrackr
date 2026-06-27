@@ -1,605 +1,216 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/hooks/useAuth';
-import { useSettings } from '@/providers/SettingsProvider';
-import { getBacktestSessions, createBacktestSession, deleteBacktestSession } from '@/lib/services/backtestService';
-import { BacktestingSession } from '@/lib/types';
-import { supabase } from '@/lib/supabaseClient';
-import ConfirmModal from '@/components/ui/ConfirmModal';
 import toast from 'react-hot-toast';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-
-interface SessionStats {
-  count: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  totalPips: number;
-}
 
 export default function BacktestingPage() {
-  const { user, loading: authLoading } = useAuth();
-  const router = useRouter();
-  const { colorblindMode } = useSettings();
-
-  const [sessions, setSessions] = useState<BacktestingSession[]>([]);
-  const [sessionStats, setSessionStats] = useState<Record<string, SessionStats>>({});
-  const [strategies, setStrategies] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Form states
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [name, setName] = useState('');
-  const [symbol, setSymbol] = useState('EURUSD');
-  const [initialBalance, setInitialBalance] = useState('10000');
-  const [startDate, setStartDate] = useState('2026-05-01T00:00');
-  const [timeframe, setTimeframe] = useState('15m');
-  const [selectedStrategy, setSelectedStrategy] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [warning, setWarning] = useState<string | null>(null);
-
-  // Delete modal state
-  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
-
-  // Reactive verification for start date and timeframe limits
-  useEffect(() => {
-    if (!startDate) {
-      setWarning(null);
-      return;
-    }
-
-    const selectedDate = new Date(startDate);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - selectedDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    // 1. Weekend check
-    const day = selectedDate.getDay();
-    if (day === 0 || day === 6) {
-      setWarning("⚠️ Selected date falls on a weekend (Saturday/Sunday). Yahoo Finance historical data feeds are closed; the chart simulation will automatically start on the nearest market open.");
-      return;
-    }
-
-    // 2. Timeframe historical retention check
-    if (timeframe === '1m' && diffDays > 30) {
-      setWarning("⚠️ Yahoo Finance keeps 1-minute historical data for the last 30 days ONLY. Your selected date is older; this run will fallback to 1-hour or 1-day timeframe.");
-      return;
-    }
-    if ((timeframe === '5m' || timeframe === '15m') && diffDays > 60) {
-      setWarning("⚠️ Yahoo Finance keeps 5-minute and 15-minute intraday data for the last 60 days ONLY. Selecting an older date triggers an automatic timeframe upgrade.");
-      return;
-    }
-    if (timeframe === '1h' && diffDays > 730) {
-      setWarning("⚠️ Yahoo Finance keeps 1-hour data for the last 730 days (2 years) ONLY. Please choose a more recent date or use the 1D timeframe.");
-      return;
-    }
-
-    setWarning(null);
-  }, [startDate, timeframe]);
-
-  const loadData = async (isInitial = false) => {
-    if (!user) return;
-    try {
-      if (isInitial) setLoading(true);
-      
-      const data = await getBacktestSessions(user.id);
-      setSessions(data);
-
-      // Load strategies for playbook linking
-      const { data: stratData } = await supabase
-        .from('strategies')
-        .select('id, name')
-        .eq('user_id', user.id);
-      
-      setStrategies(stratData || []);
-
-      // Load trades to calculate per-session metrics
-      const { data: tradesData, error: tradesErr } = await (supabase as any)
-        .from('backtest_trades')
-        .select('session_id, profit_loss, pips');
-
-      if (!tradesErr && tradesData) {
-        const statsMap: Record<string, SessionStats> = {};
-        tradesData.forEach((t: any) => {
-          if (!statsMap[t.session_id]) {
-            statsMap[t.session_id] = { count: 0, wins: 0, losses: 0, winRate: 0, totalPips: 0 };
-          }
-          const s = statsMap[t.session_id];
-          s.count += 1;
-          s.totalPips += Number(t.pips || 0);
-          if (Number(t.profit_loss || 0) >= 0) {
-            s.wins += 1;
-          } else {
-            s.losses += 1;
-          }
-        });
-
-        // Compute win rates
-        Object.keys(statsMap).forEach((key) => {
-          const s = statsMap[key];
-          s.winRate = s.count > 0 ? (s.wins / s.count) * 100 : 0;
-        });
-
-        setSessionStats(statsMap);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to load backtest sessions');
-    } finally {
-      if (isInitial) setLoading(false);
-    }
-  };
-
-  // Only run full-page loading spinner on initial mount
-  useEffect(() => {
-    if (user) {
-      loadData(sessions.length === 0);
+    if (user?.email) {
+      setEmail(user.email);
     }
   }, [user]);
 
-  const handleCreateSession = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || isCreating) return;
-
-    if (!name.trim()) {
-      toast.error('Please enter a session name');
-      return;
-    }
-
-    try {
-      setIsCreating(true);
-      const initialBal = parseFloat(initialBalance) || 10000;
-
-      const newSession = await createBacktestSession({
-        user_id: user.id,
-        name: name.trim(),
-        symbol: symbol.toUpperCase(),
-        timeframe: timeframe,
-        initial_balance: initialBal,
-        current_balance: initialBal,
-        start_date: new Date(startDate).toISOString(),
-        current_index: 0,
-        active_trade: null,
-        strategy: selectedStrategy || null,
-      });
-
-      toast.success('Backtest session launched!');
-      setSessions(prev => [newSession, ...prev]);
-      setShowAddModal(false);
-      
-      // Reset form
-      setName('');
-      setSymbol('EURUSD');
-      setInitialBalance('10000');
-      setStartDate('2026-05-01T00:00');
-      setTimeframe('15m');
-      setSelectedStrategy('');
-
-      // Navigate to the newly created session
-      router.push(`/backtesting/${newSession.id}`);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to create session');
-    } finally {
-      setIsCreating(false);
-    }
+    if (!email) return;
+    setSubmitted(false);
+    
+    // Simulate API registration
+    setTimeout(() => {
+      setSubmitted(true);
+      toast.success("Awesome! You've been added to the priority beta list.");
+    }, 800);
   };
-
-  const handleDeleteSession = async () => {
-    if (!deletingSessionId || isDeleting) return;
-    try {
-      setIsDeleting(true);
-      await deleteBacktestSession(deletingSessionId);
-      toast.success('Session deleted successfully');
-      setSessions(prev => prev.filter(s => s.id !== deletingSessionId));
-      setDeletingSessionId(null);
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete session');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const totalSessions = sessions.length;
-  const netProfit = sessions.reduce((sum, s) => sum + (s.current_balance - s.initial_balance), 0);
-
-  const formatCurrency = (val: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(val);
-  };
-
-  if (authLoading || loading) {
-    return (
-      <AuthenticatedLayout>
-        <div className="flex items-center justify-center min-h-[70vh] bg-[#090a10]">
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-xs font-semibold text-slate-500 tracking-wider">LOADING TERMINAL RUNS...</span>
-          </div>
-        </div>
-      </AuthenticatedLayout>
-    );
-  }
 
   return (
     <AuthenticatedLayout>
-      <div className="min-h-screen bg-[#090a10] text-slate-100 px-6 lg:px-8 py-8 relative overflow-hidden">
-        {/* Neon styling glows */}
-        <div className="absolute top-[-10%] left-[20%] w-[300px] h-[300px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+        {/* Glowing Badge & Title Header */}
+        <div className="text-center max-w-2xl mx-auto mb-16">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mb-4 tracking-wider uppercase">
+            ⚡ Coming Soon
+          </span>
+          <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+            Backtesting Simulator
+          </h1>
+          <p className="text-gray-400 text-lg">
+            Train your eyes, refine your edge, and practice execution candle-by-candle on 24-hour historical broker data.
+          </p>
+        </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          
-          {/* Header Panel */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 pb-8 border-b border-white/[0.04]">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-extrabold tracking-tight text-white uppercase font-sans">
-                    Replay Simulation Sandbox
-                  </h1>
-                  <p className="text-xs text-slate-400 mt-1 font-medium">
-                    Practise strategy execution, verify edge, and backtest historical markets like FX Replay.
-                  </p>
-                </div>
+        {/* Feature Preview & Waitlist Form Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16 items-stretch">
+          {/* Glassmorphic Mockup Chart (SVG) */}
+          <div className="lg:col-span-7 bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-6 flex flex-col justify-between shadow-2xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-500"></div>
+            
+            <div className="flex items-center justify-between mb-6 relative">
+              <div className="flex items-center space-x-2">
+                <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                <span className="ml-2 text-xs font-mono text-gray-500">US100.SPOT (15m)</span>
+              </div>
+              <div className="flex items-center space-x-2 bg-slate-800/80 px-3 py-1 rounded-lg border border-white/5 text-xs text-indigo-400">
+                <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+                Replay Mode
+              </div>
+            </div>
+
+            {/* SVG Candlestick Chart Mockup */}
+            <div className="w-full h-64 bg-slate-950/80 rounded-xl border border-white/5 p-4 flex items-center justify-center relative">
+              <svg className="w-full h-full opacity-60" viewBox="0 0 500 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Horizontal grid lines */}
+                <line x1="0" y1="40" x2="500" y2="40" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                <line x1="0" y1="80" x2="500" y2="80" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                <line x1="0" y1="120" x2="500" y2="120" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                <line x1="0" y1="160" x2="500" y2="160" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+
+                {/* Candles */}
+                <path d="M 30,120 L 30,80 M 30,110 H 35 V 90 H 25 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+                <path d="M 70,90 L 70,60 M 70,80 H 75 V 70 H 65 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+                <path d="M 110,70 L 110,130 M 110,80 H 115 V 110 H 105 Z" fill="#EF4444" stroke="#EF4444" strokeWidth="1" />
+                <path d="M 150,110 L 150,160 M 150,120 H 155 V 150 H 145 Z" fill="#EF4444" stroke="#EF4444" strokeWidth="1" />
+                <path d="M 190,150 L 190,110 M 190,140 H 195 V 120 H 185 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+                <path d="M 230,120 L 230,70 M 230,105 H 235 V 80 H 225 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+                <path d="M 270,80 L 270,110 M 270,90 H 275 V 105 H 265 Z" fill="#EF4444" stroke="#EF4444" strokeWidth="1" />
+                <path d="M 310,105 L 310,50 M 310,95 H 315 V 60 H 305 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+                <path d="M 350,60 L 350,90 M 350,70 H 355 V 85 H 345 Z" fill="#EF4444" stroke="#EF4444" strokeWidth="1" />
+                <path d="M 390,80 L 390,40 M 390,75 H 395 V 45 H 385 Z" fill="#10B981" stroke="#10B981" strokeWidth="1" />
+
+                {/* Entry Target Lines */}
+                <line x1="230" y1="105" x2="500" y2="105" stroke="#6366F1" strokeDasharray="3 3" strokeWidth="1.5" />
+                <text x="430" y="100" fill="#6366F1" fontSize="9" fontFamily="monospace">BUY ENTRY</text>
+
+                <line x1="230" y1="135" x2="500" y2="135" stroke="#EF4444" strokeDasharray="3 3" strokeWidth="1.5" />
+                <text x="435" y="130" fill="#EF4444" fontSize="9" fontFamily="monospace">STOP LOSS</text>
+
+                <line x1="230" y1="45" x2="500" y2="45" stroke="#10B981" strokeDasharray="3 3" strokeWidth="1.5" />
+                <text x="430" y="40" fill="#10B981" fontSize="9" fontFamily="monospace">TAKE PROFIT</text>
+              </svg>
+
+              {/* Central Premium Overlay */}
+              <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center flex-col">
+                <span className="text-4xl">🔮</span>
+                <span className="text-white font-bold text-sm tracking-wider mt-2">HIGH FIDELITY CFD CHART</span>
               </div>
             </div>
             
-            <button
-              onClick={() => {
-                // Set default date to current local timestamp in format YYYY-MM-DDTHH:MM
-                const localNow = new Date();
-                localNow.setMinutes(localNow.getMinutes() - localNow.getTimezoneOffset());
-                const formatted = localNow.toISOString().slice(0, 16);
-                setStartDate(formatted);
-                setShowAddModal(true);
-              }}
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl text-xs uppercase tracking-wider transition-all duration-200 shadow-[0_0_20px_rgba(99,102,241,0.25)] hover:shadow-[0_0_30px_rgba(99,102,241,0.4)] active:scale-95 cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-              </svg>
-              Create Backtest Run
-            </button>
+            <div className="mt-6 flex items-center justify-between text-xs text-gray-500">
+              <span>⚡ Powered by TradeTrackr Engine</span>
+              <span>1:2 Risk to Reward Setup</span>
+            </div>
           </div>
 
-          {/* Stats Bar */}
-          {sessions.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
-              <div className="bg-[#0f111a] border border-white/[0.04] rounded-xl p-5 relative overflow-hidden group shadow-lg">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-all duration-300" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Active Simulations</span>
-                <span className="text-2xl font-extrabold text-white mt-1.5 block font-mono">{totalSessions}</span>
+          {/* Premium Registration Card */}
+          <div className="lg:col-span-5 bg-gradient-to-b from-indigo-900/30 to-slate-900/30 backdrop-blur-md border border-indigo-500/10 rounded-2xl p-8 flex flex-col justify-between shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+            
+            <div>
+              <div className="flex items-center space-x-2 text-indigo-400 font-semibold text-xs tracking-wider uppercase mb-3">
+                <span>⭐</span>
+                <span>Exclusive Upgrade</span>
               </div>
-              
-              <div className="bg-[#0f111a] border border-white/[0.04] rounded-xl p-5 relative overflow-hidden group shadow-lg">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-all duration-300" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Accumulated Profit</span>
-                <span className={`text-2xl font-extrabold mt-1.5 block font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                  {netProfit >= 0 ? '+' : ''}{formatCurrency(netProfit)}
-                </span>
-              </div>
-              
-              <div className="bg-[#0f111a] border border-white/[0.04] rounded-xl p-5 relative overflow-hidden group shadow-lg">
-                <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-all duration-300" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Market Data Feed</span>
-                <span className="text-2xl font-extrabold text-indigo-400 mt-1.5 block uppercase tracking-wider font-sans text-sm md:text-base">
-                  Yahoo Finance Live
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Sessions Grid */}
-          {sessions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center border border-white/[0.04] rounded-2xl p-8 bg-[#0f111a]/40 backdrop-blur-md shadow-2xl">
-              <div className="w-16 h-16 rounded-xl border border-white/[0.06] flex items-center justify-center mb-5 text-indigo-400 shadow-[0_0_30px_rgba(99,102,241,0.1)] bg-indigo-500/5">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-bold text-white uppercase tracking-wider">No Active Sessions</h3>
-              <p className="text-xs text-slate-400 max-w-sm mt-2 mb-6 leading-relaxed">
-                Start a backtest run to replay historical bars, draw tools on chart, execute positions, and evaluate strategy results.
+              <h2 className="text-2xl font-bold text-white mb-4">
+                Request Early Access
+              </h2>
+              <p className="text-gray-300 text-sm leading-relaxed mb-6">
+                We are finalizing integrations for low-latency, 24-hour continuous historical index & forex feeds. Join our waitlist to be first in line when beta access launches.
               </p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg"
-              >
-                Launch First Session
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sessions.map((session) => {
-                const sessionProfit = session.current_balance - session.initial_balance;
-                const sessionProfitPercent = (sessionProfit / session.initial_balance) * 100;
-                const stats = sessionStats[session.id] || { count: 0, wins: 0, losses: 0, winRate: 0, totalPips: 0 };
 
-                return (
-                  <div
-                    key={session.id}
-                    onClick={() => router.push(`/backtesting/${session.id}`)}
-                    className="group relative bg-[#0f111a] border border-white/[0.04] hover:border-indigo-500/30 rounded-xl transition-all duration-300 shadow-xl cursor-pointer flex flex-col justify-between overflow-hidden hover:shadow-[0_8px_30px_rgba(99,102,241,0.12)]"
-                  >
-                    <div className="p-6">
-                      <div className="flex justify-between items-start gap-4 mb-5">
-                        <div className="flex-1">
-                          <h3 className="text-base font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">
-                            {session.name}
-                          </h3>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-455 font-mono text-[10px] font-bold uppercase tracking-widest border border-indigo-500/10">
-                              {session.symbol}
-                            </span>
-                            <span className="text-slate-700 text-xs">•</span>
-                            <span className="px-2 py-0.5 rounded bg-slate-800/40 text-slate-400 font-mono text-[10px] font-medium border border-white/[0.04]">
-                              {session.timeframe}
-                            </span>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingSessionId(session.id);
-                          }}
-                          className="p-1.5 rounded-lg border border-white/[0.02] text-slate-500 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all opacity-0 group-hover:opacity-100"
-                          title="Delete Session"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-
-                      {/* Detail Metrics */}
-                      <div className="grid grid-cols-2 gap-y-4 gap-x-5 pt-4 border-t border-white/[0.03] text-xs">
-                        
-                        <div>
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block">Balance Sheet</span>
-                          <span className="font-bold text-slate-200 mt-1 block font-mono">
-                            {formatCurrency(session.current_balance)}
-                            <span className="text-[10px] text-slate-500 font-medium font-sans block mt-0.5">
-                              Start: {formatCurrency(session.initial_balance)}
-                            </span>
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block">Performance Return</span>
-                          <span className={`font-bold mt-1 block font-mono ${sessionProfit >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                            {sessionProfit >= 0 ? '+' : ''}{sessionProfitPercent.toFixed(2)}%
-                            <span className="text-[10px] text-slate-500 block font-normal mt-0.5">
-                              {sessionProfit >= 0 ? '+' : ''}{formatCurrency(sessionProfit)}
-                            </span>
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block">Execution Stats</span>
-                          <span className="font-bold text-slate-200 mt-1 block font-mono">
-                            {stats.count} Trades
-                            <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                              {stats.wins} Wins / {stats.losses} Losses
-                            </span>
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest block">Win Ratio & Pips</span>
-                          <span className="font-bold text-slate-200 mt-1 block font-mono">
-                            {stats.winRate.toFixed(1)}% WR
-                            <span className={`text-[10px] block font-medium mt-0.5 ${stats.totalPips >= 0 ? 'text-emerald-400' : 'text-rose-500'}`}>
-                              {stats.totalPips >= 0 ? '+' : ''}{stats.totalPips.toFixed(1)} Pips
-                            </span>
-                          </span>
-                        </div>
-
-                      </div>
-
-                      {/* Date details */}
-                      <div className="mt-4 pt-3 border-t border-white/[0.02] flex items-center justify-between text-[10px] text-slate-550 font-mono">
-                        <span>START: {new Date(session.start_date).toLocaleDateString()}</span>
-                        {session.created_at && (
-                          <span>CREATED: {new Date(session.created_at).toLocaleDateString()}</span>
-                        )}
-                      </div>
-
-                    </div>
-                    <div className={`h-1.5 w-full ${sessionProfit >= 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-rose-550 to-pink-500'}`} />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Creation Modal */}
-          <Transition appear show={showAddModal} as={Fragment}>
-            <Dialog as="div" className="relative z-50" onClose={() => setShowAddModal(false)}>
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                <div className="fixed inset-0 bg-black/85 backdrop-blur-sm" />
-              </Transition.Child>
-
-              <div className="fixed inset-0 overflow-y-auto">
-                <div className="flex min-h-full items-center justify-center p-4 text-center">
-                  <Transition.Child
-                    as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0 scale-95"
-                    enterTo="opacity-100 scale-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100 scale-100"
-                    leaveTo="opacity-0 scale-95"
-                  >
-                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-[#0d0e16] border border-white/[0.08] p-6 text-left align-middle shadow-2xl transition-all">
-                      <Dialog.Title as="h3" className="text-sm font-bold text-white uppercase tracking-wider mb-5 flex items-center gap-2 font-sans">
-                        <div className="w-7 h-7 rounded bg-indigo-500/10 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                          </svg>
-                        </div>
-                        Launch Backtesting Session
-                      </Dialog.Title>
-
-                      <form onSubmit={handleCreateSession} className="space-y-4">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Session Name</label>
-                          <input
-                            type="text"
-                            required
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. NQ London Session Replay"
-                            className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-white placeholder-slate-600 transition-all font-medium"
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Trading Symbol</label>
-                            <select
-                              value={symbol}
-                              onChange={(e) => setSymbol(e.target.value)}
-                              className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium animate-none"
-                            >
-                              <option value="EURUSD">EURUSD</option>
-                              <option value="GBPUSD">GBPUSD</option>
-                              <option value="USDJPY">USDJPY</option>
-                              <option value="AUDUSD">AUDUSD</option>
-                              <option value="NQ=F">NQ=F (Nasdaq)</option>
-                              <option value="ES=F">ES=F (S&P 500)</option>
-                              <option value="YM=F">YM=F (Dow Jones)</option>
-                              <option value="XAUUSD=X">Gold (Spot)</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Capital ($)</label>
-                            <input
-                              type="number"
-                              required
-                              value={initialBalance}
-                              onChange={(e) => setInitialBalance(e.target.value)}
-                              className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-semibold font-mono"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Starting Timeframe</label>
-                            <select
-                              value={timeframe}
-                              onChange={(e) => setTimeframe(e.target.value)}
-                              className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium"
-                            >
-                              <option value="1m">1m (Last 30 Days)</option>
-                              <option value="5m">5m (Last 60 Days)</option>
-                              <option value="15m">15m (Last 60 Days)</option>
-                              <option value="1h">1h (Last 2 Years)</option>
-                              <option value="1d">1d (All History)</option>
-                            </select>
-                          </div>
-
-                          <div>
-                            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Playbook Strategy</label>
-                            <select
-                              value={selectedStrategy}
-                              onChange={(e) => setSelectedStrategy(e.target.value)}
-                              className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium"
-                            >
-                              <option value="">None (Generic)</option>
-                              {strategies.map((strat) => (
-                                <option key={strat.id} value={strat.name}>
-                                  {strat.name}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Start Date & Time (UTC)</label>
-                          <input
-                            type="datetime-local"
-                            required
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-lg text-xs bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-semibold font-mono"
-                          />
-                        </div>
-
-                        {/* Reactive warnings banner */}
-                        {warning && (
-                          <div className="p-3 bg-amber-500/10 border border-amber-500/25 rounded-lg text-[11px] text-amber-300 leading-relaxed font-sans mt-3">
-                            {warning}
-                          </div>
-                        )}
-
-                        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-white/[0.04]">
-                          <button
-                            type="button"
-                            onClick={() => setShowAddModal(false)}
-                            className="px-4 py-2 text-xs font-semibold rounded-lg border border-white/[0.08] text-slate-400 hover:bg-white/[0.04] transition-all cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={isCreating}
-                            className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-650 hover:bg-indigo-600 text-white transition-all shadow-md uppercase tracking-wider cursor-pointer"
-                          >
-                            {isCreating ? 'Launching...' : 'Launch Run'}
-                          </button>
-                        </div>
-                      </form>
-                    </Dialog.Panel>
-                  </Transition.Child>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 text-xs text-gray-400">
+                  <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>24-Hour continuous broker candles</span>
+                </div>
+                <div className="flex items-center space-x-3 text-xs text-gray-400">
+                  <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Click-and-drag drawing toolkit</span>
+                </div>
+                <div className="flex items-center space-x-3 text-xs text-gray-400">
+                  <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span>Playbook link & trade analysis logs</span>
                 </div>
               </div>
-            </Dialog>
-          </Transition>
+            </div>
 
-          {/* Delete Confirmation */}
-          <ConfirmModal
-            isOpen={deletingSessionId !== null}
-            onClose={() => setDeletingSessionId(null)}
-            onConfirm={handleDeleteSession}
-            title="Delete Backtest Session"
-            description="Are you sure you want to delete this backtest session? All historical trades logged during this session will be permanently deleted. This action cannot be undone."
-            confirmLabel="Delete Session"
-            cancelLabel="Cancel"
-            variant="danger"
-            isLoading={isDeleting}
-          />
+            <div className="mt-8">
+              {submitted ? (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl p-4 text-center">
+                  <p className="font-bold text-sm mb-1">🎉 You are on the List!</p>
+                  <p className="text-xs text-emerald-400/80">We have saved your email. You will receive an invite token shortly.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-3">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    required
+                    className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all duration-200 shadow-lg shadow-indigo-600/25 hover:shadow-indigo-500/35"
+                  >
+                    Request Priority Access
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Feature Grid Details */}
+        <div className="border-t border-white/5 pt-16">
+          <h3 className="text-center text-sm font-semibold text-gray-500 uppercase tracking-widest mb-12">
+            Why Backtest with TradeTrackr?
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-slate-900/20 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl font-bold mb-4">
+                ⏱️
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Replay Speed Control</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Step through market charts bar-by-bar at your own pace. Increase speed to test multiple trading weeks in a single hour.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/20 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl font-bold mb-4">
+                ✏️
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Interactive Drawings</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Easily draw Fibonacci, supply/demand boxes, and place entry targets with real-time risk-to-reward boundary indicators.
+              </p>
+            </div>
+
+            <div className="bg-slate-900/20 border border-white/5 rounded-2xl p-6 hover:border-white/10 transition-colors duration-300">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl font-bold mb-4">
+                📈
+              </div>
+              <h4 className="text-lg font-bold text-white mb-2">Detailed Playbooks</h4>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Link simulator runs directly to your playbook strategies, generating rich data reports to isolate patterns that yield high return rates.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </AuthenticatedLayout>
