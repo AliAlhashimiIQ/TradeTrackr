@@ -78,10 +78,21 @@ export default function BacktestSessionPage() {
   // Fullscreen State
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Advanced drawing toolbar state
+  // Floating execution panel drag coordinates
+  const [panelPos, setPanelPos] = useState({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const panelOffsetRef = useRef({ x: 0, y: 0 });
+
+  // Advanced TradingView-style drawing toolbar state
   const [activeTool, setActiveTool] = useState<'cursor' | 'trendline' | 'horizontal' | 'fvg' | 'long' | 'short'>('cursor');
   const [drawingState, setDrawingState] = useState<any>(null); // store first click values
   const [drawnLines, setDrawnLines] = useState<DrawingItem[]>([]);
+  
+  // Custom toolbar utility options
+  const [isMagnetMode, setIsMagnetMode] = useState(true);
+  const [areDrawingsHidden, setAreDrawingsHidden] = useState(false);
+  const [isToolLocked, setIsToolLocked] = useState(false);
 
   // Inputs
   const [lots, setLots] = useState('1.0');
@@ -279,12 +290,27 @@ export default function BacktestSessionPage() {
 
     chart.timeScale().fitContent();
 
-    // Chart Click Handler for drawings
+    // Chart Click Handler for drawings (includes Magnet Snapping option)
     chart.subscribeClick((param) => {
       if (activeTool === 'cursor' || !param.point || !param.time || !candleSeriesRef.current) return;
-      const price = candleSeriesRef.current.coordinateToPrice(param.point.y);
+      
+      let price = candleSeriesRef.current.coordinateToPrice(param.point.y);
       if (!price) return;
       const time = param.time;
+
+      // Magnet snapping mode logic
+      if (isMagnetMode && candles.length > 0) {
+        const closestCandle = candles.reduce((prev, curr) => {
+          return Math.abs(curr.time - (time as number)) < Math.abs(prev.time - (time as number)) ? curr : prev;
+        });
+        if (closestCandle) {
+          const snaps = [closestCandle.open, closestCandle.high, closestCandle.low, closestCandle.close];
+          const closestSnap = snaps.reduce((prev, curr) => {
+            return Math.abs(curr - price) < Math.abs(prev - price) ? curr : prev;
+          });
+          price = closestSnap;
+        }
+      }
 
       if (activeTool === 'horizontal') {
         const line = candleSeriesRef.current.createPriceLine({
@@ -295,7 +321,7 @@ export default function BacktestSessionPage() {
           title: 'LEVEL',
         });
         setDrawnLines((prev) => [...prev, { type: 'horizontal', ref: line }]);
-        setActiveTool('cursor');
+        if (!isToolLocked) setActiveTool('cursor');
         toast.success(`Horizontal Line placed at ${price.toFixed(5)}`);
       }
       else if (activeTool === 'trendline') {
@@ -315,7 +341,7 @@ export default function BacktestSessionPage() {
           ]);
           setDrawnLines((prev) => [...prev, { type: 'trendline', series: trendLineSeries }]);
           setDrawingState(null);
-          setActiveTool('cursor');
+          if (!isToolLocked) setActiveTool('cursor');
           toast.success('Trendline drawn');
         }
       }
@@ -340,7 +366,7 @@ export default function BacktestSessionPage() {
           });
           setDrawnLines((prev) => [...prev, { type: 'fvg', topRef: topLine, bottomRef: bottomLine }]);
           setDrawingState(null);
-          setActiveTool('cursor');
+          if (!isToolLocked) setActiveTool('cursor');
           toast.success('FVG boundaries placed');
         }
       }
@@ -358,7 +384,7 @@ export default function BacktestSessionPage() {
         const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
 
         setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
-        setActiveTool('cursor');
+        if (!isToolLocked) setActiveTool('cursor');
         toast.success(`Long Plan placed: Entry ${entry.toFixed(5)}`);
       }
       else if (activeTool === 'short') {
@@ -375,7 +401,7 @@ export default function BacktestSessionPage() {
         const tpLine = candleSeriesRef.current.createPriceLine({ price: tp, color: '#10b981', lineWidth: 1.5, lineStyle: 2, title: 'PLAN TP' });
 
         setDrawnLines((prev) => [...prev, { type: 'planner', entryRef: entryLine, slRef: slLine, tpRef: tpLine }]);
-        setActiveTool('cursor');
+        if (!isToolLocked) setActiveTool('cursor');
         toast.success(`Short Plan placed: Entry ${entry.toFixed(5)}`);
       }
     });
@@ -418,7 +444,7 @@ export default function BacktestSessionPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
-  }, [loading, loadingChart, candles, activeTool, drawingState]);
+  }, [loading, loadingChart, candles, activeTool, drawingState, isMagnetMode, isToolLocked]);
 
   // Sync visible slice of candles instantly when index updates
   useEffect(() => {
@@ -434,6 +460,26 @@ export default function BacktestSessionPage() {
 
     updateChartPriceLines();
   }, [currentIndex, candles]);
+
+  // Handle drawings visibility hide/show toggle
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series) return;
+    drawnLines.forEach((drawing) => {
+      if (drawing.type === 'horizontal') {
+        drawing.ref.applyOptions({ lineVisible: !areDrawingsHidden });
+      } else if (drawing.type === 'trendline') {
+        drawing.series.applyOptions({ visible: !areDrawingsHidden });
+      } else if (drawing.type === 'fvg') {
+        drawing.topRef.applyOptions({ lineVisible: !areDrawingsHidden });
+        drawing.bottomRef.applyOptions({ lineVisible: !areDrawingsHidden });
+      } else if (drawing.type === 'planner') {
+        drawing.entryRef.applyOptions({ lineVisible: !areDrawingsHidden });
+        drawing.slRef.applyOptions({ lineVisible: !areDrawingsHidden });
+        drawing.tpRef.applyOptions({ lineVisible: !areDrawingsHidden });
+      }
+    });
+  }, [areDrawingsHidden, drawnLines]);
 
   const updateChartPriceLines = () => {
     const series = candleSeriesRef.current;
@@ -702,6 +748,38 @@ export default function BacktestSessionPage() {
     toast.success('All drawings cleared');
   };
 
+  // Draggable Floating Panel mouse handlers
+  const handleDragMouseDown = (e: React.MouseEvent) => {
+    // Only drag when clicking the top header bar
+    isDraggingRef.current = true;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    panelOffsetRef.current = { ...panelPos };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      setPanelPos({
+        x: panelOffsetRef.current.x + dx,
+        y: panelOffsetRef.current.y + dy
+      });
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [panelPos]);
+
   // Fullscreen toggle handler on the chart wrapper wrapper
   const handleFullscreenToggle = () => {
     const wrapper = chartWrapperRef.current;
@@ -721,6 +799,9 @@ export default function BacktestSessionPage() {
     const handleFullscreenChange = () => {
       const isFull = document.fullscreenElement === chartWrapperRef.current;
       setIsFullscreen(isFull);
+
+      // Reset panel drag position when toggling fullscreen to prevent it getting offscreen
+      setPanelPos({ x: 0, y: 0 });
 
       const container = chartContainerRef.current;
       if (chartRef.current && container) {
@@ -850,8 +931,8 @@ export default function BacktestSessionPage() {
                 className="p-2 rounded-xl text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
                 title="Backward 1 Bar"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
                 </svg>
               </button>
 
@@ -861,12 +942,12 @@ export default function BacktestSessionPage() {
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 9v6m4-6v6" />
+                  <svg className="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <svg className="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
               </button>
@@ -877,8 +958,8 @@ export default function BacktestSessionPage() {
                 className="p-2 rounded-xl text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
                 title="Forward 1 Bar"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 005 8v8a1 1 0 001.6.8l5.334-4zM19.934 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
                 </svg>
               </button>
             </div>
@@ -1023,22 +1104,32 @@ export default function BacktestSessionPage() {
             {/* The chartWrapperRef is target of the requestFullscreen */}
             <div 
               ref={chartWrapperRef}
-              className={`relative w-full bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl transition-all duration-150 ${isFullscreen ? 'h-screen w-screen rounded-none border-none' : 'h-[500px]'}`}
+              className={`relative w-full bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl transition-all duration-155 ${isFullscreen ? 'h-screen w-screen rounded-none border-none' : 'h-[500px]'}`}
             >
               
-              {/* Fullscreen Overlay Controller (Trading Panel) */}
+              {/* Fullscreen Overlay Controller (Draggable Panel) */}
               {isFullscreen && (
-                <div className="absolute top-4 right-4 z-30 w-72 bg-white/95 dark:bg-[#0d0e16]/95 backdrop-blur-md border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl p-4 space-y-3.5 text-xs text-slate-800 dark:text-slate-100">
-                  <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-white/[0.04]">
+                <div 
+                  style={{ transform: `translate(${panelPos.x}px, ${panelPos.y}px)` }}
+                  className="absolute top-4 right-4 z-30 w-72 bg-white/95 dark:bg-[#0d0e16]/95 backdrop-blur-md border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl p-4 space-y-3.5 text-xs text-slate-800 dark:text-slate-100 select-none"
+                >
+                  {/* Draggable Header */}
+                  <div 
+                    onMouseDown={handleDragMouseDown}
+                    className="cursor-move flex justify-between items-center pb-2 border-b border-slate-100 dark:border-white/[0.04]"
+                  >
                     <div>
                       <span className="font-bold text-slate-900 dark:text-white text-sm">{session.symbol}</span>
                       <span className="ml-2 font-mono text-[10px] text-slate-400">{activeTimeframe}</span>
                     </div>
                     <button 
                       onClick={handleFullscreenToggle} 
-                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/5 font-semibold transition-all"
+                      className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/5 rounded font-semibold transition-all flex items-center justify-center text-slate-500 dark:text-gray-400"
+                      title="Exit Fullscreen"
                     >
-                      Exit ✕
+                      <svg className="w-3 h-3 text-slate-400 hover:text-slate-650" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                   </div>
 
@@ -1049,22 +1140,37 @@ export default function BacktestSessionPage() {
                       <button 
                         onClick={handleStepBackward} 
                         disabled={currentIndex <= 50 || isPlaying} 
-                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold"
+                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-600 dark:text-gray-300"
+                        title="Step Backward"
                       >
-                        ◀
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5" />
+                        </svg>
                       </button>
                       <button 
                         onClick={() => setIsPlaying(!isPlaying)} 
-                        className="p-1 px-3 bg-indigo-600 text-white rounded text-[10px] font-bold"
+                        className="p-1 px-3 bg-indigo-600 text-white rounded text-[10px] font-bold flex items-center justify-center min-w-[55px]"
+                        title={isPlaying ? 'Pause' : 'Play'}
                       >
-                        {isPlaying ? 'Pause' : 'Play'}
+                        {isPlaying ? (
+                          <svg className="w-2.5 h-2.5 text-white fill-current" viewBox="0 0 24 24">
+                            <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-2.5 h-2.5 text-white fill-current" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        )}
                       </button>
                       <button 
                         onClick={handleStepForward} 
                         disabled={currentIndex >= candles.length - 1 || isPlaying} 
-                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold"
+                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-600 dark:text-gray-300"
+                        title="Step Forward"
                       >
-                        ▶
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -1142,107 +1248,164 @@ export default function BacktestSessionPage() {
                 </div>
               )}
 
-              {/* Advanced Chart Drawing Toolbar overlay */}
-              <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 p-1 bg-white/95 dark:bg-[#0f111a]/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.08] shadow-lg">
+              {/* Advanced TradingView-style Drawing Toolbar sidebar overlay */}
+              <div className="absolute top-4 left-4 z-20 flex flex-col gap-1 p-1.5 bg-white/95 dark:bg-[#0c0e15]/95 backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/[0.08] shadow-2xl">
                 
-                {/* Pointer / Cursor */}
+                {/* 1. Pointer / Selection Crosshair */}
                 <button
                   onClick={() => { setActiveTool('cursor'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'cursor'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
                   }`}
-                  title="Cursor / Selection"
+                  title="Cursor / Crosshair Selection"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.042 21.672L13.684 16.6l4.982-1.66L7 7l1.66 11.623 3.323-2.908 3.061 5.357 2.058-1.4z" />
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m-9-9h18" />
                   </svg>
                 </button>
 
-                {/* Trendline */}
+                {/* Separator line */}
+                <div className="h-px bg-slate-200 dark:bg-white/[0.06] my-1 mx-1.5" />
+
+                {/* 2. Trendline */}
                 <button
                   onClick={() => { setActiveTool('trendline'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'trendline'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
                   }`}
-                  title="Trend Line (Two Clicks)"
+                  title="Trend Line (Click twice)"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5.5 18.5l13-13m0 0h-4m4 0v4" />
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <circle cx="6" cy="18" r="1.5" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="18" cy="6" r="1.5" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M7 17L17 7" />
                   </svg>
                 </button>
 
-                {/* Horizontal level line */}
+                {/* 3. Horizontal Level */}
                 <button
                   onClick={() => { setActiveTool('horizontal'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'horizontal'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
                   }`}
-                  title="Horizontal Level Line (One Click)"
+                  title="Horizontal Line (Click once)"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M12 4v16" />
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" />
                   </svg>
                 </button>
 
-                {/* FVG Box */}
+                {/* 4. FVG Rectangle Zone */}
                 <button
                   onClick={() => { setActiveTool('fvg'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'fvg'
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-indigo-600 text-white shadow-md'
                       : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
                   }`}
-                  title="FVG Zone Box (Click top price, then bottom price)"
+                  title="Fair Value Gap Rectangle (Click High, then Low)"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 18h16M4 6v12m16-12v12" />
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <rect x="4" y="6" width="16" height="12" rx="1.5" />
                   </svg>
                 </button>
 
-                {/* Long planner */}
+                {/* Separator line */}
+                <div className="h-px bg-slate-200 dark:bg-white/[0.06] my-1 mx-1.5" />
+
+                {/* 5. Long Planner */}
                 <button
                   onClick={() => { setActiveTool('long'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'long'
-                      ? 'bg-emerald-600 text-white'
-                      : 'text-emerald-500 hover:bg-emerald-500/10'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'text-emerald-500 hover:bg-emerald-500/10 hover:text-emerald-600'
                   }`}
-                  title="Long Position Planner (One Click Entry)"
+                  title="Long Position Planner"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z" />
+                  <svg className="w-4.5 h-4.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7l4-4m0 0l4 4m-4-4v18" />
                   </svg>
                 </button>
 
-                {/* Short planner */}
+                {/* 6. Short Planner */}
                 <button
                   onClick={() => { setActiveTool('short'); setDrawingState(null); }}
-                  className={`p-2 rounded-xl transition-all ${
+                  className={`p-2 rounded-lg transition-all ${
                     activeTool === 'short'
-                      ? 'bg-rose-600 text-white'
-                      : 'text-rose-500 hover:bg-rose-500/10'
+                      ? 'bg-rose-600 text-white shadow-md'
+                      : 'text-rose-500 hover:bg-rose-500/10 hover:text-rose-600'
                   }`}
-                  title="Short Position Planner (One Click Entry)"
+                  title="Short Position Planner"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13l-3 3m0 0l-3-3m3 3V8m0-5a9 9 0 110 18 9 9 0 010-18z" />
+                  <svg className="w-4.5 h-4.5 text-rose-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
                   </svg>
                 </button>
 
-                {/* Clear all drawings */}
+                {/* Separator line */}
+                <div className="h-px bg-slate-200 dark:bg-white/[0.06] my-1 mx-1.5" />
+
+                {/* 7. Magnet Mode Toggle */}
+                <button
+                  onClick={() => setIsMagnetMode(!isMagnetMode)}
+                  className={`p-2 rounded-lg transition-all ${
+                    isMagnetMode
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                  title="Magnet Mode (Snaps price levels exactly to candle High/Low/Open/Close)"
+                >
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v4.5A4.5 4.5 0 0013.5 12h0A4.5 4.5 0 0018 7.5V3M9 3H5m4 0h4m5 0h-4m4 0h4" />
+                  </svg>
+                </button>
+
+                {/* 8. Stay in Drawing Mode Lock */}
+                <button
+                  onClick={() => setIsToolLocked(!isToolLocked)}
+                  className={`p-2 rounded-lg transition-all ${
+                    isToolLocked
+                      ? 'bg-amber-600 text-white shadow-md'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
+                  title="Lock Drawing Tool (Stay in drawing mode after placing level)"
+                >
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                </button>
+
+                {/* 9. Hide / Show Drawings (Eye Icon) */}
+                <button
+                  onClick={() => setAreDrawingsHidden(!areDrawingsHidden)}
+                  className={`p-2 rounded-lg transition-all ${
+                    areDrawingsHidden
+                      ? 'bg-slate-600 text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-800 dark:hover:text-white'
+                  }`}
+                  title={areDrawingsHidden ? 'Show Drawings' : 'Hide Drawings'}
+                >
+                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.43 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+
+                {/* 10. Delete All Drawings (Trash Can) */}
                 {drawnLines.length > 0 && (
                   <button
                     onClick={clearDrawings}
-                    className="p-2 rounded-xl text-rose-500 hover:bg-rose-500/10 transition-all border-t border-slate-100 dark:border-white/[0.04] mt-1"
+                    className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all border-t border-slate-100 dark:border-white/[0.04] mt-1 flex items-center justify-center"
                     title="Clear All Drawings"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
@@ -1257,7 +1420,7 @@ export default function BacktestSessionPage() {
                     className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
                     title="Toggle Fullscreen Chart"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                     </svg>
                   </button>
@@ -1287,15 +1450,15 @@ export default function BacktestSessionPage() {
 
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
-                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Total Trades</div>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Total Trades</div>
                   <div className="text-lg font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{totalTrades}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Win Rate</div>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Win Rate</div>
                   <div className="text-lg font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{winRate.toFixed(1)}%</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Total Pips</div>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Total Pips</div>
                   <div className={`text-lg font-bold mt-1.5 font-mono ${trades.reduce((sum, t) => sum + (t.pips || 0), 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                     {trades.reduce((sum, t) => sum + (t.pips || 0), 0).toFixed(1)}
                   </div>
