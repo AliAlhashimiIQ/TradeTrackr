@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
     // Try Twelve Data first if API key is provided
     if (apikey && apikey !== 'your_api_key_here') {
       try {
-        const twelveSymbol = mapTwelveSymbol(rawSymbol);
+        let twelveSymbol = mapTwelveSymbol(rawSymbol);
         const twelveInterval = mapInterval(interval);
         
         let twelveUrl = `https://api.twelvedata.com/time_series?symbol=${twelveSymbol}&interval=${twelveInterval}&apikey=${apikey}&outputsize=5000`;
@@ -146,9 +146,33 @@ export async function GET(req: NextRequest) {
           twelveUrl += `&end_date=${encodeURIComponent(endDateStr)}`;
         }
 
-        const tdRes = await fetch(twelveUrl, { next: { revalidate: 60 } });
+        let tdRes = await fetch(twelveUrl, { next: { revalidate: 60 } });
         if (tdRes.ok) {
-          const tdJson = await tdRes.json();
+          let tdJson = await tdRes.json();
+          
+          // Check if index symbol is restricted on free plan and query ETF alternative
+          if (tdJson.status !== 'ok' && (twelveSymbol === 'NDX' || twelveSymbol === 'SPX' || twelveSymbol === 'DJI')) {
+            const etfMap: Record<string, string> = { 'NDX': 'QQQ', 'SPX': 'SPY', 'DJI': 'DIA' };
+            const etfSymbol = etfMap[twelveSymbol];
+            console.log(`Twelve Data: Index ${twelveSymbol} restricted on free plan. Trying ETF fallback: ${etfSymbol}`);
+            
+            let etfUrl = `https://api.twelvedata.com/time_series?symbol=${etfSymbol}&interval=${twelveInterval}&apikey=${apikey}&outputsize=5000`;
+            if (start) {
+              const startDateStr = new Date(Number(start) * 1000).toISOString().slice(0, 19).replace('T', ' ');
+              etfUrl += `&start_date=${encodeURIComponent(startDateStr)}`;
+            }
+            if (end) {
+              const endDateStr = new Date(Number(end) * 1000).toISOString().slice(0, 19).replace('T', ' ');
+              etfUrl += `&end_date=${encodeURIComponent(endDateStr)}`;
+            }
+            
+            const etfRes = await fetch(etfUrl, { next: { revalidate: 60 } });
+            if (etfRes.ok) {
+              tdJson = await etfRes.json();
+              twelveSymbol = etfSymbol;
+            }
+          }
+
           if (tdJson.status === 'ok' && Array.isArray(tdJson.values)) {
             formattedData = tdJson.values.map((item: any) => {
               const dt = item.datetime.includes(' ') ? item.datetime : `${item.datetime} 00:00:00`;
