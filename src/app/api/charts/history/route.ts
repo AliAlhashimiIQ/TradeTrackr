@@ -184,15 +184,20 @@ export async function GET(req: NextRequest) {
         }
 
         if (tdRes.ok && tdJson && tdJson.status === 'ok' && Array.isArray(tdJson.values)) {
+            let multiplier = 1;
+            if (twelveSymbol === 'QQQ') multiplier = 40;
+            else if (twelveSymbol === 'SPY') multiplier = 10;
+            else if (twelveSymbol === 'DIA') multiplier = 100;
+
             formattedData = tdJson.values.map((item: any) => {
               const dt = item.datetime.includes(' ') ? item.datetime : `${item.datetime} 00:00:00`;
               const time = Math.floor(new Date(dt + ' UTC').getTime() / 1000);
               return {
                 time,
-                open: Number(item.open),
-                high: Number(item.high),
-                low: Number(item.low),
-                close: Number(item.close)
+                open: Number(item.open) * multiplier,
+                high: Number(item.high) * multiplier,
+                low: Number(item.low) * multiplier,
+                close: Number(item.close) * multiplier
               };
             }).filter((item: any) => !isNaN(item.time) && !isNaN(item.open) && !isNaN(item.high) && !isNaN(item.low) && !isNaN(item.close));
 
