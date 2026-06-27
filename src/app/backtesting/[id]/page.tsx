@@ -98,12 +98,9 @@ export default function BacktestSessionPage() {
         const completedTrades = await getBacktestTrades(sessionId);
         setTrades(completedTrades);
 
-        // If session was saved with a Unix timestamp index (e.g. index is a timestamp > 1000000)
-        // Store it as our current replayed time.
         if (sessionData.current_index > 1000000) {
           setCurrentTimeUnix(sessionData.current_index);
         } else {
-          // Fallback to start_date timestamp
           setCurrentTimeUnix(Math.floor(new Date(sessionData.start_date).getTime() / 1000));
         }
 
@@ -155,7 +152,6 @@ export default function BacktestSessionPage() {
 
         setCandles(candleData);
 
-        // Map currentTimeUnix to closest candle index in new timeframe
         let matchedIndex = 0;
         for (let i = 0; i < candleData.length; i++) {
           if (candleData[i].time <= currentTimeUnix) {
@@ -165,7 +161,6 @@ export default function BacktestSessionPage() {
           }
         }
 
-        // If timestamp is before first candle, default to 50 visible
         if (matchedIndex < 50) {
           matchedIndex = Math.min(50, candleData.length - 1);
         }
@@ -186,18 +181,20 @@ export default function BacktestSessionPage() {
   useEffect(() => {
     if (loading || loadingChart || candles.length === 0 || !chartContainerRef.current) return;
 
+    const isDarkTheme = document.documentElement.classList.contains('dark');
+
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#090a10' },
-        textColor: '#9ca3af',
+        background: { type: ColorType.Solid, color: isDarkTheme ? '#090a10' : '#ffffff' },
+        textColor: isDarkTheme ? '#9ca3af' : '#4b5563',
         fontFamily: 'system-ui, -apple-system, sans-serif',
       },
       grid: {
-        vertLines: { color: 'rgba(255, 255, 255, 0.03)' },
-        horzLines: { color: 'rgba(255, 255, 255, 0.03)' },
+        vertLines: { color: isDarkTheme ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
+        horzLines: { color: isDarkTheme ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
       },
       timeScale: {
-        borderColor: 'rgba(255, 255, 255, 0.08)',
+        borderColor: isDarkTheme ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
         timeVisible: true,
         secondsVisible: false,
       },
@@ -219,6 +216,27 @@ export default function BacktestSessionPage() {
 
     chart.timeScale().fitContent();
 
+    // Mutation observer for light/dark mode switching on-the-fly
+    const observer = new MutationObserver(() => {
+      const dark = document.documentElement.classList.contains('dark');
+      if (chartRef.current) {
+        chartRef.current.applyOptions({
+          layout: {
+            background: { type: ColorType.Solid, color: dark ? '#090a10' : '#ffffff' },
+            textColor: dark ? '#9ca3af' : '#4b5563',
+          },
+          grid: {
+            vertLines: { color: dark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
+            horzLines: { color: dark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)' },
+          },
+          timeScale: {
+            borderColor: dark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+          }
+        });
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
     const handleResize = () => {
       if (chart && chartContainerRef.current) {
         chart.resize(
@@ -233,6 +251,7 @@ export default function BacktestSessionPage() {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      observer.disconnect();
       chart.remove();
       chartRef.current = null;
       candleSeriesRef.current = null;
@@ -246,7 +265,6 @@ export default function BacktestSessionPage() {
     const visibleData = candles.slice(0, currentIndex + 1);
     candleSeriesRef.current.setData(visibleData);
 
-    // Save currentTimeUnix state
     const currentCandle = candles[currentIndex];
     if (currentCandle) {
       setCurrentTimeUnix(currentCandle.time);
@@ -345,7 +363,6 @@ export default function BacktestSessionPage() {
     setCurrentIndex(nextIndex);
     setCurrentTimeUnix(nextCandle.time);
 
-    // Save timestamp to DB so it persists session replayed location
     await updateSessionState(sessionId, nextCandle.time, balance, activeTrade);
 
     if (activeTrade) {
@@ -535,7 +552,7 @@ export default function BacktestSessionPage() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-3">
             <div className="w-9 h-9 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium text-slate-400">Loading Replay Workspace...</span>
+            <span className="text-sm font-medium text-slate-400 dark:text-slate-500">Loading Replay Workspace...</span>
           </div>
         </div>
       </AuthenticatedLayout>
@@ -546,8 +563,8 @@ export default function BacktestSessionPage() {
     return (
       <AuthenticatedLayout>
         <div className="max-w-xl mx-auto py-16 text-center">
-          <h2 className="text-2xl font-extrabold text-white mb-2">Replay Run Locked</h2>
-          <p className="text-gray-400 text-sm mb-6">{error || 'Session could not be opened.'}</p>
+          <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white mb-2">Replay Run Locked</h2>
+          <p className="text-slate-500 dark:text-gray-400 text-sm mb-6">{error || 'Session could not be opened.'}</p>
           <button onClick={() => router.push('/backtesting')} className="px-5 py-3 bg-indigo-600 rounded-xl text-sm font-semibold text-white shadow-lg shadow-indigo-600/10">
             Back to Sandbox
           </button>
@@ -567,22 +584,22 @@ export default function BacktestSessionPage() {
 
   return (
     <AuthenticatedLayout>
-      <div className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative">
+      <div className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative text-slate-800 dark:text-slate-100">
         
         {/* Floating Topbar Dashboard */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 bg-[#0f111a]/85 backdrop-blur-lg border border-white/[0.06] px-6 py-4 rounded-3xl shadow-xl relative z-20">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 bg-white dark:bg-[#0f111a]/85 backdrop-blur-lg border border-slate-200 dark:border-white/[0.06] px-6 py-4 rounded-3xl shadow-md dark:shadow-xl relative z-20">
           <div className="flex items-center gap-4">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.15)]">
+            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center font-bold text-indigo-500 dark:text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.05)]">
               📈
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-white">{session.name}</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-400 uppercase">
+                <span className="text-base font-extrabold text-slate-900 dark:text-white">{session.name}</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase">
                   {session.symbol}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-mono mt-0.5">{formattedTime} UTC</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">{formattedTime} UTC</p>
             </div>
           </div>
 
@@ -590,7 +607,7 @@ export default function BacktestSessionPage() {
           <div className="flex flex-wrap items-center gap-4">
             
             {/* Timeframe Picker */}
-            <div className="flex bg-white/[0.04] p-0.5 rounded-xl border border-white/[0.05]">
+            <div className="flex bg-slate-100 dark:bg-white/[0.04] p-0.5 rounded-xl border border-slate-200 dark:border-white/[0.05]">
               {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
                 <button
                   key={tf}
@@ -598,7 +615,7 @@ export default function BacktestSessionPage() {
                   className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
                     activeTimeframe === tf
                       ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10'
-                      : 'text-gray-400 hover:text-white'
+                      : 'text-slate-500 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white'
                   }`}
                 >
                   {tf}
@@ -607,11 +624,11 @@ export default function BacktestSessionPage() {
             </div>
 
             {/* Replay controller buttons */}
-            <div className="flex items-center gap-2 border-l border-white/[0.08] pl-4">
+            <div className="flex items-center gap-2 border-l border-slate-200 dark:border-white/[0.08] pl-4">
               <button
                 onClick={handleStepBackward}
                 disabled={currentIndex <= 50 || isPlaying}
-                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
+                className="p-2 rounded-xl text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
                 title="Backward 1 Bar"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -638,7 +655,7 @@ export default function BacktestSessionPage() {
               <button
                 onClick={handleStepForward}
                 disabled={currentIndex >= candles.length - 1 || isPlaying}
-                className="p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
+                className="p-2 rounded-xl text-slate-500 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-all disabled:opacity-30 active:scale-95"
                 title="Forward 1 Bar"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -651,7 +668,7 @@ export default function BacktestSessionPage() {
             <select
               value={playSpeed}
               onChange={(e) => setPlaySpeed(Number(e.target.value))}
-              className="px-2.5 py-1.5 text-xs font-bold border border-white/[0.06] rounded-xl bg-[#090a10] text-slate-300 focus:outline-none"
+              className="px-2.5 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/[0.06] rounded-xl bg-white dark:bg-[#090a10] text-slate-600 dark:text-slate-300 focus:outline-none"
             >
               <option value={1500}>1.5s Speed</option>
               <option value={1000}>1.0s Speed</option>
@@ -667,69 +684,69 @@ export default function BacktestSessionPage() {
           <div className="lg:col-span-1 space-y-6">
             
             {/* Balance and Stats Card */}
-            <div className="bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-5 shadow-lg space-y-3">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Available Capital</span>
-              <div className="text-2xl font-extrabold text-white font-mono">{formatCurrency(balance)}</div>
-              <div className="flex items-center justify-between text-xs pt-1.5 border-t border-white/[0.03] font-semibold">
-                <span className="text-gray-500">Session PnL:</span>
-                <span className={`${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-5 shadow-sm dark:shadow-lg space-y-3">
+              <span className="text-[10px] text-slate-400 dark:text-gray-505 font-bold uppercase tracking-widest">Available Capital</span>
+              <div className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">{formatCurrency(balance)}</div>
+              <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100 dark:border-white/[0.03] font-semibold">
+                <span className="text-slate-500">Session PnL:</span>
+                <span className={`${netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                   {netProfit >= 0 ? '+' : ''}
-                  {formatCurrency(netProfit)}
+                  {formatCurrency(netProfit)} ({((netProfit / session.initial_balance) * 100).toFixed(2)}%)
                 </span>
               </div>
             </div>
 
             {/* Interactive Buy/Sell Action Card */}
-            <div className="bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-5 shadow-lg space-y-5">
-              <h3 className="text-xs text-white font-bold uppercase tracking-widest pb-2 border-b border-white/[0.04]">Replay Orders</h3>
+            <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-5 shadow-sm dark:shadow-lg space-y-5">
+              <h3 className="text-xs text-slate-800 dark:text-white font-bold uppercase tracking-widest pb-2 border-b border-slate-100 dark:border-white/[0.04]">Replay Orders</h3>
 
               {!activeTrade ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-2.5">
                     <button
                       onClick={() => handleOpenPosition('Long')}
-                      className="py-3 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-md shadow-emerald-500/5 transition-all active:scale-95 duration-150 cursor-pointer"
+                      className="py-3 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-sm transition-all active:scale-95 duration-150 cursor-pointer"
                     >
                       Buy Market
                     </button>
                     <button
                       onClick={() => handleOpenPosition('Short')}
-                      className="py-3 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 shadow-md shadow-rose-500/5 transition-all active:scale-95 duration-150 cursor-pointer"
+                      className="py-3 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 hover:border-rose-500/50 shadow-sm transition-all active:scale-95 duration-150 cursor-pointer"
                     >
                       Sell Market
                     </button>
                   </div>
 
-                  <div className="space-y-3.5 pt-2 border-t border-white/[0.04]">
+                  <div className="space-y-3.5 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
                     <div>
-                      <label className="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">Lots size</label>
+                      <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Lots size</label>
                       <input
                         type="text"
                         value={lots}
                         onChange={(e) => setLots(e.target.value)}
-                        className="w-full px-3 py-2 border border-white/[0.06] rounded-xl text-xs bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-white font-mono"
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-white/[0.06] rounded-xl text-xs bg-slate-50 dark:bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white font-mono"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">Stop Loss (Pips)</label>
+                        <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Stop Loss (Pips)</label>
                         <input
                           type="number"
                           placeholder="e.g. 15"
                           value={slPips}
                           onChange={(e) => setSlPips(e.target.value)}
-                          className="w-full px-3 py-2 border border-white/[0.06] rounded-xl text-xs bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-white font-mono"
-                        />
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-white/[0.06] rounded-xl text-xs bg-slate-50 dark:bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white font-mono"
+                      />
                       </div>
                       <div>
-                        <label className="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1.5">Take Profit (Pips)</label>
+                        <label className="block text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest mb-1.5">Take Profit (Pips)</label>
                         <input
                           type="number"
                           placeholder="e.g. 30"
                           value={tpPips}
                           onChange={(e) => setTpPips(e.target.value)}
-                          className="w-full px-3 py-2 border border-white/[0.06] rounded-xl text-xs bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-white font-mono"
+                          className="w-full px-3 py-2 border border-slate-200 dark:border-white/[0.06] rounded-xl text-xs bg-slate-50 dark:bg-white/[0.01] focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white font-mono"
                         />
                       </div>
                     </div>
@@ -739,34 +756,34 @@ export default function BacktestSessionPage() {
                 <div className="border border-indigo-500/20 bg-indigo-500/[0.02] rounded-2xl p-4.5 space-y-4 shadow-inner relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-500/5 rounded-full blur-xl" />
                   <div className="flex justify-between items-center">
-                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${activeTrade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                    <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${activeTrade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600'}`}>
                       {activeTrade.type}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400">{activeTrade.qty} Lot(s)</span>
+                    <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">{activeTrade.qty} Lot(s)</span>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-white/[0.04]">
+                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-white/[0.04]">
                     <div className="flex justify-between text-xs font-semibold">
-                      <span className="text-gray-500">Entry price</span>
-                      <span className="text-white font-mono">{activeTrade.entryPrice.toFixed(5)}</span>
+                      <span className="text-slate-500">Entry price</span>
+                      <span className="text-slate-900 dark:text-white font-mono">{activeTrade.entryPrice.toFixed(5)}</span>
                     </div>
                     {activeTrade.sl && (
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-500">Stop loss</span>
-                        <span className="text-rose-400 font-mono">{activeTrade.sl.toFixed(5)}</span>
+                        <span className="text-slate-500">Stop loss</span>
+                        <span className="text-rose-500 dark:text-rose-400 font-mono">{activeTrade.sl.toFixed(5)}</span>
                       </div>
                     )}
                     {activeTrade.tp && (
                       <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-gray-500">Take profit</span>
-                        <span className="text-emerald-400 font-mono">{activeTrade.tp.toFixed(5)}</span>
+                        <span className="text-slate-500">Take profit</span>
+                        <span className="text-emerald-600 dark:text-emerald-400 font-mono">{activeTrade.tp.toFixed(5)}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex justify-between items-center pt-3 border-t border-white/[0.04]">
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Floating return</span>
-                    <span className={`text-sm font-bold font-mono ${getFloatingPnL() >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/[0.04]">
+                    <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Floating return</span>
+                    <span className={`text-sm font-bold font-mono ${getFloatingPnL() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                       {getFloatingPnL() >= 0 ? '+' : ''}
                       {formatCurrency(getFloatingPnL())}
                     </span>
@@ -774,7 +791,7 @@ export default function BacktestSessionPage() {
 
                   <button
                     onClick={handleManualClose}
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-600/10 active:scale-95 duration-150 cursor-pointer"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 duration-150 cursor-pointer"
                   >
                     Close Position Market
                   </button>
@@ -785,12 +802,12 @@ export default function BacktestSessionPage() {
 
           {/* Center Main: Interactive Chart canvas */}
           <div className="lg:col-span-3">
-            <div className="relative w-full h-[500px] bg-[#090a10] rounded-3xl border border-white/[0.06] overflow-hidden shadow-2xl">
+            <div className="relative w-full h-[500px] bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl">
               {loadingChart && (
-                <div className="absolute inset-0 bg-[#090a10]/80 backdrop-blur-sm z-30 flex items-center justify-center">
+                <div className="absolute inset-0 bg-white/80 dark:bg-[#090a10]/80 backdrop-blur-sm z-30 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-xs font-medium text-slate-400">Loading historical data feed...</span>
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Loading historical data feed...</span>
                   </div>
                 </div>
               )}
@@ -799,33 +816,33 @@ export default function BacktestSessionPage() {
           </div>
         </div>
 
-        {/* Bottom stats and lists */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 pt-8 border-t border-white/[0.05]">
+        {/* Bottom panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8 pt-8 border-t border-slate-200 dark:border-white/[0.05]">
           
-          {/* Replay stats and equity chart */}
-          <div className="lg:col-span-1 bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-white/[0.06] p-5 shadow-lg flex flex-col justify-between">
+          {/* Stats & Equity */}
+          <div className="lg:col-span-1 bg-white dark:bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-5 shadow-sm dark:shadow-lg flex flex-col justify-between">
             <div>
-              <h3 className="text-xs text-white font-bold uppercase tracking-widest mb-4">Replay Performance</h3>
+              <h3 className="text-xs text-slate-800 dark:text-white font-bold uppercase tracking-widest mb-4">Replay Performance</h3>
 
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Total Trades</div>
-                  <div className="text-lg font-bold text-white mt-1.5 font-mono">{totalTrades}</div>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Total Trades</div>
+                  <div className="text-lg font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{totalTrades}</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Win Rate</div>
-                  <div className="text-lg font-bold text-white mt-1.5 font-mono">{winRate.toFixed(1)}%</div>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Win Rate</div>
+                  <div className="text-lg font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{winRate.toFixed(1)}%</div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Total Pips</div>
-                  <div className={`text-lg font-bold mt-1.5 font-mono ${trades.reduce((sum, t) => sum + (t.pips || 0), 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Total Pips</div>
+                  <div className={`text-lg font-bold mt-1.5 font-mono ${trades.reduce((sum, t) => sum + (t.pips || 0), 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                     {trades.reduce((sum, t) => sum + (t.pips || 0), 0).toFixed(1)}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Equity curve */}
+            {/* Equity Curve */}
             {trades.length > 0 && (
               <div className="h-32 w-full mt-4">
                 <ResponsiveContainer width="100%" height="100%">
@@ -852,20 +869,20 @@ export default function BacktestSessionPage() {
           </div>
 
           {/* Replay trades list */}
-          <div className="lg:col-span-2 bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-white/[0.06] p-5 shadow-lg">
-            <h3 className="text-xs text-white font-bold uppercase tracking-widest mb-4 pb-2 border-b border-white/[0.04]">Logged Simulator Trades</h3>
+          <div className="lg:col-span-2 bg-white dark:bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-5 shadow-sm dark:shadow-lg">
+            <h3 className="text-xs text-slate-800 dark:text-white font-bold uppercase tracking-widest mb-4 pb-2 border-b border-slate-100 dark:border-white/[0.04]">Logged Simulator Trades</h3>
             
             {trades.length === 0 ? (
-              <div className="py-12 flex flex-col items-center justify-center text-gray-500 text-center">
+              <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-gray-505 text-center">
                 <span className="text-2xl mb-2">📋</span>
                 <p className="text-xs font-semibold">No simulation trades logged yet.</p>
-                <p className="text-[10px] text-gray-600 mt-1 max-w-[200px]">Launch a simulated order to record your first trade metrics.</p>
+                <p className="text-[10px] text-slate-500 dark:text-gray-600 mt-1 max-w-[200px]">Launch a simulated order to record your first trade metrics.</p>
               </div>
             ) : (
               <div className="overflow-y-auto max-h-56">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-white/[0.04] text-gray-500 font-bold uppercase tracking-widest text-[9px] pb-2">
+                    <tr className="border-b border-slate-100 dark:border-white/[0.04] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest text-[9px] pb-2">
                       <th className="pb-2">Type</th>
                       <th className="pb-2">Size</th>
                       <th className="pb-2">Entry</th>
@@ -875,27 +892,27 @@ export default function BacktestSessionPage() {
                       <th className="pb-2 text-right">Delete</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/[0.03] text-gray-300 font-medium font-mono">
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/[0.03] text-slate-700 dark:text-gray-300 font-medium font-mono">
                     {[...trades].reverse().map((trade) => (
-                      <tr key={trade.id} className="hover:bg-white/[0.01]">
+                      <tr key={trade.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.01]">
                         <td className="py-2.5">
-                          <span className={`px-1.5 py-0.5 rounded font-extrabold text-[9px] uppercase ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                          <span className={`px-1.5 py-0.5 rounded font-extrabold text-[9px] uppercase ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/10 text-rose-600'}`}>
                             {trade.type}
                           </span>
                         </td>
                         <td className="py-2.5">{trade.quantity}</td>
                         <td className="py-2.5">{trade.entry_price.toFixed(5)}</td>
                         <td className="py-2.5">{trade.exit_price?.toFixed(5)}</td>
-                        <td className={`py-2.5 ${(trade.pips || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        <td className={`py-2.5 ${(trade.pips || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                           {(trade.pips || 0) > 0 ? '+' : ''}{(trade.pips || 0).toFixed(1)}
                         </td>
-                        <td className={`py-2.5 ${(trade.profit_loss || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        <td className={`py-2.5 ${(trade.profit_loss || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                           {(trade.profit_loss || 0) >= 0 ? '+' : ''}{formatCurrency(trade.profit_loss || 0)}
                         </td>
                         <td className="py-2.5 text-right">
                           <button
                             onClick={() => handleDeleteTrade(trade.id, trade.profit_loss || 0)}
-                            className="text-gray-500 hover:text-rose-400 transition-colors p-1"
+                            className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 transition-colors p-1"
                             title="Delete log entry"
                           >
                             🗑️

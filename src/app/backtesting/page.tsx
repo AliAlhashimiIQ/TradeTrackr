@@ -82,7 +82,6 @@ export default function BacktestingPage() {
       setIsCreating(true);
       const initialBal = parseFloat(initialBalance) || 10000;
 
-      // Create session passing user_id explicitly and defaulting internal timeframe to 15m (user will select dynamic timeframe on workspace)
       const newSession = await createBacktestSession({
         user_id: user.id,
         name: name.trim(),
@@ -91,7 +90,7 @@ export default function BacktestingPage() {
         initial_balance: initialBal,
         current_balance: initialBal,
         start_date: new Date(startDate).toISOString(),
-        current_index: 0, // Will default to 0 and get populated by Unix timestamp on first step
+        current_index: 0,
         active_trade: null,
         strategy: selectedStrategy || null,
       });
@@ -150,7 +149,7 @@ export default function BacktestingPage() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="flex flex-col items-center gap-3">
             <div className="w-9 h-9 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium text-slate-400">Loading Backtesting Sandbox...</span>
+            <span className="text-sm font-medium text-slate-400 dark:text-slate-500">Loading Backtesting Sandbox...</span>
           </div>
         </div>
       </AuthenticatedLayout>
@@ -161,27 +160,27 @@ export default function BacktestingPage() {
     <AuthenticatedLayout>
       <div className="px-6 lg:px-8 py-8 max-w-7xl mx-auto relative overflow-hidden">
         {/* Neon decorative background glow */}
-        <div className="absolute top-[-10%] left-[20%] w-[300px] h-[300px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-[-10%] left-[20%] w-[300px] h-[300px] bg-indigo-600/10 dark:bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[20%] right-[-10%] w-[400px] h-[400px] bg-purple-600/10 dark:bg-purple-600/5 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative z-10">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3" style={{ color: 'var(--foreground)' }}>
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
+            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-slate-900 dark:text-white">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.15)]">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               Backtesting Sandbox
             </h1>
-            <p className="text-sm text-slate-400 mt-2 max-w-2xl leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-2xl leading-relaxed">
               Practise strategy execution in simulated historical market environments. Jump back in time to verify edge, test entries, and perfect risk management on any timeframe.
             </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-2xl text-sm transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] hover:shadow-[0_4px_30px_rgba(99,102,241,0.4)] active:scale-95 duration-200"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-2xl text-sm transition-all shadow-[0_4px_20px_rgba(99,102,241,0.25)] active:scale-95 duration-200"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -193,42 +192,42 @@ export default function BacktestingPage() {
         {/* Stats Row */}
         {sessions.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 relative z-10">
-            <div className="bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-6 shadow-xl relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-full blur-2xl group-hover:bg-indigo-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Active Runs</div>
-              <div className="text-3xl font-extrabold text-white mt-2 font-mono">{totalSessions}</div>
+              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Active Runs</div>
+              <div className="text-3xl font-extrabold text-slate-900 dark:text-white mt-2 font-mono">{totalSessions}</div>
             </div>
-            <div className="bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-6 shadow-xl relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 rounded-full blur-2xl group-hover:bg-green-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Total PnL Return</div>
-              <div className={`text-3xl font-extrabold mt-2 font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Total PnL Return</div>
+              <div className={`text-3xl font-extrabold mt-2 font-mono ${netProfit >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-rose-500'}`}>
                 {netProfit >= 0 ? '+' : ''}
                 {formatCurrency(netProfit)}
               </div>
             </div>
-            <div className="bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-white/[0.06] p-6 shadow-xl relative overflow-hidden group">
+            <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-6 shadow-md dark:shadow-xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors duration-300" />
-              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Replay Data Feed</div>
-              <div className="text-3xl font-extrabold text-indigo-400 mt-2">All Timeframes</div>
+              <div className="text-[10px] text-slate-500 dark:text-gray-500 font-bold uppercase tracking-widest">Replay Data Feed</div>
+              <div className="text-3xl font-extrabold text-indigo-600 dark:text-indigo-400 mt-2">All Timeframes</div>
             </div>
           </div>
         )}
 
         {/* Sessions list */}
         {sessions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center border border-white/[0.06] rounded-3xl p-8 bg-[#0f111a]/40 backdrop-blur-md relative z-10 shadow-2xl">
-            <div className="w-20 h-20 rounded-2xl border border-white/[0.06] flex items-center justify-center mb-6 text-indigo-400 shadow-[0_0_30px_rgba(99,102,241,0.1)] bg-indigo-500/5">
+          <div className="flex flex-col items-center justify-center py-20 text-center border border-slate-200 dark:border-white/[0.06] rounded-3xl p-8 bg-white dark:bg-[#0f111a]/40 backdrop-blur-md relative z-10 shadow-lg dark:shadow-2xl">
+            <div className="w-20 h-20 rounded-2xl border border-slate-100 dark:border-white/[0.06] flex items-center justify-center mb-6 text-indigo-500 dark:text-indigo-400 shadow-[0_0_30px_rgba(99,102,241,0.05)] bg-indigo-500/5">
               <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-white tracking-tight">No sessions found</h3>
-            <p className="text-sm text-slate-400 max-w-md mt-2 mb-8 leading-relaxed">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">No sessions found</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mt-2 mb-8 leading-relaxed">
               Create a custom backtesting run to replay historical candles, practice order execution, and calculate simulated win rates.
             </p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-indigo-600/15"
+              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg"
             >
               Start Replaying Now
             </button>
@@ -242,21 +241,21 @@ export default function BacktestingPage() {
               return (
                 <div
                   key={session.id}
-                  className="group relative bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-xl flex flex-col justify-between hover:shadow-[0_8px_30px_rgba(99,102,241,0.08)] cursor-pointer overflow-hidden"
+                  className="group relative bg-white dark:bg-[#0f111a]/40 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] hover:border-indigo-500/30 transition-all duration-300 shadow-md hover:shadow-[0_8px_30px_rgba(99,102,241,0.06)] cursor-pointer overflow-hidden"
                   onClick={() => router.push(`/backtesting/${session.id}`)}
                 >
                   <div className="p-6 flex-1">
                     <div className="flex justify-between items-start gap-4 mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors line-clamp-1">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
                           {session.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-wider">
+                          <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-mono text-[10px] font-bold uppercase tracking-wider">
                             {session.symbol}
                           </span>
-                          <span className="text-slate-600 text-xs">•</span>
-                          <span className="text-xs text-slate-400 font-medium font-mono">Multi-Timeframe Feed</span>
+                          <span className="text-slate-400 dark:text-slate-600 text-xs">•</span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium font-mono">Multi-Timeframe Feed</span>
                         </div>
                       </div>
                       
@@ -265,7 +264,7 @@ export default function BacktestingPage() {
                           e.stopPropagation();
                           setDeletingSessionId(session.id);
                         }}
-                        className="p-1.5 rounded-lg border border-white/[0.04] text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all opacity-0 group-hover:opacity-100"
+                        className="p-1.5 rounded-lg border border-slate-100 dark:border-white/[0.04] text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 transition-all opacity-0 group-hover:opacity-100"
                         title="Delete Session"
                       >
                         <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -274,14 +273,14 @@ export default function BacktestingPage() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 mt-8 pt-4 border-t border-white/[0.04]">
+                    <div className="grid grid-cols-2 gap-4 mt-8 pt-4 border-t border-slate-100 dark:border-white/[0.04]">
                       <div>
-                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Initial Balance</div>
-                        <div className="text-sm font-bold text-white mt-1.5 font-mono">{formatCurrency(session.initial_balance)}</div>
+                        <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Initial Balance</div>
+                        <div className="text-sm font-bold text-slate-800 dark:text-white mt-1.5 font-mono">{formatCurrency(session.initial_balance)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Return</div>
-                        <div className={`text-sm font-bold mt-1.5 font-mono ${sessionProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        <div className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Return</div>
+                        <div className={`text-sm font-bold mt-1.5 font-mono ${sessionProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-500'}`}>
                           {sessionProfit >= 0 ? '+' : ''}
                           {sessionProfitPercent.toFixed(2)}%
                         </div>
@@ -323,9 +322,9 @@ export default function BacktestingPage() {
                   leaveFrom="opacity-100 scale-100"
                   leaveTo="opacity-0 scale-95"
                 >
-                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-[#0d0e16] border border-white/[0.08] p-6 text-left align-middle shadow-[0_0_50px_rgba(99,102,241,0.15)] transition-all">
-                    <Dialog.Title as="h3" className="text-base font-bold text-white uppercase tracking-wider mb-5 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.08] p-6 text-left align-middle shadow-2xl transition-all">
+                    <Dialog.Title as="h3" className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-wider mb-5 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
                       </svg>
                       New Backtesting Run
@@ -333,24 +332,24 @@ export default function BacktestingPage() {
 
                     <form onSubmit={handleCreateSession} className="space-y-5">
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Session Name</label>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Session Name</label>
                         <input
                           type="text"
                           required
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           placeholder="e.g. EURUSD London Breakout"
-                          className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-xl text-sm bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 text-white placeholder-gray-600 transition-all font-medium"
+                          className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm bg-slate-50 dark:bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-600 transition-all font-medium font-sans"
                         />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1.5">Symbol</label>
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Symbol</label>
                           <select
                             value={symbol}
                             onChange={(e) => setSymbol(e.target.value)}
-                            className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-xl text-sm bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium"
+                            className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm bg-white dark:bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-slate-900 dark:text-white transition-all font-medium font-sans"
                           >
                             <option value="EURUSD">EURUSD</option>
                             <option value="GBPUSD">GBPUSD</option>
@@ -364,35 +363,35 @@ export default function BacktestingPage() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1.5">Starting Capital ($)</label>
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Starting Capital ($)</label>
                           <input
                             type="number"
                             required
                             value={initialBalance}
                             onChange={(e) => setInitialBalance(e.target.value)}
-                            className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-xl text-sm bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium font-mono"
+                            className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm bg-slate-50 dark:bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-slate-900 dark:text-white transition-all font-medium font-mono"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-400 mb-1.5">Start Date in History</label>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Start Date in History</label>
                         <input
                           type="date"
                           required
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
-                          className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-xl text-sm bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium font-mono"
+                          className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm bg-slate-50 dark:bg-white/[0.02] focus:outline-none focus:border-indigo-500/50 text-slate-900 dark:text-white transition-all font-medium font-mono"
                         />
                       </div>
 
                       {strategies.length > 0 && (
                         <div>
-                          <label className="block text-xs font-semibold text-slate-400 mb-1.5">Link Playbook Strategy</label>
+                          <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Link Playbook Strategy</label>
                           <select
                             value={selectedStrategy}
                             onChange={(e) => setSelectedStrategy(e.target.value)}
-                            className="w-full px-3.5 py-2.5 border border-white/[0.06] rounded-xl text-sm bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-white transition-all font-medium"
+                            className="w-full px-3.5 py-2.5 border border-slate-200 dark:border-white/[0.06] rounded-xl text-sm bg-white dark:bg-[#0d0e16] focus:outline-none focus:border-indigo-500/50 text-slate-900 dark:text-white transition-all font-medium font-sans"
                           >
                             <option value="">None (Generic Backtesting)</option>
                             {strategies.map((strat) => (
@@ -404,18 +403,18 @@ export default function BacktestingPage() {
                         </div>
                       )}
 
-                      <div className="mt-6 flex justify-end gap-3 pt-5 border-t border-white/[0.04]">
+                      <div className="mt-6 flex justify-end gap-3 pt-5 border-t border-slate-100 dark:border-white/[0.04]">
                         <button
                           type="button"
                           onClick={() => setShowAddModal(false)}
-                          className="px-4.5 py-2.5 text-xs font-semibold rounded-xl border border-white/[0.08] text-gray-400 hover:text-white hover:bg-white/[0.04] transition-all"
+                          className="px-4.5 py-2.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-white/[0.08] text-slate-500 dark:text-gray-400 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all font-sans"
                         >
                           Cancel
                         </button>
                         <button
                           type="submit"
                           disabled={isCreating}
-                          className="px-4.5 py-2.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white transition-all shadow-md shadow-indigo-600/10"
+                          className="px-4.5 py-2.5 text-xs font-semibold rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white transition-all shadow-md font-sans"
                         >
                           {isCreating ? 'Launching...' : 'Launch Session'}
                         </button>
