@@ -18,39 +18,40 @@ export interface ParseResult {
 
 import { getSymbolMultiplier } from './forexUtils'
 
-// ── Regex HTML table extractor ────────────────────────────────────────────────
-// Bypasses DOMParser entirely — works even when textContent returns empty.
-
-function stripTags(html: string): string {
-  return html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"').replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n))
-    .replace(/\s+/g, ' ').trim()
-}
+// ── DOMParser-based HTML table extractor ────────────────────────────────────────
 
 /** Returns array-of-tables, each being array-of-rows, each being array-of-cell-texts */
 function extractTables(html: string): string[][][] {
-  const tables: string[][][] = []
-  // Use non-greedy match on each table block
-  for (const tableM of html.matchAll(/<table\b[^>]*>([\s\S]*?)<\/table>/gi)) {
-    const rows: string[][] = []
-    for (const rowM of tableM[0].matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)) {
-      const cells: string[] = []
-      for (const cellM of rowM[0].matchAll(/<t[dh]\b([^>]*?)>([\s\S]*?)<\/t[dh]>/gi)) {
-        const tagAttrs = cellM[1]
-        const content = cellM[2]
-        if (/\bclass=["']?hidden\b/i.test(tagAttrs)) {
-          continue // skip hidden columns/cells to keep layout aligned
-        }
-        cells.push(stripTags(content))
-      }
-      if (cells.length > 0) rows.push(cells)
-    }
-    if (rows.length > 0) tables.push(rows)
+  if (typeof window === 'undefined') {
+    return []; // Safe fallback for SSR
   }
-  return tables
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const tableElements = doc.querySelectorAll('table');
+  const tables: string[][][] = [];
+
+  tableElements.forEach((table) => {
+    const rows: string[][] = [];
+    const rowElements = table.querySelectorAll('tr');
+    rowElements.forEach((row) => {
+      const cells: string[] = [];
+      const cellElements = row.querySelectorAll('td, th');
+      cellElements.forEach((cell) => {
+        if (cell.classList.contains('hidden')) {
+          return;
+        }
+        cells.push((cell.textContent || '').trim());
+      });
+      if (cells.length > 0) {
+        rows.push(cells);
+      }
+    });
+    if (rows.length > 0) {
+      tables.push(rows);
+    }
+  });
+
+  return tables;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

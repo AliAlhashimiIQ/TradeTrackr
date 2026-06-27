@@ -396,7 +396,7 @@ const DEFAULT_VISIBLE_COLUMNS = {
       const enrichedPage = page.map(t => {
         return {
           ...t,
-          notes: t.notes ? t.notes.replace(/\[SL=([\d.-]+)?;TP=([\d.-]+)?;Comm=([\d.-]+)?;Swap=([\d.-]+)?\]/, '').trim() : '',
+          notes: t.notes || '',
           stop_loss: t.stop_loss ?? undefined,
           take_profit: t.take_profit ?? undefined,
           commission: t.commission ?? undefined,
