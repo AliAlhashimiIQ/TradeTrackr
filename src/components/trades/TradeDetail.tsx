@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Trade } from '@/lib/types';
 import { updateTrade } from '@/lib/tradingApi';
 import Image from 'next/image';
@@ -26,6 +26,8 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPosition, setDragPosition] = useState({ x: 0, y: 0 });
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   // Notes linked to trade.notes field
   const [localNotes, setLocalNotes] = useState(trade.notes || '');
   const [notesSaving, setNotesSaving] = useState(false);
@@ -555,10 +557,34 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
               </div>
               <div className="w-full max-w-4xl relative aspect-video rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0d0e16] shadow-2xl">
                 <video
-                  src={`/api/media?url=${encodeURIComponent(trade.video_url)}`}
+                  ref={videoRef}
+                  src={resolveTradingViewUrl(trade.video_url)}
                   controls
                   className="w-full h-full object-contain"
                 />
+              </div>
+              <div className="w-full mt-4 flex items-center justify-between border-t border-white/[0.04] pt-4">
+                <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase">Playback Speed</span>
+                <div className="flex bg-[#121420] border border-white/[0.06] rounded-xl p-1 gap-1">
+                  {[0.5, 1.0, 1.5, 2.0].map((spd) => (
+                    <button
+                      key={spd}
+                      onClick={() => {
+                        setPlaybackSpeed(spd);
+                        if (videoRef.current) {
+                          videoRef.current.playbackRate = spd;
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                        playbackSpeed === spd
+                          ? 'bg-indigo-600 text-white'
+                          : 'text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {spd.toFixed(1)}x
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
