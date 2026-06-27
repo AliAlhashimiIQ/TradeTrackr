@@ -66,7 +66,6 @@ export default function WelcomePage() {
         throw error;
       }
 
-      // Success, route to dashboard
       router.push('/dashboard');
     } catch (err: any) {
       console.error('Error saving onboarding data:', err);
@@ -90,63 +89,99 @@ export default function WelcomePage() {
 
   return (
     <div className="min-h-screen bg-[#06070b] text-white flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px]" />
+      {/* Background Glow */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/5 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-xl w-full relative z-10">
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-colors duration-500 ${step >= i ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-[#151823] text-gray-500'}`}>
-                  {i}
-                </div>
-                {i < 3 && (
-                  <div className={`w-12 h-1 rounded-full transition-colors duration-500 ${step > i ? 'bg-indigo-500/50' : 'bg-[#151823]'}`} />
-                )}
+        {/* Step Indicator */}
+        <div className="flex justify-between items-center mb-10 max-w-sm mx-auto px-4">
+          {[
+            { stepNum: 1, label: 'Currency' },
+            { stepNum: 2, label: 'Capital' },
+            { stepNum: 3, label: 'Launch' }
+          ].map((item, idx) => (
+            <React.Fragment key={item.stepNum}>
+              <div className="flex flex-col items-center">
+                <span className={`text-[9px] font-bold uppercase tracking-widest transition-colors duration-300 ${
+                  step === item.stepNum 
+                    ? 'text-indigo-400' 
+                    : step > item.stepNum 
+                      ? 'text-emerald-400' 
+                      : 'text-gray-600'
+                }`}>
+                  {item.label}
+                </span>
+                <div className={`mt-2 w-2 h-2 rounded-full transition-all duration-500 ${
+                  step === item.stepNum 
+                    ? 'bg-indigo-500 ring-4 ring-indigo-500/20' 
+                    : step > item.stepNum 
+                      ? 'bg-emerald-500' 
+                      : 'bg-[#151823]'
+                }`} />
               </div>
-            ))}
-          </div>
+              {idx < 2 && (
+                <div className={`flex-1 h-[1px] mx-4 -mt-2 transition-colors duration-500 ${
+                  step > item.stepNum ? 'bg-emerald-500/30' : 'bg-white/[0.04]'
+                }`} />
+              )}
+            </React.Fragment>
+          ))}
         </div>
 
-        <div className="bg-[#0d0e16]/80 backdrop-blur-2xl border border-white/[0.08] p-8 md:p-12 rounded-3xl shadow-2xl overflow-hidden relative min-h-[400px] flex flex-col justify-center">
+        {/* Main Content Container */}
+        <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-8 md:p-12 rounded-3xl shadow-2xl overflow-hidden relative min-h-[460px] flex flex-col justify-between">
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col h-full"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="flex flex-col h-full flex-1 justify-between"
               >
-                <div className="text-center mb-10">
-                  <h1 className="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 mb-3">Welcome to TradeTrackr</h1>
-                  <p className="text-gray-400 text-lg">Let's configure your journal. What's your base currency?</p>
+                <div>
+                  <div className="text-center mb-8">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                      Welcome to TradeTrackr
+                    </h1>
+                    <p className="text-gray-400 text-sm">
+                      Select your primary base currency to track account metrics and performance.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {CURRENCIES.map(c => (
+                      <button
+                        key={c.code}
+                        onClick={() => setCurrency(c.code)}
+                        className={`py-4 px-3 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 group ${
+                          currency === c.code
+                            ? 'bg-indigo-500/10 border-indigo-500/30 shadow-lg'
+                            : 'bg-white/[0.01] border-white/[0.04] hover:bg-white/[0.03] hover:border-white/[0.08]'
+                        }`}
+                      >
+                        <span className={`text-xl font-bold transition-colors ${
+                          currency === c.code ? 'text-indigo-400' : 'text-gray-400 group-hover:text-white'
+                        }`}>{c.symbol}</span>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                          currency === c.code ? 'text-white' : 'text-gray-600'
+                        }`}>{c.code}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-auto">
-                  {CURRENCIES.map(c => (
-                    <button
-                      key={c.code}
-                      onClick={() => setCurrency(c.code)}
-                      className={`py-4 px-3 rounded-2xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 group ${
-                        currency === c.code
-                          ? 'bg-indigo-500/20 border-indigo-500/50 shadow-lg shadow-indigo-500/20'
-                          : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05] hover:border-white/[0.1]'
-                      }`}
-                    >
-                      <span className={`text-2xl font-bold ${currency === c.code ? 'text-indigo-400' : 'text-gray-400 group-hover:text-white transition-colors'}`}>{c.symbol}</span>
-                      <span className={`text-xs font-semibold ${currency === c.code ? 'text-white' : 'text-gray-500'}`}>{c.code}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-10 flex justify-end">
-                  <button onClick={nextStep} className="px-8 py-3.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors shadow-xl shadow-white/10 flex items-center gap-2">
+                <div className="mt-8 flex justify-end">
+                  <button 
+                    onClick={nextStep} 
+                    className="px-6 py-3 bg-white hover:bg-gray-150 text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                  >
                     Continue
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
               </motion.div>
@@ -155,42 +190,58 @@ export default function WelcomePage() {
             {step === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col h-full"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="flex flex-col h-full flex-1 justify-between"
               >
-                <div className="text-center mb-10">
-                  <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Starting Balance</h1>
-                  <p className="text-gray-400 text-lg">What balance are you starting this journal with?</p>
-                </div>
-
-                <div className="mb-auto">
-                  <div className="relative group max-w-sm mx-auto">
-                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                      <span className="text-2xl font-bold text-gray-500 group-focus-within:text-indigo-400 transition-colors">
-                        {CURRENCIES.find(c => c.code === currency)?.symbol}
-                      </span>
-                    </div>
-                    <input
-                      type="number"
-                      value={balance}
-                      onChange={e => setBalance(e.target.value)}
-                      placeholder="10000"
-                      className="w-full pl-14 pr-6 py-5 bg-[#06070b] border-2 border-white/[0.08] rounded-2xl text-3xl font-bold text-white placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner"
-                    />
+                <div>
+                  <div className="text-center mb-8">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                      Starting Capital
+                    </h1>
+                    <p className="text-gray-400 text-sm">
+                      Enter the starting balance for your primary trading account to calculate growth.
+                    </p>
                   </div>
-                  {errorMsg && <p className="text-red-400 text-center mt-4 text-sm font-medium">{errorMsg}</p>}
+
+                  <div className="max-w-xs mx-auto">
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <span className="text-xl font-bold text-gray-500 group-focus-within:text-indigo-400 transition-colors">
+                          {CURRENCIES.find(c => c.code === currency)?.symbol}
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        value={balance}
+                        onChange={e => setBalance(e.target.value)}
+                        placeholder="10000"
+                        className="w-full pl-12 pr-5 py-4 bg-slate-950/60 border border-white/10 rounded-xl text-2xl font-bold text-white placeholder-gray-800 focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner font-mono text-center"
+                      />
+                    </div>
+                    {errorMsg && (
+                      <p className="text-red-400 text-center mt-3 text-xs font-semibold">{errorMsg}</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="mt-10 flex justify-between">
-                  <button onClick={() => setStep(1)} className="px-6 py-3.5 text-gray-400 font-bold hover:text-white transition-colors">
+                <div className="mt-8 flex justify-between">
+                  <button 
+                    onClick={() => setStep(1)} 
+                    className="px-5 py-3 text-gray-400 hover:text-white text-xs font-bold transition-colors"
+                  >
                     Back
                   </button>
-                  <button onClick={nextStep} className="px-8 py-3.5 bg-white text-black font-bold rounded-xl hover:bg-gray-200 transition-colors shadow-xl shadow-white/10 flex items-center gap-2">
+                  <button 
+                    onClick={nextStep} 
+                    className="px-6 py-3 bg-white hover:bg-gray-150 text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                  >
                     Continue
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                 </div>
               </motion.div>
@@ -199,36 +250,52 @@ export default function WelcomePage() {
             {step === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="flex flex-col h-full items-center text-center"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="flex flex-col h-full items-center text-center flex-1 justify-between"
               >
-                <div className="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-8 shadow-lg shadow-emerald-500/20">
-                  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mb-6 shadow-xl">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  
+                  <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight mb-2">
+                    Setup Complete
+                  </h1>
+                  <p className="text-gray-400 text-sm max-w-sm">
+                    Your journal is ready. Proceed to the Command Center to import your trade history or log executions.
+                  </p>
+
+                  {errorMsg && (
+                    <p className="text-red-400 mt-4 text-xs font-semibold">{errorMsg}</p>
+                  )}
                 </div>
-                
-                <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">All Set!</h1>
-                <p className="text-gray-400 text-lg mb-10 max-w-md">Your journal is ready. It's time to log your first trade and start tracking your edge.</p>
 
-                {errorMsg && <p className="text-red-400 mb-6 text-sm font-medium">{errorMsg}</p>}
-
-                <div className="mt-auto w-full flex justify-between items-center gap-4">
-                  <button onClick={() => setStep(2)} disabled={isSaving} className="px-6 py-3.5 text-gray-400 font-bold hover:text-white transition-colors disabled:opacity-50">
+                <div className="mt-8 w-full flex justify-between items-center gap-4">
+                  <button 
+                    onClick={() => setStep(2)} 
+                    disabled={isSaving} 
+                    className="px-5 py-3 text-gray-400 hover:text-white text-xs font-bold transition-colors disabled:opacity-50"
+                  >
                     Back
                   </button>
                   <button 
                     onClick={handleComplete} 
                     disabled={isSaving}
-                    className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold rounded-xl hover:from-indigo-500 hover:to-blue-500 transition-all shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-3 disabled:opacity-70"
+                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-75"
                   >
                     {isSaving ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
                       <>
-                        Go to Dashboard
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        Enter Dashboard
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
                       </>
                     )}
                   </button>
