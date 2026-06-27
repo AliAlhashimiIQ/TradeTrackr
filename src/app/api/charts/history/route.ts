@@ -9,16 +9,22 @@ function mapSymbol(symbol: string): string {
   const indexMap: Record<string, string> = {
     'US30': '^DJI',
     'DJ30': '^DJI',
+    'DOW30': '^DJI',
     'NAS100': '^NDX',
+    'NDX100': '^NDX',
     'USTEC': '^NDX',
     'US100': '^NDX',
+    'NASDAQ': '^NDX',
     'SPX500': '^GSPC',
     'US500': '^GSPC',
     'SPX': '^GSPC',
     'GER30': '^GDAXI',
+    'GER40': '^GDAXI',
     'DE30': '^GDAXI',
     'DE40': '^GDAXI',
-    'GER40': '^GDAXI',
+    'DAX': '^GDAXI',
+    'DAX30': '^GDAXI',
+    'DAX40': '^GDAXI',
     'UK100': '^FTSE',
   };
   if (indexMap[cleaned]) {
