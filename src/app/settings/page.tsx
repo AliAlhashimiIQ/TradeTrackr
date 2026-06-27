@@ -303,17 +303,17 @@ function SettingsContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-2xl"
+                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
-                <h2 className="text-lg font-semibold text-white mb-6">General Settings</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">General Settings</h2>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Currency</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Currency</label>
                     <select
                       value={currency}
                       onChange={(e) => setCurrency(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -324,11 +324,11 @@ function SettingsContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Timezone</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
                     <select
                       value={timezone}
                       onChange={(e) => setTimezone(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     >
                       <option value="America/New_York">Eastern Time (ET)</option>
                       <option value="America/Chicago">Central Time (CT)</option>
@@ -343,14 +343,14 @@ function SettingsContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-4">Theme</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Theme</label>
                     <div className="grid grid-cols-3 gap-4">
                       <button
                         onClick={() => setTheme('light')}
                         className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${
                           theme === 'light' 
-                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' 
-                            : 'bg-slate-950/60 border-white/10 text-gray-400 hover:border-white/20'
+                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400' 
+                            : 'bg-white dark:bg-slate-950/60 border-black/10 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/20'
                         }`}
                       >
                         <Sun className="w-6 h-6" />
@@ -361,7 +361,7 @@ function SettingsContent() {
                         className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${
                           theme === 'dark' 
                             ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' 
-                            : 'bg-slate-950/60 border-white/10 text-gray-400 hover:border-white/20'
+                            : 'bg-white dark:bg-slate-950/60 border-black/10 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/20'
                         }`}
                       >
                         <Moon className="w-6 h-6" />
@@ -371,8 +371,8 @@ function SettingsContent() {
                         onClick={() => setTheme('system')}
                         className={`flex flex-col items-center gap-3 p-4 rounded-xl border transition-all ${
                           theme === 'system' 
-                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400' 
-                            : 'bg-slate-950/60 border-white/10 text-gray-400 hover:border-white/20'
+                            ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400' 
+                            : 'bg-white dark:bg-slate-950/60 border-black/10 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:border-black/20 dark:hover:border-white/20'
                         }`}
                       >
                         <Monitor className="w-6 h-6" />
@@ -381,10 +381,10 @@ function SettingsContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-slate-950/60">
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-slate-950/60">
                     <div>
-                      <label className="block text-sm font-semibold text-white">Colorblind Mode</label>
-                      <p className="text-xs text-gray-400 mt-0.5">Swap standard Green/Red accents for high-contrast Blue/Orange variants.</p>
+                      <label className="block text-sm font-semibold text-gray-900 dark:text-white">Colorblind Mode</label>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Swap standard Green/Red accents for high-contrast Blue/Orange variants.</p>
                     </div>
                     <button
                       type="button"
@@ -400,11 +400,11 @@ function SettingsContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Default Trade Type</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Trade Type</label>
                     <select
                       value={defaultTradeType}
                       onChange={(e) => setDefaultTradeType(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     >
                       <option value="Long">Long</option>
                       <option value="Short">Short</option>
@@ -412,18 +412,18 @@ function SettingsContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Starting Balance (Manual Accounts)</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Starting Balance (Manual Accounts)</label>
                     <input
                       type="number"
                       value={startingBalance}
                       onChange={(e) => setStartingBalance(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                       placeholder="10000"
                     />
                     <p className="text-xs text-gray-500 mt-1">This balance will be used as the starting capital for manual trades when no external trading account is linked.</p>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-4 border-t border-gray-200 dark:border-white/10">
                     <button
                       onClick={handleSaveGeneral}
                       disabled={isSaving}
@@ -441,15 +441,15 @@ function SettingsContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-2xl"
+                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
-                <h2 className="text-lg font-semibold text-white mb-6">Notification Preferences</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Notification Preferences</h2>
 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-white">Email Notifications</h3>
-                      <p className="text-xs text-gray-400 mt-1">Receive important updates via email</p>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Email Notifications</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Receive important updates via email</p>
                     </div>
                     <button
                       onClick={() => setEmailNotifications(!emailNotifications)}
@@ -465,8 +465,8 @@ function SettingsContent() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-white">Weekly Performance Report</h3>
-                      <p className="text-xs text-gray-400 mt-1">Get a summary of your trading week every Sunday</p>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Weekly Performance Report</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Get a summary of your trading week every Sunday</p>
                     </div>
                     <button
                       onClick={() => setWeeklyReport(!weeklyReport)}
@@ -482,8 +482,8 @@ function SettingsContent() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-white">Trade Alerts</h3>
-                      <p className="text-xs text-gray-400 mt-1">Get alerts when price targets are hit</p>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Trade Alerts</h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Get alerts when price targets are hit</p>
                     </div>
                     <button
                       onClick={() => setTradeAlerts(!tradeAlerts)}
@@ -497,7 +497,7 @@ function SettingsContent() {
                     </button>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10">
+                  <div className="pt-4 border-t border-gray-200 dark:border-white/10">
                     <button
                       onClick={handleSaveNotifications}
                       disabled={isSaving}
@@ -515,11 +515,11 @@ function SettingsContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-2xl"
+                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
                 <div className="mb-6">
-                  <h2 className="text-lg font-semibold text-white">Prop Firm Challenge</h2>
-                  <p className="text-sm text-gray-400 mt-1">Set up your challenge so TradeTrackr can track drawdown limits and profit targets in real time.</p>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Prop Firm Challenge</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Set up your challenge so TradeTrackr can track drawdown limits and profit targets in real time.</p>
                 </div>
 
                 <div className="space-y-5">
@@ -533,8 +533,8 @@ function SettingsContent() {
                           onClick={() => { setSelectedFirmId(firm.id); setSelectedTierName(firm.tiers[0].tierName); setChallengeStartBalance(String(firm.tiers[0].accountSize)); }}
                           className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                             selectedFirmId === firm.id
-                              ? 'bg-indigo-500/10 border-indigo-500/30 text-white'
-                              : 'bg-slate-950/60 border-white/10 text-gray-400 hover:text-white hover:border-white/20'
+                              ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-white'
+                              : 'bg-white dark:bg-slate-950/60 border-black/10 dark:border-white/10 text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-black/20 dark:hover:border-white/20'
                           }`}
                         >
                           <PropFirmLogo firmId={firm.id} className="w-4 h-4 flex-shrink-0" />
@@ -547,7 +547,7 @@ function SettingsContent() {
                   {/* Tier Selector */}
                   {selectedFirm && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Account Tier</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Account Tier</label>
                       <select
                         value={selectedTierName}
                         onChange={e => {
@@ -555,7 +555,7 @@ function SettingsContent() {
                           const tier = selectedFirm.tiers.find(t => t.tierName === e.target.value);
                           if (tier) setChallengeStartBalance(String(tier.accountSize));
                         }}
-                        className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                       >
                         {availableTiers.map(tier => (
                           <option key={tier.tierName} value={tier.tierName}>{tier.tierName} — ${tier.accountSize.toLocaleString()}</option>
@@ -571,19 +571,19 @@ function SettingsContent() {
                     return (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {[
-                          { label: 'Profit Target', value: `${tier.profitTargetPercent}%`, color: 'text-emerald-400' },
-                          { label: 'Daily DD Limit', value: `${tier.maxDailyLossPercent}%`, color: 'text-amber-400' },
-                          { label: 'Total DD Limit', value: `${tier.maxTotalLossPercent}%`, color: 'text-red-400' },
-                          { label: 'Min Days', value: tier.minTradingDays ? `${tier.minTradingDays}d` : 'None', color: 'text-blue-400' },
+                          { label: 'Profit Target', value: `${tier.profitTargetPercent}%`, color: 'text-emerald-500 dark:text-emerald-400' },
+                          { label: 'Daily DD Limit', value: `${tier.maxDailyLossPercent}%`, color: 'text-amber-550 dark:text-amber-400' },
+                          { label: 'Total DD Limit', value: `${tier.maxTotalLossPercent}%`, color: 'text-red-500 dark:text-red-400' },
+                          { label: 'Min Days', value: tier.minTradingDays ? `${tier.minTradingDays}d` : 'None', color: 'text-blue-500 dark:text-blue-400' },
                         ].map(item => (
-                          <div key={item.label} className="bg-slate-950/60 border border-white/10 rounded-xl p-3">
-                            <p className="text-[10px] text-gray-500 uppercase tracking-wider mb-1">{item.label}</p>
+                          <div key={item.label} className="bg-gray-50 dark:bg-slate-950/60 border border-black/5 dark:border-white/10 rounded-xl p-3">
+                            <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">{item.label}</p>
                             <p className={`text-lg font-bold ${item.color}`}>{item.value}</p>
                           </div>
                         ))}
-                        {tier.trailingDrawdown && <div className="col-span-2 text-[11px] text-amber-400 bg-amber-500/5 border border-amber-500/10 rounded-lg px-3 py-2">Trailing drawdown — your limit follows your peak equity</div>}
-                        {tier.consistencyRule && <div className="col-span-2 text-[11px] text-blue-400 bg-blue-500/5 border border-blue-500/10 rounded-lg px-3 py-2">Consistency rule active — no single day {'>'} 40% of total profit</div>}
-                        {tier.newsRestrictionMinutes > 0 && <div className="col-span-2 text-[11px] text-purple-400 bg-purple-500/5 border border-purple-500/10 rounded-lg px-3 py-2">No trading ±{tier.newsRestrictionMinutes}min around high-impact news</div>}
+                        {tier.trailingDrawdown && <div className="col-span-2 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-500/10 rounded-lg px-3 py-2">Trailing drawdown — your limit follows your peak equity</div>}
+                        {tier.consistencyRule && <div className="col-span-2 text-[11px] text-blue-600 dark:text-blue-400 bg-blue-500/5 border border-blue-500/10 rounded-lg px-3 py-2">Consistency rule active — no single day {'>'} 40% of total profit</div>}
+                        {tier.newsRestrictionMinutes > 0 && <div className="col-span-2 text-[11px] text-purple-600 dark:text-purple-400 bg-purple-500/5 border border-purple-500/10 rounded-lg px-3 py-2">No trading ±{tier.newsRestrictionMinutes}min around high-impact news</div>}
                       </div>
                     );
                   })()}
@@ -591,27 +591,27 @@ function SettingsContent() {
                   {/* Start Date & Balance */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Challenge Start Date</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Challenge Start Date</label>
                       <input
                         type="date"
                         value={challengeStartDate}
                         onChange={e => setChallengeStartDate(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">Starting Balance ($)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Starting Balance ($)</label>
                       <input
                         type="number"
                         value={challengeStartBalance}
                         onChange={e => setChallengeStartBalance(e.target.value)}
-                        className="w-full px-3 py-2.5 bg-slate-950/60 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono"
+                        className="w-full px-3 py-2.5 bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono"
                         placeholder="e.g. 100000"
                       />
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t border-white/10 flex items-center gap-3">
+                  <div className="pt-4 border-t border-gray-200 dark:border-white/10 flex items-center gap-3">
                     <button
                       onClick={handleSavePropFirm}
                       disabled={isSaving || !selectedFirmId}
@@ -623,7 +623,7 @@ function SettingsContent() {
                       <button
                         onClick={handleClearPropFirm}
                         disabled={isSaving}
-                        className="px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-gray-400 hover:text-white rounded-lg text-sm font-medium transition-colors"
+                        className="px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.08] text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg text-sm font-medium transition-colors"
                       >
                         Clear
                       </button>
@@ -638,14 +638,14 @@ function SettingsContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 p-6 shadow-2xl"
+                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
-                <h2 className="text-lg font-semibold text-white mb-6">Data Management</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Data Management</h2>
 
                 <div className="space-y-6">
-                  <div className="p-4 bg-slate-950/50 border border-white/[0.04] rounded-xl">
-                    <h3 className="text-sm font-medium text-white mb-2">Export All Data</h3>
-                    <p className="text-xs text-gray-400 mb-4">Download all your trades, analytics, and profile data as a JSON file.</p>
+                  <div className="p-4 bg-gray-50 dark:bg-slate-950/50 border border-black/[0.04] dark:border-white/[0.04] rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Export All Data</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Download all your trades, analytics, and profile data as a JSON file.</p>
                     <button
                       onClick={handleExportData}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
@@ -657,15 +657,15 @@ function SettingsContent() {
                     </button>
                   </div>
 
-                  <div className="p-4 bg-slate-950/50 border border-white/[0.04] rounded-xl">
-                    <h3 className="text-sm font-medium text-white mb-2">Account Information</h3>
+                  <div className="p-4 bg-gray-50 dark:bg-slate-950/50 border border-black/[0.04] dark:border-white/[0.04] rounded-xl">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Account Information</h3>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Email</span>
-                        <span className="text-white font-mono text-xs">{user.email}</span>
+                        <span className="text-gray-500 dark:text-gray-400">Email</span>
+                        <span className="text-gray-900 dark:text-white font-mono text-xs">{user.email}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-400">User ID</span>
+                        <span className="text-gray-500 dark:text-gray-400">User ID</span>
                         <span className="text-gray-500 text-xs font-mono">{user.id?.slice(0, 8)}...</span>
                       </div>
                     </div>
@@ -679,28 +679,28 @@ function SettingsContent() {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-slate-900/40 backdrop-blur-md rounded-2xl border border-red-500/10 p-6 shadow-2xl"
+                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-red-500/10 dark:border-red-500/15 p-6 shadow-2xl"
               >
-                <h2 className="text-lg font-semibold text-red-400 mb-6">Danger Zone</h2>
+                <h2 className="text-lg font-semibold text-red-500 dark:text-red-400 mb-6">Danger Zone</h2>
 
                 <div className="space-y-6">
-                  <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-xl">
-                    <h3 className="text-sm font-medium text-red-400 mb-2">Sign Out of All Devices</h3>
-                    <p className="text-xs text-gray-400 mb-4">This will sign you out everywhere and invalidate all sessions.</p>
+                  <div className="p-4 bg-red-500/5 border border-red-500/10 dark:border-red-500/15 rounded-xl">
+                    <h3 className="text-sm font-medium text-red-500 dark:text-red-400 mb-2">Sign Out of All Devices</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">This will sign you out everywhere and invalidate all sessions.</p>
                     <button
                       onClick={async () => {
                         await signOut();
                         router.push('/login');
                       }}
-                      className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-600/30"
+                      className="px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-500 dark:text-red-400 rounded-lg text-sm font-medium transition-colors border border-red-600/30"
                     >
                       Sign Out Everywhere
                     </button>
                   </div>
 
-                  <div className="p-4 bg-red-500/5 border border-red-500/15 rounded-xl">
-                    <h3 className="text-sm font-medium text-red-400 mb-2">Delete Account</h3>
-                    <p className="text-xs text-gray-400 mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
+                  <div className="p-4 bg-red-500/5 border border-red-500/10 dark:border-red-500/15 rounded-xl">
+                    <h3 className="text-sm font-medium text-red-500 dark:text-red-400 mb-2">Delete Account</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Permanently delete your account and all associated data. This cannot be undone.</p>
                     <button
                       onClick={handleDeleteAccount}
                       className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"

@@ -106,6 +106,76 @@ export async function getEconomicCalendar(params: {
   } catch (error) {
     console.error('Economic calendar client error:', error);
     // Fallback to mock data on failure/error
-    return MOCK_ECONOMIC_EVENTS;
+    const today = Date.now();
+    const mockCopy = [
+      {
+        Date: new Date(today).toISOString(),
+        Country: "United States",
+        Category: "Interest Rate",
+        Event: "Fed Interest Rate Decision",
+        Reference: "Apr",
+        Source: "Federal Reserve",
+        Actual: "5.50%",
+        Previous: "5.50%",
+        Forecast: "5.50%",
+        TEForecast: "5.50%",
+        Importance: 3
+      },
+      {
+        Date: new Date(today + 86400000).toISOString(), // tomorrow
+        Country: "Euro Area",
+        Category: "Inflation",
+        Event: "Consumer Price Index (YoY)",
+        Reference: "Apr",
+        Source: "Eurostat",
+        Actual: "2.4%",
+        Previous: "2.6%",
+        Forecast: "2.5%",
+        TEForecast: "2.5%",
+        Importance: 3
+      },
+      {
+        Date: new Date(today + 172800000).toISOString(), // day after tomorrow
+        Country: "United Kingdom",
+        Category: "Employment",
+        Event: "Unemployment Rate",
+        Reference: "Mar",
+        Source: "Office for National Statistics",
+        Actual: null,
+        Previous: "4.2%",
+        Forecast: "4.3%",
+        TEForecast: "4.3%",
+        Importance: 2
+      },
+      {
+        Date: new Date(today + 259200000).toISOString(), // 3 days from now
+        Country: "Japan",
+        Category: "GDP",
+        Event: "GDP Growth Rate QoQ",
+        Reference: "Q1",
+        Source: "Cabinet Office",
+        Actual: null,
+        Previous: "0.1%",
+        Forecast: "0.3%",
+        TEForecast: "0.2%",
+        Importance: 3
+      },
+      {
+        Date: new Date(today + 345600000).toISOString(), // 4 days from now
+        Country: "China",
+        Category: "Trade",
+        Event: "Trade Balance",
+        Reference: "Apr",
+        Source: "General Administration of Customs",
+        Actual: null,
+        Previous: "58.9B",
+        Forecast: "60.2B",
+        TEForecast: "59.8B",
+        Importance: 2
+      }
+    ];
+    const returnArray = [...mockCopy];
+    Object.defineProperty(returnArray, 'isMock', { value: true, enumerable: false });
+    return returnArray;
   }
 } 

@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { getEconomicCalendar } from '@/lib/economicCalendarApi';
@@ -181,10 +181,10 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
   // Determine importance class
   const getImportanceClass = (importance: number) => {
     switch(importance) {
-      case 3: return 'bg-red-900/30 text-red-400';
-      case 2: return 'bg-yellow-900/30 text-yellow-400';
-      case 1: return 'bg-blue-900/30 text-blue-400';
-      default: return 'bg-gray-900/30 text-gray-400';
+      case 3: return 'bg-red-500/10 text-red-500 border border-red-500/25';
+      case 2: return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/25';
+      case 1: return 'bg-blue-500/10 text-blue-500 border border-blue-500/25';
+      default: return 'bg-gray-500/10 text-gray-500 border border-gray-500/25';
     }
   };
   
@@ -194,44 +194,56 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
     const lowerCountry = country.toLowerCase();
     
     if (lowerCountry.includes('united states') || lowerCountry === 'us' || lowerCountry === 'usa') {
-      return 'text-blue-400 font-medium';
+      return 'text-blue-600 dark:text-blue-400 font-medium';
     } else if (lowerCountry.includes('euro') || lowerCountry === 'eu') {
-      return 'text-yellow-400';
+      return 'text-yellow-600 dark:text-yellow-400';
     }
-    
-    return '';
+    return 'text-gray-700 dark:text-gray-300';
   };
 
   // If we're on the server or the component hasn't mounted yet, show a loading state
   if (!isMounted) {
     return (
-      <div className={`bg-[#0d1017] rounded-lg overflow-hidden ${className}`}>
-        <div className="p-4 border-b border-gray-800">
-          <h2 className="text-lg font-semibold text-white">Economic Calendar</h2>
+      <div className={`bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden shadow-2xl ${className}`}>
+        <div className="p-4 border-b border-black/5 dark:border-white/5">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Economic Calendar</h2>
         </div>
         <div className="p-8 flex justify-center">
-          <LoadingState variant="spinner" text="Loading calendar..." />
+          <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-[#0d1017] rounded-lg overflow-hidden ${className}`}>
-      <div className="p-4 border-b border-gray-800 flex justify-between items-center flex-wrap gap-3">
-        <h2 className="text-lg font-semibold text-white">Economic Calendar</h2>
+    <div className={`bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden shadow-2xl ${className}`}>
+      
+      {/* Warning Fallback Banner */}
+      {(events as any).isMock && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-[11px] text-amber-600 dark:text-amber-400 font-semibold leading-normal">
+          <div className="flex items-center gap-2">
+            <svg className="w-3.5 h-3.5 text-amber-500 shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>Offline mode. Configure your Trading Economics API key in `.env.local` for live data news feed.</span>
+          </div>
+        </div>
+      )}
+
+      <div className="p-4 border-b border-black/5 dark:border-white/5 flex justify-between items-center flex-wrap gap-3">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Economic Calendar</h2>
         
         <div className="flex items-center space-x-3">
           {/* View toggle */}
-          <div className="bg-[#1a1f2c] rounded-md flex overflow-hidden">
+          <div className="bg-gray-100 dark:bg-[#1a1f2c] rounded-lg border border-black/5 dark:border-white/5 flex overflow-hidden p-0.5">
             <button 
-              className={`px-3 py-1.5 text-xs ${view === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${view === 'list' ? 'bg-indigo-600 text-white shadow' : 'text-gray-500 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'}`}
               onClick={() => setView('list')}
             >
               List
             </button>
             <button 
-              className={`px-3 py-1.5 text-xs ${view === 'calendar' ? 'bg-blue-600 text-white' : 'text-gray-400'}`}
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${view === 'calendar' ? 'bg-indigo-600 text-white shadow' : 'text-gray-500 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'}`}
               onClick={() => setView('calendar')}
             >
               Calendar
@@ -240,14 +252,14 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
           
           {/* Importance filter */}
           <div className="hidden sm:flex items-center space-x-2">
-            <span className="text-xs text-gray-400">Importance:</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500 font-semibold uppercase tracking-wider">Importance:</span>
             {[3, 2, 1].map(imp => (
               <button
                 key={imp}
-                className={`px-2 py-1 rounded-md text-xs ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                   activeImportance.includes(imp.toString()) 
                     ? getImportanceClass(imp) 
-                    : 'bg-[#1a1f2c] text-gray-400'
+                    : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 hover:border-black/10 border border-transparent'
                 }`}
                 onClick={() => {
                   if (activeImportance.includes(imp.toString())) {
@@ -265,10 +277,10 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
           {/* Country quick filters */}
           <div className="hidden md:flex items-center space-x-2">
             <button
-              className={`px-2 py-1 rounded-md text-xs ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
                 activeCountries.includes('united states') 
-                  ? 'bg-blue-900/30 text-blue-400' 
-                  : 'bg-[#1a1f2c] text-gray-400'
+                  ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
+                  : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
               }`}
               onClick={() => {
                 if (activeCountries.includes('united states')) {
@@ -281,10 +293,10 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               US
             </button>
             <button
-              className={`px-2 py-1 rounded-md text-xs ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
                 activeCountries.includes('euro area') 
-                  ? 'bg-yellow-900/30 text-yellow-400' 
-                  : 'bg-[#1a1f2c] text-gray-400'
+                  ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20' 
+                  : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
               }`}
               onClick={() => {
                 if (activeCountries.includes('euro area')) {
@@ -305,7 +317,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               placeholder="Filter events..."
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-1.5 rounded bg-[#1a1f2c] border border-gray-700 text-white text-xs w-36 sm:w-48"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 text-gray-900 dark:text-white text-xs w-36 sm:w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
             />
             <button
               onClick={() => setFilter('')}
@@ -321,7 +333,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
       
       {/* Day selector - horizontal scrollable */}
       {days.length > 0 && (
-        <div className="border-b border-gray-800 overflow-x-auto">
+        <div className="border-b border-black/5 dark:border-gray-800 overflow-x-auto">
           <div className="flex min-w-max">
             {days.map(day => {
               const dayEvents = eventsByDay[day] || [];
@@ -330,17 +342,17 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               return (
                 <button
                   key={day}
-                  className={`px-4 py-2 flex flex-col items-center border-r border-gray-800 min-w-[100px] ${
-                    selectedDay === day ? 'bg-[#1a1f2c]' : 'hover:bg-[#161b25]'
+                  className={`px-4 py-2 flex flex-col items-center border-r border-black/5 dark:border-gray-800 min-w-[100px] transition-colors ${
+                    selectedDay === day ? 'bg-gray-100/60 dark:bg-[#1a1f2c]' : 'hover:bg-gray-50/50 dark:hover:bg-[#161b25]'
                   }`}
                   onClick={() => setSelectedDay(day === selectedDay ? null : day)}
                 >
-                  <span className="text-sm font-medium text-white">{formatDate(day + 'T00:00:00', 'day')}</span>
+                  <span className="text-sm font-medium text-gray-800 dark:text-white">{formatDate(day + 'T00:00:00', 'day')}</span>
                   <div className="flex items-center mt-1 space-x-1">
-                    <span className="text-xs text-gray-400">{dayEvents.length} events</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{dayEvents.length} events</span>
                     {highImportanceCount > 0 && (
-                      <span className="flex items-center text-xs text-red-400">
-                        <span className="w-2 h-2 rounded-full bg-red-500 mr-1"></span>
+                      <span className="flex items-center text-xs text-red-500 dark:text-red-400 font-bold">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1 animate-pulse"></span>
                         {highImportanceCount}
                       </span>
                     )}
@@ -362,28 +374,28 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
           details="Check your .env.local file to ensure your Trading Economics API key is properly configured."
         />
       ) : filteredEvents.length === 0 ? (
-        <div className="p-8 text-center text-gray-400">
+        <div className="p-8 text-center text-gray-500">
           No economic events found for the selected criteria
         </div>
       ) : view === 'list' ? (
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-800">
-            <thead className="bg-[#0a0c13]">
+          <table className="min-w-full divide-y divide-black/5 dark:divide-white/5">
+            <thead className="bg-gray-100 dark:bg-[#0a0c13]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Time</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Country</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Event</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actual</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Forecast</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Previous</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Time</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Event</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actual</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Forecast</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Previous</th>
               </tr>
             </thead>
-            <tbody className="bg-[#0d1017] divide-y divide-gray-800">
+            <tbody className="bg-white/40 dark:bg-[#0d1017] divide-y divide-black/5 dark:divide-white/5">
               {filteredEvents.map((event, index) => (
-                <tr key={index} className={`hover:bg-[#1a1f2c] ${
-                  event.Country?.toLowerCase().includes('united states') ? 'bg-blue-900/5' : ''
+                <tr key={index} className={`hover:bg-gray-100/50 dark:hover:bg-[#1a1f2c] transition-colors ${
+                  event.Country?.toLowerCase().includes('united states') ? 'bg-blue-500/[0.02] dark:bg-blue-900/5' : ''
                 }`}>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-mono">
                     {formatDate(event.Date, 'time')}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -395,22 +407,22 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mr-2 ${getImportanceClass(event.Importance)}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider mr-2 ${getImportanceClass(event.Importance)}`}>
                         {['Low', 'Medium', 'High'][event.Importance - 1] || 'Unknown'}
                       </span>
-                      <span className="text-sm text-white">{event.Event}</span>
+                      <span className="text-sm text-gray-900 dark:text-white font-medium">{event.Event}</span>
                     </div>
                     <div className="text-xs text-gray-500 mt-1">{event.Category}</div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm font-semibold">
                     {event.Actual && (
-                      <span className={event.Actual > event.Previous ? 'text-green-400' : 'text-red-400'}>
+                      <span className={event.Actual > event.Previous ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-red-400'}>
                         {event.Actual}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{event.Forecast || event.TEForecast}</td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">{event.Previous}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 font-mono">{event.Forecast || event.TEForecast || '—'}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 font-mono">{event.Previous || '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -426,9 +438,9 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
             
             return (
               <div key={day} className={`mb-6 ${selectedDay && selectedDay !== day ? 'hidden' : ''}`}>
-                <h3 className="text-white font-medium mb-3 flex items-center">
-                  <span className="text-lg">{formatDate(day + 'T00:00:00', 'day')}</span>
-                  <span className="ml-2 px-2 py-0.5 bg-[#1a1f2c] rounded-full text-xs text-gray-400">
+                <h3 className="text-gray-900 dark:text-white font-semibold mb-3 flex items-center">
+                  <span className="text-base">{formatDate(day + 'T00:00:00', 'day')}</span>
+                  <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-[#1a1f2c] border border-black/5 dark:border-white/5 rounded-full text-xs text-gray-500 dark:text-gray-400">
                     {dayEvents.length} events
                   </span>
                 </h3>
@@ -450,11 +462,11 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                     .map((event, index) => (
                       <div 
                         key={index} 
-                        className={`p-3 rounded-lg ${event.Importance === 3 
-                          ? 'bg-red-900/10 border border-red-900/20' 
+                        className={`p-4 rounded-xl border bg-white/40 dark:bg-slate-900/30 ${event.Importance === 3 
+                          ? 'border-red-500/20 shadow-sm shadow-red-500/5' 
                           : event.Importance === 2
-                            ? 'bg-yellow-900/10 border border-yellow-900/20'
-                            : 'bg-blue-900/10 border border-blue-900/20'
+                            ? 'border-yellow-500/20 shadow-sm shadow-yellow-500/5'
+                            : 'border-blue-500/20 shadow-sm shadow-blue-500/5'
                         } ${
                           event.Country?.toLowerCase().includes('united states')
                             ? 'border-l-4 border-l-blue-500'
@@ -463,37 +475,37 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                       >
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center">
-                            <span className={`text-sm font-medium ${getCountryClass(event.Country)}`}>
+                            <span className={`text-sm font-semibold ${getCountryClass(event.Country)}`}>
                               {event.Country}
                             </span>
-                            <span className="mx-2 text-gray-500">•</span>
-                            <span className="text-sm text-gray-400">{formatDate(event.Date, 'time')}</span>
+                            <span className="mx-2 text-gray-400 dark:text-gray-600">•</span>
+                            <span className="text-xs text-gray-500 font-mono">{formatDate(event.Date, 'time')}</span>
                           </div>
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getImportanceClass(event.Importance)}`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${getImportanceClass(event.Importance)}`}>
                             {['Low', 'Medium', 'High'][event.Importance - 1] || 'Unknown'}
                           </span>
                         </div>
                         
-                        <div className="text-white font-medium mb-1">{event.Event}</div>
-                        <div className="text-xs text-gray-500 mb-2">{event.Category}</div>
+                        <div className="text-gray-900 dark:text-white font-semibold text-sm mb-1">{event.Event}</div>
+                        <div className="text-xs text-gray-400 mb-3">{event.Category}</div>
                         
-                        <div className="grid grid-cols-3 gap-3 mt-2 text-xs">
+                        <div className="grid grid-cols-3 gap-3 mt-2 text-xs border-t border-black/[0.03] dark:border-white/[0.03] pt-3">
                           <div>
-                            <div className="text-gray-500 mb-1">Previous</div>
-                            <div className="text-gray-300">{event.Previous || 'N/A'}</div>
+                            <div className="text-gray-400 dark:text-gray-500 mb-0.5">Previous</div>
+                            <div className="text-gray-800 dark:text-gray-300 font-mono">{event.Previous || '—'}</div>
                           </div>
                           <div>
-                            <div className="text-gray-500 mb-1">Forecast</div>
-                            <div className="text-gray-300">{event.Forecast || event.TEForecast || 'N/A'}</div>
+                            <div className="text-gray-400 dark:text-gray-500 mb-0.5">Forecast</div>
+                            <div className="text-gray-800 dark:text-gray-300 font-mono">{event.Forecast || event.TEForecast || '—'}</div>
                           </div>
                           <div>
-                            <div className="text-gray-500 mb-1">Actual</div>
+                            <div className="text-gray-400 dark:text-gray-500 mb-0.5">Actual</div>
                             {event.Actual ? (
-                              <div className={event.Actual > event.Previous ? 'text-green-400' : 'text-red-400'}>
+                              <div className={`font-semibold font-mono ${event.Actual > event.Previous ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-red-400'}`}>
                                 {event.Actual}
                               </div>
                             ) : (
-                              <div className="text-gray-500">Pending</div>
+                              <div className="text-gray-400 dark:text-gray-500 italic">Pending</div>
                             )}
                           </div>
                         </div>
@@ -509,4 +521,4 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
   );
 };
 
-export default EconomicCalendar; 
+export default EconomicCalendar;

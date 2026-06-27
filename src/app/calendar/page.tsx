@@ -520,7 +520,7 @@ export default function CalendarPage() {
       })
 
       weekRows.push(
-        <div key={row} className="grid grid-cols-7 border-b border-white/[0.04] last:border-b-0">
+        <div key={row} className="grid grid-cols-7 border-b border-black/[0.04] dark:border-white/[0.04] last:border-b-0">
           {weekCells}
         </div>
       )
@@ -531,11 +531,11 @@ export default function CalendarPage() {
         {/* Calendar Grid (7 columns - Sun to Sat) */}
         <div className="flex-1 min-w-0">
           <div
-            className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-2xl"
+            className="bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden shadow-2xl"
           >
             {/* Day headers */}
             <div
-              className="grid grid-cols-7 border-b border-white/[0.06] bg-white/[0.015]"
+              className="grid grid-cols-7 border-b border-black/[0.06] dark:border-white/[0.06] bg-black/[0.01] dark:bg-white/[0.015]"
             >
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
                 <div
@@ -560,7 +560,7 @@ export default function CalendarPage() {
             {weeklyStatsList.map((stat) => (
               <div
                 key={stat.row}
-                className="bg-slate-900/40 backdrop-blur-md border border-white/5 p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
+                className="bg-white/80 dark:bg-slate-900/40 backdrop-blur-md border border-black/5 dark:border-white/5 p-4 rounded-xl flex flex-col justify-center animate-fadeIn min-h-[110px] min-w-[160px] lg:min-w-0 flex-1"
               >
                 <span className="text-[10px] text-indigo-400/90 uppercase tracking-[0.15em] font-extrabold mb-1">
                   Week {stat.row}
@@ -880,13 +880,13 @@ export default function CalendarPage() {
               transition={{ duration: 0.25 }}
               className="mt-6"
             >
-              <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+              <div className="bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 overflow-hidden shadow-2xl">
                 {/* Day header */}
                 <div
-                  className="px-6 py-5 flex items-center justify-between border-b border-white/5 bg-white/[0.015]"
+                  className="px-6 py-5 flex items-center justify-between border-b border-black/5 dark:border-white/5 bg-black/[0.01] dark:bg-white/[0.015]"
                 >
                   <div>
-                    <h2 className="text-base font-semibold text-white">
+                    <h2 className="text-base font-semibold text-gray-900 dark:text-white">
                       {selectedDate.toLocaleDateString('en-US', {
                         weekday: 'long',
                         month: 'long',
@@ -914,7 +914,7 @@ export default function CalendarPage() {
                 {/* Day stats */}
                 {selectedDayTrades.length > 0 && (
                   <div
-                    className="grid grid-cols-2 sm:grid-cols-4 border-b border-white/5"
+                    className="grid grid-cols-2 sm:grid-cols-4 border-b border-black/5 dark:border-white/5"
                   >
                     {[
                       {
@@ -952,8 +952,8 @@ export default function CalendarPage() {
                     ].map((s, i) => (
                       <div
                         key={i}
-                        className={`px-6 py-4 flex flex-col gap-1 bg-white/[0.01] ${
-                          i < 3 ? 'border-r border-white/5' : ''
+                        className={`px-6 py-4 flex flex-col gap-1 bg-black/[0.005] dark:bg-white/[0.01] ${
+                          i < 3 ? 'border-r border-black/5 dark:border-r-white/5' : ''
                         }`}
                       >
                         <span className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">
@@ -988,8 +988,8 @@ export default function CalendarPage() {
                       return (
                         <div
                           key={trade.id}
-                          className={`px-6 py-4 flex items-center gap-4 transition-all duration-200 bg-transparent hover:bg-white/[0.02] ${
-                            idx < selectedDayTrades.length - 1 ? 'border-b border-white/5' : ''
+                          className={`px-6 py-4 flex items-center gap-4 transition-all duration-200 bg-transparent hover:bg-black/[0.01] dark:hover:bg-white/[0.02] ${
+                            idx < selectedDayTrades.length - 1 ? 'border-b border-black/5 dark:border-white/5' : ''
                           }`}
                         >
                           {/* Side badge — liquid style */}
@@ -1012,22 +1012,22 @@ export default function CalendarPage() {
                           </span>
 
                           {/* Symbol */}
-                          <span className="text-sm font-semibold text-white min-w-[70px]">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white min-w-[70px]">
                             {trade.symbol}
                           </span>
 
                           {/* Entry / Exit */}
                           <div className="hidden sm:flex items-center gap-3 text-xs text-gray-500 min-w-[180px]">
                             <span>
-                              <span className="text-gray-600 mr-1">Entry</span>
-                              <span className="text-gray-300 tabular-nums">{fmtDecimal(trade.entry_price)}</span>
+                              <span className="text-gray-400 dark:text-gray-600 mr-1">Entry</span>
+                              <span className="text-gray-700 dark:text-gray-300 tabular-nums">{fmtDecimal(trade.entry_price)}</span>
                             </span>
-                            <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                             </svg>
                             <span>
-                              <span className="text-gray-600 mr-1">Exit</span>
-                              <span className="text-gray-300 tabular-nums">{fmtDecimal(trade.exit_price)}</span>
+                              <span className="text-gray-400 dark:text-gray-600 mr-1">Exit</span>
+                              <span className="text-gray-700 dark:text-gray-300 tabular-nums">{fmtDecimal(trade.exit_price)}</span>
                             </span>
                           </div>
 

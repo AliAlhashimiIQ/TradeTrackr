@@ -53,6 +53,7 @@ export default function TradingViewChart({
 
     let isMounted = true;
     let chart: IChartApi | null = null;
+    let resizeHandler: (() => void) | null = null;
 
     const loadDataAndRender = async () => {
       try {
@@ -107,21 +108,24 @@ export default function TradingViewChart({
 
         setLoading(false);
 
+        // Detect current theme mode from document class
+        const isDark = document.documentElement.classList.contains('dark');
+
         // Create Chart
         chart = createChart(chartContainerRef.current!, {
           layout: {
-            background: { type: ColorType.Solid, color: '#0d0e16' },
-            textColor: '#9ca3af',
+            background: { type: ColorType.Solid, color: isDark ? '#0d0e16' : '#ffffff' },
+            textColor: isDark ? '#9ca3af' : '#475569',
           },
           grid: {
-            vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            vertLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
+            horzLines: { color: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.04)' },
           },
           crosshair: {
             mode: 1, // Normal crosshair
           },
           timeScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
             timeVisible: true,
             secondsVisible: false,
           },
@@ -209,9 +213,7 @@ export default function TradingViewChart({
         };
 
         window.addEventListener('resize', handleResize);
-        return () => {
-          window.removeEventListener('resize', handleResize);
-        };
+        resizeHandler = handleResize;
       } catch (err: any) {
         if (isMounted) {
           setError(err.message || 'An error occurred loading the chart.');
@@ -224,6 +226,9 @@ export default function TradingViewChart({
 
     return () => {
       isMounted = false;
+      if (resizeHandler) {
+        window.removeEventListener('resize', resizeHandler);
+      }
       if (chart) {
         chart.remove();
       }
@@ -231,19 +236,28 @@ export default function TradingViewChart({
   }, [symbol, entryTime, exitTime, entryPrice, exitPrice, type, interval]);
 
   return (
-    <div className="w-full flex flex-col h-[500px] bg-[#0d0e16] rounded-2xl border border-white/[0.08] relative overflow-hidden shadow-2xl">
+    <div 
+      className="w-full flex flex-col h-[500px] rounded-2xl border relative overflow-hidden shadow-2xl"
+      style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border)' }}
+    >
       {/* Chart Header Info */}
-      <div className="flex justify-between items-center px-6 py-4 border-b border-white/[0.05] bg-white/[0.02]">
+      <div 
+        className="flex justify-between items-center px-6 py-4 border-b"
+        style={{ borderBottomColor: 'var(--border)', backgroundColor: 'var(--table-header-bg)' }}
+      >
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <span className="text-white font-semibold tracking-wide text-sm">{symbol}</span>
-            <span className="px-2 py-0.5 rounded text-xs bg-indigo-500/20 text-indigo-400 font-medium font-mono uppercase">
+            <span className="font-semibold tracking-wide text-sm" style={{ color: 'var(--foreground)' }}>{symbol}</span>
+            <span className="px-2 py-0.5 rounded text-[10px] bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-wider">
               Execution Map
             </span>
           </div>
 
           {/* Timeframe selector */}
-          <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.05]">
+          <div 
+            className="flex p-0.5 rounded-lg border"
+            style={{ backgroundColor: 'var(--input-bg)', borderColor: 'var(--border)' }}
+          >
             {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
               <button
                 key={tf}
@@ -251,7 +265,7 @@ export default function TradingViewChart({
                 className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-all ${
                   interval === tf
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                    : 'text-gray-400 hover:text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 {tf}
@@ -259,24 +273,28 @@ export default function TradingViewChart({
             ))}
           </div>
         </div>
-        <div className="text-xs text-gray-400 font-medium">
+        <div className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'var(--secondary)' }}>
           Powered by TradingView
         </div>
       </div>
 
       {/* Chart Canvas Area */}
-      <div className="flex-1 relative w-full h-full">
+      <div className="flex-1 relative w-full h-full" style={{ backgroundColor: 'var(--card-bg)' }}>
         {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0d0e16]/80 backdrop-blur-sm z-10">
+          <div 
+            className="absolute inset-0 flex flex-col items-center justify-center backdrop-blur-sm z-10"
+            style={{ backgroundColor: 'rgba(var(--background), 0.8)' }}
+          >
             <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-            <p className="text-gray-400 text-xs font-medium">Fetching historical tick data...</p>
+            <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--secondary)' }}>Fetching historical tick data...</p>
           </div>
         )}
 
         {error && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-[#0d0e16]">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10" style={{ backgroundColor: 'var(--card-bg)' }}>
             <svg
-              className="w-12 h-12 text-gray-600 mb-3"
+              className="w-12 h-12 mb-3"
+              style={{ color: 'var(--secondary)' }}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -288,8 +306,8 @@ export default function TradingViewChart({
                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
               />
             </svg>
-            <p className="text-gray-400 text-sm font-semibold mb-1">Chart Unavailable</p>
-            <p className="text-gray-500 text-xs max-w-sm">{error}</p>
+            <p className="text-sm font-bold mb-1" style={{ color: 'var(--foreground)' }}>Chart Unavailable</p>
+            <p className="text-xs max-w-sm" style={{ color: 'var(--secondary)' }}>{error}</p>
           </div>
         )}
 
