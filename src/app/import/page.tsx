@@ -368,7 +368,7 @@ export default function ImportPage() {
                       <select
                         value={brokerOffsetHours}
                         onChange={(e) => setBrokerOffsetHours(Number(e.target.value))}
-                        className="input text-sm py-1.5 w-full sm:w-64 bg-[#0a0b0f] border-white/[0.06] focus:border-amber-500/50 [color-scheme:dark]"
+                        className="input text-sm py-1.5 w-full sm:w-64 bg-gray-50 dark:bg-[#0a0b0f] border-black/10 dark:border-white/[0.06] focus:border-amber-500/50 text-gray-900 dark:text-white"
                       >
                         <option value={-5}>GMT-5 (US Eastern, NYSE)</option>
                         <option value={-4}>GMT-4 (US Eastern DST)</option>
@@ -421,7 +421,7 @@ export default function ImportPage() {
                       <select
                         value={targetAccountId}
                         onChange={(e) => setTargetAccountId(e.target.value)}
-                        className="input w-full text-sm py-2 bg-[#0a0b0f] border-white/[0.06] focus:border-indigo-500/50"
+                        className="input w-full text-sm py-2 bg-gray-50 dark:bg-[#0a0b0f] border-black/10 dark:border-white/[0.06] focus:border-indigo-500/50 text-gray-900 dark:text-white"
                       >
                         <option value="all">Default (Unassociated)</option>
                         {accounts.map((acc) => (

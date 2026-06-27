@@ -6,7 +6,7 @@ import { motion } from 'framer-motion'
 function Bone({ className = '', style }: { className?: string; style?: React.CSSProperties }) {
   return (
     <div
-      className={`rounded-lg bg-gradient-to-r from-white/[0.04] via-white/[0.08] to-white/[0.04] bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite] ${className}`}
+      className={`rounded-lg bg-gradient-to-r from-black/[0.04] via-black/[0.08] to-black/[0.04] dark:from-white/[0.04] dark:via-white/[0.08] dark:to-white/[0.04] bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite] ${className}`}
       style={style}
     />
   )
@@ -18,7 +18,7 @@ export function SkeletonText({ width = 'w-24', height = 'h-3' }: { width?: strin
 
 export function SkeletonCard({ className = '' }: { className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-[#0d0e16] p-5 space-y-3 ${className}`}>
+    <div className={`rounded-2xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] p-5 space-y-3 ${className}`}>
       <Bone className="h-3 w-20" />
       <Bone className="h-7 w-28" />
       <Bone className="h-2.5 w-16" />
@@ -28,7 +28,7 @@ export function SkeletonCard({ className = '' }: { className?: string }) {
 
 export function SkeletonChart({ className = '' }: { className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-[#0d0e16] p-5 ${className}`}>
+    <div className={`rounded-2xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] p-5 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         <div className="space-y-2">
           <Bone className="h-4 w-28" />
@@ -99,8 +99,8 @@ export function DashboardSkeleton() {
       </div>
 
       {/* Recent trades */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d0e16] overflow-hidden">
-        <div className="flex items-center justify-between p-5 border-b border-white/[0.05]">
+      <div className="rounded-2xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-black/5 dark:border-white/[0.05]">
           <Bone className="h-4 w-28" />
           <Bone className="h-3 w-16" />
         </div>
@@ -134,7 +134,7 @@ export function AnalyticsSkeleton() {
       </div>
 
       {/* Brief panel */}
-      <div className="rounded-2xl border border-white/[0.06] bg-[#0d0e16] p-5">
+      <div className="rounded-2xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] p-5">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-2">
             <Bone className="h-5 w-40" />
@@ -142,7 +142,7 @@ export function AnalyticsSkeleton() {
           </div>
           <div className="grid grid-cols-3 gap-3">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-xl border border-white/[0.06] bg-[#0a0b12] p-4 min-w-[180px] space-y-2">
+              <div key={i} className="rounded-xl border border-black/5 dark:border-white/[0.06] bg-gray-50 dark:bg-[#0a0b12] p-4 min-w-[180px] space-y-2">
                 <Bone className="h-2.5 w-16" />
                 <Bone className="h-3.5 w-32" />
               </div>
@@ -203,8 +203,8 @@ export function TradesListSkeleton() {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#0d0e16] overflow-hidden">
-        <div className="px-4 py-3 bg-[#0a0b12] border-b border-white/[0.04]">
+      <div className="rounded-xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] overflow-hidden">
+        <div className="px-4 py-3 bg-gray-50 dark:bg-[#0a0b12] border-b border-black/5 dark:border-white/[0.04]">
           <Bone className="h-3 w-full max-w-2xl" />
         </div>
         {[...Array(10)].map((_, i) => (
@@ -255,8 +255,8 @@ export function CalendarSkeleton() {
       </div>
 
       {/* Calendar grid */}
-      <div className="rounded-xl border border-white/[0.06] bg-[#151823] overflow-hidden">
-        <div className="grid grid-cols-7 border-b border-white/[0.06]">
+      <div className="rounded-xl border border-black/5 dark:border-white/[0.06] bg-white dark:bg-[#151823] overflow-hidden">
+        <div className="grid grid-cols-7 border-b border-black/5 dark:border-white/[0.06]">
           {[...Array(7)].map((_, i) => (
             <div key={i} className="p-4 flex justify-center">
               <Bone className="h-3 w-8" />
@@ -265,7 +265,7 @@ export function CalendarSkeleton() {
         </div>
         <div className="grid grid-cols-7">
           {[...Array(7)].map((_, i) => (
-            <div key={i} className="min-h-[120px] p-4 border border-white/[0.03] space-y-2">
+            <div key={i} className="min-h-[120px] p-4 border border-black/5 dark:border-white/[0.03] space-y-2">
               <Bone className="h-4 w-6" />
               <Bone className="h-5 w-16" />
               <Bone className="h-2.5 w-20" />

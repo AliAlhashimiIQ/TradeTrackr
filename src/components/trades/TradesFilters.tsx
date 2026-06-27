@@ -158,10 +158,10 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             </button>
             {showColumnMenu && (
               <div
-                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl border bg-[#0d0e16] border-white/[0.08] shadow-2xl p-0.5 w-[220px] text-left backdrop-blur-md"
+                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl border bg-white dark:bg-[#0d0e16] border-black/10 dark:border-white/[0.08] shadow-2xl p-0.5 w-[220px] text-left backdrop-blur-md"
               >
-                <div className="px-3 py-2.5 border-b border-white/[0.06]">
-                  <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.12em]">Toggle Columns</div>
+                <div className="px-3 py-2.5 border-b border-black/10 dark:border-white/[0.06]">
+                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.12em]">Toggle Columns</div>
                 </div>
                 <div className="p-1.5 max-h-[380px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/[0.08]">
                   {[
@@ -261,7 +261,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
       <div className="mb-6 text-left">
         <button
           onClick={onToggleIntelligence}
-          className="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0d0e16] border border-white/[0.06] text-gray-300 hover:text-white transition-colors inline-flex items-center gap-2"
+          className="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] text-gray-750 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all inline-flex items-center gap-2"
         >
           <span>{showIntelligence ? 'Hide' : 'Show'} Intelligence</span>
           <svg
@@ -335,7 +335,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                           <button
                             key={trade.id}
                             onClick={() => onReviewClick(trade)}
-                            className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-xl bg-white/[0.015] hover:bg-white/[0.04] border border-white/[0.03] ${severityBorder} transition-all duration-300 gap-3 group`}
+                            className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-xl bg-black/[0.01] dark:bg-white/[0.015] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] border border-black/5 dark:border-white/[0.03] ${severityBorder} transition-all duration-300 gap-3 group`}
                           >
                             <div className="flex items-start gap-3">
                               {/* Left status vertical indicator strip */}

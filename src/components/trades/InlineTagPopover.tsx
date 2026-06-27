@@ -201,7 +201,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                 type="text"
                 value={editingTag.name}
                 onChange={(e) => setEditingTag({ ...editingTag, name: e.target.value })}
-                className="flex-1 px-2.5 py-1.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+                className="flex-1 px-2.5 py-1.5 bg-gray-50 dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-xs text-gray-900 dark:text-white placeholder-gray-450 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
                 placeholder="Tag name"
                 onKeyDown={(e) => { if (e.key === 'Enter') handleRenameTag(); }}
               />
@@ -314,7 +314,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
                     setIsAddingCustomTag(false);
                   }
                 }}
-                className="px-2.5 py-1 bg-[#0d0e16] border border-white/[0.08] rounded-full text-xs text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-700 font-sans"
+                className="px-2.5 py-1 bg-gray-50 dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.08] rounded-full text-xs text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 w-24 placeholder-gray-450 dark:placeholder-gray-700 font-sans"
                 autoFocus
               />
             ) : (
@@ -332,7 +332,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
           {strategyRules.length > 0 && !isMistake && (
             <>
               <div className="border-t border-white/[0.06] my-2.5" />
-              <div className="p-3 bg-[#0d0e16]/60 border border-white/[0.04] rounded-xl space-y-2">
+              <div className="p-3 bg-black/[0.015] dark:bg-[#0d0e16]/60 border border-black/5 dark:border-white/[0.04] rounded-xl space-y-2">
                 <div className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
                   Strategy Checklist ({trade.strategy})
                 </div>
@@ -376,7 +376,7 @@ export const InlineTagPopover: React.FC<InlineTagPopoverProps> = ({
             placeholder={`Search ${isMistake ? 'mistakes' : 'tags'}...`}
             value={searchTag}
             onChange={e => setSearchTag(e.target.value)}
-            className="w-full px-2.5 py-1.5 mb-2.5 bg-[#0d0e16] border border-white/[0.06] rounded-lg text-xs text-white placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
+            className="w-full px-2.5 py-1.5 mb-2.5 bg-gray-50 dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-xs text-gray-900 dark:text-white placeholder-gray-450 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/30"
           />
 
           <div className="max-h-[160px] overflow-y-auto space-y-1 scrollbar-thin pr-1">

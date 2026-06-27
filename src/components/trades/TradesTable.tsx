@@ -458,7 +458,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     if (!totals) return null;
     return (
       <div
-        className="grid gap-4 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-[#0d0e16]/95 border-t border-b border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full w-max text-left"
+        className="grid gap-4 px-5 py-3 text-[11px] font-semibold text-gray-400 uppercase tracking-wider bg-slate-50/95 dark:bg-[#0d0e16]/95 border-t border-b border-black/10 dark:border-white/[0.06] sticky bottom-0 z-10 items-center min-w-full w-max text-left"
         style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
       >
         <div />
@@ -1878,16 +1878,16 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             onClick={e => e.stopPropagation()}
-            className="bg-[#0d0e16] rounded-2xl border border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
+            className="bg-white dark:bg-[#0d0e16] rounded-2xl border border-black/10 dark:border-white/[0.08] w-full max-w-md overflow-hidden shadow-2xl"
           >
-            <div className="p-5 border-b border-white/[0.06] flex justify-between items-center bg-[#0d0e16]">
+            <div className="p-5 border-b border-black/10 dark:border-white/[0.06] flex justify-between items-center bg-white dark:bg-[#0d0e16]">
               <h2 className="text-base font-bold text-white">Add Screenshot to Draft Trade</h2>
               <button onClick={() => setShowInlineScreenshotModal(false)} className="p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-white/[0.04] transition-colors">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
             <div className="p-6 space-y-6">
-              <div className="flex border-b border-white/[0.06]">
+              <div className="flex border-b border-black/10 dark:border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setInlineScreenshotTab('upload')}
@@ -1914,7 +1914,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               
               <div>
                 {inlineScreenshotTab === 'upload' ? (
-                  <label className="flex flex-col items-center justify-center gap-3 py-8 rounded-xl border border-dashed border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
+                  <label className="flex flex-col items-center justify-center gap-3 py-8 rounded-xl border border-dashed border-black/20 dark:border-white/[0.08] hover:border-indigo-500/30 hover:bg-indigo-500/[0.02] transition-all cursor-pointer">
                     <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -1944,7 +1944,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       value={inlineScreenshotEmbedUrlInput}
                       onChange={e => setInlineScreenshotEmbedUrlInput(e.target.value)}
                       placeholder="Paste TradingView link (e.g. https://www.tradingview.com/x/pCPdcgL4/)"
-                      className="w-full px-3 py-2.5 bg-[#06070b] border border-white/[0.06] rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                      className="w-full px-3 py-2.5 bg-gray-50 dark:bg-[#06070b] border border-black/10 dark:border-white/[0.06] rounded-xl text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                     />
                     <button
                       type="button"

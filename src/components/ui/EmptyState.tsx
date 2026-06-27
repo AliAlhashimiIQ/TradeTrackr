@@ -240,7 +240,7 @@ export default function EmptyState({
               transition={{ duration: 0.35, delay: idx * 0.08 }}
               onMouseEnter={() => setHoveredStep(step.id)}
               onMouseLeave={() => setHoveredStep(null)}
-              className="card bg-[#0d0e16] border border-white/[0.06] rounded-2xl p-5 hover:border-indigo-500/40 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-xl"
+              className="card bg-white dark:bg-[#0d0e16] border border-black/5 dark:border-white/[0.06] rounded-2xl p-5 hover:border-indigo-500/40 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-xl"
               style={{
                 boxShadow: hoveredStep === step.id ? '0 12px 32px rgba(99, 102, 241, 0.08)' : 'none'
               }}
