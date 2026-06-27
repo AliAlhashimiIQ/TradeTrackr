@@ -75,6 +75,9 @@ export default function BacktestSessionPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed, setPlaySpeed] = useState(1000);
 
+  // Fullscreen State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   // Advanced drawing toolbar state
   const [activeTool, setActiveTool] = useState<'cursor' | 'trendline' | 'horizontal' | 'fvg' | 'long' | 'short'>('cursor');
   const [drawingState, setDrawingState] = useState<any>(null); // store first click values
@@ -85,8 +88,8 @@ export default function BacktestSessionPage() {
   const [slPips, setSlPips] = useState('');
   const [tpPips, setTpPips] = useState('');
 
-  // Layout Fullscreen and Chart Refs
-  const workspaceContainerRef = useRef<HTMLDivElement>(null);
+  // Refs
+  const chartWrapperRef = useRef<HTMLDivElement>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
@@ -699,12 +702,13 @@ export default function BacktestSessionPage() {
     toast.success('All drawings cleared');
   };
 
-  // Fullscreen toggle handler
+  // Fullscreen toggle handler on the chart wrapper wrapper
   const handleFullscreenToggle = () => {
-    if (!workspaceContainerRef.current) return;
+    const wrapper = chartWrapperRef.current;
+    if (!wrapper) return;
 
     if (!document.fullscreenElement) {
-      workspaceContainerRef.current.requestFullscreen().catch((err) => {
+      wrapper.requestFullscreen().catch((err) => {
         toast.error(`Error enabling fullscreen: ${err.message}`);
       });
     } else {
@@ -712,9 +716,12 @@ export default function BacktestSessionPage() {
     }
   };
 
-  // Listen to fullscreen changes to resize chart
+  // Listen to fullscreen changes on the chart wrapper
   useEffect(() => {
     const handleFullscreenChange = () => {
+      const isFull = document.fullscreenElement === chartWrapperRef.current;
+      setIsFullscreen(isFull);
+
       const container = chartContainerRef.current;
       if (chartRef.current && container) {
         setTimeout(() => {
@@ -794,11 +801,7 @@ export default function BacktestSessionPage() {
 
   return (
     <AuthenticatedLayout>
-      {/* Top-level Workspace Container for fullscreen execution */}
-      <div 
-        ref={workspaceContainerRef} 
-        className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-[#090a10] w-full h-full overflow-y-auto"
-      >
+      <div className="px-6 lg:px-8 py-5 max-w-7xl mx-auto relative text-slate-800 dark:text-slate-100">
         
         {/* Floating Topbar Dashboard */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6 bg-white dark:bg-[#0f111a]/85 backdrop-blur-lg border border-slate-200 dark:border-white/[0.06] px-6 py-4 rounded-3xl shadow-md dark:shadow-xl relative z-20">
@@ -889,17 +892,6 @@ export default function BacktestSessionPage() {
               <option value={1000}>1.0s Speed</option>
               <option value={500}>0.5s Speed</option>
             </select>
-
-            {/* Topbar Fullscreen Button */}
-            <button
-              onClick={handleFullscreenToggle}
-              className="p-2 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-155"
-              title="Toggle Fullscreen Workspace"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -1008,7 +1000,7 @@ export default function BacktestSessionPage() {
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/[0.04]">
-                    <span className="text-[10px] text-slate-400 dark:text-gray-505 font-bold uppercase tracking-widest">Floating return</span>
+                    <span className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Floating return</span>
                     <span className={`text-sm font-bold font-mono ${getFloatingPnL() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                       {getFloatingPnL() >= 0 ? '+' : ''}
                       {formatCurrency(getFloatingPnL())}
@@ -1028,8 +1020,128 @@ export default function BacktestSessionPage() {
 
           {/* Center Main: Interactive Chart canvas */}
           <div className="lg:col-span-3">
-            <div className="relative w-full h-[500px] bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl">
+            {/* The chartWrapperRef is target of the requestFullscreen */}
+            <div 
+              ref={chartWrapperRef}
+              className={`relative w-full bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl transition-all duration-150 ${isFullscreen ? 'h-screen w-screen rounded-none border-none' : 'h-[500px]'}`}
+            >
               
+              {/* Fullscreen Overlay Controller (Trading Panel) */}
+              {isFullscreen && (
+                <div className="absolute top-4 right-4 z-30 w-72 bg-white/95 dark:bg-[#0d0e16]/95 backdrop-blur-md border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl p-4 space-y-3.5 text-xs text-slate-800 dark:text-slate-100">
+                  <div className="flex justify-between items-center pb-1.5 border-b border-slate-100 dark:border-white/[0.04]">
+                    <div>
+                      <span className="font-bold text-slate-900 dark:text-white text-sm">{session.symbol}</span>
+                      <span className="ml-2 font-mono text-[10px] text-slate-400">{activeTimeframe}</span>
+                    </div>
+                    <button 
+                      onClick={handleFullscreenToggle} 
+                      className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/5 font-semibold transition-all"
+                    >
+                      Exit ✕
+                    </button>
+                  </div>
+
+                  {/* Playback Controls */}
+                  <div className="flex items-center justify-between gap-1 border-b border-slate-100 dark:border-white/[0.04] pb-2">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Replay</span>
+                    <div className="flex items-center gap-1.5">
+                      <button 
+                        onClick={handleStepBackward} 
+                        disabled={currentIndex <= 50 || isPlaying} 
+                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold"
+                      >
+                        ◀
+                      </button>
+                      <button 
+                        onClick={() => setIsPlaying(!isPlaying)} 
+                        className="p-1 px-3 bg-indigo-600 text-white rounded text-[10px] font-bold"
+                      >
+                        {isPlaying ? 'Pause' : 'Play'}
+                      </button>
+                      <button 
+                        onClick={handleStepForward} 
+                        disabled={currentIndex >= candles.length - 1 || isPlaying} 
+                        className="p-1 px-2 border border-slate-200 dark:border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold"
+                      >
+                        ▶
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Timeframe selection */}
+                  <div className="flex justify-between items-center border-b border-slate-100 dark:border-white/[0.04] pb-2">
+                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Timeframe</span>
+                    <div className="flex bg-slate-100 dark:bg-white/[0.04] p-0.5 rounded-lg border border-slate-200 dark:border-white/[0.05]">
+                      {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
+                        <button
+                          key={tf}
+                          onClick={() => setActiveTimeframe(tf)}
+                          className={`px-1.5 py-0.5 text-[9px] font-bold rounded ${
+                            activeTimeframe === tf ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'
+                          }`}
+                        >
+                          {tf}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Account display */}
+                  <div className="flex justify-between items-center text-[11px] font-bold">
+                    <span className="text-slate-400 uppercase tracking-widest text-[9px]">Equity</span>
+                    <span className="font-mono text-slate-900 dark:text-white">{formatCurrency(balance)}</span>
+                  </div>
+
+                  {/* Order placing */}
+                  <div className="space-y-3 pt-1 border-t border-slate-100 dark:border-white/[0.04]">
+                    {!activeTrade ? (
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-2 gap-2">
+                          <button onClick={() => handleOpenPosition('Long')} className="py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-bold text-center rounded-lg">
+                            Buy Mkt
+                          </button>
+                          <button onClick={() => handleOpenPosition('Short')} className="py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-bold text-center rounded-lg">
+                            Sell Mkt
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="text-[8px] text-slate-400 font-bold block mb-1">Lots</label>
+                            <input type="text" value={lots} onChange={(e) => setLots(e.target.value)} className="w-full px-2 py-1 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded text-[10px] font-mono text-slate-800 dark:text-white" />
+                          </div>
+                          <div>
+                            <label className="text-[8px] text-slate-400 font-bold block mb-1">SL (Pips)</label>
+                            <input type="number" placeholder="e.g. 15" value={slPips} onChange={(e) => setSlPips(e.target.value)} className="w-full px-2 py-1 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded text-[10px] font-mono text-slate-800 dark:text-white" />
+                          </div>
+                          <div>
+                            <label className="text-[8px] text-slate-400 font-bold block mb-1">TP (Pips)</label>
+                            <input type="number" placeholder="e.g. 30" value={tpPips} onChange={(e) => setTpPips(e.target.value)} className="w-full px-2 py-1 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.06] rounded text-[10px] font-mono text-slate-800 dark:text-white" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-2.5 space-y-2">
+                        <div className="flex justify-between">
+                          <span className={`font-bold ${activeTrade.type === 'Long' ? 'text-emerald-500' : 'text-rose-500'}`}>{activeTrade.type}</span>
+                          <span className="font-mono text-slate-400">{activeTrade.qty} Lots</span>
+                        </div>
+                        <div className="flex justify-between text-[10px] pt-1">
+                          <span className="text-slate-400">Floating:</span>
+                          <span className={`font-bold font-mono ${getFloatingPnL() >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                            {getFloatingPnL() >= 0 ? '+' : ''}{formatCurrency(getFloatingPnL())}
+                          </span>
+                        </div>
+                        <button onClick={handleManualClose} className="w-full py-1.5 bg-indigo-600 text-white rounded text-[10px] font-bold">
+                          Close Position
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-[9px] text-slate-400 font-mono text-center pt-1">{formattedTime} UTC</div>
+                </div>
+              )}
+
               {/* Advanced Chart Drawing Toolbar overlay */}
               <div className="absolute top-4 left-4 z-20 flex flex-col gap-1.5 p-1 bg-white/95 dark:bg-[#0f111a]/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.08] shadow-lg">
                 
@@ -1136,6 +1248,21 @@ export default function BacktestSessionPage() {
                   </button>
                 )}
               </div>
+
+              {/* Standard Mode Chart Controls (top-right overlay when not fullscreen) */}
+              {!isFullscreen && (
+                <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                  <button
+                    onClick={handleFullscreenToggle}
+                    className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
+                    title="Toggle Fullscreen Chart"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                    </svg>
+                  </button>
+                </div>
+              )}
 
               {loadingChart && (
                 <div className="absolute inset-0 bg-white/80 dark:bg-[#090a10]/80 backdrop-blur-sm z-30 flex items-center justify-center">
