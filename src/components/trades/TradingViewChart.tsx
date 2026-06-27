@@ -40,6 +40,8 @@ export default function TradingViewChart({
       defaultInterval = '15m';
     } else if (durationSeconds < 7 * 24 * 3600) {
       defaultInterval = '1h';
+    } else if (durationSeconds < 30 * 24 * 3600) {
+      defaultInterval = '4h';
     } else {
       defaultInterval = '1d';
     }
@@ -65,15 +67,17 @@ export default function TradingViewChart({
         // Determine range padding based on selected timeframe
         let paddingSeconds = 12 * 3600; // 12 hours fallback
         if (interval === '1m') {
-          paddingSeconds = 2 * 3600; // 2 hours padding for 1m
+          paddingSeconds = 24 * 3600; // 1 day padding for 1m
         } else if (interval === '5m') {
-          paddingSeconds = 6 * 3600;
+          paddingSeconds = 3 * 24 * 3600; // 3 days padding for 5m
         } else if (interval === '15m') {
-          paddingSeconds = 24 * 3600;
+          paddingSeconds = 7 * 24 * 3600; // 7 days padding for 15m
         } else if (interval === '1h') {
-          paddingSeconds = 5 * 24 * 3600;
+          paddingSeconds = 20 * 24 * 3600; // 20 days padding for 1h
+        } else if (interval === '4h') {
+          paddingSeconds = 40 * 24 * 3600; // 40 days padding for 4h
         } else if (interval === '1d') {
-          paddingSeconds = 30 * 24 * 3600;
+          paddingSeconds = 180 * 24 * 3600; // 180 days padding for 1d
         }
 
         const start = entryTimeUnix - paddingSeconds;
@@ -240,7 +244,7 @@ export default function TradingViewChart({
 
           {/* Timeframe selector */}
           <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.05]">
-            {['1m', '5m', '15m', '1h', '1d'].map((tf) => (
+            {['1m', '5m', '15m', '1h', '4h', '1d'].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setInterval(tf)}

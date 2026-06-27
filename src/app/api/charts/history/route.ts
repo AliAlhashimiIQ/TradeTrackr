@@ -62,8 +62,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
     }
 
+    const is4h = interval === '4h';
+    const queryInterval = is4h ? '1h' : interval;
+
     const symbol = mapSymbol(rawSymbol);
-    let url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${interval}`;
+    let url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${queryInterval}`;
     if (start) url += `&period1=${start}`;
     if (end) url += `&period2=${end}`;
 
@@ -117,7 +120,36 @@ export async function GET(req: NextRequest) {
     // Sort ascending by time
     formattedData.sort((a, b) => a.time - b.time);
 
-    return NextResponse.json({ symbol, data: formattedData });
+    let finalData = formattedData;
+
+    if (is4h) {
+      const groups: Record<number, typeof formattedData> = {};
+      for (const candle of formattedData) {
+        const date = new Date(candle.time * 1000);
+        // Align to UTC 4-hour boundaries (00:00, 04:00, 08:00, 12:00, 16:00, 20:00)
+        date.setUTCHours(Math.floor(date.getUTCHours() / 4) * 4, 0, 0, 0);
+        const groupTime = Math.floor(date.getTime() / 1000);
+        if (!groups[groupTime]) {
+          groups[groupTime] = [];
+        }
+        groups[groupTime].push(candle);
+      }
+
+      const aggregated = Object.entries(groups).map(([timeStr, candlesInGroup]) => {
+        const time = Number(timeStr);
+        candlesInGroup.sort((a, b) => a.time - b.time);
+        const open = candlesInGroup[0].open;
+        const close = candlesInGroup[candlesInGroup.length - 1].close;
+        const high = Math.max(...candlesInGroup.map(c => c.high));
+        const low = Math.min(...candlesInGroup.map(c => c.low));
+        return { time, open, high, low, close };
+      });
+      
+      aggregated.sort((a, b) => a.time - b.time);
+      finalData = aggregated;
+    }
+
+    return NextResponse.json({ symbol, data: finalData });
   } catch (error: any) {
     console.error('Error fetching historical chart data:', error);
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
