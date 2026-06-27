@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
-import { performAccountSync } from '../syncHelper';
+import axios from 'axios';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+async function checkMetaApiConnectionStatus(account: any, metaApiToken: string): Promise<string> {
+  try {
+    const apiHeaders = { 'auth-token': metaApiToken };
+    const listRes = await axios.get(
+      'https://mt-provisioning-api-v1.agiliumtrade.agiliumtrade.ai/users/current/accounts',
+      { headers: apiHeaders, timeout: 5000 }
+    );
+    const metaAcc = listRes.data.find(
+      (a: any) => a.login === account.account_number && a.server === account.server_name
+    );
+    if (!metaAcc) return 'DISCONNECTED';
+    return metaAcc.connectionStatus || 'DEPLOYING';
+  } catch (err) {
+    console.error('Error checking MetaApi connection status:', err);
+    return 'ERROR';
+  }
+}
 
 export async function GET(request: NextRequest) {
   const auth = await authenticateRequest(request);
@@ -37,27 +55,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Trading account not found' }, { status: 404 });
     }
 
-    // If status is DEPLOYING, trigger a non-blocking check & sync
+    // Check status on MetaApi if currently marked as DEPLOYING
     if (data.connection_status === 'DEPLOYING') {
-      await performAccountSync(data, userId);
-      
-      // Reload updated account data
-      const { data: updatedData, error: reloadError } = await supabase
-        .from('trading_accounts')
-        .select('id, name, connection_status, balance, last_sync')
-        .eq('id', accountId)
-        .eq('user_id', userId)
-        .single();
-      
-      if (!reloadError && updatedData) {
-        return NextResponse.json({
-          success: true,
-          account: updatedData,
-        });
+      const metaApiToken = process.env.META_API_TOKEN?.trim();
+      if (metaApiToken) {
+        const currentStatus = await checkMetaApiConnectionStatus(data, metaApiToken);
+        
+        if (currentStatus === 'CONNECTED') {
+          const { error: updateErr } = await supabase
+            .from('trading_accounts')
+            .update({
+              connection_status: 'CONNECTED',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', accountId);
+
+          if (!updateErr) {
+            data.connection_status = 'CONNECTED';
+          }
+        } else if (currentStatus === 'ERROR') {
+          const { error: updateErr } = await supabase
+            .from('trading_accounts')
+            .update({
+              connection_status: 'ERROR',
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', accountId);
+
+          if (!updateErr) {
+            data.connection_status = 'ERROR';
+          }
+        }
       }
     }
 
-    // Otherwise, return current status immediately
     const cleanData = {
       id: data.id,
       name: data.name,

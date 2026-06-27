@@ -9,8 +9,15 @@ export default function NewTrade() {
   const router = useRouter();
   
   const handleSubmit = async (trade: Partial<Trade>) => {
-    await addTrade(trade as Trade);
-    router.push('/trades');
+    try {
+      await addTrade(trade as Trade);
+      if (typeof window !== 'undefined') {
+        window.sessionStorage.setItem('trigger_trade_logged_confetti', 'true');
+      }
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Failed to log trade:', error);
+    }
   };
 
   return (

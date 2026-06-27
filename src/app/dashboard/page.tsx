@@ -114,6 +114,20 @@ export default function Dashboard() {
     }
   }, [])
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const triggerConfetti = window.sessionStorage.getItem('trigger_trade_logged_confetti');
+      if (triggerConfetti === 'true') {
+        window.sessionStorage.removeItem('trigger_trade_logged_confetti');
+        setShowConfetti(true);
+        toast.success('Trade logged successfully. Keep maintaining your routine.', {
+          duration: 5000
+        });
+        setTimeout(() => setShowConfetti(false), 5000);
+      }
+    }
+  }, []);
+
   const handleLoadDemoTrades = async () => {
     if (!user?.id) return;
     setIsDemoLoading(true);
@@ -665,9 +679,37 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-white/[0.04] flex justify-between text-xs text-gray-500">
-                    <span>Longest Streak:</span>
-                    <span className="font-semibold text-white font-mono">{journalStreak.longestStreak} days</span>
+                  <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-3">
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>Longest Streak:</span>
+                      <span className="font-semibold text-white font-mono">{journalStreak.longestStreak} days</span>
+                    </div>
+                    
+                    <div className="pt-2 border-t border-white/[0.02] space-y-1.5">
+                      <div className="text-[9px] font-bold text-gray-600 uppercase tracking-widest mb-1.5">Discipline Milestones</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { name: 'Bronze', threshold: 3, activeColor: 'text-amber-600 border-amber-600/30 bg-amber-500/5' },
+                          { name: 'Silver', threshold: 5, activeColor: 'text-slate-300 border-slate-300/30 bg-slate-100/5' },
+                          { name: 'Gold', threshold: 10, activeColor: 'text-yellow-400 border-yellow-400/30 bg-yellow-400/5' },
+                          { name: 'Master', threshold: 20, activeColor: 'text-indigo-400 border-indigo-400/30 bg-indigo-400/5' }
+                        ].map((badge) => {
+                          const isEarned = journalStreak.currentStreak >= badge.threshold;
+                          return (
+                            <span 
+                              key={badge.name}
+                              className={`px-2 py-0.5 rounded text-[9px] font-semibold border tracking-wide transition-all ${
+                                isEarned 
+                                  ? badge.activeColor 
+                                  : 'text-gray-600 border-white/5 bg-transparent opacity-40'
+                              }`}
+                            >
+                              {badge.name}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
 
