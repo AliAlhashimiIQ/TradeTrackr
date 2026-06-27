@@ -1261,7 +1261,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Cursor / Crosshair Selection"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18m-9-9h18" />
                   </svg>
                 </button>
@@ -1279,7 +1279,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Trend Line (Click twice)"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <circle cx="6" cy="18" r="1.5" stroke="currentColor" strokeWidth="2"/>
                     <circle cx="18" cy="6" r="1.5" stroke="currentColor" strokeWidth="2"/>
                     <path d="M7 17L17 7" />
@@ -1296,7 +1296,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Horizontal Line (Click once)"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h18M3 18h18" />
                   </svg>
                 </button>
@@ -1311,7 +1311,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Fair Value Gap Rectangle (Click High, then Low)"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <rect x="4" y="6" width="16" height="12" rx="1.5" />
                   </svg>
                 </button>
@@ -1329,7 +1329,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Long Position Planner"
                 >
-                  <svg className="w-4.5 h-4.5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7l4-4m0 0l4 4m-4-4v18" />
                   </svg>
                 </button>
@@ -1344,7 +1344,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Short Position Planner"
                 >
-                  <svg className="w-4.5 h-4.5 text-rose-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16 17l-4 4m0 0l-4-4m4 4V3" />
                   </svg>
                 </button>
@@ -1362,7 +1362,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Magnet Mode (Snaps price levels exactly to candle High/Low/Open/Close)"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v4.5A4.5 4.5 0 0013.5 12h0A4.5 4.5 0 0018 7.5V3M9 3H5m4 0h4m5 0h-4m4 0h4" />
                   </svg>
                 </button>
@@ -1377,7 +1377,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title="Lock Drawing Tool (Stay in drawing mode after placing level)"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                   </svg>
                 </button>
@@ -1392,7 +1392,7 @@ export default function BacktestSessionPage() {
                   }`}
                   title={areDrawingsHidden ? 'Show Drawings' : 'Hide Drawings'}
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.43 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -1405,7 +1405,7 @@ export default function BacktestSessionPage() {
                     className="p-2 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-all border-t border-slate-100 dark:border-white/[0.04] mt-1 flex items-center justify-center"
                     title="Clear All Drawings"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
@@ -1420,7 +1420,7 @@ export default function BacktestSessionPage() {
                     className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
                     title="Toggle Fullscreen Chart"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
                     </svg>
                   </button>
