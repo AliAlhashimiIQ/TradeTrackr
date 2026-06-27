@@ -64,7 +64,9 @@ export default function TradingViewChart({
 
         // Determine range padding based on selected timeframe
         let paddingSeconds = 12 * 3600; // 12 hours fallback
-        if (interval === '5m') {
+        if (interval === '1m') {
+          paddingSeconds = 2 * 3600; // 2 hours padding for 1m
+        } else if (interval === '5m') {
           paddingSeconds = 6 * 3600;
         } else if (interval === '15m') {
           paddingSeconds = 24 * 3600;
@@ -93,6 +95,9 @@ export default function TradingViewChart({
         if (!isMounted) return;
 
         if (candles.length === 0) {
+          if (interval === '1m') {
+            throw new Error(`1-minute historical data is only available for trades taken within the last 7 days.`);
+          }
           throw new Error(`No historical price data available for ${symbol} around this time.`);
         }
 
@@ -235,7 +240,7 @@ export default function TradingViewChart({
 
           {/* Timeframe selector */}
           <div className="flex bg-white/[0.04] p-0.5 rounded-lg border border-white/[0.05]">
-            {['5m', '15m', '1h', '1d'].map((tf) => (
+            {['1m', '5m', '15m', '1h', '1d'].map((tf) => (
               <button
                 key={tf}
                 onClick={() => setInterval(tf)}
