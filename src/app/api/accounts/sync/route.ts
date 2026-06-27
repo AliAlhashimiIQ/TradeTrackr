@@ -20,6 +20,13 @@ export async function POST(request: NextRequest) {
     return rateLimitExceeded(limit.resetIn);
   }
 
+  const metaApiToken = process.env.META_API_TOKEN?.trim();
+  if (!metaApiToken) {
+    return NextResponse.json({ 
+      error: 'MetaApi authentication token is not configured on the server. Please define META_API_TOKEN in your environment configuration.' 
+    }, { status: 500 });
+  }
+
   try {
     const body = await request.json();
     const { accountId, all } = body;

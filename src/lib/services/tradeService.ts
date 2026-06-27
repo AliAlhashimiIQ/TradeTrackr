@@ -2,6 +2,20 @@ import { supabase } from '../supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote, TradingAccount } from '../types';
 import { sanitizeTradeInput } from '../sanitize';
 
+const lastBulkOperations: number[] = [];
+
+function checkClientRateLimit(maxOps: number = 10, windowMs: number = 60000): boolean {
+  const now = Date.now();
+  while (lastBulkOperations.length > 0 && lastBulkOperations[0] < now - windowMs) {
+    lastBulkOperations.shift();
+  }
+  if (lastBulkOperations.length >= maxOps) {
+    return false;
+  }
+  lastBulkOperations.push(now);
+  return true;
+}
+
 export interface ImportRecord {
   id: string;
   user_id: string;
@@ -435,6 +449,10 @@ export async function deleteTrade(tradeId: string): Promise<boolean> {
 }
 
 export async function deleteTradesBulk(tradeIds: string[]): Promise<boolean> {
+  if (!checkClientRateLimit(10, 60000)) {
+    throw new Error('Rate limit exceeded. Please wait a minute before performing another bulk operation.');
+  }
+
   try {
     const { error } = await supabase
       .from('trades')
@@ -762,6 +780,10 @@ export async function bulkInsertTrades(
   fileName: string,
   accountId?: string | null,
 ): Promise<BulkImportResult> {
+  if (!checkClientRateLimit(10, 60000)) {
+    throw new Error('Rate limit exceeded. Please wait a minute before performing another bulk operation.');
+  }
+
   const errors: string[] = [];
   let imported = 0;
   let skipped = 0;
