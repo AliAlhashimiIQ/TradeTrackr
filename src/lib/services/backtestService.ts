@@ -18,7 +18,7 @@ export async function getBacktestSessions(userId: string): Promise<BacktestingSe
 }
 
 export async function createBacktestSession(
-  session: Omit<BacktestingSession, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+  session: Omit<BacktestingSession, 'id' | 'created_at' | 'updated_at'>
 ): Promise<BacktestingSession> {
   try {
     const { data, error } = await (supabase as any)
