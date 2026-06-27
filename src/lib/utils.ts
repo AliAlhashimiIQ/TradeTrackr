@@ -39,14 +39,14 @@ export function formatPercentage(value: number): string {
  * Resolves a TradingView chart sharing URL (e.g. https://www.tradingview.com/x/pCPdcgL4/)
  * into a direct static image URL (e.g. https://s3.tradingview.com/snapshots/p/pCPdcgL4.png).
  */
-export function resolveTradingViewUrl(url: string | null | undefined): string {
+export function resolveTradingViewUrl(url: string | null | undefined, customToken?: string): string {
   if (!url) return '';
   const trimmed = url.trim();
   
   // If it's a Supabase storage URL, rewrite it to go through the media proxy
   if (trimmed.includes('/storage/v1/object/public/')) {
-    let token = '';
-    if (typeof window !== 'undefined') {
+    let token = customToken || '';
+    if (!token && typeof window !== 'undefined') {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
