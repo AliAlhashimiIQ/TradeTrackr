@@ -64,6 +64,10 @@ export default function BacktestSessionPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playSpeed, setPlaySpeed] = useState(1000);
 
+  // Drawing tools state
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [drawnLines, setDrawnLines] = useState<number[]>([]); // Array of price values
+
   // Inputs
   const [lots, setLots] = useState('1.0');
   const [slPips, setSlPips] = useState('');
@@ -73,12 +77,18 @@ export default function BacktestSessionPage() {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const candleSeriesRef = useRef<any>(null);
+  
+  // Execution lines
   const entryLineRef = useRef<any>(null);
   const slLineRef = useRef<any>(null);
   const tpLineRef = useRef<any>(null);
+  
+  // Drawn lines refs (to remove them programmatically)
+  const drawnLinesRefs = useRef<any[]>([]);
+
   const autoplayTimerRef = useRef<any>(null);
 
-  // Track the current replayed time (Unix seconds)
+  // Track current replayed Unix timestamp
   const [currentTimeUnix, setCurrentTimeUnix] = useState<number | null>(null);
 
   // Fetch initial Session and Trades
@@ -116,13 +126,17 @@ export default function BacktestSessionPage() {
   }, [user, sessionId]);
 
   // Load candle data when symbol, start_date or activeTimeframe changes
+  // NOT depending on currentTimeUnix to prevent loop re-fetching
+  const sessionSymbol = session?.symbol;
+  const sessionStartDate = session?.start_date;
+
   useEffect(() => {
-    if (!session || !currentTimeUnix) return;
+    if (!sessionSymbol || !sessionStartDate || !currentTimeUnix) return;
 
     const fetchCandles = async () => {
       try {
         setLoadingChart(true);
-        const start = Math.floor(new Date(session.start_date).getTime() / 1000);
+        const start = Math.floor(new Date(sessionStartDate).getTime() / 1000);
         let durationDays = 30;
 
         if (activeTimeframe === '1m') durationDays = 5;
@@ -138,7 +152,7 @@ export default function BacktestSessionPage() {
 
         const candleRes = await fetch(
           `/api/charts/history?symbol=${encodeURIComponent(
-            session.symbol
+            sessionSymbol
           )}&interval=${activeTimeframe}&start=${start}&end=${end}`
         );
 
@@ -147,7 +161,7 @@ export default function BacktestSessionPage() {
           candleData = candleJson.data || [];
         }
 
-        // Fallback hierarchy if no data was found (e.g. expired timeframe on Yahoo Finance)
+        // Fallback if Yahoo doesn't support short timeframes for this historic date
         if (candleData.length === 0) {
           const fallbacks = ['1h', '1d'];
           for (const fb of fallbacks) {
@@ -160,7 +174,7 @@ export default function BacktestSessionPage() {
             }
             const fbRes = await fetch(
               `/api/charts/history?symbol=${encodeURIComponent(
-                session.symbol
+                sessionSymbol
               )}&interval=${fb}&start=${start}&end=${fEnd}`
             );
             if (fbRes.ok) {
@@ -188,6 +202,7 @@ export default function BacktestSessionPage() {
           });
         }
 
+        // Align index
         let matchedIndex = 0;
         for (let i = 0; i < candleData.length; i++) {
           if (candleData[i].time <= currentTimeUnix) {
@@ -211,7 +226,7 @@ export default function BacktestSessionPage() {
     };
 
     fetchCandles();
-  }, [session, activeTimeframe, currentTimeUnix]);
+  }, [sessionSymbol, sessionStartDate, activeTimeframe]);
 
   // Initialize and Render Chart
   useEffect(() => {
@@ -252,7 +267,18 @@ export default function BacktestSessionPage() {
 
     chart.timeScale().fitContent();
 
-    // Mutation observer for light/dark mode switching on-the-fly
+    // Subscribe to clicks for custom drawings
+    chart.subscribeClick((param) => {
+      if (!isDrawingMode || !param.point || !param.time) return;
+      const price = candlestickSeries.coordinateToPrice(param.point.y);
+      if (price) {
+        setDrawnLines((prev) => [...prev, price]);
+        setIsDrawingMode(false); // Reset drawing state after placing
+        toast.success(`Horizontal Line Placed at ${price.toFixed(5)}`);
+      }
+    });
+
+    // Theme Mutation Observer
     const observer = new MutationObserver(() => {
       const dark = document.documentElement.classList.contains('dark');
       if (chartRef.current) {
@@ -283,8 +309,6 @@ export default function BacktestSessionPage() {
     };
     window.addEventListener('resize', handleResize);
 
-    updateChartPriceLines();
-
     return () => {
       window.removeEventListener('resize', handleResize);
       observer.disconnect();
@@ -292,9 +316,9 @@ export default function BacktestSessionPage() {
       chartRef.current = null;
       candleSeriesRef.current = null;
     };
-  }, [loading, loadingChart, candles]);
+  }, [loading, loadingChart, candles, isDrawingMode]);
 
-  // Sync visible candles when index changes
+  // Sync visible slice of candles instantly without recreating chart
   useEffect(() => {
     if (!candleSeriesRef.current || candles.length === 0 || currentIndex >= candles.length) return;
 
@@ -307,11 +331,30 @@ export default function BacktestSessionPage() {
     }
 
     updateChartPriceLines();
-
-    if (chartRef.current) {
-      chartRef.current.timeScale().fitContent();
-    }
   }, [currentIndex, candles]);
+
+  // Render drawn lines whenever drawnLines state changes
+  useEffect(() => {
+    const series = candleSeriesRef.current;
+    if (!series) return;
+
+    // Clear old drawn lines
+    drawnLinesRefs.current.forEach((line) => series.removePriceLine(line));
+    drawnLinesRefs.current = [];
+
+    // Draw new ones
+    drawnLines.forEach((price) => {
+      const line = series.createPriceLine({
+        price,
+        color: '#6366f1',
+        lineWidth: 1.5,
+        lineStyle: 0, // Solid
+        axisLabelVisible: true,
+        title: 'LEVEL',
+      });
+      drawnLinesRefs.current.push(line);
+    });
+  }, [drawnLines]);
 
   const updateChartPriceLines = () => {
     const series = candleSeriesRef.current;
@@ -333,7 +376,7 @@ export default function BacktestSessionPage() {
     if (activeTrade) {
       entryLineRef.current = series.createPriceLine({
         price: activeTrade.entryPrice,
-        color: '#6366f1',
+        color: '#3b82f6',
         lineWidth: 1.5,
         lineStyle: 2,
         axisLabelVisible: true,
@@ -343,7 +386,7 @@ export default function BacktestSessionPage() {
       if (activeTrade.sl) {
         slLineRef.current = series.createPriceLine({
           price: activeTrade.sl,
-          color: '#f43f5e',
+          color: '#ef4444',
           lineWidth: 1.5,
           lineStyle: 2,
           axisLabelVisible: true,
@@ -368,7 +411,7 @@ export default function BacktestSessionPage() {
     updateChartPriceLines();
   }, [activeTrade]);
 
-  // Autoplay Timer
+  // Autoplay loop
   useEffect(() => {
     if (isPlaying) {
       autoplayTimerRef.current = setInterval(() => {
@@ -390,7 +433,7 @@ export default function BacktestSessionPage() {
   const handleStepForward = async () => {
     if (currentIndex >= candles.length - 1) {
       setIsPlaying(false);
-      toast.success('Simulation end reached!');
+      toast.success('Simulation completed!');
       return;
     }
 
@@ -399,6 +442,7 @@ export default function BacktestSessionPage() {
     setCurrentIndex(nextIndex);
     setCurrentTimeUnix(nextCandle.time);
 
+    // Save timestamp progress to DB
     await updateSessionState(sessionId, nextCandle.time, balance, activeTrade);
 
     if (activeTrade) {
@@ -415,10 +459,10 @@ export default function BacktestSessionPage() {
       }
 
       if (hitSL) {
-        await executeCloseTrade(activeTrade.sl!, nextCandle.time, 'Auto Exit: SL Triggered');
+        await executeCloseTrade(activeTrade.sl!, nextCandle.time, 'SL Hit');
         setIsPlaying(false);
       } else if (hitTP) {
-        await executeCloseTrade(activeTrade.tp!, nextCandle.time, 'Auto Exit: TP Triggered');
+        await executeCloseTrade(activeTrade.tp!, nextCandle.time, 'TP Hit');
         setIsPlaying(false);
       }
     }
@@ -509,9 +553,9 @@ export default function BacktestSessionPage() {
       await updateSessionState(sessionId, currentTimeUnix || exitTimeUnix, finalBalance, null);
 
       if (pnl >= 0) {
-        toast.success(`Profit Logged: +$${pnl.toFixed(2)}`);
+        toast.success(`Profit: +$${pnl.toFixed(2)}`);
       } else {
-        toast.error(`Loss Logged: -$${Math.abs(pnl).toFixed(2)}`);
+        toast.error(`Loss: -$${Math.abs(pnl).toFixed(2)}`);
       }
 
       if (candleSeriesRef.current) {
@@ -536,7 +580,7 @@ export default function BacktestSessionPage() {
 
     } catch (err) {
       console.error(err);
-      toast.error('Failed to save trade log.');
+      toast.error('Failed to save trade.');
     }
   };
 
@@ -554,6 +598,36 @@ export default function BacktestSessionPage() {
       toast.error('Failed to delete trade.');
     }
   };
+
+  // Fullscreen toggle handler
+  const handleFullscreenToggle = () => {
+    if (!chartContainerRef.current) return;
+
+    if (!document.fullscreenElement) {
+      chartContainerRef.current.requestFullscreen().catch((err) => {
+        toast.error(`Error enabling fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  // Listen to fullscreen changes to resize chart
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const container = chartContainerRef.current;
+      if (chartRef.current && container) {
+        setTimeout(() => {
+          chartRef.current.resize(
+            container.clientWidth,
+            container.clientHeight
+          );
+        }, 100);
+      }
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const totalTrades = trades.length;
   const wins = trades.filter(t => (t.profit_loss ?? 0) >= 0).length;
@@ -702,7 +776,6 @@ export default function BacktestSessionPage() {
               </button>
             </div>
 
-            {/* Play Speed dropdown */}
             <select
               value={playSpeed}
               onChange={(e) => setPlaySpeed(Number(e.target.value))}
@@ -723,7 +796,7 @@ export default function BacktestSessionPage() {
             
             {/* Balance and Stats Card */}
             <div className="bg-white dark:bg-[#0f111a]/60 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-white/[0.06] p-5 shadow-sm dark:shadow-lg space-y-3">
-              <span className="text-[10px] text-slate-400 dark:text-gray-505 font-bold uppercase tracking-widest">Available Capital</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-550 font-bold uppercase tracking-widest">Available Capital</span>
               <div className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono">{formatCurrency(balance)}</div>
               <div className="flex items-center justify-between text-xs pt-1.5 border-t border-slate-100 dark:border-white/[0.03] font-semibold">
                 <span className="text-slate-500">Session PnL:</span>
@@ -820,7 +893,7 @@ export default function BacktestSessionPage() {
                   </div>
 
                   <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-white/[0.04]">
-                    <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Floating return</span>
+                    <span className="text-[10px] text-slate-400 dark:text-gray-505 font-bold uppercase tracking-widest">Floating return</span>
                     <span className={`text-sm font-bold font-mono ${getFloatingPnL() >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600'}`}>
                       {getFloatingPnL() >= 0 ? '+' : ''}
                       {formatCurrency(getFloatingPnL())}
@@ -841,6 +914,48 @@ export default function BacktestSessionPage() {
           {/* Center Main: Interactive Chart canvas */}
           <div className="lg:col-span-3">
             <div className="relative w-full h-[500px] bg-white dark:bg-[#090a10] rounded-3xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-md dark:shadow-2xl">
+              
+              {/* Fullscreen & Drawings toolbar controls */}
+              <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+                <button
+                  onClick={() => setIsDrawingMode(!isDrawingMode)}
+                  className={`p-2 rounded-xl border text-xs font-bold transition-all duration-150 flex items-center gap-1.5 shadow ${
+                    isDrawingMode
+                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/10'
+                      : 'bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5'
+                  }`}
+                  title="Draw Support/Resistance Line (Click on the chart afterwards)"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.24 9.42L7 17.66m10.12-10.12a3 3 0 11-4.24-4.24 3 3 0 014.24 4.24z" />
+                  </svg>
+                  <span>Draw Line</span>
+                </button>
+
+                {drawnLines.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setDrawnLines([]);
+                      toast.success('Drawings cleared');
+                    }}
+                    className="p-2 rounded-xl border text-xs font-bold bg-white dark:bg-[#0f111a]/80 text-rose-500 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow"
+                    title="Clear All Lines"
+                  >
+                    Clear
+                  </button>
+                )}
+
+                <button
+                  onClick={handleFullscreenToggle}
+                  className="p-2 rounded-xl border bg-white dark:bg-[#0f111a]/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/[0.08] hover:bg-slate-50 dark:hover:bg-white/5 shadow transition-all duration-150"
+                  title="Toggle Fullscreen Chart"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 4l-5 5m-11 7v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                  </svg>
+                </button>
+              </div>
+
               {loadingChart && (
                 <div className="absolute inset-0 bg-white/80 dark:bg-[#090a10]/80 backdrop-blur-sm z-30 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-3">

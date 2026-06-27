@@ -27,7 +27,7 @@ export default function BacktestingPage() {
   const [name, setName] = useState('');
   const [symbol, setSymbol] = useState('EURUSD');
   const [initialBalance, setInitialBalance] = useState('10000');
-  const [startDate, setStartDate] = useState('2025-01-01');
+  const [startDate, setStartDate] = useState('2025-01-01T00:00');
   const [selectedStrategy, setSelectedStrategy] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -103,7 +103,7 @@ export default function BacktestingPage() {
       setName('');
       setSymbol('EURUSD');
       setInitialBalance('10000');
-      setStartDate('2025-01-01');
+      setStartDate('2025-01-01T00:00');
       setSelectedStrategy('');
 
       // Navigate to the newly created session
@@ -375,9 +375,9 @@ export default function BacktestingPage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Start Date in History</label>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Start Date & Time (UTC)</label>
                         <input
-                          type="date"
+                          type="datetime-local"
                           required
                           value={startDate}
                           onChange={(e) => setStartDate(e.target.value)}
