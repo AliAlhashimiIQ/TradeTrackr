@@ -143,6 +143,17 @@ export interface BacktestingSession {
   timeframe: string;
   strategy?: string | null;
   initial_balance: number;
+  current_balance: number;
+  start_date: string;
+  current_index: number;
+  active_trade?: {
+    type: 'Long' | 'Short';
+    entryPrice: number;
+    qty: number;
+    sl?: number;
+    tp?: number;
+    entryTime: number; // Unix seconds
+  } | null;
   created_at: string;
   updated_at: string;
 }
