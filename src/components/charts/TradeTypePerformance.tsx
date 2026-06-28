@@ -224,6 +224,37 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
   const betterAvgReturn = longData.averageReturn > shortData.averageReturn ? 'Long' : 'Short';
   const betterPnL = longData.pnL > shortData.pnL ? 'Long' : 'Short';
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+          <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{label || data.name || data.subject || 'Details'}</p>
+          {payload.map((p: any, idx: number) => {
+            const val = p.value;
+            const isCurrency = data.unit === '$' || p.payload.subject === 'Avg Return' || p.name.includes('P&L');
+            const isPercent = data.unit === '%' || p.payload.subject === 'Win Rate' || p.payload.subject === 'Consistency';
+            
+            const displayVal = isCurrency 
+              ? formatCurrency(val) 
+              : isPercent 
+                ? `${val}%` 
+                : val;
+
+            return (
+              <p key={idx} className="text-xs font-semibold text-slate-650 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.fill || p.stroke }} />
+                <span>{p.name}:</span>
+                <span className="font-mono font-bold text-slate-900 dark:text-white">{displayVal}</span>
+              </p>
+            );
+          })}
+        </div>
+      );
+    }
+    return null;
+  };
+
   // Render the view based on selected mode
   const renderView = () => {
     switch (viewMode) {
@@ -249,16 +280,8 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                   tick={{ fill: '#9ca3af' }}
                 />
                 <Tooltip 
-                  formatter={(value, name, props) => {
-                    const metric = props.payload;
-                    if (metric.unit === '%') return [`${value}%`, name];
-                    if (metric.unit === '$') return [formatCurrency(value as number), name];
-                    return [value, name];
-                  }}
-                  contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
-                  itemStyle={{ color: '#e2e8f0' }}
-                  labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
-                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
+                  content={<CustomTooltip />}
+                  cursor={{ fill: 'rgba(128, 128, 128, 0.05)' }}
                 />
                 <Legend />
                 <Bar dataKey="Long" fill={COLORS.Long} name="Long Trades">
@@ -320,21 +343,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                   fillOpacity={0.3}
                 />
                 <Legend wrapperStyle={{ color: '#9ca3af', fontSize: 11 }} />
-                <Tooltip
-                  formatter={(value, name, props) => {
-                    if (name === 'Long' || name === 'Short') {
-                      const subject = props.payload.subject;
-                      if (subject === 'Win Rate') return [`${value}%`, name];
-                      if (subject === 'Avg Return') return [formatCurrency(Number(value) / 100), name];
-                      if (subject === 'Profit Factor') return [value, name];
-                      if (subject === 'Consistency') return [`${value}%`, name];
-                    }
-                    return [value, name];
-                  }}
-                  contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
-                  itemStyle={{ color: '#e2e8f0' }}
-                  labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
-                />
+                <Tooltip content={<CustomTooltip />} />
               </RadarChart>
             </ResponsiveContainer>
           </div>
@@ -366,15 +375,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
               />
             ))}
           </Pie>
-          <Tooltip
-            formatter={(value, name, props) => [
-              formatCurrency(props.payload.pnL),
-              props.payload.type
-            ]}
-            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#374151', borderRadius: '12px' }}
-            itemStyle={{ color: '#e2e8f0' }}
-            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
-          />
+          <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
           </div>
@@ -383,28 +384,28 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
   };
 
   return (
-    <div className="w-full bg-[#131825] rounded-lg p-4">
+    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Trade Type Performance
         </div>
         {isClient && (
-          <div className="flex space-x-2">
+          <div className="flex space-x-1 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
             <button
               onClick={() => setViewMode('pie')}
-              className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${viewMode === 'pie' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'pie' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Pie
             </button>
             <button
               onClick={() => setViewMode('bar')}
-              className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${viewMode === 'bar' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'bar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Bar
             </button>
             <button
               onClick={() => setViewMode('radar')}
-              className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${viewMode === 'radar' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'radar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Radar
             </button>
@@ -414,15 +415,15 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-[#1a1f2c] p-3 rounded">
-          <div className="text-sm text-blue-400 mb-1 flex items-center">
-            <span className="h-3 w-3 rounded-full bg-blue-500 mr-1.5"></span>
-            Long Trades {betterPnL === 'Long' && <span className="ml-1 text-green-400 text-xs">★</span>}
+        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
+          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
+            <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 mr-1.5"></span>
+            Long Trades {betterPnL === 'Long' && <span className="ml-1 text-green-500 text-xs">★</span>}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <div className="text-xs text-gray-400">Count</div>
-              <div className="text-base font-semibold text-white">{longData.trades}</div>
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Count</div>
+              <div className="text-base font-bold text-slate-900 dark:text-white">{longData.trades}</div>
               <div className="text-xs text-gray-500">
                 {((longData.trades / totalTrades) * 100).toFixed(0)}% of total
               </div>
@@ -438,46 +439,46 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">P&L</div>
-              <div className={`text-base font-semibold ${longData.pnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">P&L</div>
+              <div className={`text-base font-bold ${longData.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
                 {formatCurrency(longData.pnL)}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-[10px] text-slate-400 dark:text-gray-500">
                 {formatCurrency(longData.averageReturn)} avg
               </div>
             </div>
           </div>
         </div>
         
-        <div className="bg-[#1a1f2c] p-3 rounded">
-          <div className="text-sm text-red-400 mb-1 flex items-center">
-            <span className="h-3 w-3 rounded-full bg-red-500 mr-1.5"></span>
-            Short Trades {betterPnL === 'Short' && <span className="ml-1 text-green-400 text-xs">★</span>}
+        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
+          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 mr-1.5"></span>
+            Short Trades {betterPnL === 'Short' && <span className="ml-1 text-green-500 text-xs">★</span>}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <div className="text-xs text-gray-400">Count</div>
-              <div className="text-base font-semibold text-white">{shortData.trades}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Count</div>
+              <div className="text-base font-bold text-slate-900 dark:text-white">{shortData.trades}</div>
+              <div className="text-[10px] text-slate-400 dark:text-gray-500">
                 {((shortData.trades / totalTrades) * 100).toFixed(0)}% of total
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">Win Rate</div>
-              <div className="text-base font-semibold text-white flex items-center">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Win Rate</div>
+              <div className="text-base font-bold text-slate-900 dark:text-white flex items-center">
                 {formatPercent(shortData.winRate)}
-                {betterWinRate === 'Short' && <span className="ml-1 text-green-400 text-xs">★</span>}
+                {betterWinRate === 'Short' && <span className="ml-1 text-green-500 text-xs">★</span>}
               </div>
-              <div className="text-xs text-gray-500">
-                {shortData.profitFactor.toFixed(2)} profit factor
+              <div className="text-[10px] text-slate-400 dark:text-gray-500">
+                {shortData.profitFactor.toFixed(2)} PF
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">P&L</div>
-              <div className={`text-base font-semibold ${shortData.pnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">P&L</div>
+              <div className={`text-base font-bold ${shortData.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
                 {formatCurrency(shortData.pnL)}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-[10px] text-slate-400 dark:text-gray-500">
                 {formatCurrency(shortData.averageReturn)} avg
               </div>
             </div>
@@ -486,20 +487,20 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       </div>
       
       {/* Summary banner */}
-      <div className="bg-[#1a1f2c]/50 p-2 rounded-lg mb-4">
-        <div className="text-xs text-gray-300 flex justify-between">
+      <div className="bg-slate-50 dark:bg-[#1a1f2c]/50 border border-slate-200 dark:border-white/5 p-3.5 rounded-xl mb-4">
+        <div className="text-xs text-slate-655 dark:text-gray-300 flex flex-col sm:flex-row justify-between gap-2">
           <span>Total P&L: 
-            <span className={`font-medium ml-1 ${totalPnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <span className={`font-bold ml-1 ${totalPnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
               {formatCurrency(totalPnL)}
             </span>
           </span>
           <span>Better Direction: 
-            <span className={`font-medium ml-1 ${betterPnL === 'Long' ? 'text-blue-400' : 'text-red-400'}`}>
+            <span className={`font-bold ml-1 ${betterPnL === 'Long' ? 'text-indigo-600 dark:text-indigo-400' : 'text-rose-600 dark:text-rose-400'}`}>
               {betterPnL} Trades
             </span>
           </span>
           <span>Edge: 
-            <span className={`font-medium ml-1 ${Math.abs(longData.winRate - shortData.winRate) > 10 ? 'text-green-400' : 'text-gray-400'}`}>
+            <span className={`font-bold ml-1 ${Math.abs(longData.winRate - shortData.winRate) > 10 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
               {Math.abs(longData.winRate - shortData.winRate).toFixed(1)}% win rate difference
             </span>
           </span>
@@ -510,17 +511,17 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       {renderView()}
       
       {/* Insight text */}
-      <div className="text-xs text-gray-400 mt-4 bg-[#1a1f2c]/50 p-2 rounded-lg">
+      <div className="text-xs text-slate-650 dark:text-slate-350 mt-4 bg-slate-50 dark:bg-[#1a1f2c]/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
         {longData.pnL > shortData.pnL ? (
           <p>
-            Your <span className="text-blue-400">long trades</span> are more profitable overall 
+            Your <span className="font-bold text-indigo-600 dark:text-indigo-400">long trades</span> are more profitable overall 
             {longData.winRate > shortData.winRate ? 
               " and have a higher win rate." : 
               ", despite having a lower win rate."}
           </p>
         ) : (
           <p>
-            Your <span className="text-red-400">short trades</span> are more profitable overall
+            Your <span className="font-bold text-rose-600 dark:text-rose-400">short trades</span> are more profitable overall
             {shortData.winRate > longData.winRate ? 
               " and have a higher win rate." : 
               ", despite having a lower win rate."}

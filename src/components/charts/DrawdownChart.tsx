@@ -58,6 +58,21 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
   // Add reference lines at specific drawdown percentages
   const referenceLevels = [5, 10, 20, 30].filter(level => level <= maxDrawdownPercent * 1.5);
   
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const val = payload[0].value;
+      return (
+        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs animate-in fade-in zoom-in duration-100">
+          <p className="font-bold text-slate-850 dark:text-slate-200 mb-1.5">{formatDate(label)}</p>
+          <p className="text-xs font-semibold text-rose-600 dark:text-red-400">
+            Drawdown: <span className="font-mono font-bold">{val.toFixed(2)}%</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="w-full h-64 rounded-xl p-2">
       <ResponsiveContainer width="100%" height="100%">
@@ -65,7 +80,7 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
           data={data}
           margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.4} />
+          <CartesianGrid strokeDasharray="2 4" stroke="rgba(128,128,128,0.08)" />
           <XAxis
             dataKey="date"
             tickFormatter={formatDate}
@@ -83,12 +98,8 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
             domain={[0, Math.ceil(maxDrawdownPercent * 1.2)]}
           />
           <Tooltip
-            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#334155', borderRadius: '12px' }}
-            itemStyle={{ color: '#e2e8f0' }}
-            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
-            cursor={{ stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1 }}
-            formatter={(value: number) => [`${value.toFixed(2)}%`, 'Drawdown']}
-            labelFormatter={(label) => formatDate(label)}
+            content={<CustomTooltip />}
+            cursor={{ stroke: 'rgba(128, 128, 128, 0.1)', strokeWidth: 1 }}
           />
           <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 11 }} />
           

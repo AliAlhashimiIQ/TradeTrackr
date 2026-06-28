@@ -29,7 +29,7 @@ const formatCurrency = (value: number) => {
 };
 
 const formatPercent = (value: number) => {
-  return `${value.toFixed(0)}%`;
+  return `${value.toFixed(1)}%`;
 };
 
 /**
@@ -43,16 +43,16 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
   
   if (loading) {
     return (
-      <div className="w-full h-64 rounded-xl flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="w-full h-80 bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 rounded-xl flex items-center justify-center">
-        <p className="text-slate-400">No data available</p>
+      <div className="w-full h-80 bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
+        <p className="text-slate-400 dark:text-gray-500">No data available</p>
       </div>
     );
   }
@@ -89,72 +89,94 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
     return (value: number) => value.toString();
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const original = sortedData.find(s => s.symbol === label);
+      if (!original) return null;
+
+      return (
+        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+          <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{original.symbol}</p>
+          <p className={`text-xs font-semibold ${original.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'} mb-1`}>
+            P&L: <span className="font-mono font-bold">{formatCurrency(original.pnL)}</span>
+          </p>
+          <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1">
+            Win Rate: <span className="font-mono font-bold">{formatPercent(original.winRate)}</span>
+          </p>
+          <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+            Trades: <span className="font-mono font-bold">{original.trades}</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="w-full h-80 rounded-xl p-2">
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-slate-400">
+    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
+        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Top {sortedData.length} symbols by {metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trade Count'}
         </div>
-        <div className="flex space-x-1.5 bg-slate-900 border border-slate-800 rounded-lg p-1">
+        <div className="flex space-x-1 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
           <button
             onClick={() => setMetric('pnL')}
-            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'pnL' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             P&L
           </button>
           <button
             onClick={() => setMetric('winRate')}
-            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'winRate' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Win Rate
           </button>
           <button
             onClick={() => setMetric('trades')}
-            className={`px-2.5 py-1 text-xs rounded-md transition-colors ${metric === 'trades' ? 'bg-slate-200 text-slate-900' : 'text-slate-400 hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Trades
           </button>
         </div>
       </div>
       
-      <ResponsiveContainer width="100%" height="90%">
-        <BarChart
-          data={sortedData}
-          layout="vertical"
-          margin={{ top: 5, right: 30, left: 60, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.35} horizontal={false} />
-          <XAxis
-            type="number"
-            stroke="#64748b"
-            tick={{ fill: '#94a3b8', fontSize: 10 }}
-            domain={metric === 'winRate' ? [0, 100] : ['auto', 'auto']}
-            tickFormatter={metric === 'pnL' ? formatCurrency : metric === 'winRate' ? formatPercent : undefined}
-          />
-          <YAxis
-            type="category"
-            dataKey="symbol"
-            stroke="#64748b"
-            tick={{ fill: '#cbd5e1', fontSize: 11 }}
-            width={90}
-          />
-          <Tooltip
-            formatter={(value: number) => [formatTooltipValue(value), metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trades']}
-            contentStyle={{ backgroundColor: 'rgba(13,14,22,0.95)', borderColor: '#334155', borderRadius: '12px' }}
-            itemStyle={{ color: '#e2e8f0' }}
-            labelStyle={{ color: '#cbd5e1', fontWeight: 'bold' }}
-            cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
-          />
-          <Bar dataKey={metric} barSize={24} radius={[0, 8, 8, 0]}>
-            {sortedData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
-            ))}
-            <LabelList dataKey={metric} position="right" formatter={getLabelFormat()} fill="#cbd5e1" />
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+      <div className="h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={sortedData}
+            layout="vertical"
+            margin={{ top: 5, right: 35, left: 10, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.08)" horizontal={false} />
+            <XAxis
+              type="number"
+              stroke="#6b7280"
+              tick={{ fill: '#94a3b8', fontSize: 10 }}
+              domain={metric === 'winRate' ? [0, 100] : ['auto', 'auto']}
+              tickFormatter={metric === 'pnL' ? formatCurrency : metric === 'winRate' ? formatPercent : undefined}
+            />
+            <YAxis
+              type="category"
+              dataKey="symbol"
+              stroke="#6b7280"
+              tick={{ fill: '#6b7280', fontSize: 10 }}
+              width={75}
+            />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: 'rgba(128, 128, 128, 0.05)' }}
+            />
+            <Bar dataKey={metric} barSize={18} radius={[0, 4, 4, 0]}>
+              {sortedData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={getBarColor(entry)} />
+              ))}
+              <LabelList dataKey={metric} position="right" formatter={getLabelFormat()} fill="#6b7280" style={{ fontSize: 9, fontWeight: 'bold' }} />
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };
 
-export default SymbolPerformance; 
+export default SymbolPerformance;

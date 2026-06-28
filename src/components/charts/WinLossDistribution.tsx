@@ -187,13 +187,13 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       const isWin = midPoint >= 0;
       
       return (
-        <div className="bg-slate-950/95 p-3 rounded-xl shadow-2xl border border-slate-800 text-xs backdrop-blur-sm">
-          <p className="font-bold text-slate-100 mb-1">
-            {isWin ? 'Winning' : 'Losing'} Trades
+        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+          <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+            {isWin ? 'Winning' : 'Losing'} Trades Range
           </p>
-          <p className="text-slate-300 mb-1">Range: {formatCurrency(values[0])} to {formatCurrency(values[1])}</p>
-          <p className="text-slate-300">Frequency: {item.percentage.toFixed(2)}%</p>
-          <p className="text-slate-300">Count: {item.count} trades</p>
+          <p className="text-slate-650 dark:text-slate-300 mb-1">Range: <span className="font-mono font-semibold">{formatCurrency(values[0])} to {formatCurrency(values[1])}</span></p>
+          <p className="text-slate-655 dark:text-slate-300 mb-1">Frequency: <span className="font-mono font-semibold">{item.percentage.toFixed(2)}%</span></p>
+          <p className="text-slate-655 dark:text-slate-300">Count: <span className="font-mono font-bold text-slate-900 dark:text-white">{item.count} trades</span></p>
         </div>
       );
     }
@@ -201,19 +201,19 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
   };
 
   return (
-    <div className="w-full rounded-xl p-2">
+    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-slate-400">
+        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Win/Loss Distribution
         </div>
         {isClient && (
           <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-1 text-slate-300 text-xs">
+            <label className="flex items-center space-x-1.5 text-slate-600 dark:text-gray-305 text-xs cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={showLabels}
                 onChange={(e) => setShowLabels(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 h-3 w-3"
+                className="rounded text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 border-slate-300 dark:border-white/10 dark:bg-slate-900"
               />
               <span>Show Labels</span>
             </label>
@@ -223,29 +223,29 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       
       {/* Stats summary */}
       <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg">
-          <div className="text-xs text-slate-400 mb-1">Win Rate</div>
-          <div className="text-lg font-semibold text-slate-100">
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+          <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider mb-1">Win Rate</div>
+          <div className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-baseline gap-1.5">
             {formattedStats.winRate}
-            <span className="text-xs text-slate-500 ml-2">
+            <span className="text-[10px] text-slate-405 dark:text-gray-500 font-semibold font-mono">
               ({stats.winningTrades}/{stats.winningTrades + stats.losingTrades})
             </span>
           </div>
         </div>
-        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg">
-          <div className="text-xs text-slate-400 mb-1">Risk/Reward</div>
-          <div className={`text-lg font-semibold ${Number(formattedStats.riskRewardRatio) >= 1 ? 'text-green-400' : 'text-red-400'}`}>
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl">
+          <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider mb-1">Risk/Reward</div>
+          <div className={`text-base font-bold ${Number(formattedStats.riskRewardRatio) >= 1 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
             {formattedStats.riskRewardRatio}
           </div>
         </div>
-        <div className="bg-slate-900/60 border border-slate-800 p-2 rounded-lg flex justify-between">
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-3 rounded-xl flex justify-between gap-2">
           <div>
-            <div className="text-xs text-green-400">Avg Win</div>
-            <div className="text-sm font-semibold text-slate-100">{formattedStats.averageWin}</div>
+            <div className="text-[10px] font-bold text-emerald-600 dark:text-green-400 uppercase tracking-wider mb-0.5">Avg Win</div>
+            <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{formattedStats.averageWin}</div>
           </div>
           <div>
-            <div className="text-xs text-red-400">Avg Loss</div>
-            <div className="text-sm font-semibold text-slate-100">{formattedStats.averageLoss}</div>
+            <div className="text-[10px] font-bold text-rose-600 dark:text-red-400 uppercase tracking-wider mb-0.5">Avg Loss</div>
+            <div className="text-xs font-bold text-slate-900 dark:text-slate-100">{formattedStats.averageLoss}</div>
           </div>
         </div>
       </div>
