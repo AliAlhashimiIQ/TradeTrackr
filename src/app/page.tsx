@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import Logo from '@/components/ui/Logo'
 
 // Standardized animations for staggered reveal
@@ -15,6 +15,84 @@ const fadeInUp = {
     y: 0,
     transition: { delay: i * 0.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }
   })
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.05
+    }
+  }
+}
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 28 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+  }
+}
+
+// 3D Card Hover Sheen component (iOS-grade micro-interaction)
+function CardSheen({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+  const [coords, setCoords] = useState({ x: 0, y: 0 })
+  const [isHovered, setIsHovered] = useState(false)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setCoords({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    })
+  }
+
+  return (
+    <div
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`relative overflow-hidden transition-all duration-300 ${className}`}
+      style={{
+        background: 'rgba(15, 17, 26, 0.72)',
+        borderColor: 'rgba(255, 255, 255, 0.04)',
+      }}
+    >
+      {/* Light sheen following mouse */}
+      {isHovered && (
+        <div
+          className="absolute pointer-events-none rounded-full blur-[100px] transition-opacity duration-300"
+          style={{
+            width: '280px',
+            height: '280px',
+            background: 'radial-gradient(circle, rgba(99, 102, 241, 0.09) 0%, transparent 70%)',
+            left: `${coords.x - 140}px`,
+            top: `${coords.y - 140}px`,
+            zIndex: 0
+          }}
+        />
+      )}
+      
+      {/* Dynamic Border Sheen */}
+      {isHovered && (
+        <div
+          className="absolute inset-0 pointer-events-none rounded-2xl border border-indigo-500/20"
+          style={{
+            maskImage: `radial-gradient(circle 80px at ${coords.x}px ${coords.y}px, black, transparent)`,
+            WebkitMaskImage: `radial-gradient(circle 80px at ${coords.x}px ${coords.y}px, black, transparent)`,
+            zIndex: 10
+          }}
+        />
+      )}
+
+      <div className="relative z-10 w-full h-full">
+        {children}
+      </div>
+    </div>
+  )
 }
 
 const features = [
@@ -88,6 +166,12 @@ export default function Home() {
   // Chart state simulation
   const [chartActiveStep, setChartActiveStep] = useState(0)
 
+  // Scroll hooks for Parallax background blobs and progress bar
+  const { scrollY, scrollYProgress } = useScroll()
+  const blobY1 = useTransform(scrollY, [0, 1500], [0, -120])
+  const blobY2 = useTransform(scrollY, [0, 2500], [0, 180])
+  const blobY3 = useTransform(scrollY, [0, 3500], [0, -100])
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -131,13 +215,29 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#06070b] text-white overflow-hidden font-sans relative">
-      {/* Background Grid Pattern */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
+      
+      {/* Top Scroll Progress Indicator */}
+      <motion.div 
+        className="fixed top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-indigo-500 via-blue-500 to-cyan-500 z-[100] origin-left"
+        style={{ scaleX: scrollYProgress }}
+      />
 
-      {/* Ambient Radial Blobs */}
-      <div className="absolute top-[-10%] left-[-15%] w-[80vw] h-[60vh] bg-gradient-to-br from-indigo-900/15 to-transparent rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-[30%] right-[-10%] w-[50vw] h-[50vh] bg-gradient-to-bl from-violet-900/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[20%] w-[60vw] h-[40vh] bg-gradient-to-tr from-blue-900/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
+
+      {/* Ambient Parallax Radial Blobs */}
+      <motion.div 
+        className="absolute top-[-10%] left-[-15%] w-[80vw] h-[60vh] bg-gradient-to-br from-indigo-900/15 to-transparent rounded-full blur-[140px] pointer-events-none z-0" 
+        style={{ y: blobY1 }}
+      />
+      <motion.div 
+        className="absolute top-[30%] right-[-10%] w-[50vw] h-[50vh] bg-gradient-to-bl from-violet-900/10 to-transparent rounded-full blur-[140px] pointer-events-none z-0" 
+        style={{ y: blobY2 }}
+      />
+      <motion.div 
+        className="absolute bottom-[-10%] left-[20%] w-[60vw] h-[40vh] bg-gradient-to-tr from-blue-900/10 to-transparent rounded-full blur-[140px] pointer-events-none z-0" 
+        style={{ y: blobY3 }}
+      />
 
       {/* Navigation */}
       <header className="relative z-50 border-b border-white/[0.04] bg-[#06070b]/60 backdrop-blur-md">
@@ -238,7 +338,7 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.96, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="w-full max-w-[540px] rounded-2xl bg-gradient-to-b from-[#0f111a] to-[#07080d] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] p-4 flex flex-col gap-4 relative overflow-hidden backdrop-blur-xl"
+              className="w-full max-w-[540px] rounded-2xl bg-gradient-to-b from-[#0f111a] to-[#07080d] border border-white/[0.08] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] p-4 flex flex-col gap-4 relative overflow-hidden backdrop-blur-xl animate-fade-in"
             >
               {/* Card glossy shimmer */}
               <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
@@ -377,7 +477,7 @@ export default function Home() {
                 key={stat.label}
                 initial={{ opacity: 0, y: 12 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.08, duration: 0.5 }}
                 className="text-center"
               >
@@ -396,7 +496,7 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.5 }}
               className="text-center mb-20"
             >
@@ -411,24 +511,69 @@ export default function Home() {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature, i) => (
-                <motion.div
-                  key={feature.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.06, duration: 0.5 }}
-                  className="group relative p-6 rounded-2xl bg-gradient-to-b from-[#0f111a] to-[#07080d] border border-white/[0.04] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1"
-                >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.gradient} border border-white/5 flex items-center justify-center mb-5 shadow-lg group-hover:scale-105 transition-transform duration-300`}>
-                    <div className="text-indigo-400">{feature.icon}</div>
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-2">{feature.title}</h3>
-                  <p className="text-xs text-gray-400 leading-relaxed">{feature.description}</p>
+            {/* Staggered card reveal on scroll */}
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {features.map((feature) => (
+                <motion.div key={feature.title} variants={staggerItem}>
+                  <CardSheen className="p-6 rounded-2xl border flex flex-col justify-between h-full hover:-translate-y-1">
+                    <div>
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${feature.gradient} border border-white/5 flex items-center justify-center mb-5 shadow-lg`}>
+                        <div className="text-indigo-400">{feature.icon}</div>
+                      </div>
+                      <h3 className="text-base font-bold text-white mb-2">{feature.title}</h3>
+                      <p className="text-xs text-gray-400 leading-relaxed">{feature.description}</p>
+                    </div>
+                  </CardSheen>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* How It Works Section (Animated timeline) */}
+        <section className="relative z-10 py-24 px-6 border-t border-white/[0.04]">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="text-center mb-20"
+            >
+              <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight">
+                Integrate Ledger in{' '}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">
+                  Three Steps
+                </span>
+              </h2>
+            </motion.div>
+
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-100px" }}
+              className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative"
+            >
+              {[
+                { step: '01', title: 'Connect API', desc: 'Securely link trading accounts or upload historical CSV data logs.' },
+                { step: '02', title: 'Journal Details', desc: 'Annotate positions with screenshot embeds, strategy setups, and emotions.' },
+                { step: '03', title: 'Isolate Strengths', desc: 'Execute diagnostic models to identify statistical execution advantages.' },
+              ].map((item, i) => (
+                <motion.div key={item.step} variants={staggerItem} className="text-center relative group">
+                  <div className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-b from-white/10 to-transparent mb-4 font-mono select-none">
+                    {item.step}
+                  </div>
+                  <h3 className="text-base font-bold text-white mb-2 group-hover:text-indigo-400 transition-colors">{item.title}</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed px-4">{item.desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </section>
 
@@ -439,32 +584,59 @@ export default function Home() {
               
               {/* Left Side: Copy */}
               <div className="lg:col-span-5 text-left">
-                <div className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-amber-500/35 bg-amber-500/10 text-amber-300 text-[10px] font-bold uppercase tracking-wider">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  className="inline-flex items-center gap-2 px-3 py-1 mb-6 rounded-full border border-amber-500/35 bg-amber-500/10 text-amber-300 text-[10px] font-bold uppercase tracking-wider"
+                >
                   Evaluation Audits
-                </div>
-                <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight leading-snug">
+                </motion.div>
+                
+                <motion.h2 
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: 0.08 }}
+                  className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight leading-snug"
+                >
                   Enforce Evaluation{' '}
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 to-orange-400">
                     Challenge Rules
                   </span>
-                </h2>
-                <p className="text-gray-400 text-sm leading-relaxed mb-6">
+                </motion.h2>
+                
+                <motion.p 
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ delay: 0.16 }}
+                  className="text-gray-400 text-sm leading-relaxed mb-6"
+                >
                   Maintain compliance across key challenge targets. The system logs daily balance adjustments, tracks relative drawdowns, and calculates position size limits.
-                </p>
+                </motion.p>
+
                 <div className="space-y-4">
                   {[
                     'Automated Daily Drawdown limits tracking.',
                     'Checklist rule consistency checkers (e.g. 40% rule).',
                     'Frictionless MT5 account sync updates.'
                   ].map((bullet, idx) => (
-                    <div key={idx} className="flex items-center gap-3">
+                    <motion.div 
+                      key={idx} 
+                      initial={{ opacity: 0, x: -12 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="flex items-center gap-3"
+                    >
                       <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
                         <svg className="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
                       <span className="text-xs text-gray-300 font-semibold">{bullet}</span>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -474,10 +646,12 @@ export default function Home() {
                 <motion.div 
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
+                  viewport={{ once: true, margin: "-100px" }}
                   transition={{ duration: 0.6 }}
-                  className="w-full max-w-[500px] bg-[#0c0d15] border border-white/[0.06] rounded-2xl p-5 space-y-5"
+                  className="w-full max-w-[500px] bg-[#0c0d15] border border-white/[0.06] rounded-2xl p-5 space-y-5 shadow-2xl relative overflow-hidden"
                 >
+                  <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+
                   <div className="flex items-center justify-between border-b border-white/[0.04] pb-3">
                     <span className="text-xs font-bold text-gray-400">Evaluation Phase 1 Progress</span>
                     <span className="text-xs font-bold font-mono text-amber-400">$8,200.00 / $10,000.00</span>
@@ -494,7 +668,7 @@ export default function Home() {
                         className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" 
                         initial={{ width: 0 }}
                         whileInView={{ width: '82%' }}
-                        viewport={{ once: true }}
+                        viewport={{ once: true, margin: "-100px" }}
                         transition={{ duration: 1.2, ease: 'easeOut' }}
                       />
                     </div>
@@ -541,7 +715,8 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
               className="relative rounded-3xl overflow-hidden p-10 sm:p-14 text-center bg-gradient-to-br from-indigo-950/20 to-blue-950/25 border border-indigo-500/20 shadow-2xl shadow-indigo-950/10"
             >
               <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 tracking-tight">
