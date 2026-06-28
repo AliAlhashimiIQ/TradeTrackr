@@ -57,20 +57,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const simPoint = payload.find((p: any) => p.name === 'Simulated Balance' || p.dataKey === 'simulatedValue');
     
     return (
-      <div className="bg-slate-950/95 p-3 rounded-xl border border-slate-800 shadow-2xl backdrop-blur-sm">
-        <p className="text-xs text-slate-400 mb-2">{label}</p>
+      <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl text-xs">
+        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{label}</p>
         {actualPoint && (
           <div className="mb-2">
-            <p className="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Actual Balance</p>
-            <p className="text-sm font-bold text-slate-100">${actualPoint.value.toFixed(2)}</p>
+            <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold uppercase tracking-wider">Actual Balance</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">${actualPoint.value.toFixed(2)}</p>
           </div>
         )}
         {simPoint && (
-          <div className="border-t border-slate-800/80 pt-1.5 mt-1.5">
-            <p className="text-[10px] text-emerald-400 font-semibold uppercase tracking-wider">Simulated Balance</p>
-            <p className="text-sm font-bold text-slate-100">${simPoint.value.toFixed(2)}</p>
+          <div className="border-t border-slate-200 dark:border-white/10 pt-1.5 mt-1.5">
+            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">Simulated Balance</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100">${simPoint.value.toFixed(2)}</p>
             {actualPoint && (
-              <p className="text-[11px] text-emerald-300 font-medium mt-0.5">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
                 Difference: +${(simPoint.value - actualPoint.value).toFixed(2)}
               </p>
             )}

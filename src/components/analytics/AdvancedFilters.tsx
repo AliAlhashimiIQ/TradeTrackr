@@ -25,28 +25,6 @@ export interface FilterOptions {
   tags: string[];
 }
 
-// Consistent color system
-const COLORS = {
-  primary: '#3b82f6', // Blue
-  success: '#10b981', // Green
-  danger: '#ef4444', // Red
-  warning: '#f59e0b', // Amber
-  info: '#6366f1', // Indigo
-  background: {
-    dark: '#131825',
-    medium: '#151823',
-    light: '#1a1f2c',
-    lighter: '#252a38'
-  },
-  text: {
-    primary: '#ffffff',
-    secondary: '#9ca3af',
-    tertiary: '#6b7280',
-    disabled: '#4b5563'
-  },
-  border: '#1c2033'
-};
-
 const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   onApplyFilters,
   trades,
@@ -116,16 +94,19 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-[#151823] rounded-xl border border-[#1c2033] p-6 shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-slate-900/60 dark:bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#0d1018] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 md:p-8 shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-white">Advanced Filters</h2>
+          <div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">Advanced Filters</h2>
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">Filter analytics by symbols, strategies, tags, and date range.</p>
+          </div>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors duration-150"
+            className="text-slate-400 hover:text-slate-700 dark:text-gray-400 dark:hover:text-white transition-colors p-1"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -133,11 +114,11 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Symbols */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Symbols</label>
-            <div className="bg-[#1a1f2c] rounded-lg p-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Symbols</label>
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl p-4 max-h-40 overflow-y-auto">
               {availableSymbols.length > 0 ? (
                 availableSymbols.map((symbol) => (
-                  <label key={symbol} className="flex items-center mb-2 hover:bg-[#252a38]/50 p-1 rounded transition-colors duration-150">
+                  <label key={symbol} className="flex items-center mb-2 hover:bg-slate-100 dark:hover:bg-[#252a38]/50 p-1.5 rounded-xl cursor-pointer transition-colors text-slate-800 dark:text-gray-300">
                     <input
                       type="checkbox"
                       checked={selectedSymbols.includes(symbol)}
@@ -148,24 +129,24 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                           setSelectedSymbols(selectedSymbols.filter(s => s !== symbol));
                         }
                       }}
-                      className="mr-2 rounded text-blue-500 focus:ring-blue-500 h-4 w-4"
+                      className="mr-3 rounded text-indigo-600 focus:ring-indigo-500/50 h-4 w-4 border-slate-300 dark:border-white/10 dark:bg-slate-900"
                     />
-                    <span className="text-gray-300 text-sm">{symbol}</span>
+                    <span className="text-sm font-semibold">{symbol}</span>
                   </label>
                 ))
               ) : (
-                <p className="text-gray-500 text-sm">No symbols available</p>
+                <p className="text-slate-400 text-xs py-4 text-center">No symbols available</p>
               )}
             </div>
           </div>
 
           {/* Strategies */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Strategies</label>
-            <div className="bg-[#1a1f2c] rounded-lg p-3 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Strategies</label>
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl p-4 max-h-40 overflow-y-auto">
               {availableStrategies.length > 0 ? (
                 availableStrategies.map((strategy) => (
-                  <label key={strategy} className="flex items-center mb-2 hover:bg-[#252a38]/50 p-1 rounded transition-colors duration-150">
+                  <label key={strategy} className="flex items-center mb-2 hover:bg-slate-100 dark:hover:bg-[#252a38]/50 p-1.5 rounded-xl cursor-pointer transition-colors text-slate-800 dark:text-gray-300">
                     <input
                       type="checkbox"
                       checked={selectedStrategies.includes(strategy)}
@@ -176,22 +157,22 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                           setSelectedStrategies(selectedStrategies.filter(s => s !== strategy));
                         }
                       }}
-                      className="mr-2 rounded text-blue-500 focus:ring-blue-500 h-4 w-4"
+                      className="mr-3 rounded text-indigo-600 focus:ring-indigo-500/50 h-4 w-4 border-slate-300 dark:border-white/10 dark:bg-slate-900"
                     />
-                    <span className="text-gray-300 text-sm">{strategy}</span>
+                    <span className="text-sm font-semibold">{strategy}</span>
                   </label>
                 ))
               ) : (
-                <p className="text-gray-500 text-sm">No strategies available</p>
+                <p className="text-slate-400 text-xs py-4 text-center">No strategies available</p>
               )}
             </div>
           </div>
 
           {/* Trade Types */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Trade Types</label>
-            <div className="bg-[#1a1f2c] rounded-lg p-3">
-              <label className="flex items-center mb-2 hover:bg-[#252a38]/50 p-1 rounded transition-colors duration-150">
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Trade Types</label>
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+              <label className="flex items-center hover:bg-slate-100 dark:hover:bg-[#252a38]/50 p-1.5 rounded-xl cursor-pointer transition-colors text-slate-800 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={selectedTradeTypes.includes('Long')}
@@ -202,11 +183,11 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                       setSelectedTradeTypes(selectedTradeTypes.filter(t => t !== 'Long'));
                     }
                   }}
-                  className="mr-2 rounded text-blue-500 focus:ring-blue-500 h-4 w-4"
+                  className="mr-3 rounded text-indigo-600 focus:ring-indigo-500/50 h-4 w-4 border-slate-300 dark:border-white/10 dark:bg-slate-900"
                 />
-                <span className="text-gray-300 text-sm">Long</span>
+                <span className="text-sm font-semibold">Long</span>
               </label>
-              <label className="flex items-center hover:bg-[#252a38]/50 p-1 rounded transition-colors duration-150">
+              <label className="flex items-center hover:bg-slate-100 dark:hover:bg-[#252a38]/50 p-1.5 rounded-xl cursor-pointer transition-colors text-slate-800 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={selectedTradeTypes.includes('Short')}
@@ -217,33 +198,33 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                       setSelectedTradeTypes(selectedTradeTypes.filter(t => t !== 'Short'));
                     }
                   }}
-                  className="mr-2 rounded text-blue-500 focus:ring-blue-500 h-4 w-4"
+                  className="mr-3 rounded text-indigo-600 focus:ring-indigo-500/50 h-4 w-4 border-slate-300 dark:border-white/10 dark:bg-slate-900"
                 />
-                <span className="text-gray-300 text-sm">Short</span>
+                <span className="text-sm font-semibold">Short</span>
               </label>
             </div>
           </div>
 
           {/* Date Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Date Range</label>
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Date Range</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Start Date</label>
+                <label className="block text-[11px] text-slate-500 dark:text-gray-400 mb-1">Start Date</label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-[#1a1f2c] text-white border border-[#2d3348] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">End Date</label>
+                <label className="block text-[11px] text-slate-500 dark:text-gray-400 mb-1">End Date</label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full bg-[#1a1f2c] text-white border border-[#2d3348] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -251,26 +232,26 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
           {/* Profit Range */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Profit Range</label>
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Profit Range</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Min Profit</label>
+                <label className="block text-[11px] text-slate-500 dark:text-gray-400 mb-1">Min Profit ($)</label>
                 <input
                   type="number"
                   value={minProfit}
                   onChange={(e) => setMinProfit(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-[#1a1f2c] text-white border border-[#2d3348] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                  placeholder="Min"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-400 mb-1">Max Profit</label>
+                <label className="block text-[11px] text-slate-500 dark:text-gray-400 mb-1">Max Profit ($)</label>
                 <input
                   type="number"
                   value={maxProfit}
                   onChange={(e) => setMaxProfit(e.target.value)}
-                  placeholder="No limit"
-                  className="w-full bg-[#1a1f2c] text-white border border-[#2d3348] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150"
+                  placeholder="Max"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -278,52 +259,53 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
 
           {/* Tags */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-300 mb-2">Tags</label>
-            <div className="bg-[#1a1f2c] rounded-lg p-3 max-h-40 overflow-y-auto">
+            <label className="block text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-2">Tags</label>
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
               <div className="flex flex-wrap gap-2">
                 {availableTags.length > 0 ? (
-                  availableTags.map((tag) => (
-                    <label
-                      key={tag}
-                      className={`inline-flex items-center px-3 py-1 rounded-full text-xs cursor-pointer transition-colors duration-150 ${
-                        selectedTags.includes(tag)
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-[#252a38] text-gray-300 hover:bg-[#313a4f]'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.includes(tag)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedTags([...selectedTags, tag]);
-                          } else {
+                  availableTags.map((tag) => {
+                    const isSelected = selectedTags.includes(tag);
+                    return (
+                      <button
+                        type="button"
+                        key={tag}
+                        onClick={() => {
+                          if (isSelected) {
                             setSelectedTags(selectedTags.filter(t => t !== tag));
+                          } else {
+                            setSelectedTags([...selectedTags, tag]);
                           }
                         }}
-                        className="sr-only"
-                      />
-                      {tag}
-                    </label>
-                  ))
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide transition-colors ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'bg-slate-100 hover:bg-slate-200 dark:bg-[#252a38] text-slate-600 dark:text-gray-300 dark:hover:bg-[#313a4f]'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })
                 ) : (
-                  <p className="text-gray-500 text-sm">No tags available</p>
+                  <p className="text-slate-400 text-xs py-2 w-full text-center">No tags available</p>
                 )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end mt-8 space-x-3">
+        <div className="flex justify-end mt-8 gap-3 border-t border-slate-100 dark:border-white/5 pt-5">
           <button
+            type="button"
             onClick={handleReset}
-            className="px-4 py-2 text-gray-300 hover:text-white text-sm transition-colors duration-150"
+            className="px-5 py-2.5 text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold uppercase tracking-wider transition-colors"
           >
             Reset
           </button>
           <button
+            type="button"
             onClick={handleApplyFilters}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm transition-colors duration-150"
+            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-indigo-600/15"
           >
             Apply Filters
           </button>
@@ -333,4 +315,4 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   );
 };
 
-export default AdvancedFilters; 
+export default AdvancedFilters;

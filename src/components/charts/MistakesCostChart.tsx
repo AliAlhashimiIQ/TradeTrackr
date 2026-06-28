@@ -50,13 +50,13 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-950/95 border border-slate-800 p-3 rounded-xl shadow-2xl">
-          <p className="text-slate-100 font-semibold mb-1">{data.name}</p>
-          <p className="text-red-300 text-sm">
-            Total Cost: <span className="font-mono">{formatCurrency(data.cost)}</span>
+        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+          <p className="text-slate-850 dark:text-slate-100 font-bold mb-1.5">{data.name}</p>
+          <p className={`text-xs font-semibold ${data.cost < 0 ? 'text-rose-600 dark:text-red-400' : 'text-emerald-600 dark:text-green-400'} mb-1`}>
+            Total Impact: <span className="font-mono font-bold">{formatCurrency(data.cost)}</span>
           </p>
-          <p className="text-slate-400 text-xs mt-1">
-            Occurrences: {data.count}
+          <p className="text-slate-500 dark:text-slate-400">
+            Occurrences: <span className="font-bold">{data.count}</span>
           </p>
         </div>
       );
@@ -66,11 +66,11 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
 
   if (data.length === 0) {
     return (
-      <div className="h-64 flex flex-col items-center justify-center bg-[#131825]/50 rounded-2xl border border-white/[0.05]">
-        <svg className="w-12 h-12 text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="h-64 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950/40 rounded-2xl border border-slate-200 dark:border-white/[0.05]">
+        <svg className="w-12 h-12 text-slate-300 dark:text-gray-700 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <p className="text-gray-500 text-sm">No mistakes logged yet</p>
+        <p className="text-slate-400 dark:text-gray-500 text-sm">No mistakes logged yet</p>
       </div>
     );
   }
@@ -83,21 +83,22 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
           layout="vertical"
           margin={{ top: 5, right: 15, left: 10, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="2 4" stroke="#334155" strokeOpacity={0.35} horizontal={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.08)" horizontal={false} />
           <XAxis type="number" hide />
           <YAxis 
             dataKey="name" 
             type="category" 
-            tick={{ fill: '#94a3b8', fontSize: 11 }}
-            width={110}
+            tick={{ fill: '#6b7280', fontSize: 10 }}
+            stroke="#6b7280"
+            width={100}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
-          <Bar dataKey="cost" radius={[0, 8, 8, 0]} barSize={24}>
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(128,128,128,0.03)' }} />
+          <Bar dataKey="cost" radius={[0, 4, 4, 0]} barSize={18}>
             {data.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
                 fill={entry.cost < 0 ? '#f87171' : '#34d399'} 
-                fillOpacity={0.9}
+                fillOpacity={0.95}
               />
             ))}
           </Bar>

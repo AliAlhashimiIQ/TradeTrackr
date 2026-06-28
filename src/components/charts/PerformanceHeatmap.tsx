@@ -312,16 +312,16 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-[#1f2937] p-3 rounded-lg shadow-lg border border-gray-700 text-xs">
-          <p className="font-bold text-white mb-1">{data.day} at {data.hour}</p>
-          <p className="text-gray-300">
-            Trades: <span className="font-mono text-white">{data.trades}</span>
+        <div className="bg-white dark:bg-[#1f2937] p-3 rounded-xl shadow-xl border border-slate-200 dark:border-gray-700 text-xs">
+          <p className="font-bold text-slate-800 dark:text-white mb-1.5">{data.day} at {data.hour}</p>
+          <p className="text-slate-600 dark:text-gray-300 mb-0.5">
+            Trades: <span className="font-mono font-bold text-slate-900 dark:text-white">{data.trades}</span>
           </p>
-          <p className="text-blue-400">
-            Win Rate: <span className="font-mono text-white">{formatPercent(data.winRate)}</span>
+          <p className="text-indigo-600 dark:text-blue-400 mb-0.5">
+            Win Rate: <span className="font-mono font-bold text-slate-900 dark:text-white">{formatPercent(data.winRate)}</span>
           </p>
-          <p className={`${data.pnL >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            P&L: <span className="font-mono text-white">{formatCurrency(data.pnL)}</span>
+          <p className={`${data.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
+            P&L: <span className="font-mono font-bold text-slate-900 dark:text-white">{formatCurrency(data.pnL)}</span>
           </p>
         </div>
       );
@@ -340,38 +340,38 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
   }, [highlightedHour, highlightedDay]);
   
   return (
-    <div className="w-full bg-[#131825] rounded-lg p-4">
+    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Trading Performance Heatmap
         </div>
         {isClient && (
           <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-1 text-gray-300 text-xs">
+            <label className="flex items-center space-x-1.5 text-slate-600 dark:text-gray-300 text-xs cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={displayValues}
                 onChange={(e) => setDisplayValues(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 h-3 w-3"
+                className="rounded text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 border-slate-300 dark:border-white/10 dark:bg-slate-900"
               />
               <span>Show Values</span>
             </label>
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
               <button
                 onClick={() => setMetric('pnL')}
-                className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${metric === 'pnL' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
               >
                 P&L
               </button>
               <button
                 onClick={() => setMetric('winRate')}
-                className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${metric === 'winRate' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
               >
                 Win Rate
               </button>
               <button
                 onClick={() => setMetric('trades')}
-                className={`px-2 py-1 text-xs rounded transition-colors duration-150 ${metric === 'trades' ? 'bg-blue-600 text-white' : 'bg-[#1a1f2c] text-gray-300 hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
               >
                 Trades
               </button>
@@ -382,27 +382,27 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
       
       {/* Best/Worst Times */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-[#1a1f2c] p-2 rounded-md">
-          <p className="text-gray-400 text-xs mb-1">Best Performance</p>
-          <div className="flex justify-between">
-            <span className="text-xs text-green-400">
-              Best Day: <span className="font-medium">{bestDay}</span>
+        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
+          <p className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[9px] mb-1.5">Best Performance</p>
+          <div className="flex justify-between items-center">
+            <span className="text-xs text-slate-700 dark:text-gray-300">
+              Best Day: <span className="font-bold text-emerald-600 dark:text-green-400">{bestDay}</span>
             </span>
-            <span className="text-xs text-green-400">
-              Best Hour: <span className="font-medium">{bestHour}</span>
+            <span className="text-xs text-slate-700 dark:text-gray-300">
+              Best Hour: <span className="font-bold text-emerald-600 dark:text-green-400">{bestHour}</span>
             </span>
           </div>
         </div>
         
         {(metric === 'pnL' || metric === 'winRate') && (
-          <div className="bg-[#1a1f2c] p-2 rounded-md">
-            <p className="text-gray-400 text-xs mb-1">Worst Performance</p>
-            <div className="flex justify-between">
-              <span className="text-xs text-red-400">
-                Worst Day: <span className="font-medium">{worstDay}</span>
+          <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
+            <p className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[9px] mb-1.5">Worst Performance</p>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-slate-700 dark:text-gray-300">
+                Worst Day: <span className="font-bold text-rose-600 dark:text-red-400">{worstDay}</span>
               </span>
-              <span className="text-xs text-red-400">
-                Worst Hour: <span className="font-medium">{worstHour}</span>
+              <span className="text-xs text-slate-700 dark:text-gray-300">
+                Worst Hour: <span className="font-bold text-rose-600 dark:text-red-400">{worstHour}</span>
               </span>
             </div>
           </div>

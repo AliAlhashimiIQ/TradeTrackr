@@ -45,6 +45,7 @@ export default function PlaybookPage() {
   const [newStratName, setNewStratName] = useState('');
   const [newStratColor, setNewStratColor] = useState('#3b82f6');
   const [isCreating, setIsCreating] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -285,9 +286,8 @@ export default function PlaybookPage() {
   };
 
   // Handle Strategy Tag Deletion
-  const handleDeleteStrategy = async () => {
+  const executeDeleteStrategy = async () => {
     if (!selectedTagId) return;
-    if (!confirm('Are you sure you want to delete this strategy playbook? Linked trades will not be deleted, but their strategy field will be cleared.')) return;
 
     try {
       // 1. Clear strategy from trades that had it
@@ -461,7 +461,7 @@ export default function PlaybookPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={handleDeleteStrategy}
+                      onClick={() => setShowDeleteConfirm(true)}
                       className="text-xs text-red-500 hover:text-red-600 px-3 py-2 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-xl transition-all"
                     >
                       Delete Playbook
@@ -755,6 +755,42 @@ export default function PlaybookPage() {
               </div>
             </form>
           </motion.div>
+        </div>
+      )}
+
+      {/* Delete Strategy Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999]">
+          <div className="bg-white dark:bg-[#0d1018] border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 shadow-2xl max-w-md w-full text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-950/20 text-red-500 flex items-center justify-center mx-auto">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Delete Strategy Playbook?</h3>
+            <p className="text-xs text-slate-500 dark:text-gray-400 leading-relaxed">
+              Are you sure you want to delete this strategy playbook? Linked trades will not be deleted, but their strategy field will be cleared. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-slate-700 dark:text-gray-300 font-semibold rounded-xl text-xs transition-all border border-slate-200 dark:border-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  executeDeleteStrategy();
+                }}
+                className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl text-xs transition-all shadow-lg shadow-red-600/15"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

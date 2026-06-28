@@ -387,9 +387,9 @@ export default function AnalyticsPage() {
             <div className="relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 rounded-xl text-sm transition-all duration-150"
+                className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
               >
-                <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 text-indigo-550 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>{timePeriod === 'all' ? 'All Time' : `Last ${timePeriod}`}</span>
@@ -399,7 +399,7 @@ export default function AnalyticsPage() {
               </button>
               
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#0d0e16] border border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
                   {(['7d', '30d', '90d', '1y', 'all'] as TimePeriod[]).map((period) => (
                     <button
                       key={period}
@@ -407,7 +407,7 @@ export default function AnalyticsPage() {
                         setTimePeriod(period);
                         setShowFilters(false);
                       }}
-                      className="block w-full text-left px-4 py-3 text-sm text-slate-300 hover:bg-white/[0.05] transition-colors duration-150"
+                      className="block w-full text-left px-4 py-3 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors duration-150"
                     >
                       {period === 'all' ? 'All Time' : `Last ${period}`}
                     </button>
@@ -419,14 +419,14 @@ export default function AnalyticsPage() {
             {/* Filters Button */}
             <button 
               onClick={() => setShowAdvancedFilters(true)}
-              className="flex items-center px-4 py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 rounded-xl text-sm transition-all duration-150"
+              className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
             >
-              <svg className="w-4 h-4 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2 text-indigo-550 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span>Advanced Filters</span>
               {activeFilters && (
-                <span className="ml-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                <span className="ml-2 bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
                   {Object.values(activeFilters).flat().filter(Boolean).length}
                 </span>
               )}
@@ -1105,13 +1105,13 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 border-blue-500/10 flex flex-col`}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-white font-medium text-sm sm:text-base">What-If Mistake Excluder</h2>
-                    <p className="text-gray-500 text-xs mt-0.5">Toggle mistakes to exclude them from the curve</p>
+                    <h2 className="text-slate-900 dark:text-white font-semibold text-sm sm:text-base">What-If Mistake Excluder</h2>
+                    <p className="text-slate-500 dark:text-gray-400 text-xs mt-0.5">Toggle mistakes to exclude them from the curve</p>
                   </div>
                   {excludedMistakes.length > 0 && (
                     <button 
                       onClick={() => setExcludedMistakes([])}
-                      className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                      className="text-xs text-indigo-650 dark:text-indigo-400 hover:text-indigo-500 font-bold"
                     >
                       Reset All
                     </button>
@@ -1119,7 +1119,7 @@ export default function AnalyticsPage() {
                 </div>
                 
                 {allMistakesList.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center py-8 text-center text-xs text-gray-500">
+                  <div className="flex-1 flex items-center justify-center py-8 text-center text-xs text-slate-400 dark:text-gray-500">
                     No mistakes logged in current date range.
                   </div>
                 ) : (
@@ -1134,8 +1134,8 @@ export default function AnalyticsPage() {
                           key={mistake} 
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                             isChecked 
-                              ? 'bg-blue-600/10 border-blue-500/30' 
-                              : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                              ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/30' 
+                              : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/[0.04]'
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -1149,13 +1149,15 @@ export default function AnalyticsPage() {
                                   setExcludedMistakes(prev => [...prev, mistake]);
                                 }
                               }}
-                              className="rounded border-gray-700 bg-gray-900 text-blue-500 focus:ring-blue-500/50 w-4 h-4"
+                              className="rounded border-slate-300 dark:border-gray-700 bg-slate-100 dark:bg-gray-900 text-indigo-600 focus:ring-indigo-500/50 w-4 h-4"
                             />
-                            <span className="text-xs font-semibold text-gray-200">{mistake}</span>
+                            <span className="text-xs font-semibold text-slate-800 dark:text-gray-200">{mistake}</span>
                           </div>
                           <div className="text-right">
-                            <span className="text-[10px] text-gray-500 block">{mTrades.length} trades</span>
-                            <span className="text-xs font-bold text-red-400">-${Math.abs(totalPnL).toFixed(0)}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-gray-400 block">{mTrades.length} trades</span>
+                            <span className={`text-xs font-bold ${totalPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                              {totalPnL >= 0 ? '+' : '-'}${Math.abs(totalPnL).toFixed(0)}
+                            </span>
                           </div>
                         </label>
                       );
@@ -1167,43 +1169,55 @@ export default function AnalyticsPage() {
               {/* Middle Panel: Recalculated Stats */}
               <div className={`${panelClass} p-5 border-emerald-500/10 flex flex-col justify-between`}>
                 <div>
-                  <h2 className="text-white font-medium mb-3 text-sm sm:text-base">Simulated Recovery Impact</h2>
+                  <h2 className="text-slate-900 dark:text-white font-semibold mb-3 text-sm sm:text-base">Simulated Recovery Impact</h2>
                   {excludedMistakes.length === 0 ? (
-                    <div className="py-8 text-center text-xs text-gray-500">
+                    <div className="py-8 text-center text-xs text-slate-400 dark:text-gray-500">
                       Select one or more mistakes to calculate simulated metrics.
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {/* Big recovery card */}
-                      <div className="bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 text-center">
-                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mb-1">
-                          Simulated Recovery Profit
-                        </span>
-                        <span className="text-3xl font-black text-emerald-400">
-                          +${simulatedMetrics?.recoveryProfit.toFixed(0)}
-                        </span>
-                        <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                          By avoiding the selected mistakes, you would have avoided those losses entirely!
-                        </p>
-                      </div>
+                      {(() => {
+                        const recPnL = simulatedMetrics?.recoveryProfit ?? 0;
+                        const isPositive = recPnL >= 0;
+                        return (
+                          <div className={`border rounded-2xl p-4 text-center ${
+                            isPositive 
+                              ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400' 
+                              : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-550/25 text-rose-700 dark:text-rose-400'
+                          }`}>
+                            <span className="text-[9px] font-bold uppercase tracking-wider block mb-1">
+                              {isPositive ? 'Simulated Recovery Profit' : 'Simulated Net Loss Impact'}
+                            </span>
+                            <span className="text-3xl font-black">
+                              {isPositive ? '+' : '-'}${Math.abs(recPnL).toFixed(0)}
+                            </span>
+                            <p className="text-[10px] text-slate-500 dark:text-gray-400 mt-2 leading-relaxed">
+                              {isPositive 
+                                ? 'By avoiding the selected mistakes, you would have avoided those losses entirely!' 
+                                : 'Avoiding these mistake trades would have also removed profitable trades.'}
+                            </p>
+                          </div>
+                        );
+                      })()}
 
                       {/* Stat grid */}
                       <div className="grid grid-cols-2 gap-3 pt-2">
-                        <div className="bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl text-center">
-                          <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Win Rate</span>
-                          <div className="text-sm font-bold text-white">
+                        <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04] p-3 rounded-xl text-center">
+                          <span className="text-[9px] text-slate-500 dark:text-gray-400 font-bold uppercase block mb-1">Win Rate</span>
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">
                             {simulatedMetrics?.simWinRate.toFixed(1)}%
                           </div>
-                          <span className="text-[9px] text-gray-500">
+                          <span className="text-[9px] text-slate-400 dark:text-gray-500">
                             was {simulatedMetrics?.actualWinRate.toFixed(1)}%
                           </span>
                         </div>
-                        <div className="bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl text-center">
-                          <span className="text-[9px] text-gray-500 font-bold uppercase block mb-1">Profit Factor</span>
-                          <div className="text-sm font-bold text-white">
+                        <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.04] p-3 rounded-xl text-center">
+                          <span className="text-[9px] text-slate-500 dark:text-gray-400 font-bold uppercase block mb-1">Profit Factor</span>
+                          <div className="text-sm font-bold text-slate-900 dark:text-white">
                             {simulatedMetrics?.simProfitFactor.toFixed(2)}
                           </div>
-                          <span className="text-[9px] text-gray-500">
+                          <span className="text-[9px] text-slate-400 dark:text-gray-500">
                             was {simulatedMetrics?.actualProfitFactor.toFixed(2)}
                           </span>
                         </div>
@@ -1213,7 +1227,7 @@ export default function AnalyticsPage() {
                 </div>
                 
                 {excludedMistakes.length > 0 && (
-                  <p className="text-[10px] text-gray-500 mt-3 text-center border-t border-white/[0.04] pt-2">
+                  <p className="text-[10px] text-slate-400 dark:text-gray-505 mt-3 text-center border-t border-slate-100 dark:border-white/[0.04] pt-2">
                     Simulating {simulatedMetrics?.simTradesCount} trades out of {filteredTrades.length}
                   </p>
                 )}
@@ -1221,19 +1235,13 @@ export default function AnalyticsPage() {
 
               {/* Right Panel: Simulated Equity Curve Comparison */}
               <div className={`${panelClass} p-5 border-blue-500/10 min-h-[300px] flex flex-col`}>
-                <h2 className="text-white font-medium mb-3 text-sm sm:text-base">Simulated Equity Curve</h2>
+                <h2 className="text-slate-900 dark:text-white font-semibold mb-3 text-sm sm:text-base">Simulated Equity Curve</h2>
                 <div className="flex-1 min-h-[220px]">
-                  {excludedMistakes.length === 0 ? (
-                    <div className="h-full flex items-center justify-center text-xs text-gray-500 text-center">
-                      Select mistakes to overlay the simulated growth curve.
-                    </div>
-                  ) : (
-                    <EquityCurve 
-                      data={equityChartData} 
-                      simulatedData={simulatedEquityCurve} 
-                      initialCapital={initialCapital} 
-                    />
-                  )}
+                  <EquityCurve 
+                    data={equityChartData} 
+                    simulatedData={excludedMistakes.length > 0 ? simulatedEquityCurve : []} 
+                    initialCapital={initialCapital} 
+                  />
                 </div>
               </div>
             </div>
@@ -1242,17 +1250,17 @@ export default function AnalyticsPage() {
             <div className={`${panelClass} p-5 mb-6 border-red-500/15`}>
               <div className="flex justify-between items-center mb-4">
                 <div>
-                  <h2 className="text-white font-medium">Dollar Cost of Each Mistake</h2>
-                  <p className="text-gray-500 text-xs mt-0.5">Total P&L impact when this mistake was present</p>
+                  <h2 className="text-slate-900 dark:text-white font-semibold">Dollar Cost of Each Mistake</h2>
+                  <p className="text-slate-500 dark:text-gray-400 text-xs mt-0.5">Total P&L impact when this mistake was present</p>
                 </div>
-                <div className="bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-tighter">TradeZella Killer</div>
+                <div className="bg-red-50 dark:bg-red-500/10 text-red-650 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-200 dark:border-red-500/10 uppercase tracking-tighter">Mistake Tracker</div>
               </div>
               <MistakesCostChart trades={filteredTrades} />
             </div>
 
             {/* Per-Mistake Table */}
             <div className={`${panelClass} overflow-hidden mb-8`}>
-              <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b border-white/[0.04] bg-white/[0.02] dark:bg-black/20">
+              <div className="grid grid-cols-5 gap-4 px-5 py-3 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-widest border-b border-slate-200 dark:border-white/[0.04] bg-slate-50 dark:bg-black/20">
                 <div className="col-span-2">Mistake</div>
                 <div>Occurrences</div>
                 <div>Total P&L Impact</div>
@@ -1261,22 +1269,22 @@ export default function AnalyticsPage() {
               {(() => {
                 const allMistakes = [...new Set(filteredTrades.flatMap(t => t.mistakes || []))];
                 if (!allMistakes.length) return (
-                  <div className="px-5 py-12 text-center text-gray-600">No mistakes logged yet. Tag mistakes in your trades to see them here.</div>
+                  <div className="px-5 py-12 text-center text-slate-500">No mistakes logged yet. Tag mistakes in your trades to see them here.</div>
                 );
                 return allMistakes.map(mistake => {
                   const mTrades = filteredTrades.filter(t => t.mistakes?.includes(mistake));
                   const totalPnL = mTrades.reduce((s, t) => s + t.profit_loss, 0);
                   const winRate = mTrades.length ? (mTrades.filter(t => t.profit_loss > 0).length / mTrades.length * 100) : 0;
                   return (
-                    <div key={mistake} className="grid grid-cols-5 gap-4 px-5 py-3.5 border-b border-white/[0.03] items-center hover:bg-white/[0.02] transition-colors duration-150">
+                    <div key={mistake} className="grid grid-cols-5 gap-4 px-5 py-3.5 border-b border-slate-200 dark:border-white/[0.03] items-center hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
                       <div className="col-span-2">
-                        <span className="px-2 py-1 bg-red-900/30 text-red-400 rounded text-xs font-medium border border-red-900/40">{mistake}</span>
+                        <span className="px-2 py-1 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-xs font-semibold border border-red-200 dark:border-red-900/40">{mistake}</span>
                       </div>
-                      <div className="text-sm text-gray-300">{mTrades.length}</div>
-                      <div className={`text-sm font-bold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <div className="text-sm text-slate-700 dark:text-gray-300">{mTrades.length}</div>
+                      <div className={`text-sm font-bold ${totalPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                         {totalPnL >= 0 ? '+' : ''}${Math.abs(totalPnL).toFixed(0)}
                       </div>
-                      <div className={`text-sm font-bold ${winRate >= 50 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      <div className={`text-sm font-bold ${winRate >= 50 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                         {winRate.toFixed(0)}%
                       </div>
                     </div>
