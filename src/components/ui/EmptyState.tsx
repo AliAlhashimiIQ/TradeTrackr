@@ -163,7 +163,7 @@ export default function EmptyState({
         description: 'Connect MetaTrader 5 or other accounts to automate executions sync and track prop firm rules.',
         btnLabel: 'Link Account',
         href: '/accounts',
-        color: 'from-blue-500/20 to-indigo-500/10 border-blue-500/30 text-blue-400',
+        color: 'bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20 text-blue-600 dark:text-blue-400',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
@@ -176,7 +176,7 @@ export default function EmptyState({
         description: 'Bulk upload historical trades from MetaTrader, TradeZella, TraderSync, or custom files.',
         btnLabel: 'Import Report',
         href: '/import',
-        color: 'from-purple-500/20 to-indigo-500/10 border-purple-500/30 text-purple-400',
+        color: 'bg-purple-50 dark:bg-purple-500/10 border-purple-100 dark:border-purple-500/20 text-purple-600 dark:text-purple-400',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -189,7 +189,7 @@ export default function EmptyState({
         description: 'Log a ticket manually with lot sizing, strategy tags, entry/exit parameters, screenshots, and emotional notes.',
         btnLabel: 'Add Trade',
         action: onManualLogClick,
-        color: 'from-emerald-500/20 to-indigo-500/10 border-emerald-500/30 text-emerald-400',
+        color: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -203,7 +203,7 @@ export default function EmptyState({
         btnLabel: 'Inject Demo Data',
         action: onLoadDemoClick,
         loading: isDemoLoading,
-        color: 'from-amber-500/20 to-indigo-500/10 border-amber-500/30 text-amber-400',
+        color: 'bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20 text-amber-600 dark:text-amber-400',
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
@@ -213,7 +213,7 @@ export default function EmptyState({
     ]
 
     return (
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto py-10 px-4">
         {/* Onboarding Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -221,48 +221,38 @@ export default function EmptyState({
           transition={{ duration: 0.4 }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-400 text-xs font-semibold mb-4 uppercase tracking-widest">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-150 dark:border-indigo-500/25 text-indigo-650 dark:text-indigo-400 text-xs font-bold mb-4 uppercase tracking-widest">
             🏁 Getting Started Onboarding
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white mb-3">Welcome to TradeTrackr!</h2>
-          <p className="text-gray-400 text-sm max-w-lg mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-3">Welcome to TradeTrackr!</h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm max-w-lg mx-auto leading-relaxed">
             Your journal is currently empty. Get started by connecting an account, uploading a CSV, adding a manual trade, or loading demo data.
           </p>
         </motion.div>
 
         {/* Onboarding Checklist Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {checklistSteps.map((step, idx) => (
             <motion.div
               key={step.id}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: idx * 0.08 }}
-              onMouseEnter={() => setHoveredStep(step.id)}
-              onMouseLeave={() => setHoveredStep(null)}
-              className="card bg-white dark:bg-[#0d0e16] border border-black/5 dark:border-white/[0.06] rounded-2xl p-5 hover:border-indigo-500/40 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-xl"
-              style={{
-                boxShadow: hoveredStep === step.id ? '0 12px 32px rgba(99, 102, 241, 0.08)' : 'none'
-              }}
+              className="card bg-white dark:bg-[#0d0e16] border border-slate-250 dark:border-white/[0.06] rounded-2xl p-6 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 hover:shadow-md"
             >
-              {/* Subtle background glow */}
-              {hoveredStep === step.id && (
-                <div className="absolute -right-16 -bottom-16 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
-              )}
-
               <div>
-                <div className="flex items-center gap-3 mb-3">
-                  <div className={`p-2 rounded-xl bg-gradient-to-br ${step.color.split(' ').slice(0, 2).join(' ')} border border-white/5`}>
+                <div className="flex items-center gap-3.5 mb-4">
+                  <div className={`p-2.5 rounded-xl border ${step.color}`}>
                     {step.icon}
                   </div>
-                  <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                    <span className="text-[10px] text-gray-500 bg-white/5 w-5 h-5 rounded-full flex items-center justify-center font-mono">
+                  <h3 className="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span className="text-[10px] text-indigo-650 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 w-5 h-5 rounded-full flex items-center justify-center font-bold">
                       {step.id}
                     </span>
                     {step.title}
                   </h3>
                 </div>
-                <p className="text-gray-400 text-xs leading-relaxed mb-6">
+                <p className="text-slate-550 dark:text-slate-400 text-xs leading-relaxed mb-6 font-medium">
                   {step.description}
                 </p>
               </div>
@@ -271,7 +261,7 @@ export default function EmptyState({
                 {step.href ? (
                   <Link
                     href={step.href}
-                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-white/[0.08] hover:border-indigo-500/30 bg-white/[0.02] hover:bg-indigo-500/10 text-gray-300 hover:text-white text-xs font-semibold tracking-wide transition-all duration-200"
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[#121420] dark:hover:bg-[#1c1e30] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer"
                   >
                     {step.btnLabel}
                   </Link>
@@ -280,11 +270,11 @@ export default function EmptyState({
                     type="button"
                     onClick={step.action}
                     disabled={step.loading}
-                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-white/[0.08] hover:border-indigo-500/30 bg-white/[0.02] hover:bg-indigo-500/10 text-gray-300 hover:text-white text-xs font-semibold tracking-wide transition-all duration-200 disabled:opacity-50"
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[#121420] dark:hover:bg-[#1c1e30] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
                   >
                     {step.loading ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        <div className="w-3.5 h-3.5 border-2 border-slate-300 dark:border-white/20 border-t-indigo-600 dark:border-t-white rounded-full animate-spin" />
                         Injecting...
                       </div>
                     ) : (
@@ -310,8 +300,8 @@ export default function EmptyState({
       <div className="mb-6 opacity-80">
         {illustrations[variant]}
       </div>
-      <h2 className="text-xl font-bold text-white mb-2">{title ?? d.title}</h2>
-      <p className="text-gray-500 text-sm max-w-md mb-8 leading-relaxed">{subtitle ?? d.subtitle}</p>
+      <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">{title ?? d.title}</h2>
+      <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mb-8 leading-relaxed">{subtitle ?? d.subtitle}</p>
       <Link
         href={ctaHref ?? d.ctaHref}
         className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-blue-500 shadow-lg shadow-indigo-500/20 transition-all"

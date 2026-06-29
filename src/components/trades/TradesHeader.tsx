@@ -19,7 +19,7 @@ export interface TradesHeaderProps {
   formatCurrency: (value: number) => string;
 }
 
-export const TradesHeader: React.FC<TradesHeaderProps> = ({
+export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
   quickMetrics,
   tradesCount,
   filteredTradesCount,
@@ -240,6 +240,6 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
       </div>
     </>
   );
-};
+});
 
 export default TradesHeader;

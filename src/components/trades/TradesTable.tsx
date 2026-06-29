@@ -1082,6 +1082,19 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     );
   };
 
+  if (filteredTrades.length === 0 && inlineNewRowIndex === null) {
+    return (
+      <div className="w-full">
+        <EmptyState
+          variant="trades"
+          onManualLogClick={onManualLogClick}
+          onLoadDemoClick={onLoadDemoClick}
+          isDemoLoading={isDemoLoading}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Desktop view */}
