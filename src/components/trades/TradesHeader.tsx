@@ -156,11 +156,11 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
               <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/[0.04] relative z-10 space-y-1.5">
                 <div className="flex justify-center">
                   <svg className="w-[145px] h-[55px]" viewBox="0 0 100 50">
-                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" className="stroke-slate-100 dark:stroke-white/[0.05]" strokeWidth="9.5" strokeLinecap="round" />
+                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="#e2e8f0" className="dark:stroke-white/[0.05]" strokeWidth="9.5" strokeLinecap="round" />
                     <path
                       d="M 10 45 A 35 35 0 0 1 90 45"
-                      fill="none; stroke: url(#winRateGrad)"
-                      className="stroke-[url(#winRateGrad)]"
+                      fill="none"
+                      stroke="url(#winRateGrad)"
                       strokeWidth="9.5"
                       strokeLinecap="round"
                       strokeDasharray="110"
