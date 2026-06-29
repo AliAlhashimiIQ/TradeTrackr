@@ -458,7 +458,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
     if (!totals) return null;
     return (
       <div
-        className="grid gap-4 px-5 py-3.5 text-[11px] font-bold text-slate-550 dark:text-gray-400 uppercase tracking-wider bg-slate-100/90 dark:bg-[#121420]/90 border border-slate-205 dark:border-white/[0.08] sticky bottom-0 z-10 items-center min-w-full w-max text-left rounded-xl mt-3 shadow-sm"
+        className="grid gap-4 px-5 py-3 text-[11px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-wider bg-[#eff2f8] dark:bg-[#151823] border-t border-slate-200 dark:border-white/[0.08] sticky bottom-0 z-10 items-center min-w-full w-max text-left"
         style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
       >
         <div />
@@ -569,7 +569,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
     return (
       <div
-        className="grid gap-4 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full w-max text-left rounded-xl border border-indigo-500/40 dark:border-indigo-500/30 bg-white dark:bg-[#0d0e16] shadow-md mb-2"
+        className="grid gap-4 px-5 py-3.5 items-center relative animate-fadeInOpacity min-w-full w-max text-left border-y border-indigo-500/20 dark:border-indigo-500/30 bg-white dark:bg-[#0d0e16]"
         style={{
           gridTemplateColumns: 'var(--grid-template-columns)',
           zIndex: activePopover?.tradeId === 'new-row' ? 30 : 10,
@@ -1091,7 +1091,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   return (
     <>
       {/* Desktop view */}
-      <div className="hidden md:block rounded-2xl min-h-[450px] border border-slate-205 dark:border-white/[0.08] bg-[#f8fafc]/50 dark:bg-[#07080d] p-3 flex flex-col">
+      <div className="hidden md:block card rounded-2xl min-h-[450px] overflow-hidden flex flex-col">
         <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-white/[0.08] scrollbar-track-transparent flex-grow">
           <div 
             ref={containerRef}
@@ -1103,7 +1103,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           >
           {/* Table Header — columns driven by columnOrder for drag-to-reorder */}
           <div
-            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-slate-100/90 dark:bg-[#121420]/90 border border-slate-200/80 dark:border-white/[0.06] rounded-xl mb-3 shadow-sm"
+            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-[#eff2f8] dark:bg-[#151823] border-b border-slate-200/80 dark:border-white/[0.08]"
             style={{
               gridTemplateColumns: 'var(--grid-template-columns)',
             }}
@@ -1196,7 +1196,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               isDemoLoading={isDemoLoading}
             />
           ) : (
-            <div className="flex flex-col gap-2.5 mt-2">
+            <>
               {inlineNewRowIndex === 0 && filteredTrades.length === 0 && renderInlineEditorRow()}
               {filteredTrades.map((trade, idx) => (
                 <div key={trade.id} className="relative min-w-full text-left" style={{ zIndex: (activePopover?.tradeId === trade.id || idx === inlineNewRowIndex) ? 30 : 1 }}>
@@ -1227,8 +1227,8 @@ export const TradesTable: React.FC<TradesTableProps> = ({
 
                   <div
                     className={`grid gap-4 px-5 ${
-                      tableDensity === 'compact' ? 'py-3.5' : 'py-4.5'
-                    } items-center bg-white dark:bg-[#0d0e16] border border-slate-200/60 dark:border-white/[0.04] rounded-xl hover:border-indigo-500/35 hover:scale-[1.002] transition-all duration-200 group/row min-w-full w-max text-left shadow-sm`}
+                      tableDensity === 'compact' ? 'py-3' : 'py-4'
+                    } items-center bg-white dark:bg-[#0d0e16] hover:bg-slate-50/50 dark:hover:bg-indigo-500/[0.01] transition-all duration-200 border-b border-slate-100 dark:border-white/[0.04] group/row min-w-full w-max text-left`}
                     style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
                   >
                     {/* Checkbox + inline add button */}
@@ -1568,12 +1568,20 @@ export const TradesTable: React.FC<TradesTableProps> = ({
               {/* Notion-style add row button at bottom */}
               <button
                 onClick={() => onStartInlineAdd(filteredTrades.length)}
-                className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-white dark:bg-[#0d0e16] hover:bg-indigo-500/[0.02] dark:hover:bg-indigo-500/[0.02] text-indigo-650 dark:text-indigo-400 border border-dashed border-slate-250 dark:border-white/[0.08] hover:border-indigo-500/40 rounded-xl transition-all duration-200 shadow-sm mt-1 cursor-pointer"
+                className="w-full flex items-center gap-2 px-5 py-3 text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 bg-white dark:bg-[#0d0e16] hover:bg-slate-50 dark:hover:bg-white/[0.02] border-t border-slate-100 dark:border-white/[0.04] transition-all duration-200 group/add"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v12m6-6H6" /></svg>
-                <span className="text-xs font-bold">New Trade</span>
+                <div
+                  className="w-5 h-5 rounded-md flex items-center justify-center transition-all duration-200 group-hover/add:scale-105"
+                  style={{
+                    background: 'rgba(0,0,0,0.04)',
+                    border: '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v12m6-6H6" /></svg>
+                </div>
+                <span className="text-xs font-semibold">New Trade</span>
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>
