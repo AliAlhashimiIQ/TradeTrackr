@@ -108,7 +108,7 @@ const TrendDown = () => (
 export default function CalendarPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const { selectedAccountIds } = useAccount();
+  const { accounts, selectedAccountIds } = useAccount();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'Week' | 'Month'>('Month');
@@ -176,6 +176,15 @@ export default function CalendarPage() {
     return p;
   }, [monthTrades]);
 
+  // Compute active account balance for Gain % calculation
+  const activeAccountBalance = useMemo(() => {
+    if (selectedAccountIds === 'all' || !selectedAccountIds?.length) {
+      return accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 100000;
+    }
+    const filtered = accounts.filter(a => selectedAccountIds.includes(a.id));
+    return filtered.reduce((sum, acc) => sum + (acc.balance || 0), 0) || 100000;
+  }, [accounts, selectedAccountIds]);
+
   // Compute stats for selected month
   const monthStats = useMemo(() => {
     const pnl = calcPnL(monthTrades);
@@ -202,8 +211,10 @@ export default function CalendarPage() {
       return dp < worst ? dp : worst;
     }, 0);
 
-    return { pnl, wins, losses, winRate, tradingDays, totalTrades: monthTrades.length, bestDay, worstDay };
-  }, [monthTrades, currentMonth, currentYear, tradesByDate]);
+    const gainPercent = activeAccountBalance > 0 ? (pnl / activeAccountBalance) * 100 : 0;
+
+    return { pnl, wins, losses, winRate, tradingDays, totalTrades: monthTrades.length, bestDay, worstDay, gainPercent };
+  }, [monthTrades, currentMonth, currentYear, tradesByDate, activeAccountBalance]);
 
   // Year to Date monthly overview
   const yearMonthlyStats = useMemo(() => {
@@ -322,20 +333,30 @@ export default function CalendarPage() {
     const isToday = isSameDay(date, today);
     const isSelected = selectedDate && isSameDay(date, selectedDate);
 
+    // Color-coded borders and backgrounds for winning/losing days
+    let dayCellClasses = 'bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.06]';
+    if (dayTrades.length > 0) {
+      if (isProfit) {
+        dayCellClasses = 'bg-emerald-50/30 dark:bg-emerald-950/15 border-emerald-250 dark:border-emerald-500/25';
+      } else if (isLoss) {
+        dayCellClasses = 'bg-rose-50/30 dark:bg-rose-950/15 border-rose-250 dark:border-rose-500/25';
+      }
+    }
+
     return (
       <motion.button
         onClick={() => setSelectedDate(date)}
         whileHover={{ y: -2 }}
-        className={`relative aspect-[4/3] sm:aspect-[1.5] p-3 rounded-2xl border transition-all duration-200 flex flex-col justify-between text-left group ${
+        className={`relative aspect-[4/3] sm:aspect-[1.5] p-3 rounded-2xl border transition-all duration-200 flex flex-col justify-between text-left group ${dayCellClasses} ${
           isToday
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/10 dark:ring-indigo-400/10 bg-indigo-50/50 dark:bg-indigo-950/10'
             : isOutsideMonth
               ? 'opacity-25 bg-slate-50/20 dark:bg-white/[0.01] border-slate-200 dark:border-white/[0.03]'
-              : 'bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.06] shadow-sm hover:border-slate-350 dark:hover:border-white/10 hover:shadow'
+              : 'shadow-sm hover:border-slate-350 dark:hover:border-white/10 hover:shadow'
         } ${isSelected ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 border-transparent shadow-lg' : ''}`}
       >
         <div className="flex justify-between items-center w-full">
-          <span className={`text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
+          <span className={`text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-650 dark:text-slate-400'}`}>
             {date.getDate()}
           </span>
           {isToday && (
@@ -350,7 +371,7 @@ export default function CalendarPage() {
             <span className="text-[9px] text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
               {dayTrades.length} trade{dayTrades.length > 1 ? 's' : ''}
             </span>
-            <span className={`text-xs sm:text-sm font-black tracking-tight mt-0.5 leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+            <span className={`text-xs sm:text-sm font-black tracking-tight mt-0.5 leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
               {pnl > 0 ? '+' : ''}${Math.abs(pnl).toFixed(0)}
             </span>
           </div>
@@ -496,7 +517,7 @@ export default function CalendarPage() {
                     className={`px-4 py-1 text-xs font-bold rounded-lg transition-all ${
                       (mode === 'Month' && viewMode === 'Month') || (mode === 'Week' && viewMode === 'Week')
                         ? 'bg-indigo-600 text-white shadow'
-                        : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                        : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {mode === 'Month' ? 'Monthly' : 'Weekly'}
@@ -532,34 +553,45 @@ export default function CalendarPage() {
               {weeklyStatsList.map((stat, idx) => {
                 const rangeStr = `${stat.start.toLocaleString('en-US', { month: 'short', day: '2-digit' })} - ${stat.end.toLocaleString('en-US', { month: 'short', day: '2-digit' })}`;
                 const isProfit = stat.pnl > 0;
+                const isLoss = stat.pnl < 0;
                 
                 return (
-                  <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.03] bg-slate-50/50 dark:bg-white/[0.01]">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">{rangeStr}</span>
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : stat.pnl < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
-                        {stat.pnl > 0 ? 'WIN' : stat.pnl < 0 ? 'LOSS' : 'BE'}
+                  <div key={idx} className="flex flex-col gap-2 p-3.5 rounded-xl border border-slate-100 dark:border-white/[0.03] bg-slate-50/50 dark:bg-white/[0.01]">
+                    <div className="flex justify-between items-center w-full">
+                      <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-wider">
+                        Week {idx + 1}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-gray-400 mt-1.5 font-semibold font-mono">
-                        {stat.tradesCount} trades · {stat.winRate}% WR
+                      <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold font-mono">
+                        {rangeStr}
                       </span>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2 text-right">
-                      <span className={`text-base font-black tabular-nums tracking-tight leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : stat.pnl < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
-                        {stat.pnl > 0 ? '+' : ''}${Math.abs(stat.pnl).toFixed(0)}
-                      </span>
-                      {stat.cumulative.length >= 2 ? (
-                        <MiniSparkline
-                          data={stat.cumulative}
-                          width={75}
-                          height={20}
-                          color="#10b981"
-                          negativeColor="#ef4444"
-                        />
-                      ) : (
-                        <div className="w-[75px] h-[20px] border-b border-dashed border-slate-200 dark:border-white/10" />
-                      )}
+                    <div className="flex items-end justify-between mt-1">
+                      <div className="flex flex-col gap-0.5">
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                          {isProfit ? 'WIN' : isLoss ? 'LOSS' : 'BE'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 dark:text-gray-400 font-semibold font-mono">
+                          {stat.tradesCount} trades · {stat.winRate}% WR
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 text-right">
+                        <span className={`text-base font-black tabular-nums tracking-tight leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                          {stat.pnl !== 0 ? (isProfit ? '+' : '-') : ''}${Math.abs(stat.pnl).toFixed(0)}
+                        </span>
+                        {stat.cumulative.length >= 2 ? (
+                          <MiniSparkline
+                            data={stat.cumulative}
+                            width={75}
+                            height={20}
+                            color="#10b981"
+                            negativeColor="#ef4444"
+                          />
+                        ) : (
+                          <div className="w-[75px] h-[20px] border-b border-dashed border-slate-200 dark:border-white/10" />
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -647,22 +679,27 @@ export default function CalendarPage() {
           </Link>
         </div>
 
-        {/* ─── Top Stats Strip ─── */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Net P&L */}
-          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden min-h-[95px]">
-            <div className="flex flex-col gap-1 z-10">
-              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Net P&L</span>
-              <span className={`text-2xl font-black tabular-nums tracking-tight ${monthStats.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {monthStats.pnl >= 0 ? '+' : '-'}${Math.abs(monthStats.pnl).toFixed(2)}
+        {/* ─── Top Stats Strip (Restored 7 Cards) ─── */}
+        <div className="mb-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3.5">
+          {/* Card 1: Net P&L (with Sparkline + Gain %) */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col gap-1.5 relative overflow-hidden col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Net P&L</span>
+              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                monthStats.pnl >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
+              }`}>
+                {monthStats.pnl >= 0 ? '+' : ''}{monthStats.gainPercent.toFixed(1)}%
               </span>
             </div>
+            <span className={`text-xl font-black tabular-nums tracking-tight ${monthStats.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+              {monthStats.pnl >= 0 ? '+' : '-'}${Math.abs(monthStats.pnl).toFixed(0)}
+            </span>
             {monthCumulativePnL.length >= 2 ? (
-              <div className="z-10 bg-slate-50 dark:bg-white/[0.01] border border-slate-100 dark:border-white/[0.03] p-1 rounded-xl">
+              <div className="mt-1">
                 <MiniSparkline
                   data={monthCumulativePnL}
-                  width={100}
-                  height={32}
+                  width={90}
+                  height={18}
                   color="#10b981"
                   negativeColor="#ef4444"
                 />
@@ -671,48 +708,66 @@ export default function CalendarPage() {
           </div>
 
           {/* Card 2: Win Rate */}
-          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden min-h-[95px]">
-            <div className="flex flex-col gap-1 z-10">
-              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Win Rate</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                {monthStats.winRate}%
-              </span>
-            </div>
-            <div className="z-10 flex items-center">
-              <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.9155"
-                  className="stroke-slate-100 dark:stroke-white/[0.05]"
-                  strokeWidth="3.5"
-                  fill="none"
-                />
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.9155"
-                  className="stroke-indigo-600 dark:stroke-indigo-400"
-                  strokeWidth="3.5"
-                  strokeDasharray={`${monthStats.winRate}, 100`}
-                  strokeLinecap="round"
-                  fill="none"
-                />
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Win Rate</span>
+              <svg className="w-5 h-5 transform -rotate-90" viewBox="0 0 36 36">
+                <circle cx="18" cy="18" r="15.9155" className="stroke-slate-100 dark:stroke-white/[0.05]" strokeWidth="3.5" fill="none" />
+                <circle cx="18" cy="18" r="15.9155" className="stroke-indigo-600 dark:stroke-indigo-400" strokeWidth="3.5" strokeDasharray={`${monthStats.winRate}, 100`} strokeLinecap="round" fill="none" />
               </svg>
             </div>
+            <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight mt-1">
+              {monthStats.winRate}%
+            </span>
           </div>
 
-          {/* Card 3: Trades Count */}
-          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-5 rounded-2xl shadow-sm flex items-center justify-between relative overflow-hidden min-h-[95px]">
-            <div className="flex flex-col gap-1 z-10">
-              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Trades</span>
-              <span className="text-2xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
-                {monthStats.totalTrades}
-              </span>
+          {/* Card 3: Wins */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Wins</span>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight">
+              {monthStats.wins}
+            </span>
+          </div>
+
+          {/* Card 4: Losses */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Losses</span>
+            <span className="text-xl font-black text-rose-600 dark:text-rose-400 tabular-nums tracking-tight">
+              {monthStats.losses}
+            </span>
+          </div>
+
+          {/* Card 5: Total Trades */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Trades</span>
+              <span className="text-[8px] font-black uppercase bg-slate-100 dark:bg-white/[0.04] px-1.5 py-0.5 rounded text-slate-500 font-mono">Month</span>
             </div>
-            <div className="z-10 bg-slate-50 dark:bg-white/[0.03] text-slate-550 dark:text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 uppercase tracking-widest font-mono">
-              Monthly
+            <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+              {monthStats.totalTrades}
+            </span>
+          </div>
+
+          {/* Card 6: Best Day */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Best Day</span>
+              <span className="text-emerald-500"><TrendUp /></span>
             </div>
+            <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight mt-1">
+              {monthStats.bestDay > 0 ? '+' : ''}${monthStats.bestDay.toFixed(0)}
+            </span>
+          </div>
+
+          {/* Card 7: Worst Day */}
+          <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Worst Day</span>
+              <span className="text-rose-500"><TrendDown /></span>
+            </div>
+            <span className="text-xl font-black text-rose-600 dark:text-rose-400 tabular-nums tracking-tight mt-1">
+              {monthStats.worstDay < 0 ? '-' : ''}${Math.abs(monthStats.worstDay).toFixed(0)}
+            </span>
           </div>
         </div>
 
@@ -859,7 +914,7 @@ export default function CalendarPage() {
           )}
         </AnimatePresence>
 
-        {/* ─── YTD Annual Quick View Timeline ─── */}
+        {/* ─── YTD Annual Quick View Timeline (Enhanced & Color-Coded) ─── */}
         <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/[0.06] flex flex-col gap-4">
           <div className="flex justify-between items-center">
             <span className="text-xs font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">
@@ -894,6 +949,17 @@ export default function CalendarPage() {
               const name = dateForMonth.toLocaleString('default', { month: 'short' }).toUpperCase();
               const isActive = currentMonth === stat.month;
               const isProfit = stat.pnl > 0;
+              const isLoss = stat.pnl < 0;
+
+              // Soft green/red monthly card styling
+              let monthCardClasses = 'bg-white dark:bg-[#0d0e16]/85 border-slate-250 dark:border-white/[0.06]';
+              if (stat.tradesCount > 0) {
+                if (isProfit) {
+                  monthCardClasses = 'bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-250 dark:border-emerald-500/20';
+                } else if (isLoss) {
+                  monthCardClasses = 'bg-rose-50/20 dark:bg-rose-950/10 border-rose-250 dark:border-rose-500/20';
+                }
+              }
               
               return (
                 <button
@@ -902,18 +968,32 @@ export default function CalendarPage() {
                     setCurrentDate(new Date(currentYear, stat.month, 1));
                     setSelectedDate(null);
                   }}
-                  className={`p-3.5 rounded-xl flex flex-col justify-between text-center transition-all border ${
+                  className={`p-3.5 rounded-xl flex flex-col justify-between text-center transition-all border ${monthCardClasses} ${
                     isActive
-                      ? 'border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-500/10 dark:bg-indigo-500/[0.03] shadow-md shadow-indigo-500/5'
-                      : 'bg-white dark:bg-[#0d0e16]/80 border-slate-200 dark:border-white/[0.06] hover:border-slate-350 dark:hover:border-white/10'
+                      ? 'ring-2 ring-indigo-500 border-transparent shadow-md'
+                      : 'hover:border-slate-350 dark:hover:border-white/12'
                   }`}
                 >
-                  <span className={`text-[9px] tracking-wider font-black ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-500'}`}>
+                  <span className={`text-[10px] tracking-wider font-black ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-500'}`}>
                     {name}
                   </span>
                   <span className={`text-xs font-black tabular-nums tracking-tight mt-2 block ${stat.tradesCount > 0 ? (isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400') : 'text-slate-400'}`}>
                     {stat.tradesCount > 0 ? (isProfit ? '+' : '-') + `$${Math.abs(stat.pnl).toFixed(0)}` : '—'}
                   </span>
+                  <div className="mt-2.5 flex flex-col gap-0.5 items-center w-full">
+                    <span className="text-[9px] text-slate-500 dark:text-gray-500 font-semibold font-mono">
+                      {stat.tradesCount} Tr
+                    </span>
+                    {stat.tradesCount > 0 ? (
+                      <span className={`text-[8px] font-black px-1 py-0.2 rounded border ${
+                        stat.winRate >= 50
+                          ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/15'
+                          : 'bg-red-500/10 text-red-650 dark:text-red-400 border-red-500/15'
+                      }`}>
+                        {stat.winRate}% WR
+                      </span>
+                    ) : null}
+                  </div>
                 </button>
               );
             })}
