@@ -94,7 +94,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
     <>
       {/* Saved Views Panel */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-black/5 dark:bg-white/[0.02] border border-black/10 dark:border-white/[0.05] shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.2)]">
+        <div className="flex flex-wrap gap-2 items-center">
           {[
             { id: 'all', label: 'All Trades', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg> },
             { id: 'forex', label: 'Forex', icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
@@ -106,10 +106,10 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             <button
               key={view.id}
               onClick={() => onViewChange(view.id as SavedView)}
-              className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-250 flex items-center gap-1.5 ${
                 activeView === view.id
-                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
+                  ? 'bg-indigo-650 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white border border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
               {view.icon}
@@ -118,39 +118,39 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-wider text-gray-500">Density</span>
-          <div className="flex rounded-lg p-0.5 bg-black/5 dark:bg-white/[0.03] border border-black/10 dark:border-white/[0.07] shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_2px_8px_rgba(0,0,0,0.25)]">
-            <button
-              onClick={() => onDensityChange('compact')}
-              className={`px-2.5 py-1 text-xs rounded-md transition-all duration-200 ${
-                tableDensity === 'compact'
-                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm font-semibold'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
-              }`}
-            >
-              Compact
-            </button>
-            <button
-              onClick={() => onDensityChange('comfortable')}
-              className={`px-2.5 py-1 text-xs rounded-md transition-all duration-200 ${
-                tableDensity === 'comfortable'
-                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25 shadow-sm font-semibold'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-transparent'
-              }`}
-            >
-              Comfortable
-            </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-450 dark:text-gray-500">Density</span>
+            <div className="flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/[0.06] shadow-sm">
+              <button
+                onClick={() => onDensityChange('compact')}
+                className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${
+                  tableDensity === 'compact'
+                    ? 'bg-white dark:bg-[#121420] text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-white/[0.08] shadow-sm font-bold'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-medium border border-transparent'
+                }`}
+              >
+                Compact
+              </button>
+              <button
+                onClick={() => onDensityChange('comfortable')}
+                className={`px-3 py-1 text-xs rounded-lg transition-all duration-200 ${
+                  tableDensity === 'comfortable'
+                    ? 'bg-white dark:bg-[#121420] text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-white/[0.08] shadow-sm font-bold'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-medium border border-transparent'
+                }`}
+              >
+                Comfortable
+              </button>
+            </div>
           </div>
 
           {/* Column Visibility Menu */}
           <div className="relative">
             <button
               onClick={() => setShowColumnMenu(!showColumnMenu)}
-              className={`popover-trigger px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                showColumnMenu
-                  ? 'bg-indigo-500/15 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-200 border border-indigo-500/30 dark:border-indigo-500/25'
-                  : 'bg-black/5 dark:bg-white/[0.03] text-gray-500 dark:text-gray-400 border border-black/10 dark:border-white/[0.07] hover:bg-black/10 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-white'
+              className={`popover-trigger px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-50 dark:bg-[#121420] border border-slate-250 dark:border-white/[0.08] text-slate-700 dark:text-slate-205 hover:bg-slate-100 dark:hover:bg-[#1c1e30] transition-all flex items-center gap-1.5 shadow-sm ${
+                showColumnMenu ? 'text-indigo-600 border-indigo-300' : ''
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>
@@ -261,7 +261,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
       <div className="mb-6 text-left">
         <button
           onClick={onToggleIntelligence}
-          className="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] text-gray-750 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-all inline-flex items-center gap-2"
+          className="mb-3 px-3.5 py-2 rounded-xl text-xs font-bold bg-white dark:bg-[#0d0e16] border border-slate-250 dark:border-white/[0.08] text-slate-700 dark:text-slate-250 hover:bg-slate-50 dark:hover:bg-white/5 transition-all inline-flex items-center gap-2 shadow-sm"
         >
           <span>{showIntelligence ? 'Hide' : 'Show'} Intelligence</span>
           <svg
