@@ -1103,7 +1103,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           >
           {/* Table Header — columns driven by columnOrder for drag-to-reorder */}
           <div
-            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-[#eff2f8] dark:bg-[#151823] border-b border-slate-200/80 dark:border-white/[0.08]"
+            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-[#eff2f8] dark:bg-[#151823] border-b border-slate-200/80 dark:border-white/[0.08] rounded-t-[15px]"
             style={{
               gridTemplateColumns: 'var(--grid-template-columns)',
             }}
