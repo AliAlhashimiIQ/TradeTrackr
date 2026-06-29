@@ -73,8 +73,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
           {
             label: 'Total P&L',
             value: formatCurrency(quickMetrics.totalPnL),
-            color: quickMetrics.totalPnL >= 0 ? '#34d399' : '#f87171',
-            glow: quickMetrics.totalPnL >= 0 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+            color: quickMetrics.totalPnL >= 0 ? '#10b981' : '#ef4444',
             icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -84,8 +83,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
           {
             label: 'Win Rate',
             value: `${quickMetrics.winRate.toFixed(1)}%`,
-            color: quickMetrics.winRate >= 50 ? '#34d399' : '#f87171',
-            glow: quickMetrics.winRate >= 50 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+            color: quickMetrics.winRate >= 50 ? '#10b981' : '#ef4444',
             icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -95,8 +93,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
           {
             label: 'Profit Factor',
             value: quickMetrics.profitFactor.toFixed(2),
-            color: quickMetrics.profitFactor >= 1 ? '#34d399' : '#f87171',
-            glow: quickMetrics.profitFactor >= 1 ? 'rgba(16,185,129,0.06)' : 'rgba(239,68,68,0.05)',
+            color: quickMetrics.profitFactor >= 1 ? '#10b981' : '#ef4444',
             icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -106,8 +103,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
           {
             label: 'Total Trades',
             value: tradesCount.toString(),
-            color: '#818cf8',
-            glow: 'rgba(99,102,241,0.05)',
+            color: '#6366f1',
             icon: (
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -115,25 +111,25 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
             )
           },
         ].map((m, i) => (
-          <div key={i} className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
+          <div key={i} className="stat-card group relative p-5 hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between rounded-2xl border border-slate-250 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] shadow-sm">
             <div>
               <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">{m.label}</span>
-                <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${m.color}12`, color: `${m.color}99` }}>{m.icon}</div>
+                <span className="text-[11px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">{m.label}</span>
+                <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${m.color}12`, color: m.color }}>{m.icon}</div>
               </div>
-              <div className="text-2xl font-bold tracking-tight relative z-10" style={{ color: m.color, textShadow: `0 0 20px ${m.color}33` }}>
+              <div className="text-2xl font-black tracking-tight relative z-10" style={{ color: m.color }}>
                 {m.value}
               </div>
             </div>
 
             {/* Custom Visual Mini Charts */}
             {m.label === 'Total P&L' && (
-              <div className="mt-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.04] space-y-2 relative z-10">
-                <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] space-y-2 relative z-10">
+                <div className="flex justify-between text-xs text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">
                   <span>Avg Win</span>
                   <span>Avg Loss</span>
                 </div>
-                <div className="h-2 w-full rounded-full bg-black/[0.06] dark:bg-white/[0.04] overflow-hidden flex">
+                <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-white/[0.04] overflow-hidden flex">
                   <div
                     style={{
                       width: `${(quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss)) > 0 ? (quickMetrics.avgWin / (quickMetrics.avgWin + Math.abs(quickMetrics.avgLoss))) * 100 : 50}%`,
@@ -149,22 +145,22 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
                     className="h-full"
                   />
                 </div>
-                <div className="flex justify-between text-xs font-semibold font-mono tabular-nums">
-                  <span className="text-emerald-400">{formatCurrency(quickMetrics.avgWin)}</span>
-                  <span className="text-red-400">-{formatCurrency(Math.abs(quickMetrics.avgLoss))}</span>
+                <div className="flex justify-between text-xs font-bold font-mono tabular-nums">
+                  <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(quickMetrics.avgWin)}</span>
+                  <span className="text-rose-600 dark:text-rose-400">-{formatCurrency(Math.abs(quickMetrics.avgLoss))}</span>
                 </div>
               </div>
             )}
 
             {m.label === 'Win Rate' && (
-              <div className="mt-3 pt-2 border-t border-black/[0.06] dark:border-white/[0.04] relative z-10 space-y-1.5">
+              <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/[0.04] relative z-10 space-y-1.5">
                 <div className="flex justify-center">
-                  <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
-                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
+                  <svg className="w-[145px] h-[55px]" viewBox="0 0 100 50">
+                    <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" className="stroke-slate-100 dark:stroke-white/[0.05]" strokeWidth="9.5" strokeLinecap="round" />
                     <path
                       d="M 10 45 A 35 35 0 0 1 90 45"
-                      fill="none"
-                      stroke="url(#winRateGrad)"
+                      fill="none; stroke: url(#winRateGrad)"
+                      className="stroke-[url(#winRateGrad)]"
                       strokeWidth="9.5"
                       strokeLinecap="round"
                       strokeDasharray="110"
@@ -180,13 +176,13 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
                     </defs>
                   </svg>
                 </div>
-                <div className="flex justify-between items-center text-xs text-gray-400 font-semibold tracking-wide px-1">
+                <div className="flex justify-between items-center text-xs text-slate-450 dark:text-gray-500 font-bold tracking-wide px-1">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
                     <span>{Math.round((quickMetrics.winRate / 100) * filteredTradesCount)} Wins</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-red-400 block" />
+                    <span className="w-2 h-2 rounded-full bg-rose-400 block" />
                     <span>{filteredTradesCount - Math.round((quickMetrics.winRate / 100) * filteredTradesCount)} Losses</span>
                   </div>
                 </div>
@@ -196,8 +192,8 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
             {m.label === 'Profit Factor' && (() => {
               const gpRatio = quickMetrics.profitFactor > 0 ? (quickMetrics.profitFactor / (quickMetrics.profitFactor + 1)) * 100 : 50;
               return (
-                <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
-                  <div className="text-xs text-gray-400 leading-normal font-medium max-w-[65%]">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
+                  <div className="text-xs text-slate-450 dark:text-gray-500 leading-normal font-bold max-w-[65%]">
                     <span>Proportion of gross profit vs gross loss</span>
                   </div>
                   <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
@@ -223,24 +219,22 @@ export const TradesHeader: React.FC<TradesHeaderProps> = ({
               const total = longCount + shortCount;
               const longPct = total > 0 ? (longCount / total) * 100 : 50;
               return (
-                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
-                  <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] space-y-2 relative z-10">
+                  <div className="flex justify-between text-xs text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">
                     <span>Buy ({longCount})</span>
                     <span>Sell ({shortCount})</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-white/[0.04] overflow-hidden flex">
                     <div style={{ width: `${longPct}%` }} className="h-full bg-emerald-500" />
                     <div style={{ width: `${100 - longPct}%` }} className="h-full bg-red-500" />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400 font-bold px-0.5">
+                  <div className="flex justify-between text-xs text-slate-400 dark:text-gray-500 font-bold px-0.5 font-mono">
                     <span>{total > 0 ? `${longPct.toFixed(0)}%` : '--'}</span>
                     <span>{total > 0 ? `${(100 - longPct).toFixed(0)}%` : '--'}</span>
                   </div>
                 </div>
               );
             })()}
-
-            {m.glow && <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: `radial-gradient(ellipse, ${m.glow} 0%, transparent 70%)` }} />}
           </div>
         ))}
       </div>

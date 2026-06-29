@@ -158,10 +158,10 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             </button>
             {showColumnMenu && (
               <div
-                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl border bg-white dark:bg-[#0d0e16] border-black/10 dark:border-white/[0.08] shadow-2xl p-0.5 w-[220px] text-left backdrop-blur-md"
+                className="popover-container absolute right-0 top-full mt-2 z-30 rounded-2xl border bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.08] shadow-2xl p-0.5 w-[220px] text-left"
               >
-                <div className="px-3 py-2.5 border-b border-black/10 dark:border-white/[0.06]">
-                  <div className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-[0.12em]">Toggle Columns</div>
+                <div className="px-3 py-2.5 border-b border-slate-100 dark:border-white/[0.06]">
+                  <div className="text-[10px] font-bold text-slate-450 dark:text-gray-400 uppercase tracking-[0.12em]">Toggle Columns</div>
                 </div>
                 <div className="p-1.5 max-h-[380px] overflow-y-auto scrollbar-thin scrollbar-thumb-white/[0.08]">
                   {[

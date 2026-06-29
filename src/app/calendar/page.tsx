@@ -334,12 +334,12 @@ export default function CalendarPage() {
     const isSelected = selectedDate && isSameDay(date, selectedDate);
 
     // Color-coded borders and backgrounds for winning/losing days
-    let dayCellClasses = 'bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.06]';
+    let dayCellClasses = 'bg-white dark:bg-[#0d0e16] border-slate-250 dark:border-white/[0.06]';
     if (dayTrades.length > 0) {
       if (isProfit) {
-        dayCellClasses = 'bg-emerald-50/30 dark:bg-emerald-950/15 border-emerald-250 dark:border-emerald-500/25';
+        dayCellClasses = 'bg-[#e6f4ea] dark:bg-emerald-950/45 border-[#ceead6] dark:border-emerald-500/35';
       } else if (isLoss) {
-        dayCellClasses = 'bg-rose-50/30 dark:bg-rose-950/15 border-rose-250 dark:border-rose-500/25';
+        dayCellClasses = 'bg-[#fce8e6] dark:bg-rose-950/45 border-[#fad2cf] dark:border-rose-500/35';
       }
     }
 
@@ -952,12 +952,12 @@ export default function CalendarPage() {
               const isLoss = stat.pnl < 0;
 
               // Soft green/red monthly card styling
-              let monthCardClasses = 'bg-white dark:bg-[#0d0e16]/85 border-slate-250 dark:border-white/[0.06]';
+              let monthCardClasses = 'bg-white dark:bg-[#0d0e16] border-slate-250 dark:border-white/[0.06]';
               if (stat.tradesCount > 0) {
                 if (isProfit) {
-                  monthCardClasses = 'bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-250 dark:border-emerald-500/20';
+                  monthCardClasses = 'bg-[#e6f4ea] dark:bg-emerald-950/45 border-[#ceead6] dark:border-emerald-500/35';
                 } else if (isLoss) {
-                  monthCardClasses = 'bg-rose-50/20 dark:bg-rose-950/10 border-rose-250 dark:border-rose-500/20';
+                  monthCardClasses = 'bg-[#fce8e6] dark:bg-rose-950/45 border-[#fad2cf] dark:border-rose-500/35';
                 }
               }
               

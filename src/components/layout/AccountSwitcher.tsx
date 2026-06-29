@@ -58,7 +58,7 @@ export default function AccountSwitcher() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] text-gray-300 hover:text-white rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200"
+        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[#0d0e16] hover:bg-slate-50 dark:hover:bg-[#121420] border border-slate-250 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200"
       >
         <div className="flex items-center gap-1.5">
           <div className="relative flex h-2 w-2">
@@ -69,13 +69,13 @@ export default function AccountSwitcher() {
           </div>
           <span className="max-w-[120px] truncate">{triggerLabel}</span>
           {!isAll && selectedCount > 1 && (
-            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-indigo-500/30 text-indigo-300 text-[9px] font-bold">
+            <span className="flex items-center justify-center w-4 h-4 rounded-full bg-indigo-500/10 dark:bg-indigo-500/30 text-indigo-600 dark:text-indigo-300 text-[9px] font-bold">
               {selectedCount}
             </span>
           )}
         </div>
         <svg
-          className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -92,15 +92,15 @@ export default function AccountSwitcher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full mb-2 left-0 w-72 bg-[#0f1117] border border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100] backdrop-blur-md"
+            className="absolute bottom-full mb-2 left-0 w-72 bg-white dark:bg-[#0d0e16] border border-slate-250 dark:border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100]"
           >
             {/* Header */}
-            <div className="px-4 py-2.5 border-b border-white/[0.04] flex items-center justify-between">
-              <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Trading Account</p>
+            <div className="px-4 py-2.5 border-b border-slate-100 dark:border-white/[0.04] flex items-center justify-between">
+              <p className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Trading Account</p>
               {!isAll && (
                 <button
                   onClick={() => setSelection('all')}
-                  className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold transition-colors"
+                  className="text-[10px] text-indigo-650 dark:text-indigo-400 hover:text-indigo-500 font-semibold transition-colors"
                 >
                   Clear
                 </button>
@@ -108,7 +108,7 @@ export default function AccountSwitcher() {
             </div>
 
             {/* List */}
-            <div className="max-h-60 overflow-y-auto divide-y divide-white/[0.03] scrollbar-thin">
+            <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-white/[0.03] scrollbar-thin">
               {/* All Accounts Option */}
               <button
                 onClick={() => {
@@ -117,15 +117,15 @@ export default function AccountSwitcher() {
                 }}
                 className={`w-full flex items-center justify-between px-4 py-2.5 text-xs text-left transition-colors ${
                   isAll
-                    ? 'bg-indigo-500/10 text-indigo-400 font-semibold'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 font-semibold'
+                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
                 <div className="flex items-center gap-2.5">
                   <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
                     isAll
-                      ? 'bg-indigo-500 border-indigo-500'
-                      : 'border-white/[0.15] bg-white/[0.03]'
+                      ? 'bg-indigo-600 border-indigo-600 text-white'
+                      : 'border-slate-200 dark:border-white/[0.15] bg-slate-50 dark:bg-white/[0.03]'
                   }`}>
                     {isAll && (
                       <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,7 +133,7 @@ export default function AccountSwitcher() {
                       </svg>
                     )}
                   </div>
-                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5 text-slate-400 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -147,7 +147,7 @@ export default function AccountSwitcher() {
 
               {/* Individual accounts — checkboxes for multi-select */}
               {accounts.length === 0 ? (
-                <div className="px-4 py-3 text-xs text-gray-500 italic text-center">
+                <div className="px-4 py-3 text-xs text-slate-450 dark:text-gray-505 italic text-center">
                   No accounts connected
                 </div>
               ) : (
@@ -159,15 +159,15 @@ export default function AccountSwitcher() {
                       onClick={() => selectAccount(acc.id)}
                       className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-left transition-colors ${
                         checked
-                          ? 'bg-indigo-500/10 text-indigo-300'
-                          : 'text-gray-400 hover:text-white hover:bg-white/5'
+                          ? 'bg-indigo-500/10 text-indigo-650 dark:text-indigo-300 font-semibold'
+                          : 'text-slate-600 dark:text-gray-450 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                       }`}
                     >
                       {/* Checkbox */}
                       <div className={`w-4 h-4 rounded flex items-center justify-center border flex-shrink-0 transition-colors ${
                         checked
-                          ? 'bg-indigo-500 border-indigo-500'
-                          : 'border-white/[0.15] bg-white/[0.03]'
+                          ? 'bg-indigo-600 border-indigo-600'
+                          : 'border-slate-250 dark:border-white/[0.15] bg-slate-50 dark:bg-white/[0.03]'
                       }`}>
                         {checked && (
                           <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -180,13 +180,13 @@ export default function AccountSwitcher() {
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getStatusColor(acc.connection_status)}`} />
 
                       {/* Name */}
-                      <span className="truncate flex-1 font-medium" title={acc.name}>
+                      <span className="truncate flex-1 font-medium text-slate-800 dark:text-slate-205" title={acc.name}>
                         {acc.name}
                       </span>
 
                       {/* Connection badge */}
                       {acc.connection_status === 'CONNECTED' && (
-                        <span className="text-[9px] text-emerald-400 font-bold uppercase tracking-wide flex-shrink-0">
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide flex-shrink-0">
                           Live
                         </span>
                       )}
@@ -198,21 +198,21 @@ export default function AccountSwitcher() {
 
             {/* Multi-select hint */}
             {accounts.length > 1 && (
-              <div className="px-4 py-2 border-t border-white/[0.04]">
-                <p className="text-[10px] text-gray-600 text-center">
+              <div className="px-4 py-2 border-t border-slate-100 dark:border-white/[0.04]">
+                <p className="text-[10px] text-slate-400 dark:text-gray-600 text-center">
                   Click accounts to select one or more
                 </p>
               </div>
             )}
 
             {/* Footer link */}
-            <div className={`${accounts.length > 1 ? '' : 'border-t border-white/[0.04] mt-1.5'} pt-1.5 px-2 pb-1`}>
+            <div className={`${accounts.length > 1 ? '' : 'border-t border-slate-100 dark:border-white/[0.04] mt-1.5'} pt-1.5 px-2 pb-1`}>
               <button
                 onClick={() => {
                   setIsOpen(false)
                   router.push('/accounts')
                 }}
-                className="w-full flex items-center justify-center gap-1.5 py-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-xl text-xs font-semibold transition-all"
+                className="w-full flex items-center justify-center gap-1.5 py-2 bg-indigo-50 dark:bg-indigo-950/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-605 dark:text-indigo-400 rounded-xl text-xs font-semibold border border-indigo-100 dark:border-indigo-900/20 transition-all"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
