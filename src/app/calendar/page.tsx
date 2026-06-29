@@ -275,6 +275,63 @@ export default function CalendarPage() {
     return `${startM} ${start.getDate()} - ${endM} ${end.getDate()}, ${start.getFullYear()}`;
   }, [weekDates]);
 
+  // Days in selected Month cells grouping
+  const monthCellsData = useMemo(() => {
+    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+    const totalCells = Math.ceil((daysInMonth + firstDay) / 7) * 7;
+
+    const cells = [];
+    for (let i = 0; i < totalCells; i++) {
+      const dayNum = i - firstDay + 1;
+      const isValid = dayNum > 0 && dayNum <= daysInMonth;
+      const date = isValid ? new Date(currentYear, currentMonth, dayNum) : null;
+      cells.push({ date, isValid });
+    }
+    return { cells, firstDay, daysInMonth };
+  }, [currentYear, currentMonth]);
+
+  const weeklyStatsList = useMemo(() => {
+    const { cells, firstDay, daysInMonth } = monthCellsData;
+    const list: Array<{ start: Date; end: Date; pnl: number; tradesCount: number; winRate: number; cumulative: number[] }> = [];
+
+    for (let row = 0; row < cells.length / 7; row++) {
+      const startDayNum = row * 7 - firstDay + 1;
+      const endDayNum = row * 7 - firstDay + 7;
+      const startD = new Date(currentYear, currentMonth, Math.max(1, startDayNum));
+      const endD = new Date(currentYear, currentMonth, Math.min(daysInMonth, endDayNum));
+
+      let weekTrades: Trade[] = [];
+      for (let d = 0; d < 7; d++) {
+        const dayNum = row * 7 + d - firstDay + 1;
+        if (dayNum > 0 && dayNum <= daysInMonth) {
+          const date = new Date(currentYear, currentMonth, dayNum);
+          const dateStr = toLocalDateString(date);
+          const dayTrades = tradesByDate[dateStr] || [];
+          weekTrades = [...weekTrades, ...dayTrades];
+        }
+      }
+
+      const sortedWeekTrades = [...weekTrades].sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime());
+      let sum = 0;
+      const cumulative = [0];
+      sortedWeekTrades.forEach(t => {
+        sum += t.profit_loss;
+        cumulative.push(sum);
+      });
+
+      list.push({
+        start: startD,
+        end: endD,
+        pnl: calcPnL(weekTrades),
+        tradesCount: weekTrades.length,
+        winRate: calcWinRate(weekTrades),
+        cumulative,
+      });
+    }
+    return list;
+  }, [monthCellsData, currentYear, currentMonth, tradesByDate]);
+
   const selectedDayTrades = useMemo(() => {
     if (!selectedDate) return [];
     return tradesByDate[toLocalDateString(selectedDate)] || [];
@@ -380,130 +437,69 @@ export default function CalendarPage() {
     );
   };
 
-  /* ═══════════════════ WEEK VIEW ═══════════════════ */
-  const renderWeekView = () => {
+  /* ─── WEEK GRID VIEW ─── */
+  const renderWeekGrid = () => {
     const weekPnl = weekDates.reduce((s, d) => {
       const k = toLocalDateString(d);
       return s + calcPnL(tradesByDate[k] || []);
     }, 0);
 
     return (
-      <div className="bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-sm p-4">
-        {/* Day headers */}
-        <div className="grid grid-cols-7 border-b border-slate-100 dark:border-white/[0.04] mb-3">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div key={d} className="px-3 py-2.5 text-center text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-              {d}
-            </div>
-          ))}
-        </div>
-
+      <div className="flex flex-col gap-3">
         {/* Day cells */}
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-7 gap-3 animate-fadeInOpacity">
           {weekDates.map((date) => (
             <DayCell key={date.toISOString()} date={date} large />
           ))}
-        </div>
-
-        {/* Week total bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-t border-slate-100 dark:border-white/[0.04] mt-5">
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-widest">Week Total</span>
-            {weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []).length > 0 && (
-              <span className="text-xs text-slate-500 dark:text-gray-400 font-semibold font-mono">
-                ({weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []).length} trades · {calcWinRate(weekDates.map(date => toLocalDateString(date)).flatMap(k => tradesByDate[k] || []))}% WR)
-              </span>
-            )}
-          </div>
-          <span className={`text-lg font-black tabular-nums ${weekPnl > 0 ? 'text-emerald-600 dark:text-emerald-400' : weekPnl < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
-            {weekPnl > 0 ? '+' : ''}{fmt(weekPnl)}
-          </span>
         </div>
       </div>
     );
   };
 
-  /* ═══════════════════ MONTH VIEW ═══════════════════ */
-  const renderMonthView = () => {
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
-    const totalCells = Math.ceil((daysInMonth + firstDay) / 7) * 7;
-
-    const cells = [];
-    for (let i = 0; i < totalCells; i++) {
-      const dayNum = i - firstDay + 1;
-      const isValid = dayNum > 0 && dayNum <= daysInMonth;
-      const date = isValid ? new Date(currentYear, currentMonth, dayNum) : null;
-      cells.push(<DayCell key={i} date={date} isOutsideMonth={!isValid} />);
-    }
-
-    const weekRows: React.ReactNode[] = [];
-    const weeklyStatsList: Array<{ start: Date; end: Date; pnl: number; tradesCount: number; winRate: number; cumulative: number[] }> = [];
-
+  /* ─── MONTH GRID VIEW ─── */
+  const renderMonthGrid = () => {
+    const { cells } = monthCellsData;
+    const weekRows = [];
     for (let row = 0; row < cells.length / 7; row++) {
       const weekCells = cells.slice(row * 7, row * 7 + 7);
-      
-      const startDayNum = row * 7 - firstDay + 1;
-      const endDayNum = row * 7 - firstDay + 7;
-      const startD = new Date(currentYear, currentMonth, Math.max(1, startDayNum));
-      const endD = new Date(currentYear, currentMonth, Math.min(daysInMonth, endDayNum));
-
-      let weekTrades: Trade[] = [];
-      for (let d = 0; d < 7; d++) {
-        const dayNum = row * 7 + d - firstDay + 1;
-        if (dayNum > 0 && dayNum <= daysInMonth) {
-          const date = new Date(currentYear, currentMonth, dayNum);
-          const dateStr = toLocalDateString(date);
-          const dayTrades = tradesByDate[dateStr] || [];
-          weekTrades = [...weekTrades, ...dayTrades];
-        }
-      }
-
-      // Sort weekly trades to construct week sparkline
-      const sortedWeekTrades = [...weekTrades].sort((a, b) => new Date(a.entry_time).getTime() - new Date(b.entry_time).getTime());
-      let sum = 0;
-      const cumulative = [0];
-      sortedWeekTrades.forEach(t => {
-        sum += t.profit_loss;
-        cumulative.push(sum);
-      });
-
-      weeklyStatsList.push({
-        start: startD,
-        end: endD,
-        pnl: calcPnL(weekTrades),
-        tradesCount: weekTrades.length,
-        winRate: calcWinRate(weekTrades),
-        cumulative,
-      });
-
       weekRows.push(
         <div key={row} className="grid grid-cols-7 gap-3">
-          {weekCells}
+          {weekCells.map((c, i) => (
+            <DayCell key={i} date={c.date} isOutsideMonth={!c.isValid} />
+          ))}
         </div>
       );
     }
+    return (
+      <div className="flex flex-col gap-3 animate-fadeInOpacity">
+        {weekRows}
+      </div>
+    );
+  };
 
+  /* ─── UNIFIED CALENDAR LAYOUT ─── */
+  const renderCalendarUnifiedLayout = () => {
     return (
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start w-full">
         {/* Calendar Grid (3 columns) */}
         <div className="xl:col-span-3 flex flex-col gap-3">
           <div className="bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-sm p-5">
+            
             {/* Calendar header controls */}
             <div className="flex justify-between items-center mb-5">
               <div className="flex items-center gap-3">
                 <button
                   onClick={goToPrevious}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <ChevronLeft />
                 </button>
                 <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 font-sans tracking-tight">
-                  {monthName} {currentYear}
+                  {viewMode === 'Month' ? `${monthName} ${currentYear}` : weekLabel}
                 </h2>
                 <button
                   onClick={goToNext}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-655 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <ChevronRight />
                 </button>
@@ -513,10 +509,10 @@ export default function CalendarPage() {
                 {(['Month', 'Week'] as const).map((mode) => (
                   <button
                     key={mode}
-                    onClick={() => setViewMode(mode === 'Month' ? 'Month' : 'Week')}
-                    className={`px-4 py-1 text-xs font-bold rounded-lg transition-all ${
-                      (mode === 'Month' && viewMode === 'Month') || (mode === 'Week' && viewMode === 'Week')
-                        ? 'bg-indigo-600 text-white shadow'
+                    onClick={() => setViewMode(mode)}
+                    className={`px-4 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                      viewMode === mode
+                        ? 'bg-indigo-650 text-white shadow'
                         : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -535,10 +531,8 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            {/* Month Day Grid */}
-            <div className="flex flex-col gap-3">
-              {weekRows}
-            </div>
+            {/* Grid Days */}
+            {viewMode === 'Month' ? renderMonthGrid() : renderWeekGrid()}
           </div>
         </div>
 
@@ -568,7 +562,7 @@ export default function CalendarPage() {
 
                     <div className="flex items-end justify-between mt-1">
                       <div className="flex flex-col gap-0.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
                           {isProfit ? 'WIN' : isLoss ? 'LOSS' : 'BE'}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-gray-400 font-semibold font-mono">
@@ -783,7 +777,7 @@ export default function CalendarPage() {
               exit={{ opacity: 0, y: -12 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
             >
-              {viewMode === 'Month' ? renderMonthView() : renderWeekView()}
+              {renderCalendarUnifiedLayout()}
             </motion.div>
           </AnimatePresence>
         )}
