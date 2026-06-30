@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/apiAuth';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
@@ -26,6 +26,10 @@ export async function GET(request: NextRequest) {
   
   const userId = auth.user!.id;
   const supabase = auth.supabase!;
+
+  // 2. Rate limit: 60 requests per minute
+  const { allowed, resetIn } = checkRateLimit(userId, 60, 60_000);
+  if (!allowed) return rateLimitExceeded(resetIn);
 
   // 2. Extract media URL
   const { searchParams } = new URL(request.url);

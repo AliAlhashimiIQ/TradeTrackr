@@ -114,8 +114,23 @@ function mapInterval(interval: string): string {
   return map[interval] || interval;
 }
 
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+import { checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
+
 export async function GET(req: NextRequest) {
   try {
+    const supabase = createRouteHandlerClient({ cookies });
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { allowed, resetIn } = checkRateLimit(user.id, 40, 60_000);
+    if (!allowed) return rateLimitExceeded(resetIn);
+
     const { searchParams } = new URL(req.url);
     const rawSymbol = searchParams.get('symbol');
     const interval = searchParams.get('interval') || '15m'; // e.g. 5m, 15m, 1h, 1d

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/apiAuth';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 import { createClient } from '@supabase/supabase-js';
 import axios from 'axios';
 
@@ -30,6 +30,10 @@ export async function GET(request: NextRequest) {
   if ('error' in auth && auth.error) return auth.error;
 
   const userId = auth.user!.id;
+
+  // Rate Limit: 30 requests per minute
+  const { allowed, resetIn } = checkRateLimit(userId, 30, 60_000);
+  if (!allowed) return rateLimitExceeded(resetIn);
 
   try {
     const { searchParams } = new URL(request.url);
