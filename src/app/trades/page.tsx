@@ -7,12 +7,14 @@ import { useAccount } from '@/hooks/useAccount'
 import { Trade, TradingAccount } from '@/lib/types'
 import { getPagedTrades, deleteTrade, deleteTradesBulk, addTrade, updateTrade, getFilteredTradeMetrics, getTradingAccounts, getUserTags, updateTag } from '@/lib/tradingApi'
 import { uploadTradeScreenshot, supabase } from '@/lib/supabaseClient'
-import EnhancedTradeForm from '@/components/trades/EnhancedTradeForm'
+import dynamic from 'next/dynamic'
+
+const EnhancedTradeForm = dynamic(() => import('@/components/trades/EnhancedTradeForm'), { ssr: false })
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout'
-import TradeDetail from '@/components/trades/TradeDetail'
-import TagModal from '@/components/trades/TagModal'
-import ExportModal from '@/components/trades/ExportModal'
-import TradeAIChatBox from '@/components/trades/TradeAIChatBox'
+const TradeDetail = dynamic(() => import('@/components/trades/TradeDetail'), { ssr: false })
+const TagModal = dynamic(() => import('@/components/trades/TagModal'), { ssr: false })
+const ExportModal = dynamic(() => import('@/components/trades/ExportModal'), { ssr: false })
+const TradeAIChatBox = dynamic(() => import('@/components/trades/TradeAIChatBox'), { ssr: false })
 import { calculatePerformanceMetrics } from '@/lib/tradeMetrics'
 import { TradesListSkeleton } from '@/components/ui/SkeletonLoader'
 import ConfirmModal from '@/components/ui/ConfirmModal'

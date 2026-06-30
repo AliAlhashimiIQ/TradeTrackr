@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/lib/apiAuth';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 import { encryptPassword } from '@/lib/crypto';
 
 export async function POST(request: NextRequest) {
   const auth = await authenticateRequest(request);
   if ('error' in auth && auth.error) return auth.error;
+
+  const { allowed, resetIn } = checkRateLimit(auth.user!.id, 20, 60_000);
+  if (!allowed) return rateLimitExceeded(resetIn);
   
   const userId = auth.user!.id;
   const supabase = auth.supabase!;
@@ -54,6 +57,9 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   const auth = await authenticateRequest(request);
   if ('error' in auth && auth.error) return auth.error;
+
+  const { allowed, resetIn } = checkRateLimit(auth.user!.id, 20, 60_000);
+  if (!allowed) return rateLimitExceeded(resetIn);
   
   const userId = auth.user!.id;
   const supabase = auth.supabase!;

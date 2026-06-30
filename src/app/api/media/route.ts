@@ -1,9 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/apiAuth';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: NextRequest) {
   // 1. Authenticate request
-  const auth = await authenticateRequest(request);
+  let auth = await authenticateRequest(request);
+  
+  if ('error' in auth && auth.error) {
+    // Fallback: Support token in query parameter for browser <img> requests
+    const { searchParams } = new URL(request.url);
+    const queryToken = searchParams.get('token');
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (queryToken && supabaseUrl && supabaseServiceKey) {
+      const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: { user }, error } = await supabaseClient.auth.getUser(queryToken);
+      if (!error && user) {
+        auth = { user, supabase: supabaseClient };
+      }
+    }
+  }
+
   if ('error' in auth && auth.error) return auth.error;
   
   const userId = auth.user!.id;

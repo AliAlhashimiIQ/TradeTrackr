@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateRequest, checkRateLimit, rateLimitExceeded } from '@/lib/apiAuth';
 
 const BASE_URL = 'https://api.tradingeconomics.com/calendar';
 
 export async function GET(request: NextRequest) {
+  // 1. Authenticate request
+  const auth = await authenticateRequest(request);
+  if ('error' in auth && auth.error) return auth.error;
+
+  // 2. Rate limit: 20 requests per minute
+  const { allowed, resetIn } = checkRateLimit(auth.user!.id, 20, 60_000);
+  if (!allowed) return rateLimitExceeded(resetIn);
+
   // Use server-only key TRADING_ECONOMICS_API_KEY
   const apiKey = process.env.TRADING_ECONOMICS_API_KEY;
 

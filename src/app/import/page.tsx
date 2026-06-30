@@ -201,7 +201,18 @@ export default function ImportPage() {
     setHistory((h) => h.filter((r) => r.id !== id))
   }
 
-  if (loading) return null
+  if (loading) {
+    return (
+      <AuthenticatedLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-sm text-slate-400 font-medium">Loading import page...</span>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
 
   const selectedCount = selectedKeys.size
   const profitTrades = parsed.filter((t) => t.profit_loss > 0).length

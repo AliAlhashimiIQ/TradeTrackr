@@ -17,6 +17,29 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'TradeTrackr | Trading Journal & Analytics',
   description: 'The professional trading journal that helps you track, analyze, and master your trading performance with AI-powered insights.',
+  openGraph: {
+    title: 'TradeTrackr | Trading Journal & Analytics',
+    description: 'The professional trading journal that helps you track, analyze, and master your trading performance with AI-powered insights.',
+    url: 'https://tradetrackr.com',
+    siteName: 'TradeTrackr',
+    images: [
+      {
+        url: 'https://tradetrackr.com/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'TradeTrackr Dashboard Preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TradeTrackr | Trading Journal & Analytics',
+    description: 'The professional trading journal that helps you track, analyze, and master your trading performance with AI-powered insights.',
+    images: ['https://tradetrackr.com/og-image.jpg'],
+    creator: '@TradeTrackr',
+  },
 }
 
 export default function RootLayout({

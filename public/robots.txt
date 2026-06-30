@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /trades
+Disallow: /analytics
+Disallow: /playbook
+Disallow: /import
+Disallow: /settings
+Disallow: /profile
+Disallow: /accounts
+Disallow: /api/
+
+Sitemap: https://tradetrackr.com/sitemap.xml

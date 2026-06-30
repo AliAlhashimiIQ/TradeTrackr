@@ -88,13 +88,23 @@ export async function getEconomicCalendar(params: {
     if (params.startDate) queryParts.push(`d1=${params.startDate}`);
     if (params.endDate) queryParts.push(`d2=${params.endDate}`);
 
+    const { supabase } = await import('@/lib/supabaseClient');
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
     const url = `/api/calendar?${queryParts.join('&')}`;
+
+    const headers: Record<string, string> = {
+      'Accept': 'application/json',
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
 
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
