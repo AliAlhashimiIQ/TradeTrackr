@@ -1,13 +1,12 @@
 // Cryptographic utility using the Web Crypto API, compatible with both browser and Node.js
 
-const ENCRYPTION_KEY_RAW = process.env.DB_ENCRYPTION_KEY;
-if (!ENCRYPTION_KEY_RAW) {
-  throw new Error('DB_ENCRYPTION_KEY environment variable is not configured');
-}
-
 async function getKey(): Promise<CryptoKey> {
+  const rawKey = process.env.DB_ENCRYPTION_KEY;
+  if (!rawKey) {
+    throw new Error('DB_ENCRYPTION_KEY environment variable is not configured');
+  }
   const enc = new TextEncoder();
-  const keyMaterial = enc.encode(ENCRYPTION_KEY_RAW);
+  const keyMaterial = enc.encode(rawKey);
   
   // Use SHA-256 to derive a consistent 256-bit key from the raw secret
   const hash = await crypto.subtle.digest('SHA-256', keyMaterial);
