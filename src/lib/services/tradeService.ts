@@ -304,7 +304,7 @@ export async function addTrade(trade: Trade): Promise<Trade> {
     
     const { data, error } = await supabase
       .from('trades')
-      .insert([tradeData])
+      .insert([tradeData as any]) // eslint-disable-line @typescript-eslint/no-explicit-any
       .select()
       .single();
 
@@ -407,7 +407,7 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
     
     const { data, error } = await supabase
       .from('trades')
-      .update(tradeData)
+      .update(tradeData as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .eq('id', trade.id)
       .select()
       .single();
