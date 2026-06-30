@@ -515,7 +515,6 @@ export interface TrainingStatistics {
 }
 
 export async function storeUserCorrection(field: string, analysisValue: unknown, userValue: unknown): Promise<void> {
-  console.log('storeUserCorrection', field, analysisValue, userValue);
 }
 
 export async function getTrainingStatistics(): Promise<TrainingStatistics> {

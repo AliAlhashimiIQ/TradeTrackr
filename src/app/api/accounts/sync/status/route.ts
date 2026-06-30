@@ -104,6 +104,6 @@ export async function GET(request: NextRequest) {
 
   } catch (err: any) {
     console.error('API sync status error:', err);
-    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

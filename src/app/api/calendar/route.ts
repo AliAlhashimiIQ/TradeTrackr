@@ -47,6 +47,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Calendar proxy endpoint error:', err);
-    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

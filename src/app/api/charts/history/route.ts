@@ -163,7 +163,7 @@ export async function GET(req: NextRequest) {
         if (shouldTryEtf && (twelveSymbol === 'NDX' || twelveSymbol === 'SPX' || twelveSymbol === 'DJI')) {
           const etfMap: Record<string, string> = { 'NDX': 'QQQ', 'SPX': 'SPY', 'DJI': 'DIA' };
           const etfSymbol = etfMap[twelveSymbol];
-          console.log(`Twelve Data: Index ${twelveSymbol} restricted on free plan. Trying ETF fallback: ${etfSymbol}`);
+          console.info(`Twelve Data: Index ${twelveSymbol} restricted on free plan. Trying ETF fallback: ${etfSymbol}`);
           
           let etfUrl = `https://api.twelvedata.com/time_series?symbol=${etfSymbol}&interval=${twelveInterval}&apikey=${apikey}&outputsize=5000`;
           if (start) {
@@ -204,7 +204,7 @@ export async function GET(req: NextRequest) {
             // Sort ascending (oldest first)
             formattedData.sort((a, b) => a.time - b.time);
             twelveDataSuccess = true;
-            console.log(`Twelve Data: Loaded ${formattedData.length} candles for ${twelveSymbol}`);
+            console.info(`Twelve Data: Loaded ${formattedData.length} candles for ${twelveSymbol}`);
           } else {
             console.warn(`Twelve Data API returned warning/error:`, tdJson);
           }
@@ -229,7 +229,7 @@ export async function GET(req: NextRequest) {
 
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/120.0.0.0',
         'Accept': 'application/json'
       },
       next: { revalidate: 60 } // Cache for 60 seconds
@@ -303,7 +303,7 @@ export async function GET(req: NextRequest) {
       finalData = aggregated;
     }
 
-    console.log(`Yahoo Finance: Loaded fallback of ${finalData.length} candles for ${symbol}`);
+    console.info(`Yahoo Finance: Loaded fallback of ${finalData.length} candles for ${symbol}`);
     return NextResponse.json({ symbol, data: finalData });
   } catch (error: any) {
     console.error('Error fetching historical chart data:', error);

@@ -151,7 +151,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
         }
       }
       
-      console.log('Corrections saved successfully', {
+      console.debug('Corrections saved successfully', {
         original: analysis,
         corrected: editedAnalysis
       });

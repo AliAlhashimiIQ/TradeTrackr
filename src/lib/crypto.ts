@@ -1,6 +1,9 @@
 // Cryptographic utility using the Web Crypto API, compatible with both browser and Node.js
 
-const ENCRYPTION_KEY_RAW = process.env.DB_ENCRYPTION_KEY || 'tradetrackr-aes-256-encryption-key-32chars!';
+const ENCRYPTION_KEY_RAW = process.env.DB_ENCRYPTION_KEY;
+if (!ENCRYPTION_KEY_RAW) {
+  throw new Error('DB_ENCRYPTION_KEY environment variable is not configured');
+}
 
 async function getKey(): Promise<CryptoKey> {
   const enc = new TextEncoder();

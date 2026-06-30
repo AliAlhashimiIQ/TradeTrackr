@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Create account API error:', err);
-    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -102,6 +102,6 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json(data);
   } catch (err: any) {
     console.error('Update account API error:', err);
-    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

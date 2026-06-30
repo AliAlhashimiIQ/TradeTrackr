@@ -8,12 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function authenticateRequest(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
-  let token = authHeader?.replace('Bearer ', '') || undefined;
-
-  if (!token) {
-    const { searchParams } = new URL(req.url);
-    token = searchParams.get('token') || undefined;
-  }
+  const token = authHeader?.replace('Bearer ', '') || undefined;
 
   if (!token) {
     return {

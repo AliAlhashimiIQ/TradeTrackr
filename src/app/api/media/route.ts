@@ -52,6 +52,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(data.signedUrl);
   } catch (err: any) {
     console.error('Media proxy error:', err);
-    return NextResponse.json({ error: 'Internal server error', details: err.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

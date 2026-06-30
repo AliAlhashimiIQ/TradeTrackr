@@ -86,7 +86,7 @@ export async function performAccountSync(account: any, userId: string) {
         if (errMsg.includes('top up')) {
           throw new Error('Please top up your MetaApi.cloud account to allow account deployment.');
         }
-        console.log('[MetaApi Debug] Deploy status/error:', errMsg);
+        console.warn('[MetaApi Debug] Deploy status/error:', errMsg);
       }
 
       // Query actual status once

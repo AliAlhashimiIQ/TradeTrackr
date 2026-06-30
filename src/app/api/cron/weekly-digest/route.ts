@@ -689,7 +689,7 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error running weekly digest cron:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -726,6 +726,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error('Error running weekly digest cron:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
