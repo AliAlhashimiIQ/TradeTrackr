@@ -548,7 +548,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                     {screenshotPreview ? (
                       <div className="relative rounded-xl overflow-hidden border border-black/10 dark:border-white/[0.08]">
-                        <img src={screenshotPreview} alt="Chart" className="w-full max-h-64 object-cover" />
+                        <img src={resolveTradingViewUrl(screenshotPreview)} alt="Chart" className="w-full max-h-64 object-cover" />
                         <button
                           type="button"
                           onClick={() => {
