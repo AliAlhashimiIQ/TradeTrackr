@@ -25,7 +25,6 @@ function LoginContent() {
     signIn,
     signInWithGoogle, 
     resetPassword, 
-    signOut,
     loading: authLoading 
   } = useAuth();
 
@@ -101,14 +100,14 @@ function LoginContent() {
   };
 
   useEffect(() => {
+    // Only auto-redirect if logged in AND we weren't just bounced from the dashboard.
+    // If redirectedFrom is present it means the server kicked us out (cookie mismatch).
+    // In that case, show the login form so the user can re-authenticate and sync cookies.
     const redirectedFrom = searchParams?.get('redirectedFrom');
-    if (user && redirectedFrom) {
-      // Clear out-of-sync localStorage session if server middleware kicked us out
-      signOut().catch(err => console.error('Signout failed:', err));
-    } else if (user) {
+    if (user && !redirectedFrom) {
       router.push('/dashboard');
     }
-  }, [user, router, searchParams, signOut]);
+  }, [user, router, searchParams]);
 
   useEffect(() => {
     const authError = searchParams?.get('error');
