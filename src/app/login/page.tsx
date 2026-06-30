@@ -25,6 +25,7 @@ function LoginContent() {
     signIn,
     signInWithGoogle, 
     resetPassword, 
+    signOut,
     loading: authLoading 
   } = useAuth();
 
@@ -100,10 +101,14 @@ function LoginContent() {
   };
 
   useEffect(() => {
-    if (user) {
+    const redirectedFrom = searchParams?.get('redirectedFrom');
+    if (user && redirectedFrom) {
+      // Clear out-of-sync localStorage session if server middleware kicked us out
+      signOut().catch(err => console.error('Signout failed:', err));
+    } else if (user) {
       router.push('/dashboard');
     }
-  }, [user, router]);
+  }, [user, router, searchParams, signOut]);
 
   useEffect(() => {
     const authError = searchParams?.get('error');
