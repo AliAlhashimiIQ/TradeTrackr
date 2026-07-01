@@ -49,8 +49,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(data);
   } catch (err: any) {
-    console.error('Create account API error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Create account API error:', err?.message ?? err);
+    const message = err?.message?.includes('DB_ENCRYPTION_KEY')
+      ? 'Server configuration error: missing encryption key'
+      : err?.message || 'Internal server error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
