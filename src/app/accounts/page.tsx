@@ -16,6 +16,7 @@ import {
   assignLegacyTradesToAccount,
 } from '@/lib/tradingApi'
 import { toast } from 'react-hot-toast'
+import { useAccount } from '@/providers/AccountProvider'
 
 type TabType = 'accounts' | 'portfolios'
 type SyncStep = 'idle' | 'connect' | 'auth' | 'fetch' | 'db' | 'done'
@@ -34,6 +35,7 @@ const COMMON_SERVERS = [
 
 export default function AccountsPage() {
   const { user, loading } = useAuth()
+  const { refreshAccounts: refreshGlobalAccounts } = useAccount()
   const [unassignedCount, setUnassignedCount] = useState<number>(0)
   const [isMigrating, setIsMigrating] = useState(false)
   const [selectedMigrationAccountId, setSelectedMigrationAccountId] = useState<string>('')
@@ -146,6 +148,7 @@ export default function AccountsPage() {
       setNewAccType('DEMO')
       setNewAccPlatform('MT5')
       fetchAccounts()
+      refreshGlobalAccounts() // keep sidebar + import dropdown in sync
     } catch (err: any) {
       toast.error(err.message || 'Failed to add trading account')
     } finally {
@@ -162,6 +165,7 @@ export default function AccountsPage() {
       await deleteTradingAccount(id)
       toast.success('Account deleted successfully')
       fetchAccounts()
+      refreshGlobalAccounts() // keep sidebar + import dropdown in sync
     } catch (err) {
       toast.error('Failed to delete account')
     }
