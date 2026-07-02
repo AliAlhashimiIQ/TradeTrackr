@@ -1104,29 +1104,29 @@ export const TradesTable: React.FC<TradesTableProps> = ({
           >
           {/* Table Header — columns driven by columnOrder for drag-to-reorder */}
           <div
-            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-white dark:bg-[#0d0e16] border-b border-slate-200/80 dark:border-white/[0.08] rounded-t-[15px]"
+            className="grid gap-4 px-5 py-3.5 text-[10px] font-bold text-slate-500 dark:text-gray-400 uppercase tracking-[0.1em] sticky top-0 z-10 min-w-full w-max text-left bg-slate-50 dark:bg-[#0c0d14] border-b border-slate-200/60 dark:border-white/[0.03] rounded-t-[15px]"
             style={{
               gridTemplateColumns: 'var(--grid-template-columns)',
             }}
           >
             {/* Fixed: checkbox */}
-            <div className="relative group/header flex items-center justify-center h-full border-r border-slate-200/80 dark:border-white/[0.08] pr-2">
+            <div className="relative group/header flex items-center justify-center h-full pr-2">
               <input
                 type="checkbox"
                 checked={filteredTrades.length > 0 && selectedTradeIds.length === filteredTrades.length}
                 onChange={e => onToggleSelectAll(e.target.checked)}
-                className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer"
+                className="rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer"
               />
               {renderResizeHandle('checkbox')}
             </div>
             {/* Fixed: trade/screenshot */}
-            <div className="relative group/header text-center flex items-center justify-center h-full border-r border-slate-200/80 dark:border-white/[0.08] pr-2">
+            <div className="relative group/header text-center flex items-center justify-center h-full pr-2">
               <span className="truncate">Trade</span>
               {renderResizeHandle('screenshot')}
             </div>
             {/* Fixed: symbol */}
             <div
-              className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full border-r border-slate-200/80 dark:border-white/[0.08] pr-2"
+              className="relative group/header cursor-pointer hover:text-indigo-400 transition-colors duration-200 select-none flex items-center gap-1 text-left h-full pr-2"
               onClick={() => onSort('symbol')}
             >
               <span className="truncate">Symbol {sortField === 'symbol' && <span className="text-indigo-400">{sortDirection === 'asc' ? '↑' : '↓'}</span>}</span>
@@ -1161,7 +1161,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   onDrop={e => handleDrop(e, colKey)}
                   onDragEnd={handleDragEnd}
                   onClick={() => sortField_ && onSort(sortField_)}
-                  className={`relative group/header flex items-center h-full select-none transition-all duration-150 border-r border-slate-200/80 dark:border-white/[0.08] pr-2
+                  className={`relative group/header flex items-center h-full select-none transition-all duration-150 pr-2
                     ${ALIGN_RIGHT.has(colKey) ? 'justify-end text-right font-sans' : 'justify-start text-left'}
                     ${sortField_ ? 'cursor-pointer hover:text-indigo-400' : 'cursor-grab active:cursor-grabbing'}
                     ${isDragging ? 'opacity-40' : 'opacity-100'}
@@ -1229,14 +1229,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                   <div
                     className={`grid gap-4 px-5 ${
                       tableDensity === 'compact' ? 'py-3' : 'py-4'
-                    } items-center bg-white dark:bg-[#0d0e16] hover:bg-slate-50/50 dark:hover:bg-indigo-500/[0.01] transition-all duration-200 border-b border-slate-100 dark:border-white/[0.04] group/row min-w-full w-max text-left`}
+                    } items-center bg-white dark:bg-[#0c0d14] hover:bg-slate-50 dark:hover:bg-[#12131f] transition-all duration-200 border-b border-slate-100 dark:border-white/[0.03] group/row min-w-full w-max text-left`}
                     style={{ gridTemplateColumns: 'var(--grid-template-columns)' }}
                   >
                     {/* Checkbox + inline add button */}
-                    <div className="hidden md:flex items-center justify-center gap-1.5 border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full">
+                    <div className="hidden md:flex items-center justify-center gap-1.5 pr-2 h-full">
                       <button
                         onClick={() => onStartInlineAdd(idx + 1)}
-                        className="w-6 h-6 rounded-md bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all opacity-20 group-hover/row:opacity-100 hover:scale-105 active:scale-95"
+                        className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all opacity-20 group-hover/row:opacity-100 hover:scale-105 active:scale-95"
                         title="Add trade"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v12m6-6H6" /></svg>
@@ -1245,12 +1245,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         type="checkbox"
                         checked={selectedTradeIds.includes(trade.id)}
                         onChange={e => onToggleSelectTrade(trade.id, e.target.checked)}
-                        className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer"
+                        className="rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer"
                       />
                     </div>
 
                     {/* Trade / Screenshot Upload */}
-                    <div className="relative group flex items-center justify-center border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full">
+                    <div className="relative group flex items-center justify-center pr-2 h-full">
                       {uploadingTradeId === trade.id ? (
                         <div className="w-11 h-8 rounded bg-white/[0.02] flex items-center justify-center border border-white/[0.06]">
                           <div className="w-3.5 h-3.5 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -1314,18 +1314,27 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       )}
                     </div>
                     {/* Symbol */}
-                    <div className="flex items-center gap-1.5 min-w-0 border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full">
+                    <div className="flex items-center gap-1.5 min-w-0 pr-2 h-full">
                       {(() => {
+                        const isLong = trade.type === 'Long';
                         const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
                         return (
-                          <div className={`${tableDensity === 'compact' ? 'w-6 h-6 text-[9px]' : 'w-7 h-7 text-xs'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${pnlColors.bg10} ${pnlColors.text} ring-1 ${pnlColors.ring20}`}>
-                            {(trade.profit_loss ?? 0) >= 0 ? '↑' : '↓'}
+                          <div className={`${tableDensity === 'compact' ? 'w-6 h-6' : 'w-7 h-7'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${pnlColors.bg10} ${pnlColors.text} ring-1 ${pnlColors.ring20}`}>
+                            {isLong ? (
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0-7 7m7-7 7 7" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m0 0-7-7m7 7 7-7" />
+                              </svg>
+                            )}
                           </div>
                         );
                       })()}
                       <div className="min-w-0 truncate">
                         <div className="flex items-center gap-1 min-w-0">
-                          <span className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-white group-hover/row:text-indigo-300 transition-colors duration-200 truncate`}>{trade.symbol}</span>
+                          <span className={`${tableDensity === 'compact' ? 'text-xs' : 'text-sm'} font-bold text-gray-900 dark:text-white group-hover/row:text-indigo-500 dark:group-hover/row:text-indigo-300 transition-colors duration-200 truncate`}>{trade.symbol}</span>
                         </div>
                       </div>
                     </div>
@@ -1335,7 +1344,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       const ds = tableDensity === 'compact' ? 'text-xs' : 'text-sm';
                       switch (colKey) {
                         case 'side': return (
-                          <div key={colKey} className="flex items-center border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full">
+                          <div key={colKey} className="flex items-center pr-2 h-full">
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg inline-flex items-center"
                               style={trade.type === 'Long'
                                 ? { background:'linear-gradient(135deg,rgba(16,185,129,0.1),rgba(16,185,129,0.04))', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)', boxShadow:'0 0 8px rgba(16,185,129,0.08)' }
@@ -1343,18 +1352,18 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                               }>{trade.type === 'Long' ? 'BUY' : 'SELL'}</span>
                           </div>
                         );
-                        case 'entry': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
-                        case 'exit': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
-                        case 'lots': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}</div>;
+                        case 'entry': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{(trade.entry_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
+                        case 'exit': return <div key={colKey} className={`${ds} text-gray-300 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{(trade.exit_price ?? 0).toFixed(isForexPair(trade.symbol) ? 5 : 2)}</div>;
+                        case 'lots': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{trade.lots !== undefined && trade.lots !== null ? formatLots(trade.lots) : trade.quantity}</div>;
                         case 'pips': {
                           const hasPips = trade.pips !== undefined && trade.pips !== null;
                           const pipColors = getPLColorClasses(trade.pips ?? 0, colorblindMode);
-                          return <div key={colKey} className={`${ds} text-right tabular-nums ${!hasPips ? 'text-gray-400' : pipColors.text70} border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{hasPips ? formatPips(trade.pips) : '--'}</div>;
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${!hasPips ? 'text-gray-400' : pipColors.text70} pr-2 h-full flex items-center justify-end`}>{hasPips ? formatPips(trade.pips) : '--'}</div>;
                         }
                         case 'pnl': {
                           const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
                           return (
-                            <div key={colKey} className={`${ds} font-bold tabular-nums text-right border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>
+                            <div key={colKey} className={`${ds} font-bold tabular-nums text-right pr-2 h-full flex items-center justify-end`}>
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg" style={{ color:pnlColors.hexColor, background:pnlColors.hexBg, textShadow:(trade.profit_loss ?? 0) !== 0 ? `0 0 12px ${pnlColors.hexShadow}` : 'none' }}>
                                 {(trade.profit_loss ?? 0) > 0 ? '+' : ''}{formatCurrency(trade.profit_loss ?? 0)}
                               </span>
@@ -1364,26 +1373,26 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         case 'percentGain': {
                           const gainColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
                           const pct = trade.profit_loss != null ? getPercentGain(trade.profit_loss, trade.account_id, userAccounts, startingBalance) : null;
-                          return <div key={colKey} className={`${ds} text-right tabular-nums ${gainColors.text70} border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{pct != null ? `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%` : '--'}</div>;
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${gainColors.text70} pr-2 h-full flex items-center justify-end`}>{pct != null ? `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%` : '--'}</div>;
                         }
-                        case 'commission': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}</div>;
+                        case 'commission': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{(trade as any).commission != null ? formatCurrency((trade as any).commission) : '$0.00'}</div>;
                         case 'netProfit': {
                           const net = (trade.profit_loss ?? 0) - ((trade as any).commission ?? 0);
                           const netColors = getPLColorClasses(net, colorblindMode);
-                          return <div key={colKey} className={`${ds} text-right tabular-nums ${netColors.text} border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{net > 0 ? '+' : ''}{formatCurrency(net)}</div>;
+                          return <div key={colKey} className={`${ds} text-right tabular-nums ${netColors.text} pr-2 h-full flex items-center justify-end`}>{net > 0 ? '+' : ''}{formatCurrency(net)}</div>;
                         }
-                        case 'date': return <div key={colKey} className={`${ds} text-gray-400 text-left border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center`}>{new Date(trade.entry_time).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</div>;
-                        case 'openTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center`}>{new Date(trade.entry_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
-                        case 'closeTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center`}>{new Date(trade.exit_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
+                        case 'date': return <div key={colKey} className={`${ds} text-gray-400 text-left pr-2 h-full flex items-center`}>{new Date(trade.entry_time).toLocaleDateString('en-US', { month:'short', day:'numeric' })}</div>;
+                        case 'openTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums pr-2 h-full flex items-center`}>{new Date(trade.entry_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
+                        case 'closeTime': return <div key={colKey} className={`${ds} text-gray-400 text-left tabular-nums pr-2 h-full flex items-center`}>{new Date(trade.exit_time).toLocaleString('en-US', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>;
                         case 'holdTime': {
                           const m = Math.round((new Date(trade.exit_time).getTime() - new Date(trade.entry_time).getTime()) / 60000);
-                          return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m`}</div>;
+                          return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : `${m}m`}</div>;
                         }
-                        case 'stopLoss': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
-                        case 'takeProfit': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center justify-end`}>{(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
-                        case 'account': return <div key={colKey} className={`${ds} text-gray-400 text-left truncate border-r border-slate-100 dark:border-white/[0.04] pr-2 h-full flex items-center`}>{trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}</div>;
+                        case 'stopLoss': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{(trade as any).stop_loss ? (trade as any).stop_loss.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
+                        case 'takeProfit': return <div key={colKey} className={`${ds} text-gray-400 text-right tabular-nums pr-2 h-full flex items-center justify-end`}>{(trade as any).take_profit ? (trade as any).take_profit.toFixed(isForexPair(trade.symbol) ? 5 : 2) : '--'}</div>;
+                        case 'account': return <div key={colKey} className={`${ds} text-gray-400 text-left truncate pr-2 h-full flex items-center`}>{trade.account_id && accountsMap.has(trade.account_id) ? accountsMap.get(trade.account_id) : '--'}</div>;
                         case 'strategy': return (
-                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full border-r border-slate-100 dark:border-white/[0.04] pr-2">
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full pr-2">
                             {trade.strategy ? (
                               <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
                                 className="popover-trigger px-2.5 py-1 rounded-lg text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 text-xs font-semibold tracking-wide capitalize hover:bg-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all truncate">
@@ -1391,7 +1400,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                               </button>
                             ) : (
                               <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
-                                className="popover-trigger w-6 h-6 rounded-full bg-white/[0.03] hover:bg-indigo-500/20 border border-white/[0.06] hover:border-indigo-500/40 text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95">+</button>
+                                className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-650 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             )}
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' && (
@@ -1419,7 +1428,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           </div>
                         );
                         case 'mindset': return (
-                          <div key={colKey} className="relative flex items-center gap-1 pr-4 min-w-0 h-full border-r border-slate-100 dark:border-white/[0.04] pr-2">
+                          <div key={colKey} className="relative flex items-center gap-1 pr-4 min-w-0 h-full pr-2">
                             {trade.emotional_state ? (
                               <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
                                 className={`popover-trigger text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
@@ -1427,7 +1436,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                               </button>
                             ) : (
                               <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
-                                className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95" title="Set mindset">+</button>
+                                className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-650 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0" title="Set mindset">+</button>
                             )}
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' && (
@@ -1455,7 +1464,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           </div>
                         );
                         case 'tags': return (
-                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full h-full border-r border-slate-100 dark:border-white/[0.04] pr-2">
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full h-full pr-2">
                             <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
                               {trade.tags && trade.tags.map(tag => {
                                 const tc = userTagsConfig.find(c => c.name.toLowerCase() === tag.toLowerCase());
@@ -1468,14 +1477,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                               })}
                             </div>
                             <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
-                              className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-indigo-500/25 border border-white/[0.04] text-gray-400 hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
+                              className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-650 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false, idx >= filteredTrades.length - 2)}
                             </AnimatePresence>
                           </div>
                         );
                         case 'mistakes': return (
-                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full h-full border-r border-slate-100 dark:border-white/[0.04] pr-2">
+                          <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 w-full h-full pr-2">
                             <div className={`flex items-center ${wrapTags ? 'flex-wrap' : 'flex-nowrap overflow-x-auto scrollbar-none'} gap-1.5 min-w-0 max-w-[calc(100%-24px)] overflow-hidden`}>
                               {trade.mistakes && trade.mistakes.map(mistake => {
                                 const tc = userTagsConfig.find(c => c.name.toLowerCase() === mistake.toLowerCase());
@@ -1488,14 +1497,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                               })}
                             </div>
                             <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
-                              className="popover-trigger w-5 h-5 rounded-full bg-white/[0.04] hover:bg-red-500/25 border border-white/[0.04] text-gray-400 hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
+                              className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-red-500/10 dark:hover:bg-red-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-red-650 dark:hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}
                             </AnimatePresence>
                           </div>
                         );
                         case 'notes': return (
-                          <div key={colKey} className="relative pr-4 min-w-0 overflow-hidden text-left h-full border-r border-slate-100 dark:border-white/[0.04] pr-2">
+                          <div key={colKey} className="relative pr-4 min-w-0 overflow-hidden text-left h-full pr-2">
                             <div onClick={() => onNotesEditClick(trade)}
                               className="text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1.5 rounded-lg border border-transparent hover:border-white/[0.04] transition-all min-h-[24px]"
                               title="Click to view/edit learnings">
