@@ -1317,9 +1317,9 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     <div className="flex items-center gap-1.5 min-w-0 pr-2 h-full">
                       {(() => {
                         const isLong = trade.type === 'Long';
-                        const pnlColors = getPLColorClasses(trade.profit_loss ?? 0, colorblindMode);
+                        const directionColors = getPLColorClasses(isLong ? 1 : -1, colorblindMode);
                         return (
-                          <div className={`${tableDensity === 'compact' ? 'w-6 h-6' : 'w-7 h-7'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${pnlColors.bg10} ${pnlColors.text} ring-1 ${pnlColors.ring20}`}>
+                          <div className={`${tableDensity === 'compact' ? 'w-6 h-6' : 'w-7 h-7'} rounded-lg flex items-center justify-center font-bold flex-shrink-0 transition-transform duration-200 group-hover/row:scale-105 ${directionColors.bg10} ${directionColors.text} ring-1 ${directionColors.ring20}`}>
                             {isLong ? (
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0-7 7m7-7 7 7" />
