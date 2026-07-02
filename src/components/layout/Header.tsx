@@ -10,6 +10,7 @@ import { useTheme } from 'next-themes'
 
 import Logo from '@/components/ui/Logo'
 import AccountSwitcher from '@/components/layout/AccountSwitcher'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 export default function Header() {
   const pathname = usePathname()
@@ -141,15 +142,17 @@ export default function Header() {
               <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--foreground)' }}>TradeTrackr</span>
             </Link>
             
-            <button
-              onClick={toggleSidebar}
-              className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-black/[0.05] dark:hover:bg-white/5 transition-colors duration-200"
-              title="Collapse Sidebar"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7M17 19l-7-7 7-7" />
-              </svg>
-            </button>
+            <Tooltip label={sidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'} position="right">
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded-lg hover:bg-black/[0.05] dark:hover:bg-white/5 transition-colors duration-200"
+                aria-label="Toggle sidebar"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 19l-7-7 7-7M17 19l-7-7 7-7" />
+                </svg>
+              </button>
+            </Tooltip>
           </div>
 
           {/* Search bar */}
@@ -276,21 +279,23 @@ export default function Header() {
               </div>
               
               {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center shrink-0"
-                title="Toggle Theme"
-              >
-                {!mounted || theme === 'dark' ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                )}
-              </button>
+              <Tooltip label={!mounted || theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'} position="right">
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="p-1.5 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/[0.05] dark:hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center shrink-0"
+                  aria-label="Toggle theme"
+                >
+                  {!mounted || theme === 'dark' ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                    </svg>
+                  )}
+                </button>
+              </Tooltip>
             </div>
 
             <div className="flex gap-1.5 px-1 mt-1">

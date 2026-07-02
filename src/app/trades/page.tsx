@@ -498,13 +498,21 @@ const DEFAULT_VISIBLE_COLUMNS = {
         confirmLabel: 'Delete',
         variant: 'danger',
         onConfirm: async () => {
+          // ── Optimistic update: remove from UI immediately ──────────
+          const previousTrades = trades;
+          const previousFiltered = filteredTrades;
+          setTrades(prev => prev.filter(t => t.id !== tradeId));
+          setFilteredTrades(prev => prev.filter(t => t.id !== tradeId));
           setIsDeleting(tradeId);
           try {
             await deleteTrade(tradeId);
-            await fetchPagedTrades();
-            await fetchGlobalMetrics();
-            toast.success('Trade deleted successfully');
+            // Refresh metrics in background (don't block UX)
+            fetchGlobalMetrics().catch(console.error);
+            toast.success('Trade deleted');
           } catch (e) {
+            // ── Rollback on failure ────────────────────────────────
+            setTrades(previousTrades);
+            setFilteredTrades(previousFiltered);
             console.error(e);
             toast.error('Failed to delete trade');
           } finally {

@@ -1,6 +1,7 @@
 import { supabase } from '../supabaseClient';
 import { Trade, TradeMetrics, OpenPosition, ChartData, TradeNote, TradingAccount } from '../types';
 import { sanitizeTradeInput } from '../sanitize';
+import { withCache, cache, TTL } from '../cache';
 
 const lastBulkOperations: number[] = [];
 
@@ -149,6 +150,11 @@ export interface PagedTradesOptions {
 }
 
 export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTradesResult> {
+  const cacheKey = `pagedTrades:${JSON.stringify(opts)}`;
+  return withCache(cacheKey, () => _getPagedTrades(opts), TTL.SHORT);
+}
+
+async function _getPagedTrades(opts: PagedTradesOptions): Promise<PagedTradesResult> {
   const {
     userId,
     page = 1,
@@ -213,6 +219,11 @@ export async function getPagedTrades(opts: PagedTradesOptions): Promise<PagedTra
 }
 
 export async function getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'page' | 'pageSize' | 'sortField' | 'sortDirection'>): Promise<Trade[]> {
+  const cacheKey = `filteredMetrics:${JSON.stringify(opts)}`;
+  return withCache(cacheKey, () => _getFilteredTradeMetrics(opts), TTL.SHORT);
+}
+
+async function _getFilteredTradeMetrics(opts: Omit<PagedTradesOptions, 'page' | 'pageSize' | 'sortField' | 'sortDirection'>): Promise<Trade[]> {
   const {
     userId,
     search,
@@ -315,7 +326,11 @@ export async function addTrade(trade: Trade): Promise<Trade> {
     if (sanitized.tags && sanitized.tags.length > 0) {
       await addTradeTagsToDatabase(sanitized.id, sanitized.user_id, sanitized.tags);
     }
-    
+
+    // Invalidate cached reads so next fetch gets fresh data
+    cache.invalidateByPrefix('pagedTrades:');
+    cache.invalidateByPrefix('filteredMetrics:');
+
     return { ...sanitized, ...data } as Trade;
   } catch (error) {
     throw error;
@@ -427,6 +442,10 @@ export async function updateTrade(trade: Trade): Promise<Trade> {
       }
     }
     
+    // Invalidate cached reads
+    cache.invalidateByPrefix('pagedTrades:');
+    cache.invalidateByPrefix('filteredMetrics:');
+
     return { ...trade, ...data } as Trade;
   } catch (error) {
     throw error;
@@ -441,13 +460,16 @@ export async function deleteTrade(tradeId: string): Promise<boolean> {
       .eq('id', tradeId);
 
     if (error) throw error;
-    
+
+    // Invalidate cached reads
+    cache.invalidateByPrefix('pagedTrades:');
+    cache.invalidateByPrefix('filteredMetrics:');
+
     return true;
   } catch (error) {
     throw error;
   }
 }
-
 export async function deleteTradesBulk(tradeIds: string[]): Promise<boolean> {
   if (!checkClientRateLimit(10, 60000)) {
     throw new Error('Rate limit exceeded. Please wait a minute before performing another bulk operation.');
@@ -460,7 +482,11 @@ export async function deleteTradesBulk(tradeIds: string[]): Promise<boolean> {
       .in('id', tradeIds);
 
     if (error) throw error;
-    
+
+    // Invalidate cached reads
+    cache.invalidateByPrefix('pagedTrades:');
+    cache.invalidateByPrefix('filteredMetrics:');
+
     return true;
   } catch (error) {
     console.error('deleteTradesBulk error:', error);
