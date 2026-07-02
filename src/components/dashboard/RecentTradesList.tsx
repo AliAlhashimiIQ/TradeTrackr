@@ -173,7 +173,7 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
                       }}
                     >
                       {trade.profit_loss > 0 ? '+' : ''}
-                      {trade.profit_loss != null ? formatPnL(trade.profit_loss) : '--'}
+                      {trade.profit_loss != null ? (trade.profit_loss < 0 ? `-$${Math.abs(trade.profit_loss).toFixed(2)}` : `$${trade.profit_loss.toFixed(2)}`) : '--'}
                     </span>
                   </td>
 
