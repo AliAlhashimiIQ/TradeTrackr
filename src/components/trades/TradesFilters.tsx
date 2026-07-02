@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trade, TradingAccount } from '@/lib/types';
-import { isForexPair } from '@/lib/forexUtils';
 
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review';
 type TableDensity = 'compact' | 'comfortable';
@@ -106,10 +105,10 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             <button
               key={view.id}
               onClick={() => onViewChange(view.id as SavedView)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-250 flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 border border-transparent ${
                 activeView === view.id
-                  ? 'bg-indigo-650 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white border border-transparent hover:bg-slate-50 dark:hover:bg-white/5'
+                  ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)]'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
               }`}
             >
               {view.icon}
@@ -149,7 +148,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           <div className="relative">
             <button
               onClick={() => setShowColumnMenu(!showColumnMenu)}
-              className={`popover-trigger px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-50 dark:bg-[#121420] border border-slate-250 dark:border-white/[0.08] text-slate-700 dark:text-slate-205 hover:bg-slate-100 dark:hover:bg-[#1c1e30] transition-all flex items-center gap-1.5 shadow-sm ${
+              className={`popover-trigger px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-50 dark:bg-[#121420] border border-slate-250 dark:border-white/[0.08] text-slate-700 dark:text-slate-250 hover:bg-slate-100 dark:hover:bg-[#1c1e30] transition-all flex items-center gap-1.5 shadow-sm ${
                 showColumnMenu ? 'text-indigo-600 border-indigo-300' : ''
               }`}
             >
@@ -198,18 +197,18 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                     ]},
                   ].map(group => (
                     <div key={group.section}>
-                      <div className="px-2.5 py-1.5 text-[9px] font-bold text-gray-600 dark:text-gray-400 uppercase tracking-[0.12em]">{group.section}</div>
+                      <div className="px-2.5 py-1.5 text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.12em]">{group.section}</div>
                       {group.items.map(col => (
                         <button
                           key={col.key}
                           onClick={() => onToggleColumn(col.key)}
-                          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] text-xs rounded-lg transition-all duration-150 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group/col text-left text-gray-700 dark:text-gray-300"
+                          className="w-full flex items-center gap-2.5 px-2.5 py-[7px] text-xs rounded-lg transition-all duration-150 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] group/col text-left text-gray-705 dark:text-gray-300"
                         >
                           <div
                             className={`w-4 h-4 rounded flex items-center justify-center shrink-0 transition-all duration-200 ${
                               visibleColumns[col.key]
                                 ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-sm shadow-indigo-500/20'
-                                : 'bg-black/5 dark:bg-white/[0.04] border border-black/10 dark:border-white/[0.1]'
+                                : 'bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.1]'
                             }`}
                           >
                             {visibleColumns[col.key] && (
@@ -218,7 +217,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               </svg>
                             )}
                           </div>
-                          <span className={`${visibleColumns[col.key] ? 'text-gray-800 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-500'} group-hover/col:text-gray-900 dark:group-hover/col:text-gray-200 transition-colors`}>
+                          <span className={`${visibleColumns[col.key] ? 'text-gray-800 dark:text-gray-200 font-semibold' : 'text-gray-450 dark:text-gray-500'} group-hover/col:text-gray-900 dark:group-hover/col:text-gray-200 transition-colors`}>
                             {col.label}
                           </span>
                         </button>
@@ -227,10 +226,10 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                   ))}
                 </div>
                 {/* Wrap Tags */}
-                <div className="px-3 py-2 border-t border-white/[0.06]">
+                <div className="px-3 py-2 border-t border-slate-100 dark:border-white/[0.06]">
                   <button
                     onClick={onToggleWrapTags}
-                    className="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors"
+                    className="w-full flex items-center justify-between text-left px-2.5 py-1.5 rounded-lg text-xs font-semibold text-gray-750 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.04] transition-colors"
                   >
                     <span>Wrap Tags & Cells</span>
                     <div
@@ -270,7 +269,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
 
@@ -283,34 +282,34 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
               className="overflow-hidden"
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
-                <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
+                <div className="card rounded-xl p-4 border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-white">Top Mistake Cost</h3>
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Top Mistake Cost</h3>
                     <span className="text-[10px] uppercase tracking-wider text-gray-500">Realized Loss Impact</span>
                   </div>
                   {topMistakeCost.length === 0 ? (
-                    <div className="text-sm text-gray-500">No mistake-linked losses yet.</div>
+                    <div className="text-sm text-gray-500 font-medium py-3">No mistake-linked losses yet.</div>
                   ) : (
                     <div className="space-y-2">
                       {topMistakeCost.map(([mistake, cost]) => (
                         <div key={mistake} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-300">{mistake}</span>
-                          <span className="text-red-400 font-semibold">-${cost.toFixed(2)}</span>
+                          <span className="text-gray-700 dark:text-gray-300 font-medium">{mistake}</span>
+                          <span className="text-red-600 dark:text-red-400 font-semibold">-${cost.toFixed(2)}</span>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
 
-                <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
+                <div className="card rounded-xl p-4 border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                      <svg className="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                       </svg>
                       Smart Review Queue
                     </h3>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                       Needs Attention
                     </span>
                   </div>
@@ -335,26 +334,26 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                           <button
                             key={trade.id}
                             onClick={() => onReviewClick(trade)}
-                            className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-xl bg-black/[0.01] dark:bg-white/[0.015] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] border border-black/5 dark:border-white/[0.03] ${severityBorder} transition-all duration-300 gap-3 group`}
+                            className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-xl bg-slate-50/50 dark:bg-white/[0.015] hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-slate-200 dark:border-white/[0.03] ${severityBorder} transition-all duration-300 gap-3 group`}
                           >
                             <div className="flex items-start gap-3">
                               {/* Left status vertical indicator strip */}
                               <div 
                                 className={`w-1 self-stretch rounded-full ${
                                   isHighRisk ? 'bg-red-500' : isMedRisk ? 'bg-amber-500' : 'bg-indigo-400'
-                                }`} 
+                                  }`} 
                               />
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">
+                                  <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {trade.symbol}
                                   </span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-white/[0.04] text-gray-400 uppercase">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-slate-200/50 dark:bg-white/[0.04] text-gray-650 dark:text-gray-400 uppercase">
                                     {trade.type} {trade.lots ? `${trade.lots} Lot` : ''}
                                   </span>
                                   {trade.profit_loss !== undefined && (
                                     <span className={`text-xs font-mono font-bold ${
-                                      trade.profit_loss >= 0 ? 'text-emerald-400' : 'text-red-400'
+                                      trade.profit_loss >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'
                                     }`}>
                                       {trade.profit_loss >= 0 ? '+' : ''}{fmtCurrency(trade.profit_loss)}
                                     </span>
@@ -364,12 +363,12 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   {/* Strategy Tags or Fallback */}
                                   {hasStrategyTags ? (
                                     trade.tags?.map(tag => (
-                                      <span key={tag} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                                      <span key={tag} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border border-indigo-500/20">
                                         {tag}
                                       </span>
                                     ))
                                   ) : (
-                                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold bg-gray-500/10 text-gray-400 border border-gray-500/20">
+                                    <span className="text-[9px] px-2 py-0.5 rounded font-semibold bg-slate-100 dark:bg-gray-500/10 text-slate-500 dark:text-gray-400 border border-slate-200 dark:border-gray-500/20">
                                       No Strategy Tags
                                     </span>
                                   )}
@@ -377,20 +376,20 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   {reasons.filter(r => r !== 'no-plan').map(reason => {
                                     if (reason === 'fomo') {
                                       return (
-                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-400 border border-orange-500/20">
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-650 dark:text-orange-400 border border-orange-500/20">
                                           FOMO
                                         </span>
                                       );
                                     }
                                     if (reason === 'oversized') {
                                       return (
-                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                                           Oversized
                                         </span>
                                       );
                                     }
                                     return (
-                                      <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                                      <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
                                         Large Loss
                                       </span>
                                     );
@@ -404,14 +403,14 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               <div className="text-right">
                                 <span className="text-[10px] text-gray-500 block">Score</span>
                                 <span className={`text-xs font-bold font-mono ${
-                                  quality >= 70 ? 'text-emerald-400' : quality >= 50 ? 'text-amber-400' : 'text-red-400'
+                                  quality >= 70 ? 'text-emerald-600 dark:text-emerald-400' : quality >= 50 ? 'text-amber-650 dark:text-amber-400' : 'text-rose-600 dark:text-red-400'
                                 }`}>
                                   {quality}%
                                 </span>
                               </div>
                               
                               {/* Review CTA Div */}
-                              <div className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-white/[0.04] border border-white/[0.06] text-gray-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-300">
+                              <div className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.06] text-gray-700 dark:text-gray-300 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-300">
                                 Review &rarr;
                               </div>
                             </div>
@@ -432,12 +431,12 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
         {showFilters && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
             className="mb-6 overflow-hidden text-left">
-            <div className="card rounded-xl p-4 border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3">
+            <div className="card rounded-2xl p-5 border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3.5">
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Symbol</label>
                   <select value={symbolFilter || ''} onChange={e => onFilterChange('symbolFilter', e.target.value || null)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50">
                     <option value="">All Symbols</option>
                     {uniqueSymbols.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
@@ -445,7 +444,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Direction</label>
                   <select value={typeFilter} onChange={e => onFilterChange('typeFilter', e.target.value)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50">
                     <option value="All">All</option><option value="Long">Long</option><option value="Short">Short</option>
                   </select>
                 </div>
@@ -453,11 +452,11 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">
                     Period
                     {(startDate || endDate) && (
-                      <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 uppercase tracking-wide font-bold">Custom</span>
+                      <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30 uppercase tracking-wide font-bold">Custom</span>
                     )}
                   </label>
                   <select value={dateFilter} onChange={e => onFilterChange('dateFilter', e.target.value)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50">
                     <option value="All">All Time</option><option value="7d">7 Days</option><option value="30d">30 Days</option><option value="90d">90 Days</option><option value="1y">1 Year</option>
                   </select>
                 </div>
@@ -468,7 +467,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                     type="date"
                     value={startDate}
                     onChange={e => onFilterChange('startDate', e.target.value)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                   />
                 </div>
                 <div>
@@ -477,20 +476,20 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                     type="date"
                     value={endDate}
                     onChange={e => onFilterChange('endDate', e.target.value)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Account</label>
                   <select value={accountFilter || ''} onChange={e => onFilterChange('accountFilter', e.target.value || null)}
-                    className="w-full px-3 py-2 bg-[#151823] border border-white/[0.06] rounded-lg text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50 [color-scheme:dark]">
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg text-gray-800 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500/50">
                     <option value="">All Accounts</option>
                     {userAccounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name} ({acc.account_number})</option>)}
                   </select>
                 </div>
                 <div className="flex items-end">
                   <button onClick={onResetFilters}
-                    className="w-full px-3 py-2 text-sm text-gray-400 hover:text-white bg-[#151823] border border-white/[0.06] rounded-lg transition-colors">
+                    className="w-full px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-slate-50 dark:bg-[#151823] border border-slate-200 dark:border-white/[0.06] rounded-lg transition-colors hover:bg-slate-100 font-semibold">
                     Reset All
                   </button>
                 </div>
@@ -506,14 +505,14 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             className="mb-4 p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-indigo-300 font-medium">{selectedTradeIds.length} selected</span>
+              <span className="text-sm text-indigo-650 dark:text-indigo-300 font-semibold">{selectedTradeIds.length} selected</span>
               <div className="flex gap-1.5">
-                <button onClick={() => onBulkAction('delete')} className="px-3 py-1.5 text-xs font-medium bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
-                <button onClick={() => onBulkAction('export')} className="px-3 py-1.5 text-xs font-medium bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
-                <button onClick={() => onBulkAction('tag')} className="px-3 py-1.5 text-xs font-medium bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
+                <button onClick={() => onBulkAction('delete')} className="px-3 py-1.5 text-xs font-semibold bg-red-500/10 text-red-650 dark:text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
+                <button onClick={() => onBulkAction('export')} className="px-3 py-1.5 text-xs font-semibold bg-blue-500/10 text-blue-650 dark:text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
+                <button onClick={() => onBulkAction('tag')} className="px-3 py-1.5 text-xs font-semibold bg-purple-500/10 text-purple-650 dark:text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
               </div>
             </div>
-            <button onClick={onClearSelection} className="text-xs text-gray-500 hover:text-white transition-colors">Clear</button>
+            <button onClick={onClearSelection} className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors font-medium">Clear</button>
           </motion.div>
         )}
       </AnimatePresence>
