@@ -11,16 +11,18 @@ import { useTheme } from 'next-themes'
 import Logo from '@/components/ui/Logo'
 import AccountSwitcher from '@/components/layout/AccountSwitcher'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { StreakPanel } from '@/components/layout/StreakPanel'
 
 export default function Header() {
   const pathname = usePathname()
   const router = useRouter()
   const { signOut, user } = useAuth()
-  const { streak, isLoading: isLoadingStreak } = useStreak()
+  const { streak, isLoading: isLoadingStreak, tradeDates, frozenDates, streakFreezes, totalDays, thisWeek, thisMonth, totalTrades } = useStreak()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [streakPanelOpen, setStreakPanelOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
@@ -214,47 +216,33 @@ export default function Header() {
           {user && !isLoadingStreak && (
             <div className="px-2">
               {streak.currentStreak > 0 ? (
-                <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/10 border border-amber-500/25 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-semibold cursor-default select-none shadow-sm shadow-amber-500/5 group relative w-full">
+                <button
+                  onClick={() => setStreakPanelOpen(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/15 border border-amber-500/25 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-semibold cursor-pointer select-none shadow-sm shadow-amber-500/5 transition-colors duration-150"
+                  title="View streak details"
+                >
                   <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
                   </svg>
-                  <span>{streak.currentStreak} Day Streak</span>
-                  <div className="absolute bottom-4 left-full ml-2 z-50 bg-white dark:bg-[#0f1117] border border-black/10 dark:border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-gray-900 dark:text-white">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>
-                    <div className="flex justify-between text-xs py-1 border-b border-black/5 dark:border-white/[0.03]">
-                      <span className="text-gray-500 dark:text-gray-400">Current Streak:</span>
-                      <span className="font-semibold text-amber-600 dark:text-amber-400 font-mono">{streak.currentStreak} days</span>
-                    </div>
-                    <div className="flex justify-between text-xs py-1 mt-1">
-                      <span className="text-gray-500 dark:text-gray-400">Longest Streak:</span>
-                      <span className="font-semibold text-gray-900 dark:text-white font-mono">{streak.longestStreak} days</span>
-                    </div>
-                    <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-2 leading-relaxed">
-                      Log at least one trade daily to keep your consistency streak burning!
-                    </div>
-                  </div>
-                </div>
+                  <span className="flex-1 text-left">{streak.currentStreak} Day Streak</span>
+                  <svg className="w-3 h-3 text-amber-500/50 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
               ) : (
-                <div className="flex items-center gap-2 px-3 py-2 bg-black/[0.02] dark:bg-white/[0.02] border border-black/10 dark:border-white/[0.06] text-gray-450 dark:text-gray-500 rounded-xl text-xs font-semibold cursor-default select-none group relative w-full">
+                <button
+                  onClick={() => setStreakPanelOpen(true)}
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.04] border border-black/10 dark:border-white/[0.06] text-gray-450 dark:text-gray-500 rounded-xl text-xs font-semibold cursor-pointer select-none transition-colors duration-150"
+                  title="View streak details"
+                >
                   <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
                   </svg>
-                  <span>0 Day Streak</span>
-                  <div className="absolute bottom-4 left-full ml-2 z-50 bg-white dark:bg-[#0f1117] border border-black/10 dark:border-white/[0.08] rounded-xl shadow-2xl p-3 w-56 hidden group-hover:block text-left text-gray-900 dark:text-white">
-                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Consistency Streak</div>
-                    <div className="flex justify-between text-xs py-1 border-b border-black/5 dark:border-white/[0.03]">
-                      <span className="text-gray-500 dark:text-gray-400">Current Streak:</span>
-                      <span className="font-semibold text-gray-400 font-mono">0 days</span>
-                    </div>
-                    <div className="flex justify-between text-xs py-1 mt-1">
-                      <span className="text-gray-500 dark:text-gray-400">Longest Streak:</span>
-                      <span className="font-semibold text-gray-900 dark:text-white font-mono">{streak.longestStreak} days</span>
-                    </div>
-                    <div className="text-[10px] text-gray-450 dark:text-gray-500 mt-2 leading-relaxed">
-                      Log a trade today to start your journaling streak!
-                    </div>
-                  </div>
-                </div>
+                  <span className="flex-1 text-left">0 Day Streak</span>
+                  <svg className="w-3 h-3 text-gray-600 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
               )}
             </div>
           )}
@@ -407,6 +395,22 @@ export default function Header() {
           </svg>
         </button>
       )}
+
+      {/* Streak Panel */}
+      <StreakPanel
+        isOpen={streakPanelOpen}
+        onClose={() => setStreakPanelOpen(false)}
+        currentStreak={streak.currentStreak}
+        longestStreak={streak.longestStreak}
+        isStreakActiveToday={streak.isStreakActiveToday}
+        tradeDates={tradeDates}
+        frozenDates={frozenDates}
+        streakFreezes={streakFreezes}
+        totalDays={totalDays}
+        thisWeek={thisWeek}
+        thisMonth={thisMonth}
+        totalTrades={totalTrades}
+      />
     </>
   )
 }
