@@ -92,35 +92,43 @@ export default function Header() {
   return (
     <>
       {/* Mobile Sticky Header */}
-      <header className="topbar-liquid sticky top-0 z-50 w-full lg:hidden">
-        <div className="w-full px-4 py-2.5">
+      <header className="sticky top-0 z-50 w-full lg:hidden bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div className="w-full px-4 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}
-            <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-slate-950 border border-white/[0.08] rounded-xl flex items-center justify-center shadow-md shadow-black/25">
-                <Logo className="w-5 h-5" />
+            <Link href="/dashboard" className="flex items-center gap-2.5 group">
+              <div className="w-8 h-8 bg-indigo-600 dark:bg-slate-900 border border-indigo-500/30 dark:border-slate-800 rounded-xl flex items-center justify-center shadow-md">
+                <Logo className="w-5 h-5 text-white" />
               </div>
-              <span className="text-base font-bold text-white tracking-tight">TradeTrackr</span>
+              <span className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">TradeTrackr</span>
             </Link>
 
             {/* Mobile Menu Button & Streak Badge */}
             <div className="flex items-center gap-2">
               {user && !isLoadingStreak && (
-                <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-lg text-[10px] font-semibold" title={`${streak.currentStreak} day streak`}>
-                  <svg className="w-3 h-3 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <div className="flex items-center gap-1 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-lg text-[10px] font-bold" title={`${streak.currentStreak} day streak`}>
+                  <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
                   </svg>
                   <span>{streak.currentStreak || 0}d</span>
                 </div>
               )}
+              
+              {/* 3 Horizontal Lines Hamburger Button */}
               <button 
+                type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
+                aria-label="Toggle Navigation Menu"
+                className="p-2 text-slate-800 dark:text-slate-100 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm flex items-center justify-center shrink-0"
               >
                 {mobileMenuOpen ? (
-                  <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg className="w-6 h-6 text-slate-800 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 ) : (
-                  <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" /></svg>
+                  <svg className="w-6 h-6 text-slate-800 dark:text-slate-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
                 )}
               </button>
             </div>
