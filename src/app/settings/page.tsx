@@ -283,10 +283,10 @@ function SettingsContent() {
                       setActiveSection(section.id);
                     }
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
                     activeSection === section.id
-                      ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 shadow-sm'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900'
                   }`}
                 >
                   {section.icon}
@@ -297,15 +297,16 @@ function SettingsContent() {
           </div>
 
           {/* Main Content */}
+          {/* Main Content */}
           <div className="flex-1 min-w-0">
             {/* General Settings */}
             {activeSection === 'general' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
+                className="card bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
               >
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">General Settings</h2>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">General Settings</h2>
 
                 <div className="space-y-6">
                   <div>
