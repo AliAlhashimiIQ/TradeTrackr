@@ -114,3 +114,29 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+export async function GET(request: NextRequest) {
+  const auth = await authenticateRequest(request);
+  if ('error' in auth && auth.error) return auth.error;
+
+  const userId = auth.user!.id;
+  const supabase = auth.supabase!;
+
+  try {
+    const { data, error } = await supabase
+      .from('trading_accounts')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Fetch accounts database error:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data || []);
+  } catch (err: any) {
+    console.error('Fetch accounts API error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

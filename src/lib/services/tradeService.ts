@@ -911,6 +911,20 @@ export async function deleteImportRecord(id: string): Promise<void> {
 
 export async function getTradingAccounts(userId: string): Promise<TradingAccount[]> {
   try {
+    if (typeof window !== 'undefined') {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch('/api/accounts', {
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.ok) {
+        const accountsData = await res.json();
+        if (Array.isArray(accountsData)) return accountsData as TradingAccount[];
+      }
+    }
+
     const { data, error } = await supabase
       .from('trading_accounts')
       .select('*')
