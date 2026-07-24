@@ -72,7 +72,6 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
             setChecklist(data.rules_checklist);
           }
         } else {
-          // Reset form for fresh date
           setMarketBias('Neutral');
           setConfidence(3);
           setDailyGoal('');
@@ -129,7 +128,6 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
         .upsert(payload, { onConflict: 'user_id,date' });
 
       if (error) {
-        // Fallback to localStorage if table is pending Supabase migration
         localStorage.setItem(`journal_${user.id}_${date}`, JSON.stringify(payload));
       }
 
@@ -137,7 +135,6 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
       if (onSaved) onSaved();
     } catch (err: any) {
       console.error('Error saving journal:', err);
-      // LocalStorage fallback
       localStorage.setItem(`journal_${user?.id}_${date}`, JSON.stringify({
         market_bias: marketBias,
         confidence_rating: confidence,
@@ -156,38 +153,38 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
 
   if (loading) {
     return (
-      <div className="p-8 text-center text-slate-400 font-mono text-sm animate-pulse">
+      <div className="p-8 text-center text-slate-500 dark:text-slate-400 font-mono text-sm animate-pulse">
         Loading prep journal for {date}...
       </div>
     );
   }
 
   return (
-    <div className="bg-[#0B0F19] border border-slate-800 rounded-xl p-6 text-slate-100 space-y-6">
+    <div className="bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-slate-900 dark:text-slate-100 shadow-sm space-y-6 font-sans">
       {/* Header & Date summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <h2 className="text-xl font-semibold tracking-wide flex items-center gap-2">
+          <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <span>Macro Prep & Session Journal</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-mono bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
               {date}
             </span>
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Track daily market bias, key levels, economic news, and post-market execution discipline.
           </p>
         </div>
 
         {/* Trade Summary Pill */}
-        <div className="flex items-center gap-4 bg-slate-900 border border-slate-800 px-4 py-2 rounded-lg text-xs font-mono">
+        <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-xl text-xs font-mono">
           <div>
-            <span className="text-slate-400">Trades Logged: </span>
-            <span className="text-slate-200 font-bold">{tradesCount}</span>
+            <span className="text-slate-500 dark:text-slate-400">Trades Logged: </span>
+            <span className="text-slate-900 dark:text-slate-100 font-bold">{tradesCount}</span>
           </div>
-          <div className="h-4 w-px bg-slate-800" />
+          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
           <div>
-            <span className="text-slate-400">Net P&L: </span>
-            <span className={`font-bold ${netPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <span className="text-slate-500 dark:text-slate-400">Net P&L: </span>
+            <span className={`font-bold ${netPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
               {netPnL >= 0 ? '+' : ''}${netPnL.toFixed(2)}
             </span>
           </div>
@@ -195,13 +192,14 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-2">
+      <div className="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-2">
         <button
+          type="button"
           onClick={() => setActiveTab('pre-market')}
-          className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
             activeTab === 'pre-market'
-              ? 'bg-indigo-600 text-white shadow-lg'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,11 +208,12 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
           1. Pre-Market Preparation
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab('post-market')}
-          className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors flex items-center gap-2 ${
             activeTab === 'post-market'
-              ? 'bg-indigo-600 text-white shadow-lg'
-              : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,8 +228,8 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Market Bias */}
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
                 Session Market Bias
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -239,14 +238,14 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                     key={bias}
                     type="button"
                     onClick={() => setMarketBias(bias)}
-                    className={`py-2 rounded-lg text-xs font-semibold border transition-all ${
+                    className={`py-2.5 rounded-lg text-xs font-bold border transition-all ${
                       marketBias === bias
                         ? bias === 'Bullish'
-                          ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-sm'
+                          ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/40 shadow-sm'
                           : bias === 'Bearish'
-                          ? 'bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-sm'
-                          : 'bg-slate-700/40 text-slate-200 border-slate-600 shadow-sm'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                          ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/40 shadow-sm'
+                          : 'bg-slate-200 dark:bg-slate-700/40 text-slate-800 dark:text-slate-200 border-slate-300 dark:border-slate-600 shadow-sm'
+                        : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
                     {bias}
@@ -256,8 +255,8 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
             </div>
 
             {/* Conviction Rating */}
-            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+            <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
                 Bias Conviction Rating (1 - 5 Stars)
               </label>
               <div className="flex items-center gap-2 pt-1">
@@ -266,16 +265,16 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                     key={star}
                     type="button"
                     onClick={() => setConfidence(star)}
-                    className={`p-2 rounded-lg text-sm transition-all ${
+                    className={`p-2.5 rounded-lg text-sm transition-all ${
                       star <= confidence
-                        ? 'text-amber-400 bg-amber-400/10 border border-amber-400/20'
-                        : 'text-slate-600 bg-slate-950 border border-slate-800'
+                        ? 'text-amber-500 bg-amber-400/10 border border-amber-400/30'
+                        : 'text-slate-400 dark:text-slate-600 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800'
                     }`}
                   >
                     ★
                   </button>
                 ))}
-                <span className="text-xs font-mono text-slate-400 ml-2">{confidence}/5 Stars</span>
+                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 ml-2">{confidence}/5 Stars</span>
               </div>
             </div>
           </div>
@@ -283,7 +282,7 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
           {/* Daily Goal & Key Levels */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
                 Daily Process Goal & Plan
               </label>
               <textarea
@@ -291,12 +290,12 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                 onChange={(e) => setDailyGoal(e.target.value)}
                 placeholder="e.g. Only take setups on 15m orderblocks. Do not trade before 9:30 AM EST open..."
                 rows={3}
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
                 Key Technical Levels (Support / Resistance / Liquidity)
               </label>
               <textarea
@@ -304,14 +303,14 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                 onChange={(e) => setKeyLevels(e.target.value)}
                 placeholder="e.g. EURUSD Support: 1.0820, Resistance: 1.0890. XAUUSD Liquidity Pool: 2365..."
                 rows={3}
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
               />
             </div>
           </div>
 
           {/* Economic News Notes */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
               Economic Calendar Events & Macro Drivers
             </label>
             <textarea
@@ -319,20 +318,20 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
               onChange={(e) => setEconomicNotes(e.target.value)}
               placeholder="e.g. 8:30 AM Core CPI release (High impact). CPI expected 0.3% MoM..."
               rows={2}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
             />
           </div>
 
           {/* Pre-Flight Checklist */}
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                 Session Discipline Rules Checklist
               </label>
               <button
                 type="button"
                 onClick={handleAddChecklistItem}
-                className="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1"
+                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
               >
                 + Add Rule
               </button>
@@ -342,15 +341,15 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
               {checklist.map((item, idx) => (
                 <label
                   key={idx}
-                  className="flex items-center space-x-3 p-2 rounded-lg bg-slate-950/60 border border-slate-800/80 cursor-pointer hover:border-slate-700"
+                  className="flex items-center space-x-3 p-2.5 rounded-lg bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={item.checked}
                     onChange={() => handleToggleChecklist(idx)}
-                    className="w-4 h-4 rounded text-indigo-600 bg-slate-900 border-slate-700 focus:ring-0"
+                    className="w-4 h-4 rounded text-indigo-600 bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700 focus:ring-0"
                   />
-                  <span className={`text-xs font-medium ${item.checked ? 'text-slate-200 line-through opacity-70' : 'text-slate-300'}`}>
+                  <span className={`text-xs font-medium ${item.checked ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-800 dark:text-slate-200'}`}>
                     {item.text}
                   </span>
                 </label>
@@ -364,8 +363,8 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
       {activeTab === 'post-market' && (
         <div className="space-y-6">
           {/* Discipline Grade */}
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-3">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+          <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
               Session Execution Grade (A+ to F)
             </label>
             <div className="flex items-center gap-3">
@@ -377,11 +376,11 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                   className={`w-12 h-10 rounded-lg text-sm font-bold font-mono border transition-all ${
                     disciplineGrade === grade
                       ? grade.startsWith('A')
-                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-lg'
+                        ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/40 shadow-md'
                         : grade === 'B' || grade === 'C'
-                        ? 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-lg'
-                        : 'bg-rose-500/20 text-rose-400 border-rose-500/40 shadow-lg'
-                      : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
+                        ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/40 shadow-md'
+                        : 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/40 shadow-md'
+                      : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                   }`}
                 >
                   {grade}
@@ -392,7 +391,7 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
 
           {/* Reflection */}
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
               Post-Market Execution Reflection & Takeaways
             </label>
             <textarea
@@ -400,19 +399,19 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
               onChange={(e) => setReflection(e.target.value)}
               placeholder="Reflect on today's performance. Did you stick to your plan? Were stop losses respected? What will you improve tomorrow?"
               rows={5}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+              className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
             />
           </div>
         </div>
       )}
 
       {/* Save Button */}
-      <div className="pt-4 border-t border-slate-800 flex justify-end">
+      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex justify-end">
         <button
           type="button"
           onClick={handleSaveJournal}
           disabled={saving}
-          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold tracking-wide rounded-lg shadow-lg transition-colors flex items-center gap-2 disabled:opacity-50"
+          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold tracking-wide rounded-xl shadow-lg transition-colors flex items-center gap-2 disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Session Journal'}
         </button>

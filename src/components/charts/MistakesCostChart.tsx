@@ -98,34 +98,34 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
   return (
     <div className="w-full space-y-4">
       {/* Financial Leak & Discipline Impact Banner */}
-      <div className="bg-[#090D16] border border-slate-800 rounded-xl p-4 text-xs font-sans">
+      <div className="bg-slate-50 dark:bg-[#090D16] border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="text-slate-400 font-semibold uppercase tracking-wider text-[11px] mb-1">
+            <div className="text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px] mb-1">
               Disciplined Execution Leak Analysis
             </div>
-            <div className="text-slate-200">
+            <div className="text-slate-800 dark:text-slate-200">
               Eliminating mistake trades would adjust net P&L from{' '}
-              <span className={`font-mono font-bold ${actualNetPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+              <span className={`font-mono font-bold ${actualNetPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 {actualNetPnL >= 0 ? '+' : ''}{formatCurrency(actualNetPnL)}
               </span>{' '}
               to{' '}
-              <span className="font-mono font-bold text-emerald-400">
+              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                 +{formatCurrency(disciplinedNetPnL)}
               </span>{' '}
-              (<span className="text-emerald-400 font-bold">+{formatCurrency(pnlDifference)}</span> recovered).
+              (<span className="text-emerald-600 dark:text-emerald-400 font-bold">+{formatCurrency(pnlDifference)}</span> recovered).
             </div>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-900 border border-slate-800/80 px-3.5 py-2 rounded-lg shrink-0 font-mono text-[11px]">
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 px-3.5 py-2 rounded-lg shrink-0 font-mono text-[11px] shadow-sm">
             <div>
               <div className="text-slate-500 text-[10px]">Actual PF</div>
-              <div className="text-slate-200 font-bold">{actualPF.toFixed(2)}</div>
+              <div className="text-slate-900 dark:text-slate-200 font-bold">{actualPF.toFixed(2)}</div>
             </div>
-            <div className="text-slate-600">→</div>
+            <div className="text-slate-400 dark:text-slate-600">→</div>
             <div>
-              <div className="text-emerald-400 text-[10px]">Disciplined PF</div>
-              <div className="text-emerald-400 font-bold">{disciplinedPF.toFixed(2)}</div>
+              <div className="text-emerald-600 dark:text-emerald-400 text-[10px]">Disciplined PF</div>
+              <div className="text-emerald-600 dark:text-emerald-400 font-bold">{disciplinedPF.toFixed(2)}</div>
             </div>
           </div>
         </div>

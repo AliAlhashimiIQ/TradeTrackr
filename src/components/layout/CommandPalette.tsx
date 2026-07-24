@@ -1,9 +1,10 @@
-'use client'
+'use client';
 
-import React, { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSettings } from '@/providers/SettingsProvider'
-import { useAuth } from '@/hooks/useAuth'
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSettings } from '@/providers/SettingsProvider';
+import { useAuth } from '@/hooks/useAuth';
+import { useAccount } from '@/providers/AccountProvider';
 import { 
   Search, 
   LayoutDashboard, 
@@ -14,9 +15,13 @@ import {
   Terminal, 
   CornerDownLeft, 
   X,
-  Plus
-} from 'lucide-react'
-import toast from 'react-hot-toast'
+  Plus,
+  Calendar,
+  BookOpen,
+  Sun,
+  Layers
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface ParsedLog {
   symbol?: string;
@@ -27,332 +32,395 @@ interface ParsedLog {
 }
 
 export default function CommandPalette() {
-  const router = useRouter()
-  const { user } = useAuth()
-  const { colorblindMode, setColorblindMode } = useSettings()
-  const [isOpen, setIsOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  // Only enable for authenticated users
-  if (!user) return null
+  const router = useRouter();
+  const { user } = useAuth();
+  const { colorblindMode, setColorblindMode } = useSettings();
+  const { accounts, selectAccount } = useAccount();
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Listen for Ctrl+K / Cmd+K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setIsOpen(prev => !prev)
-        setQuery('')
-        setSelectedIndex(0)
+        e.preventDefault();
+        setIsOpen(prev => !prev);
+        setQuery('');
+        setSelectedIndex(0);
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Auto-focus input when opened
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
-        inputRef.current?.focus()
-      }, 50)
+        inputRef.current?.focus();
+      }, 50);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
-  // Parse command helper
+  if (!user) return null;
+
+  // Quick /log command parser
   const parseLogCommand = (text: string): ParsedLog | null => {
-    if (!text.toLowerCase().startsWith('/log')) return null
-    const clean = text.substring(4).trim()
-    if (!clean) return {}
+    if (!text.toLowerCase().startsWith('/log')) return null;
+    const clean = text.substring(4).trim();
+    if (!clean) return {};
 
-    const result: ParsedLog = {}
-    
-    // Pattern to match: [buy/sell/long/short]? [lots/qty]? [symbol]? [@ price]?
-    const regex = /^(buy|sell|long|short)?\s*([\d\.]+)?\s*([a-zA-Z\d\.\-_]+)?\s*(?:@|at)?\s*([\d\.]+)?$/i
-    const match = clean.match(regex)
+    const result: ParsedLog = {};
+    const regex = /^(buy|sell|long|short)?\s*([\d\.]+)?\s*([a-zA-Z\d\.\-_]+)?\s*(?:@|at)?\s*([\d\.]+)?$/i;
+    const match = clean.match(regex);
 
     if (match) {
-      const [, side, size, sym, price] = match
+      const [, side, size, sym, price] = match;
       if (side) {
-        result.type = (side.toLowerCase() === 'sell' || side.toLowerCase() === 'short') ? 'Short' : 'Long'
+        result.type = (side.toLowerCase() === 'sell' || side.toLowerCase() === 'short') ? 'Short' : 'Long';
       }
       if (size) {
-        const val = parseFloat(size)
+        const val = parseFloat(size);
         if (!isNaN(val)) {
-          result.lots = val
-          result.quantity = val
+          result.lots = val;
+          result.quantity = val;
         }
       }
       if (sym) {
-        result.symbol = sym.toUpperCase()
+        result.symbol = sym.toUpperCase();
       }
       if (price) {
-        const val = parseFloat(price)
+        const val = parseFloat(price);
         if (!isNaN(val)) {
-          result.entryPrice = val
+          result.entryPrice = val;
         }
       }
     }
-    return result
-  }
+    return result;
+  };
 
-  const parsedLog = parseLogCommand(query)
+  const parsedLog = parseLogCommand(query);
 
-  // Build the list of static actions
+  // Build static actions
   const staticItems = [
     {
       id: 'dashboard',
       category: 'Navigation',
       title: 'Go to Dashboard',
-      subtitle: 'View your account performance and quick stats',
+      subtitle: 'Command Center & quick portfolio stats overview',
       icon: LayoutDashboard,
+      shortcut: 'G D',
       action: () => {
-        router.push('/dashboard')
-        setIsOpen(false)
+        router.push('/dashboard');
+        setIsOpen(false);
       }
     },
     {
       id: 'trades',
       category: 'Navigation',
-      title: 'Go to Trades Log',
-      subtitle: 'View, filter, and manage your logged trades',
+      title: 'Go to Trades Journal',
+      subtitle: 'High-density table view of executed trades',
       icon: BarChart3,
+      shortcut: 'G T',
       action: () => {
-        router.push('/trades')
-        setIsOpen(false)
+        router.push('/trades');
+        setIsOpen(false);
       }
     },
     {
       id: 'analytics',
       category: 'Navigation',
-      title: 'Go to Analytics & Mistakes',
-      subtitle: 'Deep dive into statistics, what-if simulations, and metrics',
+      title: 'Go to Analytics & Mistake Cost',
+      subtitle: 'Drawdowns, heatmaps, and disciplined execution leak analysis',
       icon: PieChart,
+      shortcut: 'G A',
       action: () => {
-        router.push('/analytics')
-        setIsOpen(false)
+        router.push('/analytics');
+        setIsOpen(false);
+      }
+    },
+    {
+      id: 'calendar',
+      category: 'Navigation',
+      title: 'Go to Trading Calendar',
+      subtitle: 'Daily P&L matrix & session performance',
+      icon: Calendar,
+      shortcut: 'G C',
+      action: () => {
+        router.push('/calendar');
+        setIsOpen(false);
+      }
+    },
+    {
+      id: 'journal',
+      category: 'Navigation',
+      title: 'Go to Macro Prep & Session Journal',
+      subtitle: 'Pre-market daily bias, key levels, & post-market review',
+      icon: BookOpen,
+      shortcut: 'G J',
+      action: () => {
+        router.push('/journal');
+        setIsOpen(false);
       }
     },
     {
       id: 'settings',
       category: 'Navigation',
       title: 'Go to Settings',
-      subtitle: 'Manage your timezone, currency, and preferences',
+      subtitle: 'Manage timezone, currency, and account parameters',
       icon: SettingsIcon,
       action: () => {
-        router.push('/settings')
-        setIsOpen(false)
+        router.push('/settings');
+        setIsOpen(false);
+      }
+    },
+    {
+      id: 'theme-toggle',
+      category: 'Preferences',
+      title: 'Toggle Dark / Light Theme',
+      subtitle: 'Switch application color theme mode',
+      icon: Sun,
+      action: () => {
+        const isCurrentlyDark = document.documentElement.classList.contains('dark');
+        if (isCurrentlyDark) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          toast.success('Switched to Light Mode');
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          toast.success('Switched to Dark Mode');
+        }
+        setIsOpen(false);
       }
     },
     {
       id: 'colorblind',
       category: 'Preferences',
       title: colorblindMode ? 'Disable Colorblind Mode' : 'Enable Colorblind Mode',
-      subtitle: 'Toggle colorblind-friendly green/red status colors',
+      subtitle: 'Toggle colorblind-accessible green/red status palette',
       icon: Eye,
       action: () => {
-        const nextState = !colorblindMode
-        setColorblindMode(nextState)
-        toast.success(`Colorblind mode ${nextState ? 'enabled' : 'disabled'}`)
-        setIsOpen(false)
+        const nextState = !colorblindMode;
+        setColorblindMode(nextState);
+        toast.success(`Colorblind mode ${nextState ? 'enabled' : 'disabled'}`);
+        setIsOpen(false);
       }
-    }
-  ]
+    },
+    {
+      id: 'acc-all',
+      category: 'Accounts',
+      title: 'Filter: All Accounts Combined',
+      subtitle: 'View consolidated portfolio stats across all connected accounts',
+      icon: Layers,
+      action: () => {
+        selectAccount('all');
+        toast.success('Filtered to All Accounts');
+        setIsOpen(false);
+      }
+    },
+    ...accounts.map(acc => ({
+      id: `acc-${acc.id}`,
+      category: 'Accounts' as const,
+      title: `Switch to ${acc.name}`,
+      subtitle: `${acc.platform || 'Account'} • ${acc.type || 'LIVE'} • $${acc.balance?.toLocaleString() ?? 0}`,
+      icon: Layers,
+      action: () => {
+        selectAccount(acc.id);
+        toast.success(`Filtered to account: ${acc.name}`);
+        setIsOpen(false);
+      }
+    }))
+  ];
 
-  // Filter actions based on query, or handle custom commands
+  // Filter actions based on query
   const filteredItems = (() => {
     if (parsedLog) {
-      // It's a quick command!
       return [
         {
           id: 'quick-log',
           category: 'Quick Command',
           title: 'Quick Log Trade',
-          subtitle: `Parse and open trade form: ${
-            parsedLog.type ? parsedLog.type : 'Long'
-          } ${parsedLog.lots ? parsedLog.lots + ' lots' : ''} ${parsedLog.symbol ? parsedLog.symbol : ''} ${
-            parsedLog.entryPrice ? '@ ' + parsedLog.entryPrice : ''
-          }`,
+          subtitle: `Parse & open trade form: ${parsedLog.type || 'Long'} ${parsedLog.lots ? parsedLog.lots + ' lots' : ''} ${parsedLog.symbol || ''} ${parsedLog.entryPrice ? '@ ' + parsedLog.entryPrice : ''}`,
           icon: Plus,
           action: () => {
-            const params = new URLSearchParams()
-            if (parsedLog.symbol) params.set('symbol', parsedLog.symbol)
-            if (parsedLog.type) params.set('type', parsedLog.type)
+            const params = new URLSearchParams();
+            if (parsedLog.symbol) params.set('symbol', parsedLog.symbol);
+            if (parsedLog.type) params.set('type', parsedLog.type);
             if (parsedLog.lots) {
-              params.set('lots', String(parsedLog.lots))
-              params.set('quantity', String(parsedLog.lots))
+              params.set('lots', String(parsedLog.lots));
+              params.set('quantity', String(parsedLog.lots));
             }
-            if (parsedLog.entryPrice) params.set('entry_price', String(parsedLog.entryPrice))
+            if (parsedLog.entryPrice) params.set('entry_price', String(parsedLog.entryPrice));
             
-            router.push(`/trades/new?${params.toString()}`)
-            setIsOpen(false)
+            router.push(`/trades/new?${params.toString()}`);
+            setIsOpen(false);
           }
         }
-      ]
+      ];
     }
 
-    if (!query) return staticItems
+    if (!query) return staticItems;
 
     return staticItems.filter(item => 
       item.title.toLowerCase().includes(query.toLowerCase()) ||
       item.category.toLowerCase().includes(query.toLowerCase()) ||
       item.subtitle.toLowerCase().includes(query.toLowerCase())
-    )
-  })()
+    );
+  })();
 
-  // Handle navigate list
   useEffect(() => {
     if (filteredItems.length === 0) {
-      setSelectedIndex(0)
-      return
+      setSelectedIndex(0);
+      return;
     }
     if (selectedIndex >= filteredItems.length) {
-      setSelectedIndex(filteredItems.length - 1)
+      setSelectedIndex(filteredItems.length - 1);
     }
-  }, [filteredItems, selectedIndex])
+  }, [filteredItems, selectedIndex]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      e.preventDefault()
-      setIsOpen(false)
+      e.preventDefault();
+      setIsOpen(false);
     } else if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setSelectedIndex(prev => (prev + 1) % filteredItems.length)
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % filteredItems.length);
     } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setSelectedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length)
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length);
     } else if (e.key === 'Enter') {
-      e.preventDefault()
+      e.preventDefault();
       if (filteredItems[selectedIndex]) {
-        filteredItems[selectedIndex].action()
+        filteredItems[selectedIndex].action();
       }
     }
-  }
+  };
 
-  // Click outside to close
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
     if (isOpen) {
-      document.addEventListener('mousedown', handleOutsideClick)
+      document.addEventListener('mousedown', handleOutsideClick);
     }
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [isOpen])
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
-  // Group filtered items by category
   const categories = filteredItems.reduce((acc, item) => {
-    if (!acc[item.category]) acc[item.category] = []
-    acc[item.category].push(item)
-    return acc
-  }, {} as Record<string, typeof filteredItems>)
+    if (!acc[item.category]) acc[item.category] = [];
+    acc[item.category].push(item);
+    return acc;
+  }, {} as Record<string, typeof filteredItems>);
 
-  // Order categories for sequential arrow index mapping
-  const categoryKeys = Object.keys(categories)
-  let itemCounter = 0
+  const categoryKeys = Object.keys(categories);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 overflow-y-auto bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-200">
       <div 
         ref={containerRef}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-800 bg-[#161a24]/95 shadow-2xl backdrop-blur-md flex flex-col max-h-[70vh] transition-all transform duration-300"
+        className="w-full max-w-xl overflow-hidden rounded-xl border border-slate-800 bg-[#0B0F19] text-slate-100 shadow-2xl flex flex-col max-h-[75vh] font-sans"
       >
         {/* Search header */}
-        <div className="flex items-center border-b border-gray-800/80 px-4 py-4 gap-3">
-          <Search className="w-5 h-5 text-gray-400 shrink-0" />
+        <div className="flex items-center border-b border-slate-800 px-4 py-3 bg-slate-900/60 gap-3">
+          <Search className="w-4 h-4 text-slate-400 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-transparent text-sm text-gray-100 placeholder-gray-500 focus:outline-none border-none outline-none ring-0 p-0 focus:ring-0"
-            placeholder="Type a command (e.g. /log buy 1.0 XAUUSD @ 2350) or search navigation..."
+            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none border-none outline-none ring-0 p-0"
+            placeholder="Type a command (e.g. /log buy 1.0 XAUUSD @ 2350) or search..."
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value)
-              setSelectedIndex(0)
+              setQuery(e.target.value);
+              setSelectedIndex(0);
             }}
           />
-          <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded border border-gray-800 bg-gray-900/60 text-[10px] font-mono text-gray-500">
+          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">
             ESC
-          </span>
+          </kbd>
           <button 
             onClick={() => setIsOpen(false)}
-            className="text-gray-500 hover:text-gray-300 transition-colors p-1"
+            className="text-slate-400 hover:text-slate-200 transition-colors p-1"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* /log helper guide if user typed /log */}
+        {/* /log helper guide */}
         {query.toLowerCase().startsWith('/log') && (
-          <div className="px-4 py-2 bg-blue-500/5 border-b border-blue-500/10 text-xs text-blue-400/90 flex items-center justify-between">
+          <div className="px-4 py-2 bg-indigo-500/10 border-b border-indigo-500/20 text-xs text-indigo-300 flex items-center justify-between font-sans">
             <span className="flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Format: <code className="bg-blue-500/10 px-1 rounded text-blue-300 font-mono">/log [buy/sell] [size] [symbol] @ [entry]</code></span>
+              <Terminal className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Format: <code className="bg-indigo-950 px-1.5 py-0.5 rounded text-indigo-200 font-mono">/log [buy/sell] [size] [symbol] @ [entry]</code></span>
             </span>
-            <span className="text-[10px] text-gray-500">Auto-fills new trade form</span>
+            <span className="text-[10px] text-slate-400">Press Enter to pre-fill trade form</span>
           </div>
         )}
 
         {/* Action list */}
-        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-2 space-y-3">
           {filteredItems.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-sm text-gray-400">No results found for &ldquo;{query}&rdquo;</p>
-              <p className="text-xs text-gray-500 mt-1">Try searching for dashboard, trades, analytics, or colorblind</p>
+            <div className="py-10 text-center">
+              <p className="text-sm text-slate-400">No results matching "{query}"</p>
             </div>
           ) : (
             categoryKeys.map((catName) => (
-              <div key={catName} className="mb-2">
-                <h3 className="px-3 py-1.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+              <div key={catName} className="space-y-1">
+                <h3 className="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">
                   {catName}
                 </h3>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {categories[catName].map((item) => {
-                    // Find actual flat list index of this item
-                    const currentFlatIndex = filteredItems.findIndex(i => i.id === item.id)
-                    const isSelected = currentFlatIndex === selectedIndex
-                    const IconComp = item.icon
+                    const currentFlatIndex = filteredItems.findIndex(i => i.id === item.id);
+                    const isSelected = currentFlatIndex === selectedIndex;
+                    const IconComp = item.icon;
 
                     return (
                       <button
                         key={item.id}
                         onClick={item.action}
                         onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                        className={`w-full flex items-center text-left px-3 py-2.5 rounded-xl transition-all duration-150 gap-3 group ${
+                        className={`w-full flex items-center justify-between text-left px-3 py-2.5 rounded-lg transition-all duration-150 border ${
                           isSelected
-                            ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/15'
-                            : 'text-gray-300 hover:bg-gray-800/40 hover:text-gray-100'
+                            ? 'bg-indigo-600/20 border-indigo-500/40 text-slate-100'
+                            : 'bg-transparent border-transparent hover:bg-slate-900/60 text-slate-300'
                         }`}
                       >
-                        <div className={`p-2 rounded-lg shrink-0 ${
-                          isSelected ? 'bg-white/10' : 'bg-gray-800/80 group-hover:bg-gray-800 text-gray-400 group-hover:text-gray-200'
-                        }`}>
-                          <IconComp className="w-4 h-4" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-none">{item.title}</p>
-                          <p className={`text-xs mt-1 truncate ${
-                            isSelected ? 'text-blue-100' : 'text-gray-500'
+                        <div className="flex items-center space-x-3 min-w-0">
+                          <div className={`p-1.5 rounded-md border shrink-0 ${
+                            isSelected
+                              ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                              : 'bg-slate-900 border-slate-800 text-slate-400'
                           }`}>
-                            {item.subtitle}
-                          </p>
+                            <IconComp className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-xs font-semibold tracking-wide text-slate-100">
+                              {item.title}
+                            </div>
+                            {item.subtitle && (
+                              <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
+                                {item.subtitle}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {isSelected && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-white bg-white/15 px-1.5 py-0.5 rounded shrink-0">
-                            <span>Select</span>
-                            <CornerDownLeft className="w-3 h-3" />
-                          </span>
+
+                        {item.shortcut && (
+                          <kbd className="px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded shrink-0 ml-2">
+                            {item.shortcut}
+                          </kbd>
                         )}
                       </button>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -361,20 +429,14 @@ export default function CommandPalette() {
         </div>
 
         {/* Palette footer */}
-        <div className="flex items-center justify-between border-t border-gray-800/80 px-4 py-3 bg-[#11141c]/60 text-[11px] text-gray-500">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1">
-              <kbd className="px-1 rounded bg-gray-900 border border-gray-800">↑↓</kbd> Navigate
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1 rounded bg-gray-900 border border-gray-800">Enter</kbd> Select
-            </span>
+        <div className="flex items-center justify-between border-t border-slate-800 px-4 py-2 bg-slate-900/40 text-[11px] text-slate-400">
+          <div className="flex items-center space-x-3">
+            <span><kbd className="px-1 py-0.5 bg-slate-800 rounded">↑↓</kbd> Navigate</span>
+            <span><kbd className="px-1 py-0.5 bg-slate-800 rounded">↵</kbd> Select</span>
           </div>
-          <div>
-            Press <kbd className="px-1 rounded bg-gray-900 border border-gray-800">Ctrl + K</kbd> to toggle anywhere
-          </div>
+          <div>TradeTrackr Command Palette</div>
         </div>
       </div>
     </div>
-  )
+  );
 }
