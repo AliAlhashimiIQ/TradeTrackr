@@ -17,6 +17,7 @@ import {
   Plus,
   Calendar,
   BookOpen,
+  FileText,
   Sun,
   Layers
 } from 'lucide-react';
@@ -158,7 +159,7 @@ export default function CommandPalette() {
       category: 'Navigation',
       title: 'Go to Macro Prep & Session Journal',
       subtitle: 'Pre-market daily bias, key levels, & post-market review',
-      icon: BookOpen,
+      icon: FileText,
       shortcut: 'G J',
       action: () => {
         router.push('/journal');
