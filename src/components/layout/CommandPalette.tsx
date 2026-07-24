@@ -13,7 +13,6 @@ import {
   Settings as SettingsIcon, 
   Eye, 
   Terminal, 
-  CornerDownLeft, 
   X,
   Plus,
   Calendar,
@@ -323,19 +322,19 @@ export default function CommandPalette() {
   const categoryKeys = Object.keys(categories);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/70 backdrop-blur-sm transition-opacity duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm transition-opacity duration-200">
       <div 
         ref={containerRef}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xl overflow-hidden rounded-xl border border-slate-800 bg-[#0B0F19] text-slate-100 shadow-2xl flex flex-col max-h-[75vh] font-sans"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0D0E16] text-slate-900 dark:text-slate-100 shadow-2xl flex flex-col max-h-[75vh] font-sans"
       >
         {/* Search header */}
-        <div className="flex items-center border-b border-slate-800 px-4 py-3 bg-slate-900/60 gap-3">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
+        <div className="flex items-center border-b border-slate-200 dark:border-slate-800/80 px-4 py-3.5 bg-slate-50/80 dark:bg-slate-900/40 gap-3">
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
           <input
             ref={inputRef}
             type="text"
-            className="w-full bg-transparent text-sm text-slate-100 placeholder-slate-500 focus:outline-none border-none outline-none ring-0 p-0"
+            className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-none outline-none ring-0 p-0"
             placeholder="Type a command (e.g. /log buy 1.0 XAUUSD @ 2350) or search..."
             value={query}
             onChange={(e) => {
@@ -343,12 +342,12 @@ export default function CommandPalette() {
               setSelectedIndex(0);
             }}
           />
-          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded">
+          <kbd className="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-200/60 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded">
             ESC
           </kbd>
           <button 
             onClick={() => setIsOpen(false)}
-            className="text-slate-400 hover:text-slate-200 transition-colors p-1"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
           >
             <X className="w-4 h-4" />
           </button>
@@ -356,12 +355,12 @@ export default function CommandPalette() {
 
         {/* /log helper guide */}
         {query.toLowerCase().startsWith('/log') && (
-          <div className="px-4 py-2 bg-indigo-500/10 border-b border-indigo-500/20 text-xs text-indigo-300 flex items-center justify-between font-sans">
+          <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-500/10 border-b border-indigo-100 dark:border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between font-sans">
             <span className="flex items-center gap-1.5">
-              <Terminal className="w-3.5 h-3.5 text-indigo-400" />
-              <span>Format: <code className="bg-indigo-950 px-1.5 py-0.5 rounded text-indigo-200 font-mono">/log [buy/sell] [size] [symbol] @ [entry]</code></span>
+              <Terminal className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span>Format: <code className="bg-indigo-100 dark:bg-indigo-950 px-1.5 py-0.5 rounded text-indigo-800 dark:text-indigo-200 font-mono">/log [buy/sell] [size] [symbol] @ [entry]</code></span>
             </span>
-            <span className="text-[10px] text-slate-400">Press Enter to pre-fill trade form</span>
+            <span className="text-[10px] text-slate-500 dark:text-slate-400">Press Enter to pre-fill trade form</span>
           </div>
         )}
 
@@ -374,7 +373,7 @@ export default function CommandPalette() {
           ) : (
             categoryKeys.map((catName) => (
               <div key={catName} className="space-y-1">
-                <h3 className="px-3 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                <h3 className="px-3 py-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-mono">
                   {catName}
                 </h3>
                 <div className="space-y-1">
@@ -386,28 +385,29 @@ export default function CommandPalette() {
                     return (
                       <button
                         key={item.id}
+                        type="button"
                         onClick={item.action}
                         onMouseEnter={() => setSelectedIndex(currentFlatIndex)}
-                        className={`w-full flex items-center justify-between text-left px-3 py-2.5 rounded-lg transition-all duration-150 border ${
+                        className={`w-full flex items-center justify-between text-left px-3.5 py-2.5 rounded-xl transition-all duration-150 border ${
                           isSelected
-                            ? 'bg-indigo-600/20 border-indigo-500/40 text-slate-100'
-                            : 'bg-transparent border-transparent hover:bg-slate-900/60 text-slate-300'
+                            ? 'bg-indigo-50 dark:bg-indigo-600/20 border-indigo-200 dark:border-indigo-500/40 text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'bg-transparent border-transparent hover:bg-slate-100 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         <div className="flex items-center space-x-3 min-w-0">
-                          <div className={`p-1.5 rounded-md border shrink-0 ${
+                          <div className={`p-2 rounded-lg border shrink-0 ${
                             isSelected
-                              ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
-                              : 'bg-slate-900 border-slate-800 text-slate-400'
+                              ? 'bg-indigo-100 dark:bg-indigo-500/20 border-indigo-300 dark:border-indigo-500/40 text-indigo-600 dark:text-indigo-300'
+                              : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400'
                           }`}>
                             <IconComp className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <div className="text-xs font-semibold tracking-wide text-slate-100">
+                            <div className={`text-xs font-semibold tracking-wide ${isSelected ? 'text-indigo-950 dark:text-white font-bold' : 'text-slate-900 dark:text-slate-200'}`}>
                               {item.title}
                             </div>
                             {item.subtitle && (
-                              <div className="text-[11px] text-slate-400 truncate mt-0.5 font-normal">
+                              <div className={`text-[11px] truncate mt-0.5 font-normal ${isSelected ? 'text-indigo-700 dark:text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>
                                 {item.subtitle}
                               </div>
                             )}
@@ -415,7 +415,7 @@ export default function CommandPalette() {
                         </div>
 
                         {item.shortcut && (
-                          <kbd className="px-2 py-0.5 text-[10px] font-mono text-slate-400 bg-slate-800 border border-slate-700 rounded shrink-0 ml-2">
+                          <kbd className="px-2 py-0.5 text-[10px] font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded shrink-0 ml-2">
                             {item.shortcut}
                           </kbd>
                         )}
@@ -429,12 +429,12 @@ export default function CommandPalette() {
         </div>
 
         {/* Palette footer */}
-        <div className="flex items-center justify-between border-t border-slate-800 px-4 py-2 bg-slate-900/40 text-[11px] text-slate-400">
+        <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-900/40 text-[11px] text-slate-500 dark:text-slate-400">
           <div className="flex items-center space-x-3">
-            <span><kbd className="px-1 py-0.5 bg-slate-800 rounded">↑↓</kbd> Navigate</span>
-            <span><kbd className="px-1 py-0.5 bg-slate-800 rounded">↵</kbd> Select</span>
+            <span><kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono text-[10px]">↑↓</kbd> Navigate</span>
+            <span><kbd className="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono text-[10px]">↵</kbd> Select</span>
           </div>
-          <div>TradeTrackr Command Palette</div>
+          <div className="font-mono text-[10px]">TradeTrackr Command Palette</div>
         </div>
       </div>
     </div>
