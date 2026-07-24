@@ -75,35 +75,92 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
     );
   }
 
+  // Calculate Disciplined vs Actual financial impact metrics
+  const actualNetPnL = trades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+  
+  const cleanTrades = trades.filter((t) => !t.mistakes || t.mistakes.length === 0);
+  const disciplinedNetPnL = cleanTrades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
+  const totalMistakeCost = trades
+    .filter((t) => t.mistakes && t.mistakes.length > 0 && t.profit_loss < 0)
+    .reduce((sum, t) => sum + t.profit_loss, 0);
+
+  // Calculate profit factors
+  const calcPF = (tradeList: Trade[]) => {
+    const wins = tradeList.filter((t) => t.profit_loss > 0).reduce((s, t) => s + t.profit_loss, 0);
+    const losses = Math.abs(tradeList.filter((t) => t.profit_loss < 0).reduce((s, t) => s + t.profit_loss, 0));
+    return losses === 0 ? (wins > 0 ? 99.9 : 0) : wins / losses;
+  };
+
+  const actualPF = calcPF(trades);
+  const disciplinedPF = calcPF(cleanTrades);
+  const pnlDifference = Math.abs(disciplinedNetPnL - actualNetPnL);
+
   return (
-    <div className="w-full h-80">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 5, right: 15, left: 10, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.08)" horizontal={false} />
-          <XAxis type="number" hide />
-          <YAxis 
-            dataKey="name" 
-            type="category" 
-            tick={{ fill: '#6b7280', fontSize: 10 }}
-            stroke="#6b7280"
-            width={100}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(128,128,128,0.03)' }} />
-          <Bar dataKey="cost" radius={[0, 4, 4, 0]} barSize={18}>
-            {data.map((entry, index) => (
-              <Cell 
-                key={`cell-${index}`} 
-                fill={entry.cost < 0 ? '#f87171' : '#34d399'} 
-                fillOpacity={0.95}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="w-full space-y-4">
+      {/* Financial Leak & Discipline Impact Banner */}
+      <div className="bg-[#090D16] border border-slate-800 rounded-xl p-4 text-xs font-sans">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <div className="text-slate-400 font-semibold uppercase tracking-wider text-[11px] mb-1">
+              Disciplined Execution Leak Analysis
+            </div>
+            <div className="text-slate-200">
+              Eliminating mistake trades would adjust net P&L from{' '}
+              <span className={`font-mono font-bold ${actualNetPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {actualNetPnL >= 0 ? '+' : ''}{formatCurrency(actualNetPnL)}
+              </span>{' '}
+              to{' '}
+              <span className="font-mono font-bold text-emerald-400">
+                +{formatCurrency(disciplinedNetPnL)}
+              </span>{' '}
+              (<span className="text-emerald-400 font-bold">+{formatCurrency(pnlDifference)}</span> recovered).
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-900 border border-slate-800/80 px-3.5 py-2 rounded-lg shrink-0 font-mono text-[11px]">
+            <div>
+              <div className="text-slate-500 text-[10px]">Actual PF</div>
+              <div className="text-slate-200 font-bold">{actualPF.toFixed(2)}</div>
+            </div>
+            <div className="text-slate-600">→</div>
+            <div>
+              <div className="text-emerald-400 text-[10px]">Disciplined PF</div>
+              <div className="text-emerald-400 font-bold">{disciplinedPF.toFixed(2)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="w-full h-72">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 5, right: 15, left: 10, bottom: 5 }}
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.08)" horizontal={false} />
+            <XAxis type="number" hide />
+            <YAxis 
+              dataKey="name" 
+              type="category" 
+              tick={{ fill: '#94a3b8', fontSize: 11 }}
+              stroke="#475569"
+              width={110}
+            />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(128,128,128,0.03)' }} />
+            <Bar dataKey="cost" radius={[0, 4, 4, 0]} barSize={18}>
+              {data.map((entry, index) => (
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={entry.cost < 0 ? '#ef4444' : '#10b981'} 
+                  fillOpacity={0.95}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };

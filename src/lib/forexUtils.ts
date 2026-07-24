@@ -127,7 +127,7 @@ export const getSymbolMultiplier = (symbol: string): number => {
     return 1;
   }
   // Indices / Futures
-  const indices = ['US30', 'NAS100', 'NDX', 'SPX500', 'SPX', 'GER30', 'DE30', 'UK100', 'JPN225', 'HK50'];
+  const indices = ['US30', 'NAS100', 'NDX', 'SPX500', 'SPX', 'GER30', 'DE30', 'UK100', 'JPN225', 'HK50', 'US100'];
   if (indices.some(index => cleanSymbol.includes(index))) {
     return 1;
   }

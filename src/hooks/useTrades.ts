@@ -46,8 +46,8 @@ export function useTrades(dateRange: DateRange, accountSelection?: AccountSelect
       }),
       supabase.from('profiles').select('settings').eq('id', user.id).single(),
       accountIds && accountIds.length > 0
-        ? supabase.from('trading_accounts').select('balance').in('id', accountIds)
-        : supabase.from('trading_accounts').select('balance').eq('user_id', user.id),
+        ? supabase.from('trading_accounts').select('balance, initial_balance').in('id', accountIds)
+        : supabase.from('trading_accounts').select('balance, initial_balance').eq('user_id', user.id),
     ])
     
     const settings = (profileRes.data?.settings as any) || {}
@@ -56,8 +56,19 @@ export function useTrades(dateRange: DateRange, accountSelection?: AccountSelect
     let cap = profileStartingBalance
     const accountsList = (accountsRes.data as any[]) || []
     if (accountsList.length > 0) {
-      const totalBalance = accountsList.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)
-      if (totalBalance > 0) cap = totalBalance
+      const sumPnL = (tradesData || []).reduce((sum: number, t: any) => sum + (Number(t.profit_loss) || 0), 0)
+      const totalCurrentBalance = accountsList.reduce((sum, acc) => sum + Number(acc.balance || 0), 0)
+      const hasInitialBalance = accountsList.some(acc => Number(acc.initial_balance) > 0)
+
+      if (hasInitialBalance) {
+        cap = accountsList.reduce((sum, acc) => {
+          const init = Number(acc.initial_balance)
+          return sum + (init > 0 ? init : Number(acc.balance || 0))
+        }, 0)
+      } else if (totalCurrentBalance > 0) {
+        const calculatedInitial = totalCurrentBalance - sumPnL
+        cap = calculatedInitial > 0 ? calculatedInitial : totalCurrentBalance
+      }
     }
     
     return { trades: tradesData, initialCapital: cap }

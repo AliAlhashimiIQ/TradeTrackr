@@ -13,6 +13,8 @@ import { supabase } from '@/lib/supabaseClient';
 import { usePathname } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 
+import CommandPalette from '@/components/common/CommandPalette';
+
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -92,6 +94,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
 
   return (
     <div className="liquid-bg flex-1 flex flex-col relative bg-[#06070b]">
+      <CommandPalette />
       <main className="flex-1 py-4 relative z-10 w-full overflow-x-auto">
         {children}
       </main>

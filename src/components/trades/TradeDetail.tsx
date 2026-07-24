@@ -437,6 +437,8 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                 entryPrice={trade.entry_price}
                 exitPrice={trade.exit_price}
                 type={trade.type}
+                stopLoss={trade.stop_loss}
+                takeProfit={trade.take_profit}
               />
             </div>
           )}

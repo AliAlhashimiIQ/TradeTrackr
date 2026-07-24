@@ -10,6 +10,8 @@ interface TradingViewChartProps {
   entryPrice: number;
   exitPrice: number | null;
   type: 'Long' | 'Short';
+  stopLoss?: number;
+  takeProfit?: number;
 }
 
 export default function TradingViewChart({
@@ -19,6 +21,8 @@ export default function TradingViewChart({
   entryPrice,
   exitPrice,
   type,
+  stopLoss,
+  takeProfit,
 }: TradingViewChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
@@ -197,6 +201,30 @@ export default function TradingViewChart({
             { time: entryCandleTime, value: entryPrice },
             { time: exitCandleTime, value: exitPrice },
           ]);
+        }
+
+        // Render Stop Loss horizontal price line
+        if (stopLoss && Number(stopLoss) > 0) {
+          candlestickSeries.createPriceLine({
+            price: Number(stopLoss),
+            color: '#ef4444',
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'SL',
+          });
+        }
+
+        // Render Take Profit horizontal price line
+        if (takeProfit && Number(takeProfit) > 0) {
+          candlestickSeries.createPriceLine({
+            price: Number(takeProfit),
+            color: '#22c55e',
+            lineWidth: 1,
+            lineStyle: 2,
+            axisLabelVisible: true,
+            title: 'TP',
+          });
         }
 
         // Fit content on chart
