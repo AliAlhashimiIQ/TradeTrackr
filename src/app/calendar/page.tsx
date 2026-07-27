@@ -404,7 +404,7 @@ export default function CalendarPage() {
       <motion.button
         onClick={() => setSelectedDate(date)}
         whileHover={{ y: -2 }}
-        className={`relative aspect-[4/3] sm:aspect-[1.5] p-3 rounded-2xl border transition-all duration-200 flex flex-col justify-between text-left group ${dayCellClasses} ${
+        className={`relative aspect-[4/3] sm:aspect-[1.5] p-1 sm:p-3 rounded-xl sm:rounded-2xl border transition-all duration-200 flex flex-col justify-between text-left group ${dayCellClasses} ${
           isToday
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/10 dark:ring-indigo-400/10 bg-indigo-50/50 dark:bg-indigo-950/10'
             : isOutsideMonth
@@ -413,23 +413,23 @@ export default function CalendarPage() {
         } ${isSelected ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 border-transparent shadow-lg' : ''}`}
       >
         <div className="flex justify-between items-center w-full">
-          <span className={`text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-650 dark:text-slate-400'}`}>
+          <span className={`text-[10px] sm:text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-650 dark:text-slate-400'}`}>
             {date.getDate()}
           </span>
           {isToday && (
-            <span className="text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30">
+            <span className="hidden sm:inline-block text-[9px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded border border-indigo-100 dark:border-indigo-900/30">
               Today
             </span>
           )}
         </div>
 
         {dayTrades.length > 0 ? (
-          <div className="flex flex-col w-full text-right">
-            <span className="text-[9px] text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
+          <div className="flex flex-col w-full text-right mt-0.5">
+            <span className="hidden sm:inline-block text-[9px] text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
               {dayTrades.length} trade{dayTrades.length > 1 ? 's' : ''}
             </span>
-            <span className={`text-xs sm:text-sm font-black tracking-tight mt-0.5 leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
-              {pnl > 0 ? '+' : ''}${Math.abs(pnl).toFixed(0)}
+            <span className={`text-[9px] sm:text-sm font-black tracking-tight leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
+              {pnl > 0 ? '+' : ''}${Math.abs(pnl) >= 1000 ? `${(pnl / 1000).toFixed(1)}k` : Math.abs(pnl).toFixed(0)}
             </span>
           </div>
         ) : null}
@@ -445,9 +445,9 @@ export default function CalendarPage() {
     }, 0);
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 sm:gap-3">
         {/* Day cells */}
-        <div className="grid grid-cols-7 gap-3 animate-fadeInOpacity">
+        <div className="grid grid-cols-7 gap-1 sm:gap-3 animate-fadeInOpacity">
           {weekDates.map((date) => (
             <DayCell key={date.toISOString()} date={date} large />
           ))}
@@ -463,7 +463,7 @@ export default function CalendarPage() {
     for (let row = 0; row < cells.length / 7; row++) {
       const weekCells = cells.slice(row * 7, row * 7 + 7);
       weekRows.push(
-        <div key={row} className="grid grid-cols-7 gap-3">
+        <div key={row} className="grid grid-cols-7 gap-1 sm:gap-3">
           {weekCells.map((c, i) => (
             <DayCell key={i} date={c.date} isOutsideMonth={!c.isValid} />
           ))}
@@ -471,7 +471,7 @@ export default function CalendarPage() {
       );
     }
     return (
-      <div className="flex flex-col gap-3 animate-fadeInOpacity">
+      <div className="flex flex-col gap-1 sm:gap-3 animate-fadeInOpacity">
         {weekRows}
       </div>
     );
@@ -483,23 +483,23 @@ export default function CalendarPage() {
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start w-full">
         {/* Calendar Grid (3 columns) */}
         <div className="xl:col-span-3 flex flex-col gap-3">
-          <div className="bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-sm p-5">
+          <div className="bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.06] overflow-hidden shadow-sm p-3 sm:p-5">
             
             {/* Calendar header controls */}
-            <div className="flex justify-between items-center mb-5">
-              <div className="flex items-center gap-3">
+            <div className="flex justify-between items-center mb-4 sm:mb-5">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={goToPrevious}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <ChevronLeft />
                 </button>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 font-sans tracking-tight">
+                <h2 className="text-sm sm:text-lg font-bold text-slate-800 dark:text-slate-100 font-sans tracking-tight">
                   {viewMode === 'Month' ? `${monthName} ${currentYear}` : weekLabel}
                 </h2>
                 <button
                   onClick={goToNext}
-                  className="p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-655 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-655 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <ChevronRight />
                 </button>
@@ -510,7 +510,7 @@ export default function CalendarPage() {
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`px-4 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                    className={`px-2.5 sm:px-4 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer ${
                       viewMode === mode
                         ? 'bg-indigo-650 text-white shadow'
                         : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
@@ -523,10 +523,11 @@ export default function CalendarPage() {
             </div>
 
             {/* Day headers */}
-            <div className="grid grid-cols-7 gap-3 mb-3">
+            <div className="grid grid-cols-7 gap-1 sm:gap-3 mb-2 text-center">
               {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map((d) => (
-                <div key={d} className="px-1 py-2 text-center text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-widest">
-                  {d}
+                <div key={d} className="px-0.5 py-1 text-center text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">
+                  <span className="inline sm:hidden">{d[0]}</span>
+                  <span className="hidden sm:inline">{d}</span>
                 </div>
               ))}
             </div>

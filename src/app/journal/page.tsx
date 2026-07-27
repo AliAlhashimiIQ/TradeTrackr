@@ -76,7 +76,7 @@ export default function JournalPage() {
           </div>
 
           {/* Date Selector Navigation */}
-          <div className="flex items-center space-x-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-xl text-xs shadow-sm">
+          <div className="flex flex-wrap items-center justify-between sm:justify-end gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1.5 rounded-xl text-xs shadow-sm">
             <button
               onClick={handlePrevDay}
               className="px-3 py-1.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors font-medium"

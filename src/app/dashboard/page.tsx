@@ -431,7 +431,7 @@ export default function Dashboard() {
           <>
             {/* ── Stat Pills Row ── */}
             <ErrorBoundary>
-              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+              <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                 {[
                   {
                     label: 'Net P&L',
