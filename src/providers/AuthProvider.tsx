@@ -1,10 +1,9 @@
 'use client'
 
-import React, { createContext, ReactNode, useEffect, useMemo, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/lib/database.types'
+import React, { createContext, ReactNode, useEffect, useState } from 'react'
 import { Session, User, AuthError } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
 
 interface AuthContextType {
   user: User | null;
@@ -32,13 +31,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true)
   const [authError, setAuthError] = useState<AuthError | null>(null)
   const router = useRouter()
-
-  // createBrowserClient from @supabase/ssr stores the session in cookies,
-  // making it visible to the Next.js middleware for server-side auth checks.
-  const supabase = useMemo(() => createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  ), [])
 
   useEffect(() => {
     let isMounted = true
