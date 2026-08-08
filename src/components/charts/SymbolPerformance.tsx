@@ -43,7 +43,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
   
   if (loading) {
     return (
-      <div className="w-full h-80 bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
+      <div className="w-full h-80 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
@@ -51,7 +51,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-80 bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
+      <div className="w-full h-80 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
         <p className="text-slate-400 dark:text-gray-500">No data available</p>
       </div>
     );
@@ -95,7 +95,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
       if (!original) return null;
 
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{original.symbol}</p>
           <p className={`text-xs font-semibold ${original.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'} mb-1`}>
             P&L: <span className="font-mono font-bold">{formatCurrency(original.pnL)}</span>
@@ -113,7 +113,7 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-5">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Top {sortedData.length} symbols by {metric === 'pnL' ? 'P&L' : metric === 'winRate' ? 'Win Rate' : 'Trade Count'}

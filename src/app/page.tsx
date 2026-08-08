@@ -25,7 +25,7 @@ export default function Home() {
 
   if (loading || !mounted) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#07090e]">
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
         <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -34,16 +34,16 @@ export default function Home() {
   if (user) return null
 
   return (
-    <div className="min-h-screen bg-[#07090e] text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[var(--background)] text-slate-100 font-sans selection:bg-indigo-500/30 selection:text-white overflow-x-hidden">
       
       {/* Background Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-to-b from-indigo-500/10 via-indigo-500/5 to-transparent blur-[120px] pointer-events-none z-0" />
 
       {/* Navigation */}
-      <header className="sticky top-0 z-50 border-b border-slate-800/60 bg-[#07090e]/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-slate-800/60 bg-[var(--background)]/80 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#0e121e] border border-slate-800 rounded-xl flex items-center justify-center shadow-inner">
+            <div className="w-9 h-9 bg-[var(--surface-1)] border border-slate-800 rounded-xl flex items-center justify-center shadow-inner">
               <Logo className="w-5 h-5 text-indigo-400" />
             </div>
             <span className="text-base font-black tracking-tight text-white">TradeTrackr</span>
@@ -97,7 +97,7 @@ export default function Home() {
           </Link>
           <a
             href="#demo"
-            className="px-8 py-4 bg-[#0e121e] border border-slate-800 hover:border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
+            className="px-8 py-4 bg-[var(--surface-1)] border border-slate-800 hover:border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-xl transition-all"
           >
             Interactive Demo ↓
           </a>
@@ -120,10 +120,10 @@ export default function Home() {
 
       {/* Interactive App Demo Showcase */}
       <section id="demo" className="py-12 px-6 max-w-6xl mx-auto">
-        <div className="border border-slate-800 rounded-2xl bg-[#0c0f1a] overflow-hidden shadow-2xl shadow-black">
+        <div className="border border-slate-800 rounded-2xl bg-[var(--surface-1)] overflow-hidden shadow-2xl shadow-black">
           
           {/* Top Window Bar */}
-          <div className="px-6 py-4 border-b border-slate-800/80 bg-[#080a12] flex flex-wrap items-center justify-between gap-4">
+          <div className="px-6 py-4 border-b border-slate-800/80 bg-[var(--surface-0)] flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-red-500/80" />
               <span className="w-3 h-3 rounded-full bg-amber-500/80" />
@@ -132,10 +132,12 @@ export default function Home() {
             </div>
 
             {/* Interactive Tab Buttons */}
-            <div className="flex bg-[#040509] p-1 rounded-xl border border-slate-800">
+            <div className="flex bg-[#040509] p-1 rounded-xl border border-slate-800" role="tablist">
               {(['DASHBOARD', 'TRADES', 'MISTAKES', 'PROPFIRM'] as const).map((tab) => (
                 <button
                   key={tab}
+                  role="tab"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab)}
                   className={`text-xs font-bold font-mono px-3.5 py-1.5 rounded-lg transition-all ${
                     activeTab === tab ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'
@@ -151,30 +153,30 @@ export default function Home() {
           </div>
 
           {/* Tab Content Display */}
-          <div className="p-6 sm:p-8 bg-[#0b0e18] text-left">
+          <div className="p-6 sm:p-8 bg-[#0b0e18] text-left" role="tabpanel">
             <AnimatePresence mode="wait">
               {activeTab === 'DASHBOARD' && (
                 <motion.div key="DASHBOARD" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800">
                       <div className="text-xs text-slate-400 font-mono">Net Realized P&L</div>
                       <div className="text-xl font-black font-mono text-emerald-400 mt-1">+$8,342.00</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800">
                       <div className="text-xs text-slate-400 font-mono">Win Rate</div>
                       <div className="text-xl font-black font-mono text-white mt-1">67.4%</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800">
                       <div className="text-xs text-slate-400 font-mono">Profit Factor</div>
                       <div className="text-xl font-black font-mono text-white mt-1">2.14</div>
                     </div>
-                    <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800">
+                    <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800">
                       <div className="text-xs text-slate-400 font-mono">Disciplined Edge</div>
                       <div className="text-xl font-black font-mono text-indigo-400 mt-1">82%</div>
                     </div>
                   </div>
 
-                  <div className="p-5 rounded-xl bg-[#0e1322] border border-slate-800 space-y-3">
+                  <div className="p-5 rounded-xl bg-[var(--surface-2)] border border-slate-800 space-y-3">
                     <div className="flex justify-between text-xs font-mono">
                       <span className="text-slate-400">EQUITY CURVE & DISCIPLINE LEAK OVERLAY</span>
                       <span className="text-emerald-400 font-bold">+12.4% Capital Growth</span>
@@ -190,15 +192,15 @@ export default function Home() {
                 <motion.div key="TRADES" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 font-mono text-xs">
                   <div className="text-slate-300 font-bold">AUTOMATED META-TRADER AUDIT LOG</div>
                   <div className="space-y-2">
-                    <div className="p-3 bg-[#0e1322] border border-slate-800 rounded-xl flex justify-between items-center">
+                    <div className="p-3 bg-[var(--surface-2)] border border-slate-800 rounded-xl flex justify-between items-center">
                       <div><strong className="text-white">NAS100 BUY</strong> · 5 Lots</div>
                       <div className="text-emerald-400 font-bold">+$2,250.00</div>
                     </div>
-                    <div className="p-3 bg-[#0e1322] border border-slate-800 rounded-xl flex justify-between items-center">
+                    <div className="p-3 bg-[var(--surface-2)] border border-slate-800 rounded-xl flex justify-between items-center">
                       <div><strong className="text-white">XAUUSD SELL</strong> · 2 Lots</div>
                       <div className="text-emerald-400 font-bold">+$2,500.00</div>
                     </div>
-                    <div className="p-3 bg-[#0e1322] border border-slate-800 rounded-xl flex justify-between items-center">
+                    <div className="p-3 bg-[var(--surface-2)] border border-slate-800 rounded-xl flex justify-between items-center">
                       <div><strong className="text-white">US30 SELL</strong> · 3 Lots</div>
                       <div className="text-rose-400 font-bold">-$2,100.00</div>
                     </div>
@@ -218,11 +220,11 @@ export default function Home() {
 
               {activeTab === 'PROPFIRM' && (
                 <motion.div key="PROPFIRM" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 font-mono text-xs">
-                  <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800 space-y-2">
                     <div className="flex justify-between"><span className="text-slate-400">FTMO Stage 1 Goal ($10,000)</span><span className="text-emerald-400 font-bold">83.4% Complete</span></div>
                     <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div className="bg-emerald-400 h-full w-[83.4%]" /></div>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#0e1322] border border-slate-800 space-y-2">
+                  <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-slate-800 space-y-2">
                     <div className="flex justify-between"><span className="text-slate-400">Daily Loss Limit Buffer ($5,000 max)</span><span className="text-emerald-400 font-bold">Safe (Used $600)</span></div>
                     <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div className="bg-indigo-500 h-full w-[12%]" /></div>
                   </div>
@@ -241,7 +243,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="p-8 rounded-2xl bg-[#0c0f1a] border border-slate-800 space-y-4 hover:border-indigo-500/40 transition-all">
+          <div className="p-8 rounded-2xl bg-[var(--surface-1)] border border-slate-800 space-y-4 hover:border-indigo-500/40 transition-all">
             <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-black text-lg">01</div>
             <h3 className="text-lg font-bold text-white">Automated MT4/MT5 Cloud Sync</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -249,7 +251,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-8 rounded-2xl bg-[#0c0f1a] border border-slate-800 space-y-4 hover:border-emerald-500/40 transition-all">
+          <div className="p-8 rounded-2xl bg-[var(--surface-1)] border border-slate-800 space-y-4 hover:border-emerald-500/40 transition-all">
             <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-black text-lg">02</div>
             <h3 className="text-lg font-bold text-white">Execution Leak Audit</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -257,7 +259,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="p-8 rounded-2xl bg-[#0c0f1a] border border-slate-800 space-y-4 hover:border-blue-500/40 transition-all">
+          <div className="p-8 rounded-2xl bg-[var(--surface-1)] border border-slate-800 space-y-4 hover:border-blue-500/40 transition-all">
             <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 font-black text-lg">03</div>
             <h3 className="text-lg font-bold text-white">Prop Firm Rule Safeguards</h3>
             <p className="text-xs text-slate-400 leading-relaxed">
@@ -269,7 +271,7 @@ export default function Home() {
 
       {/* CTA Box */}
       <section className="py-20 px-6 max-w-4xl mx-auto text-center">
-        <div className="p-12 rounded-3xl bg-gradient-to-b from-[#0c0f1a] to-[#080a12] border border-slate-800 space-y-6">
+        <div className="p-12 rounded-3xl bg-gradient-to-b from-[var(--surface-1)] to-[var(--surface-0)] border border-slate-800 space-y-6">
           <h2 className="text-3xl sm:text-4xl font-black text-white">Start Tracking Your Edge Today</h2>
           <p className="text-sm text-slate-400 max-w-md mx-auto">
             Take control of your execution. Join prop firm traders who use TradeTrackr to audit discipline and scale capital.

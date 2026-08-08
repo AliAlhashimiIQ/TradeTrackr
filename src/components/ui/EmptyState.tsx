@@ -238,7 +238,7 @@ export default function EmptyState({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, delay: idx * 0.08 }}
-              className="card bg-white dark:bg-[#0d0e16] border border-slate-250 dark:border-white/[0.06] rounded-2xl p-6 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 hover:shadow-md"
+              className="card bg-white dark:bg-[var(--surface-1)] border border-slate-250 dark:border-white/[0.06] rounded-2xl p-6 transition-all duration-300 relative flex flex-col justify-between overflow-hidden shadow-sm hover:scale-[1.01] hover:border-indigo-500/40 hover:shadow-md"
             >
               <div>
                 <div className="flex items-center gap-3.5 mb-4">
@@ -261,7 +261,7 @@ export default function EmptyState({
                 {step.href ? (
                   <Link
                     href={step.href}
-                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[#121420] dark:hover:bg-[#1c1e30] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer"
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-3)] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer"
                   >
                     {step.btnLabel}
                   </Link>
@@ -270,7 +270,7 @@ export default function EmptyState({
                     type="button"
                     onClick={step.action}
                     disabled={step.loading}
-                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[#121420] dark:hover:bg-[#1c1e30] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
+                    className="w-full inline-flex items-center justify-center py-2.5 rounded-xl border border-slate-250 dark:border-white/[0.08] bg-slate-50 hover:bg-slate-100 dark:bg-[var(--surface-2)] dark:hover:bg-[var(--surface-3)] text-slate-700 dark:text-slate-205 text-xs font-bold tracking-wide transition-all duration-200 shadow-sm cursor-pointer disabled:opacity-50"
                   >
                     {step.loading ? (
                       <div className="flex items-center gap-2">

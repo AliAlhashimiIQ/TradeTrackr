@@ -205,7 +205,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
   const selectedEmotion = getSelectedEmotion();
   
   return (
-    <div className={`bg-[#0f1117] rounded-lg overflow-hidden ${className} rounded-[2.5rem]`}>
+    <div className={`bg-[var(--tooltip-bg)] rounded-lg overflow-hidden ${className} rounded-[2.5rem]`}>
       <div className="p-4 border-b border-gray-800">
         <h3 className="text-white text-sm font-semibold flex items-center">
           <svg className="w-4 h-4 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -220,7 +220,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
       
       {/* Selected Emotion Display */}
       {selectedEmotion && (
-        <div className="mx-4 mt-4 p-3 rounded-lg bg-[#151823] border border-gray-800">
+        <div className="mx-4 mt-4 p-3 rounded-lg bg-[var(--surface-raised)] border border-gray-800">
           <div className="flex items-center">
             <div className={`w-10 h-10 rounded-full ${selectedEmotion.color.replace('bg-', 'bg-')}/20 flex items-center justify-center mr-3`}>
               <div className={`text-${selectedEmotion.color.replace('bg-', '')}`}>
@@ -242,7 +242,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
             type="button"
             className={`px-4 py-2 text-sm rounded-t-lg ${
               activeSection === 'positive'
-                ? 'bg-[#151823] text-green-400 border-t border-l border-r border-gray-700'
+                ? 'bg-[var(--surface-raised)] text-green-400 border-t border-l border-r border-gray-700'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
             onClick={() => setActiveSection('positive')}
@@ -253,7 +253,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
             type="button"
             className={`px-4 py-2 text-sm rounded-t-lg ${
               activeSection === 'negative'
-                ? 'bg-[#151823] text-red-400 border-t border-l border-r border-gray-700'
+                ? 'bg-[var(--surface-raised)] text-red-400 border-t border-l border-r border-gray-700'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
             onClick={() => setActiveSection('negative')}
@@ -264,7 +264,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
             type="button"
             className={`px-4 py-2 text-sm rounded-t-lg ${
               activeSection === 'neutral'
-                ? 'bg-[#151823] text-blue-400 border-t border-l border-r border-gray-700'
+                ? 'bg-[var(--surface-raised)] text-blue-400 border-t border-l border-r border-gray-700'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
             onClick={() => setActiveSection('neutral')}
@@ -275,7 +275,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
       </div>
       
       {/* Emotions Grid */}
-      <div className="p-4 bg-[#151823] mx-4 mb-4 rounded-b-lg border-b border-l border-r border-gray-700">
+      <div className="p-4 bg-[var(--surface-raised)] mx-4 mb-4 rounded-b-lg border-b border-l border-r border-gray-700">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {emotions[activeSection].map((emotion) => (
             <button
@@ -285,7 +285,7 @@ const EmotionalStateSelector: React.FC<EmotionalStateSelectorProps> = ({
               className={`p-3 rounded-lg flex flex-col items-center justify-center transition-all ${
                 value === emotion.value
                   ? `${emotion.color.replace('bg-', 'bg-')}/20 border border-${emotion.color.replace('bg-', '')}/30 shadow-md`
-                  : 'bg-[#1a1f2c] hover:bg-[#1c2236] border border-transparent'
+                  : 'bg-[var(--surface-3)] hover:bg-[#1c2236] border border-transparent'
               }`}
             >
               <div className={`w-8 h-8 rounded-full ${emotion.color.replace('bg-', 'bg-')}/20 flex items-center justify-center mb-2`}>

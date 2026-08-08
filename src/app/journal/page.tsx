@@ -8,6 +8,7 @@ import { getAllTrades } from '@/lib/tradingApi';
 import { Trade } from '@/lib/types';
 import { toLocalYMD } from '@/lib/utils';
 import { useAccount } from '@/providers/AccountProvider';
+import { SkeletonCard } from '@/components/ui/SkeletonLoader';
 
 export default function JournalPage() {
   const { user } = useAuth();
@@ -105,11 +106,18 @@ export default function JournalPage() {
         </div>
 
         {/* Daily Prep Form */}
-        <DailyPrepForm
-          date={selectedDate}
-          tradesCount={dayTrades.length}
-          netPnL={netPnL}
-        />
+        {loading ? (
+          <div className="space-y-6">
+            <SkeletonCard className="h-64" />
+            <SkeletonCard className="h-64" />
+          </div>
+        ) : (
+          <DailyPrepForm
+            date={selectedDate}
+            tradesCount={dayTrades.length}
+            netPnL={netPnL}
+          />
+        )}
       </div>
     </AuthenticatedLayout>
   );

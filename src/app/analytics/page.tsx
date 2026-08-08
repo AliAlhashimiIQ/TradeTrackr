@@ -399,7 +399,7 @@ export default function AnalyticsPage() {
               </button>
               
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
                   {(['7d', '30d', '90d', '1y', 'all'] as TimePeriod[]).map((period) => (
                     <button
                       key={period}
@@ -589,8 +589,10 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Tab Navigation */}
-        <div className="flex p-1 bg-white/[0.03] dark:bg-slate-950/40 backdrop-blur-md border border-white/[0.08] rounded-xl mb-8 w-fit max-w-full overflow-x-auto shadow-lg">
+        <div className="flex p-1 bg-white/[0.03] dark:bg-slate-950/40 backdrop-blur-md border border-white/[0.08] rounded-xl mb-8 w-fit max-w-full overflow-x-auto shadow-lg" role="tablist">
           <button
+            role="tab"
+            aria-selected={activeTab === 'overview'}
             onClick={() => setActiveTab('overview')}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'overview'
@@ -604,6 +606,8 @@ export default function AnalyticsPage() {
             Overview
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'breakdown'}
             onClick={() => setActiveTab('breakdown')}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'breakdown'
@@ -617,6 +621,8 @@ export default function AnalyticsPage() {
             Detailed Breakdown
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'mistakes'}
             onClick={() => setActiveTab('mistakes')}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
               activeTab === 'mistakes'
@@ -630,6 +636,8 @@ export default function AnalyticsPage() {
             Cost of Mistakes
           </button>
           <button
+            role="tab"
+            aria-selected={activeTab === 'propfirm'}
             onClick={() => setActiveTab('propfirm')}
             className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
               activeTab === 'propfirm'
@@ -651,7 +659,7 @@ export default function AnalyticsPage() {
         </div>
         
         {activeTab === 'overview' && (
-          <>
+          <div role="tabpanel">
             {filteredTrades.length === 0 && !loading ? (
               <EmptyState variant="analytics" />
             ) : (
@@ -972,7 +980,7 @@ export default function AnalyticsPage() {
             <AIInsights trades={filteredTrades} isLoading={loading} />
             </>
             )}
-          </>
+          </div>
         )}
         
         {activeTab === 'breakdown' && (
@@ -1323,7 +1331,7 @@ export default function AnalyticsPage() {
         />
       </div>
       
-      <footer className="bg-[#0f1117] py-6 mt-auto border-t border-[#1a1f2c]">
+      <footer className="bg-[var(--tooltip-bg)] py-6 mt-auto border-t border-[var(--surface-3)]">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-gray-500 text-sm mb-4 sm:mb-0">© 2025 TradeTrackr. All rights reserved.</p>
           <div className="flex space-x-6">

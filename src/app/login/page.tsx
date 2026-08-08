@@ -118,7 +118,7 @@ function LoginContent() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#06070b]">
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
@@ -139,7 +139,7 @@ function LoginContent() {
   if (user) return null;
 
   return (
-    <div className="min-h-screen bg-[#06070b] flex relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--background)] flex relative overflow-hidden">
       {/* Ambient light */}
       <div className="absolute top-[-30%] left-[-15%] w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[400px] h-[400px] bg-blue-600/6 rounded-full blur-[100px] pointer-events-none" />
@@ -329,7 +329,7 @@ function LoginContent() {
                     <div className="w-full border-t border-white/[0.06]" />
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="px-3 bg-[#06070b] text-gray-500">or continue with</span>
+                    <span className="px-3 bg-[var(--background)] text-gray-500">or continue with</span>
                   </div>
                 </div>
 
@@ -378,7 +378,7 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-[#06070b] flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-[var(--background)] flex items-center justify-center">Loading...</div>}>
       <LoginContent />
     </Suspense>
   );

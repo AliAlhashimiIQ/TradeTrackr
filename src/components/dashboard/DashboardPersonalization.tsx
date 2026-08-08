@@ -113,7 +113,7 @@ const DashboardPersonalization = ({ dateRange = '30d' }: { dateRange?: DateRange
   }
   
   return (
-    <div className="bg-[#0f1117] rounded-lg shadow-xl overflow-hidden">
+    <div className="bg-[var(--tooltip-bg)] rounded-lg shadow-xl overflow-hidden">
       <div className="p-4 border-b border-gray-800 flex justify-between items-center">
         <h2 className="text-lg font-medium text-white">Personalization & Quick Actions</h2>
         <button
@@ -128,7 +128,7 @@ const DashboardPersonalization = ({ dateRange = '30d' }: { dateRange?: DateRange
         </button>
       </div>
       {isCustomizing && (
-        <div className="p-4 bg-[#161a25] border-b border-gray-800">
+        <div className="p-4 bg-[var(--surface-2)] border-b border-gray-800">
           <h3 className="text-sm font-medium text-white mb-3">Widget Configuration</h3>
           <div className="grid grid-cols-2 gap-3">
             {activeWidgets.map(widget => (

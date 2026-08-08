@@ -42,14 +42,14 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
   
   if (trades.length < 10) {
     return (
-      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+      <div className="bg-white dark:bg-[var(--surface-1)] rounded-lg p-4 border border-black/5 dark:border-transparent">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <svg className="w-5 h-5 mr-2 text-indigo-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
           </svg>
           AI Insights
         </h3>
-        <div className="p-3 bg-gray-50 dark:bg-[#1d2333] rounded-lg text-sm text-gray-500 dark:text-gray-400 text-center border border-black/5 dark:border-transparent">
+        <div className="p-3 bg-gray-50 dark:bg-[var(--surface-3)] rounded-lg text-sm text-gray-500 dark:text-gray-400 text-center border border-black/5 dark:border-transparent">
           <p>Add at least 10 trades to unlock AI-powered insights.</p>
         </div>
       </div>
@@ -58,7 +58,7 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
+      <div className="bg-white dark:bg-[var(--surface-1)] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
         <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -70,7 +70,7 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
   }
 
   return (
-    <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+    <div className="bg-white dark:bg-[var(--surface-1)] rounded-lg p-4 border border-black/5 dark:border-transparent">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
         <svg className="w-5 h-5 mr-2 text-indigo-650 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -80,14 +80,14 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
       
       <div className="space-y-2">
         {error ? (
-          <div className="p-3 bg-gray-50 dark:bg-[#1d2333] rounded-lg text-sm text-rose-600 dark:text-red-400 text-center border border-black/5 dark:border-transparent">
+          <div className="p-3 bg-gray-50 dark:bg-[var(--surface-3)] rounded-lg text-sm text-rose-600 dark:text-red-400 text-center border border-black/5 dark:border-transparent">
             {error}
           </div>
         ) : insights.length > 0 ? (
           insights.map((insight) => (
             <div 
               key={insight.id} 
-              className="p-3 bg-gray-50 dark:bg-[#1d2333] rounded-lg text-sm border border-black/5 dark:border-transparent"
+              className="p-3 bg-gray-50 dark:bg-[var(--surface-3)] rounded-lg text-sm border border-black/5 dark:border-transparent"
             >
               <div className="flex items-start">
                 <div 
@@ -107,7 +107,7 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
             </div>
           ))
         ) : (
-          <div className="p-3 bg-gray-50 dark:bg-[#1d2333] rounded-lg text-sm text-gray-500 dark:text-gray-400 text-center border border-black/5 dark:border-transparent">
+          <div className="p-3 bg-gray-50 dark:bg-[var(--surface-3)] rounded-lg text-sm text-gray-500 dark:text-gray-400 text-center border border-black/5 dark:border-transparent">
             <p>Not enough trading data to generate insights.</p>
             <p className="text-xs mt-1">Complete more trades to unlock AI insights.</p>
           </div>

@@ -158,7 +158,7 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      className="card rounded-2xl border border-black/5 dark:border-white/[0.07] bg-white dark:bg-[#0d0e16] overflow-hidden flex flex-col transition-colors duration-300"
+      className="card rounded-2xl border border-black/5 dark:border-white/[0.07] bg-white dark:bg-[var(--surface-1)] overflow-hidden flex flex-col transition-colors duration-300"
     >
       {/* Violation banner */}
       {(isViolated || (consistencyStats?.isBreached && tier.consistencyRule)) && (

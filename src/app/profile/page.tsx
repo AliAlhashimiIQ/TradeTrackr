@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
+import { motion } from 'framer-motion';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 
 type ProfileData = {
@@ -180,7 +181,7 @@ export default function ProfilePage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a10] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[var(--surface-0)] flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
@@ -197,37 +198,45 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* User Stats Sidebar */}
           <div className="md:col-span-1 space-y-6">
-            <div className="card bg-white dark:bg-[#131825] rounded-lg shadow-lg overflow-hidden p-6 border border-gray-200 dark:border-gray-800">
-              <h2 className="text-xl font-bold text-white mb-6">Your Stats</h2>
+            <motion.div 
+              initial="hidden" 
+              animate="show" 
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+              className="card bg-white dark:bg-[var(--surface-2)] rounded-lg shadow-lg overflow-hidden p-6 border border-gray-200 dark:border-gray-800"
+            >
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Your Stats</h2>
               
               <div className="space-y-4">
-                <div className="pb-4 border-b border-gray-200 dark:border-gray-800">
-                  <p className="text-sm text-gray-400 mb-1">Joined Date</p>
-                  <p className="text-lg font-medium text-white">
+                <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="pb-4 border-b border-gray-200 dark:border-gray-800">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Joined Date</p>
+                  <p className="text-lg font-medium text-gray-900 dark:text-white">
                     {profileData?.created_at ? new Date(profileData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Unknown'}
                   </p>
-                </div>
+                </motion.div>
                 
-                <div className="pb-4 border-b border-gray-200 dark:border-gray-800">
-                  <p className="text-sm text-gray-400 mb-1">Total Trades</p>
-                  <p className="text-lg font-medium text-blue-400">
+                <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }} className="pb-4 border-b border-gray-200 dark:border-gray-800">
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Trades</p>
+                  <p className="text-lg font-medium text-blue-600 dark:text-blue-400">
                     {userStats.totalTrades}
                   </p>
-                </div>
+                </motion.div>
                 
-                <div>
-                  <p className="text-sm text-gray-400 mb-1">Net P&L</p>
-                  <p className={`text-lg font-medium ${userStats.netPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                <motion.div variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } }}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Net P&L</p>
+                  <p className={`text-lg font-medium ${userStats.netPnl >= 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-red-500 dark:text-red-400'}`}>
                     {userStats.netPnl >= 0 ? '+' : ''}
                     {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(userStats.netPnl)}
                   </p>
-                </div>
+                </motion.div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Account Settings Form */}
-          <div className="card md:col-span-2 bg-white dark:bg-[#131825] rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+          <div className="card md:col-span-2 bg-white dark:bg-[var(--surface-2)] rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800">
             <div className="p-6">
               <h2 className="text-2xl font-bold text-white mb-6">Account Settings</h2>
               
@@ -304,7 +313,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.username || ''}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white dark:bg-[#1a202c] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
+                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
                         placeholder="Choose a username"
                       />
                     </div>
@@ -319,7 +328,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.full_name || ''}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white dark:bg-[#1a202c] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
+                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -334,7 +343,7 @@ export default function ProfilePage() {
                         type="email"
                         value={formData.email}
                         disabled
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-[#1a202c]/50 border border-gray-300 dark:border-gray-650 rounded-md opacity-75 cursor-not-allowed text-gray-500 dark:text-gray-400"
+                        className="w-full px-3 py-2 bg-gray-100 dark:bg-[var(--surface-3)]/50 border border-gray-300 dark:border-gray-650 rounded-md opacity-75 cursor-not-allowed text-gray-500 dark:text-gray-400"
                       />
                       <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                     </div>

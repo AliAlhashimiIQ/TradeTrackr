@@ -277,7 +277,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Left Column - Trade Details */}
               <div className="space-y-6">
-                <div className="bg-[#1a1f2c] rounded-lg p-4">
+                <div className="bg-[var(--surface-3)] rounded-lg p-4">
                   <h3 className="text-gray-400 text-sm mb-3">Trade Information</h3>
                   <div className="space-y-4">
                     <div>
@@ -328,7 +328,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                 </div>
 
                 {/* Additional Metrics */}
-                <div className="bg-[#1a1f2c] rounded-lg p-4">
+                <div className="bg-[var(--surface-3)] rounded-lg p-4">
                   <h3 className="text-gray-400 text-sm mb-3">Additional Metrics</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -360,7 +360,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
 
                 {/* Tags */}
                 {trade.tags && trade.tags.length > 0 && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                  <div className="bg-[var(--surface-3)] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Tags</h3>
                     <div className="flex flex-wrap gap-2">
                       {trade.tags.map((tag, index) => (
@@ -377,7 +377,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
 
                 {/* Mistakes */}
                 {trade.mistakes && trade.mistakes.length > 0 && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4 border border-red-900/20">
+                  <div className="bg-[var(--surface-3)] rounded-lg p-4 border border-red-900/20">
                     <h3 className="text-red-400/70 text-sm mb-3 font-semibold uppercase tracking-wider">Mistakes Logged</h3>
                     <div className="flex flex-wrap gap-2">
                       {trade.mistakes.map((mistake, index) => (
@@ -396,21 +396,21 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
               {/* Right Column - Additional Information */}
               <div className="space-y-6">
                 {trade.emotional_state && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                  <div className="bg-[var(--surface-3)] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Emotional State</h3>
                     <p className="text-white capitalize">{trade.emotional_state}</p>
                   </div>
                 )}
 
                 {trade.screenshot_url && typeof trade.screenshot_url === 'string' && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                  <div className="bg-[var(--surface-3)] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Screenshot</h3>
                     <a href={resolveTradingViewUrl(trade.screenshot_url, authToken)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
                   </div>
                 )}
 
                 {trade.video_url && (
-                  <div className="bg-[#1a1f2c] rounded-lg p-4">
+                  <div className="bg-[var(--surface-3)] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Video Recording</h3>
                     <button
                       onClick={() => setActiveTab('video')}
@@ -569,7 +569,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                   <p className="text-xs mt-0.5" style={{ color: 'var(--muted-foreground, #9ca3af)' }}>Play your recorded execution session for this trade</p>
                 </div>
               </div>
-              <div className="w-full max-w-4xl relative aspect-video rounded-2xl overflow-hidden border border-white/[0.08] bg-[#0d0e16] shadow-2xl">
+              <div className="w-full max-w-4xl relative aspect-video rounded-2xl overflow-hidden border border-white/[0.08] bg-[var(--surface-1)] shadow-2xl">
                 <video
                   ref={videoRef}
                   src={resolveTradingViewUrl(trade.video_url, authToken)}
@@ -579,7 +579,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
               </div>
               <div className="w-full mt-4 flex items-center justify-between border-t border-white/[0.04] pt-4">
                 <span className="text-xs text-gray-500 font-semibold tracking-wider uppercase">Playback Speed</span>
-                <div className="flex bg-[#121420] border border-white/[0.06] rounded-xl p-1 gap-1">
+                <div className="flex bg-[var(--surface-2)] border border-white/[0.06] rounded-xl p-1 gap-1">
                   {[0.5, 1.0, 1.5, 2.0].map((spd) => (
                     <button
                       key={spd}

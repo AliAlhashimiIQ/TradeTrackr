@@ -24,7 +24,7 @@ export default function DateRangeSelector({
   ];
 
   return (
-    <div className={`bg-[#1a1f2c] rounded-lg flex ${className}`}>
+    <div className={`bg-[var(--surface-3)] rounded-lg flex ${className}`}>
       {ranges.map((range) => (
         <button
           key={range.value}

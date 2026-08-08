@@ -21,6 +21,14 @@
   --table-header-bg: rgba(241, 245, 249, 0.95);
   --table-header-border: rgba(0, 0, 0, 0.08);
 
+  /* Surface hierarchy */
+  --surface-0: #f8fafc;
+  --surface-1: #ffffff;
+  --surface-2: #f8fafc;
+  --surface-3: #f1f5f9;
+  --surface-raised: #ffffff;
+  --surface-overlay: rgba(255, 255, 255, 0.92);
+
   --calendar-empty-bg: rgba(241, 245, 249, 0.5);
   --calendar-cell-border: rgba(0, 0, 0, 0.06);
 
@@ -105,6 +113,14 @@
   --tooltip-bg: #0f1117;
   --table-header-bg: rgba(10, 11, 18, 0.95);
   --table-header-border: rgba(255, 255, 255, 0.06);
+
+  /* Surface hierarchy */
+  --surface-0: #06070b;
+  --surface-1: #0d0e16;
+  --surface-2: #131825;
+  --surface-3: #181e2e;
+  --surface-raised: #151823;
+  --surface-overlay: rgba(11, 15, 25, 0.95);
 
   --calendar-empty-bg: rgba(10, 11, 18, 0.5);
   --calendar-cell-border: rgba(255, 255, 255, 0.04);
@@ -1257,12 +1273,12 @@
 }
 
 /* Streak panel shimmer animation */
-@keyframes shimmer {
+@keyframes streakShimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(400%); }
 }
-.animate-shimmer {
-  animation: shimmer 2s ease-in-out infinite;
+.animate-streak-shimmer {
+  animation: streakShimmer 2s ease-in-out infinite;
 }
 
 /* Animated flame flicker */

@@ -20,7 +20,7 @@ const MetricCard = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
+      <div className="bg-white dark:bg-[var(--surface-2)] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
         <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20 mb-2"></div>
         <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
       </div>
@@ -28,7 +28,7 @@ const MetricCard = ({
   }
 
   return (
-    <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+    <div className="bg-white dark:bg-[var(--surface-2)] rounded-lg p-4 border border-black/5 dark:border-transparent">
       <h4 className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">{title}</h4>
       <div className={`text-xl font-bold ${textColor}`}>{value}</div>
     </div>

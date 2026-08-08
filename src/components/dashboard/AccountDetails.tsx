@@ -42,7 +42,7 @@ export default function AccountDetails({ initialBalance = 25000, trades }: Accou
                 min={0}
                 value={balanceInput}
                 onChange={e => setBalanceInput(e.target.value)}
-                className="p-2 rounded bg-gray-150 dark:bg-[#232a3d] text-indigo-600 dark:text-blue-400 font-bold border border-black/10 dark:border-blue-700/30 focus:ring-2 focus:ring-indigo-500 w-32 focus:outline-none"
+                className="p-2 rounded bg-gray-150 dark:bg-[var(--surface-3)] text-indigo-600 dark:text-blue-400 font-bold border border-black/10 dark:border-blue-700/30 focus:ring-2 focus:ring-indigo-500 w-32 focus:outline-none"
               />
               <button
                 className="px-3 py-1 rounded bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition text-sm"
@@ -70,7 +70,7 @@ export default function AccountDetails({ initialBalance = 25000, trades }: Accou
       </div>
       <div className="mt-6">
         <h4 className="text-base font-bold text-gray-900 dark:text-white mb-2">Balance History</h4>
-        <div className="w-full h-32 bg-gray-100 dark:bg-[#131825] rounded-lg p-3 flex items-end gap-1.5 overflow-x-auto border border-black/5 dark:border-transparent">
+        <div className="w-full h-32 bg-gray-100 dark:bg-[var(--surface-1)] rounded-lg p-3 flex items-end gap-1.5 overflow-x-auto border border-black/5 dark:border-transparent">
           {balanceHistory.map((bal, idx) => (
             <div key={idx} style={{ height: `${40 + (bal-Number(balanceInput))/Number(balanceInput)*60}px` }} className="w-2.5 rounded bg-indigo-500/70 dark:bg-blue-400/70 transition-all shrink-0 hover:bg-indigo-600 dark:hover:bg-blue-400" title={`$${bal.toLocaleString()}`}></div>
           ))}

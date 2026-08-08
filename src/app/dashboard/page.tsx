@@ -75,7 +75,7 @@ const EquityAreaChart = dynamic(() => import('@/components/dashboard/EquityAreaC
   loading: () => <div className="h-64 flex items-center justify-center text-gray-500/50 text-sm">Loading chart...</div>
 })
 
-const card = 'card rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16]'
+const card = 'card rounded-2xl border border-gray-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)]'
 
 // Stagger animation variants
 const container = {
@@ -472,6 +472,9 @@ export default function Dashboard() {
                   <motion.div
                     key={i}
                     variants={item}
+                    tabIndex={0}
+                    role="group"
+                    aria-label={`${s.label}: ${s.value}`}
                     className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between"
                   >
                     <div>
@@ -517,7 +520,7 @@ export default function Dashboard() {
                     {s.label === 'Win Rate' && (
                       <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
                         <div className="flex justify-center">
-                          <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
+                          <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50" aria-label="Win Rate Gauge">
                             <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
                             <path
                               d="M 10 45 A 35 35 0 0 1 90 45"
@@ -559,7 +562,7 @@ export default function Dashboard() {
                           <div className="text-xs text-gray-400 leading-normal font-medium max-w-[65%]">
                             <span>Proportion of gross profit vs gross loss</span>
                           </div>
-                          <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
+                          <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36" aria-label="Profit Factor Gauge">
                             <circle cx="18" cy="18" r="15.915" fill="none" stroke="#ef4444" strokeWidth="5.5" className="opacity-95" />
                             <circle
                               cx="18"
@@ -609,7 +612,7 @@ export default function Dashboard() {
                             <span>Current R:R</span>
                             <span>Target R:R</span>
                           </div>
-                          <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                          <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex" aria-label="Risk Reward Progress Bar" role="progressbar" aria-valuenow={rrVal} aria-valuemax={targetRR}>
                             <div 
                               style={{ 
                                 width: `${fillPct}%`,

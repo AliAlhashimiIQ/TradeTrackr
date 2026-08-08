@@ -187,7 +187,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
       const isWin = midPoint >= 0;
       
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">
             {isWin ? 'Winning' : 'Losing'} Trades Range
           </p>
@@ -201,7 +201,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Win/Loss Distribution

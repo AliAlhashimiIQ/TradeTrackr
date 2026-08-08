@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { usePathname } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 
-import CommandPalette from '@/components/common/CommandPalette';
+import CommandPalette from '@/components/layout/CommandPalette';
 
 export default function AuthenticatedLayout({ children }: AuthenticatedLayoutProps) {
   const { user, loading } = useAuth();
@@ -70,7 +70,7 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
 
   if (loading || (user && checkingOnboard)) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#06070b]">
+      <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
         <div className="flex flex-col items-center gap-6">
           <div className="relative">
             <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
@@ -93,8 +93,8 @@ export default function AuthenticatedLayout({ children }: AuthenticatedLayoutPro
   }
 
   return (
-    <div className="liquid-bg flex-1 flex flex-col relative bg-[#06070b]">
-      <main className="flex-1 py-4 relative z-10 w-full overflow-x-auto">
+    <div className="liquid-bg flex-1 flex flex-col relative bg-[var(--background)]">
+      <main id="main-content" className="flex-1 py-4 relative z-10 w-full overflow-x-auto">
         {children}
       </main>
       <footer className="py-4 px-6 text-center border-t border-white/[0.04] relative z-10">

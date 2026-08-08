@@ -243,7 +243,7 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   
   // Render correlation heatmap
   const renderCorrelationHeatmap = () => (
-      <div className="bg-[#1a1f2c] p-4 rounded-lg mt-4">
+      <div className="bg-[var(--surface-3)] p-4 rounded-lg mt-4">
         <h4 className="text-sm font-medium text-white mb-3">Instrument Correlation</h4>
       {correlations.length === 0 ? (
         <div className="text-xs text-gray-400">Not enough data to calculate correlations.</div>
@@ -280,7 +280,7 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
     );
   
   const renderHealthScore = () => (
-      <div className="bg-[#1a1f2c] p-4 rounded-lg">
+      <div className="bg-[var(--surface-3)] p-4 rounded-lg">
         <h4 className="text-sm font-medium text-white mb-3">Trading Health Score</h4>
         <div className="flex items-center mb-5">
           <div className="w-20 h-20 rounded-full flex items-center justify-center border-4 border-indigo-500 mr-4">
@@ -320,13 +320,13 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
   };
   
   return (
-    <div className="bg-[#131825] rounded-lg p-6">
+    <div className="bg-[var(--surface-2)] rounded-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Advanced Features</h2>
         
         <div className="flex space-x-3">
           <select
-            className="bg-[#1a1f2c] text-gray-300 rounded border border-gray-700 text-sm px-3 py-1.5"
+            className="bg-[var(--surface-3)] text-gray-300 rounded border border-gray-700 text-sm px-3 py-1.5"
             value={view}
             onChange={(e) => setView(e.target.value as CalendarView)}
           >
@@ -335,7 +335,7 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
           </select>
           
           <button
-            className="text-gray-300 hover:text-white bg-[#1a1f2c] px-3 py-1.5 rounded-md text-sm border border-gray-700"
+            className="text-gray-300 hover:text-white bg-[var(--surface-3)] px-3 py-1.5 rounded-md text-sm border border-gray-700"
             onClick={() => setShowCorrelation(!showCorrelation)}
           >
             {showCorrelation ? 'Hide Correlation' : 'Show Correlation'}
@@ -350,7 +350,7 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Calendar section (2/3 width) */}
         <div className="lg:col-span-2">
-          <div className="bg-[#1a1f2c] rounded-lg overflow-hidden">
+          <div className="bg-[var(--surface-3)] rounded-lg overflow-hidden">
             <div className="border-b border-gray-800 p-4">
               <h3 className="text-md font-medium text-white">Trading Calendar</h3>
             </div>
@@ -373,7 +373,7 @@ const DashboardAdvancedFeatures: React.FC<DashboardAdvancedFeaturesProps> = ({ d
         
         {/* Alerts section (1/3 width) */}
         <div className="space-y-6">
-          <div className="bg-[#1a1f2c] rounded-lg overflow-hidden">
+          <div className="bg-[var(--surface-3)] rounded-lg overflow-hidden">
             <div className="border-b border-gray-800 p-4">
               <h3 className="text-md font-medium text-white">Risk Alerts</h3>
             </div>

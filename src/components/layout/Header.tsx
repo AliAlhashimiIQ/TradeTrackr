@@ -92,7 +92,7 @@ export default function Header() {
   return (
     <>
       {/* Mobile Sticky Header */}
-      <header className="sticky top-0 z-50 w-full lg:hidden bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+      <header className="sticky top-0 z-50 w-full lg:hidden bg-white/95 dark:bg-[var(--surface-overlay)] backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div className="w-full px-4 py-3">
           <div className="flex justify-between items-center">
             {/* Logo */}

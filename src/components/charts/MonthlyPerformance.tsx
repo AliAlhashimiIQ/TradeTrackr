@@ -79,7 +79,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
       const tradesVal = payload.find((p: any) => p.name === 'Trades')?.value;
 
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{label}</p>
           {pnlVal !== undefined && (
             <p className={`text-xs font-semibold ${pnlVal >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'} mb-1`}>
@@ -103,7 +103,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
   };
 
   return (
-    <div className="w-full h-80 bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full h-80 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Monthly Performance

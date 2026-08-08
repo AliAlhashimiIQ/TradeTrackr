@@ -124,7 +124,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
 
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -132,7 +132,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <p className="text-gray-400">No data available</p>
       </div>
     );
@@ -228,7 +228,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{label || data.name || data.subject || 'Details'}</p>
           {payload.map((p: any, idx: number) => {
             const val = p.value;
@@ -384,7 +384,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Trade Type Performance
@@ -415,7 +415,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
+        <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
             <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 mr-1.5"></span>
             Long Trades {betterPnL === 'Long' && <span className="ml-1 text-green-500 text-xs">★</span>}
@@ -450,7 +450,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
           </div>
         </div>
         
-        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
+        <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
           <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-500 mr-1.5"></span>
             Short Trades {betterPnL === 'Short' && <span className="ml-1 text-green-500 text-xs">★</span>}
@@ -487,7 +487,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       </div>
       
       {/* Summary banner */}
-      <div className="bg-slate-50 dark:bg-[#1a1f2c]/50 border border-slate-200 dark:border-white/5 p-3.5 rounded-xl mb-4">
+      <div className="bg-slate-50 dark:bg-[var(--surface-3)]/50 border border-slate-200 dark:border-white/5 p-3.5 rounded-xl mb-4">
         <div className="text-xs text-slate-655 dark:text-gray-300 flex flex-col sm:flex-row justify-between gap-2">
           <span>Total P&L: 
             <span className={`font-bold ml-1 ${totalPnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
@@ -511,7 +511,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       {renderView()}
       
       {/* Insight text */}
-      <div className="text-xs text-slate-650 dark:text-slate-350 mt-4 bg-slate-50 dark:bg-[#1a1f2c]/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+      <div className="text-xs text-slate-650 dark:text-slate-350 mt-4 bg-slate-50 dark:bg-[var(--surface-3)]/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
         {longData.pnL > shortData.pnL ? (
           <p>
             Your <span className="font-bold text-indigo-600 dark:text-indigo-400">long trades</span> are more profitable overall 

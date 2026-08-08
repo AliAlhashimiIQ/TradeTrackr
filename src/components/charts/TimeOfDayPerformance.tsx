@@ -41,7 +41,7 @@ const TimeOfDayPerformance: React.FC<TimeOfDayPerformanceProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -49,7 +49,7 @@ const TimeOfDayPerformance: React.FC<TimeOfDayPerformanceProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <p className="text-gray-400">No data available</p>
       </div>
     );
@@ -82,7 +82,7 @@ const TimeOfDayPerformance: React.FC<TimeOfDayPerformanceProps> = ({
       const wrVal = payload.find((p: any) => p.dataKey === 'winRate')?.value;
 
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{fullName}</p>
           {pnlVal !== undefined && (
             <p className={`text-xs font-semibold ${pnlVal >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'} mb-1`}>
@@ -101,7 +101,7 @@ const TimeOfDayPerformance: React.FC<TimeOfDayPerformanceProps> = ({
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart

@@ -57,7 +57,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     const simPoint = payload.find((p: any) => p.name === 'Simulated Balance' || p.dataKey === 'simulatedValue');
     
     return (
-      <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl text-xs">
+      <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl border border-slate-200 dark:border-white/10 shadow-xl text-xs">
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{label}</p>
         {actualPoint && (
           <div className="mb-2">

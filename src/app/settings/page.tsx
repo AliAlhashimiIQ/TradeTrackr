@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabaseClient';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useTheme } from 'next-themes';
 import { Sun, Moon, Monitor } from 'lucide-react';
@@ -251,7 +251,7 @@ function SettingsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-[#0a0a10]">
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-[var(--surface-0)]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
@@ -339,12 +339,16 @@ function SettingsContent() {
           {/* Main Content */}
           {/* Main Content */}
           <div className="flex-1 min-w-0">
+            <AnimatePresence mode="wait">
             {/* General Settings */}
             {activeSection === 'general' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
+                key="general"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="card bg-white dark:bg-[var(--surface-1)] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
               >
                 <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6">General Settings</h2>
 
@@ -480,9 +484,12 @@ function SettingsContent() {
             {/* Billing & Subscription */}
             {activeSection === 'billing' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
+                key="billing"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="card bg-white dark:bg-[var(--surface-1)] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -599,8 +606,11 @@ function SettingsContent() {
             {/* Notification Settings */}
             {activeSection === 'notifications' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                key="notifications"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
                 className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Notification Preferences</h2>
@@ -673,8 +683,11 @@ function SettingsContent() {
             {/* Prop Firm / Account */}
             {activeSection === 'account' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                key="account"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
                 className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
                 <div className="mb-6">
@@ -796,8 +809,11 @@ function SettingsContent() {
             {/* Data & Export */}
             {activeSection === 'data' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                key="data"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
                 className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-black/5 dark:border-white/5 p-6 shadow-2xl"
               >
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Data Management</h2>
@@ -837,9 +853,12 @@ function SettingsContent() {
             {/* Danger Zone */}
             {activeSection === 'danger' && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="card bg-white/80 dark:bg-slate-900/40 backdrop-blur-md rounded-2xl border border-red-500/10 dark:border-red-500/15 p-6 shadow-2xl"
+                key="danger"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="card bg-red-50 dark:bg-red-950/20 rounded-2xl border border-red-200 dark:border-red-900/50 p-6 shadow-sm"
               >
                 <h2 className="text-lg font-semibold text-red-500 dark:text-red-400 mb-6">Danger Zone</h2>
 
@@ -871,6 +890,7 @@ function SettingsContent() {
                 </div>
               </motion.div>
             )}
+            </AnimatePresence>
           </div>
         </div>
       </div>

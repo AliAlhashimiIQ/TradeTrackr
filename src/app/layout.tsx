@@ -50,6 +50,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${jakarta.variable} font-sans antialiased text-slate-100 min-h-screen flex flex-col`}>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg">
+          Skip to main content
+        </a>
         <Providers>
           <PageTransitionProvider>
             {children}

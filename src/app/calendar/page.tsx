@@ -404,6 +404,7 @@ export default function CalendarPage() {
       <motion.button
         onClick={() => setSelectedDate(date)}
         whileHover={{ y: -2 }}
+        aria-label={`${date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}. ${dayTrades.length > 0 ? `${dayTrades.length} trades, P&L ${pnl > 0 ? '+' : ''}$${pnl.toFixed(2)}` : 'No trades'}`}
         className={`relative aspect-[4/3] sm:aspect-[1.5] p-1 sm:p-3 rounded-xl sm:rounded-2xl border transition-all duration-200 flex flex-col justify-between text-left group ${dayCellClasses} ${
           isToday
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/10 dark:ring-indigo-400/10 bg-indigo-50/50 dark:bg-indigo-950/10'

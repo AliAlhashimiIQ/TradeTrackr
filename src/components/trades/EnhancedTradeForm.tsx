@@ -428,7 +428,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                 value={formData.symbol || ''}
                 onChange={e => handleChange('symbol', e.target.value.toUpperCase())}
                 placeholder="Search or type symbol..."
-                className={`w-full px-5 py-4 bg-white dark:bg-[#0d0e16] border rounded-xl text-gray-900 dark:text-white text-xl font-bold placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.symbol ? 'border-red-500/50' : 'border-black/10 dark:border-white/[0.06]'}`}
+                className={`w-full px-5 py-4 bg-white dark:bg-[var(--surface-1)] border rounded-xl text-gray-900 dark:text-white text-xl font-bold placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${errors.symbol ? 'border-red-500/50' : 'border-black/10 dark:border-white/[0.06]'}`}
                 autoComplete="off"
               />
               {errors.symbol && <p className="text-xs text-red-500 mt-2 ml-1">{errors.symbol}</p>}
@@ -441,7 +441,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     className={`group relative px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 border ${
                       formData.symbol === s.name
                         ? 'bg-indigo-500/20 text-indigo-700 dark:text-white border-indigo-500/40 shadow-lg shadow-indigo-500/10 scale-[1.02]'
-                        : 'bg-white dark:bg-[#0d0e16] text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[#151823] border-black/5 dark:border-white/[0.04] hover:border-black/15 dark:hover:border-white/[0.1]'
+                        : 'bg-white dark:bg-[var(--surface-1)] text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-[var(--surface-raised)] border-black/5 dark:border-white/[0.04] hover:border-black/15 dark:hover:border-white/[0.1]'
                     }`}
                   >
                     <span className="mr-1.5 text-[10px] font-bold text-indigo-500/70 dark:text-indigo-400/70">{s.tag}</span>{s.name}
@@ -459,7 +459,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
               <select
                 value={formData.account_id || ''}
                 onChange={e => handleChange('account_id', e.target.value || null)}
-                className="w-full px-5 py-4 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-xl text-gray-900 dark:text-white text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all dark:[color-scheme:dark]"
+                className="w-full px-5 py-4 bg-white dark:bg-[var(--surface-1)] border border-black/10 dark:border-white/[0.06] rounded-xl text-gray-900 dark:text-white text-base font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all dark:[color-scheme:dark]"
               >
                 <option value="">No Account (Default)</option>
                 {accounts.map(acc => (
@@ -483,7 +483,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   className={`relative py-4 rounded-xl font-bold text-sm transition-all duration-200 overflow-hidden border-2 ${
                     formData.type === 'Long'
                       ? 'text-emerald-600 dark:text-emerald-400 border-emerald-500/40'
-                      : 'text-gray-500 border-black/5 dark:border-transparent bg-white dark:bg-[#0d0e16] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50'
+                      : 'text-gray-500 border-black/5 dark:border-transparent bg-white dark:bg-[var(--surface-1)] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   {formData.type === 'Long' && <div className="absolute inset-0 bg-emerald-500/10" />}
@@ -498,7 +498,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   className={`relative py-4 rounded-xl font-bold text-sm transition-all duration-200 overflow-hidden border-2 ${
                     formData.type === 'Short'
                       ? 'text-red-650 dark:text-red-400 border-red-500/40'
-                      : 'text-gray-500 border-black/5 dark:border-transparent bg-white dark:bg-[#0d0e16] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50'
+                      : 'text-gray-500 border-black/5 dark:border-transparent bg-white dark:bg-[var(--surface-1)] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50'
                   }`}
                 >
                   {formData.type === 'Short' && <div className="absolute inset-0 bg-red-500/10" />}
@@ -578,7 +578,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                             toast.success('Pasted link embedded successfully!');
                           }
                         }}
-                        className="bg-white dark:bg-[#0d0e16] rounded-xl border border-black/10 dark:border-white/[0.06] overflow-hidden"
+                        className="bg-white dark:bg-[var(--surface-1)] rounded-xl border border-black/10 dark:border-white/[0.06] overflow-hidden"
                       >
                         <div className="flex border-b border-black/10 dark:border-white/[0.06]">
                           <button
@@ -622,7 +622,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                                   value={embedUrl}
                                   onChange={e => setEmbedUrl(e.target.value)}
                                   placeholder="Paste TradingView link (e.g. https://www.tradingview.com/x/pCPdcgL4/)"
-                                  className="flex-1 px-3 py-2 bg-white dark:bg-[#06070b] border border-black/10 dark:border-white/[0.06] text-gray-900 dark:text-white text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+                                  className="flex-1 px-3 py-2 bg-white dark:bg-[var(--surface-0)] border border-black/10 dark:border-white/[0.06] text-gray-900 dark:text-white text-xs placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                                 />
                                 <button
                                   type="button"
@@ -678,7 +678,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                       <h2 className="text-base font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Parameters</h2>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="bg-white dark:bg-[#0d0e16] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
+                      <div className="bg-white dark:bg-[var(--surface-1)] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Stop Loss</label>
                         <input
                           type="number"
@@ -690,7 +690,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         />
                         {errors.stop_loss && <p className="text-[10px] text-red-500 mt-1">{errors.stop_loss}</p>}
                       </div>
-                      <div className="bg-white dark:bg-[#0d0e16] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
+                      <div className="bg-white dark:bg-[var(--surface-1)] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Take Profit</label>
                         <input
                           type="number"
@@ -702,7 +702,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                         />
                         {errors.take_profit && <p className="text-[10px] text-red-500 mt-1">{errors.take_profit}</p>}
                       </div>
-                      <div className="bg-white dark:bg-[#0d0e16] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
+                      <div className="bg-white dark:bg-[var(--surface-1)] rounded-xl border border-black/10 dark:border-white/[0.06] p-4">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-1.5">Commission</label>
                         <input
                           type="number"
@@ -727,7 +727,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                       onChange={e => handleChange('notes', e.target.value)}
                       placeholder="What was the setup? Lessons learned?"
                       rows={3}
-                      className="w-full px-4 py-3.5 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-xl text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none"
+                      className="w-full px-4 py-3.5 bg-white dark:bg-[var(--surface-1)] border border-black/10 dark:border-white/[0.06] rounded-xl text-gray-900 dark:text-white text-base placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 resize-none"
                     />
                   </div>
                 </motion.div>

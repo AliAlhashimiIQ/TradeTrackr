@@ -55,7 +55,7 @@ export default function ConfirmModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.08] p-6 text-left align-middle shadow-xl dark:shadow-[0_0_50px_rgba(99,102,241,0.15)] transition-all">
+              <Dialog.Panel className="w-full max-w-sm transform overflow-hidden rounded-2xl bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-white/[0.08] p-6 text-left align-middle shadow-xl dark:shadow-[0_0_50px_rgba(99,102,241,0.15)] transition-all">
                 <Dialog.Title
                   as="h3"
                   className="text-base font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2.5 mb-2"

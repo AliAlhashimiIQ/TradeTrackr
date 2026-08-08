@@ -235,7 +235,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
         
         <div className="flex items-center space-x-3">
           {/* View toggle */}
-          <div className="bg-gray-100 dark:bg-[#1a1f2c] rounded-lg border border-black/5 dark:border-white/5 flex overflow-hidden p-0.5">
+          <div className="bg-gray-100 dark:bg-[var(--surface-3)] rounded-lg border border-black/5 dark:border-white/5 flex overflow-hidden p-0.5">
             <button 
               className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${view === 'list' ? 'bg-indigo-600 text-white shadow' : 'text-gray-500 dark:text-gray-400 hover:text-gray-950 dark:hover:text-white'}`}
               onClick={() => setView('list')}
@@ -259,7 +259,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                 className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors ${
                   activeImportance.includes(imp.toString()) 
                     ? getImportanceClass(imp) 
-                    : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 hover:border-black/10 border border-transparent'
+                    : 'bg-gray-100 dark:bg-[var(--surface-3)] text-gray-500 dark:text-gray-400 hover:border-black/10 border border-transparent'
                 }`}
                 onClick={() => {
                   if (activeImportance.includes(imp.toString())) {
@@ -280,7 +280,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
                 activeCountries.includes('united states') 
                   ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
-                  : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
+                  : 'bg-gray-100 dark:bg-[var(--surface-3)] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
               }`}
               onClick={() => {
                 if (activeCountries.includes('united states')) {
@@ -296,7 +296,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors ${
                 activeCountries.includes('euro area') 
                   ? 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20' 
-                  : 'bg-gray-100 dark:bg-[#1a1f2c] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
+                  : 'bg-gray-100 dark:bg-[var(--surface-3)] text-gray-500 dark:text-gray-400 border-transparent hover:border-black/10'
               }`}
               onClick={() => {
                 if (activeCountries.includes('euro area')) {
@@ -343,7 +343,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                 <button
                   key={day}
                   className={`px-4 py-2 flex flex-col items-center border-r border-black/5 dark:border-gray-800 min-w-[100px] transition-colors ${
-                    selectedDay === day ? 'bg-gray-100/60 dark:bg-[#1a1f2c]' : 'hover:bg-gray-50/50 dark:hover:bg-[#161b25]'
+                    selectedDay === day ? 'bg-gray-100/60 dark:bg-[var(--surface-3)]' : 'hover:bg-gray-50/50 dark:hover:bg-[var(--surface-2)]'
                   }`}
                   onClick={() => setSelectedDay(day === selectedDay ? null : day)}
                 >
@@ -380,7 +380,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
       ) : view === 'list' ? (
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-black/5 dark:divide-white/5">
-            <thead className="bg-gray-100 dark:bg-[#0a0c13]">
+            <thead className="bg-gray-100 dark:bg-[var(--surface-1)]">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Time</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Country</th>
@@ -390,9 +390,9 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Previous</th>
               </tr>
             </thead>
-            <tbody className="bg-white/40 dark:bg-[#0d1017] divide-y divide-black/5 dark:divide-white/5">
+            <tbody className="bg-white/40 dark:bg-[var(--surface-1)] divide-y divide-black/5 dark:divide-white/5">
               {filteredEvents.map((event, index) => (
-                <tr key={index} className={`hover:bg-gray-100/50 dark:hover:bg-[#1a1f2c] transition-colors ${
+                <tr key={index} className={`hover:bg-gray-100/50 dark:hover:bg-[var(--surface-3)] transition-colors ${
                   event.Country?.toLowerCase().includes('united states') ? 'bg-blue-500/[0.02] dark:bg-blue-900/5' : ''
                 }`}>
                   <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300 font-mono">
@@ -440,7 +440,7 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
               <div key={day} className={`mb-6 ${selectedDay && selectedDay !== day ? 'hidden' : ''}`}>
                 <h3 className="text-gray-900 dark:text-white font-semibold mb-3 flex items-center">
                   <span className="text-base">{formatDate(day + 'T00:00:00', 'day')}</span>
-                  <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-[#1a1f2c] border border-black/5 dark:border-white/5 rounded-full text-xs text-gray-500 dark:text-gray-400">
+                  <span className="ml-2 px-2 py-0.5 bg-gray-100 dark:bg-[var(--surface-3)] border border-black/5 dark:border-white/5 rounded-full text-xs text-gray-500 dark:text-gray-400">
                     {dayEvents.length} events
                   </span>
                 </h3>

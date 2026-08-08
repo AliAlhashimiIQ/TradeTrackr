@@ -91,7 +91,7 @@ export default function EquityChart({ data, isLoading }: EquityChartProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-[#131825] rounded-lg animate-pulse">
+      <div className="flex items-center justify-center h-64 bg-[var(--surface-2)] rounded-lg animate-pulse">
         <div className="text-gray-400">Loading chart...</div>
       </div>
     );

@@ -149,7 +149,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
   
   if (loading) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -157,7 +157,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
 
   if (!data || data.length === 0) {
     return (
-      <div className="w-full h-64 bg-[#131825] rounded-lg flex items-center justify-center">
+      <div className="w-full h-64 bg-[var(--surface-2)] rounded-lg flex items-center justify-center">
         <p className="text-gray-400">No data available</p>
       </div>
     );
@@ -312,7 +312,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-[#1f2937] p-3 rounded-xl shadow-xl border border-slate-200 dark:border-gray-700 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3 rounded-xl shadow-xl border border-slate-200 dark:border-gray-700 text-xs">
           <p className="font-bold text-slate-800 dark:text-white mb-1.5">{data.day} at {data.hour}</p>
           <p className="text-slate-600 dark:text-gray-300 mb-0.5">
             Trades: <span className="font-mono font-bold text-slate-900 dark:text-white">{data.trades}</span>
@@ -340,7 +340,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
   }, [highlightedHour, highlightedDay]);
   
   return (
-    <div className="w-full bg-white dark:bg-[#131825] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
+    <div className="w-full bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <div className="text-sm font-semibold text-slate-800 dark:text-slate-200">
           Trading Performance Heatmap
@@ -359,19 +359,19 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
             <div className="flex space-x-2 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
               <button
                 onClick={() => setMetric('pnL')}
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[var(--surface-3)]'}`}
               >
                 P&L
               </button>
               <button
                 onClick={() => setMetric('winRate')}
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[var(--surface-3)]'}`}
               >
                 Win Rate
               </button>
               <button
                 onClick={() => setMetric('trades')}
-                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[#252a38]'}`}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all duration-150 ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-300 hover:bg-slate-200 dark:hover:bg-[var(--surface-3)]'}`}
               >
                 Trades
               </button>
@@ -382,7 +382,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
       
       {/* Best/Worst Times */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
+          <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
           <p className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[9px] mb-1.5">Best Performance</p>
           <div className="flex justify-between items-center">
             <span className="text-xs text-slate-700 dark:text-gray-300">
@@ -395,7 +395,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
         </div>
         
         {(metric === 'pnL' || metric === 'winRate') && (
-          <div className="bg-slate-50 dark:bg-[#1a1f2c] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
+            <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3 rounded-xl">
             <p className="text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider text-[9px] mb-1.5">Worst Performance</p>
             <div className="flex justify-between items-center">
               <span className="text-xs text-slate-700 dark:text-gray-300">
@@ -469,7 +469,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
           {metric === 'pnL' ? (
             <>
               <div className="w-16 bg-gradient-to-r from-red-500/80 to-red-500/20"></div>
-              <div className="w-4 bg-[#1a1f2c]"></div>
+              <div className="w-4 bg-[var(--surface-3)]"></div>
               <div className="w-16 bg-gradient-to-r from-green-500/20 to-green-500/80"></div>
               <div className="flex justify-between w-full absolute">
                 <span className="text-xs text-red-400">Loss</span>

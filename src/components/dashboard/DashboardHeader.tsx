@@ -44,7 +44,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </p>
         </div>
         
-        <div className="flex items-center px-5 py-2.5 bg-white dark:bg-[#131825] rounded-xl border border-black/10 dark:border-white/5 shadow-lg transition-all duration-305">
+        <div className="flex items-center px-5 py-2.5 bg-white dark:bg-[var(--surface-1)] rounded-xl border border-black/10 dark:border-white/5 shadow-lg transition-all duration-305">
           <div className="mr-3 h-8 w-8 flex items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-red-500 bg-opacity-20">
             <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
@@ -72,7 +72,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute top-14 right-0 w-56 bg-white dark:bg-[#151823] rounded-xl shadow-2xl border border-black/10 dark:border-indigo-900/20 p-2 z-50 text-gray-900 dark:text-white"
+                className="absolute top-14 right-0 w-56 bg-white dark:bg-[var(--surface-raised)] rounded-xl shadow-2xl border border-black/10 dark:border-indigo-900/20 p-2 z-50 text-gray-900 dark:text-white"
               >
                 <div className="text-gray-900 dark:text-white font-bold px-3 py-2 border-b border-black/10 dark:border-gray-700 mb-1 text-sm">
                   {displayName}

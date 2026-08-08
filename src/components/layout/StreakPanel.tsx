@@ -578,7 +578,7 @@ export function StreakPanel({
                         />
                         {/* Shimmer effect */}
                         <div className="absolute inset-0 rounded-full overflow-hidden">
-                          <div className="absolute inset-y-0 w-1/3 animate-shimmer"
+                          <div className="absolute inset-y-0 w-1/3 animate-streak-shimmer"
                             style={{
                               background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
                               animationDuration: '2s',

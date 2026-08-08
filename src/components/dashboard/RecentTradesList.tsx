@@ -90,7 +90,7 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-100 dark:divide-white/[0.03]">
-          <thead className="bg-slate-50 dark:bg-[#0c0d14]">
+          <thead className="bg-slate-50 dark:bg-[var(--surface-1)]">
             <tr>
               <th className="px-5 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Date/Time</th>
               <th className="px-5 py-3 text-left text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Symbol</th>
@@ -108,7 +108,7 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
               const dirColors = getPLColorClasses(isLong ? 1 : -1, false);
 
               return (
-                <tr key={trade.id} className="hover:bg-slate-50/50 dark:hover:bg-[#12131f] transition-all group/row">
+                <tr key={trade.id} className="hover:bg-slate-50/50 dark:hover:bg-[var(--surface-2)] transition-all group/row">
                   {/* Time */}
                   <td className="px-5 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 font-mono">

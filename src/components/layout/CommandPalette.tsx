@@ -327,7 +327,7 @@ export default function CommandPalette() {
       <div 
         ref={containerRef}
         onKeyDown={handleKeyDown}
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0D0E16] text-slate-900 dark:text-slate-100 shadow-2xl flex flex-col max-h-[75vh] font-sans"
+        className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[var(--surface-1)] text-slate-900 dark:text-slate-100 shadow-2xl flex flex-col max-h-[75vh] font-sans"
       >
         {/* Search header */}
         <div className="flex items-center border-b border-slate-200 dark:border-slate-800/80 px-4 py-3.5 bg-slate-50/80 dark:bg-slate-900/40 gap-3">

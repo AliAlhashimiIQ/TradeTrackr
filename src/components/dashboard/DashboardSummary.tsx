@@ -29,7 +29,7 @@ interface OpenPositionProps {
 const OpenPositions: React.FC<OpenPositionProps> = ({ positions, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-[#131825] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
+      <div className="bg-white dark:bg-[var(--surface-2)] rounded-lg p-4 animate-pulse border border-black/5 dark:border-transparent">
         <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
@@ -41,7 +41,7 @@ const OpenPositions: React.FC<OpenPositionProps> = ({ positions, isLoading }) =>
   }
 
   return (
-    <div className="bg-white dark:bg-[#131825] rounded-lg p-4 border border-black/5 dark:border-transparent">
+    <div className="bg-white dark:bg-[var(--surface-2)] rounded-lg p-4 border border-black/5 dark:border-transparent">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Open Positions</h3>
       
       {positions.length > 0 ? (
@@ -51,7 +51,7 @@ const OpenPositions: React.FC<OpenPositionProps> = ({ positions, isLoading }) =>
             const isProfitable = pnl > 0;
             
             return (
-              <div key={index} className="bg-gray-50 dark:bg-[#1d2333] rounded-lg p-3 border border-black/5 dark:border-transparent">
+              <div key={index} className="bg-gray-50 dark:bg-[var(--surface-3)] rounded-lg p-3 border border-black/5 dark:border-transparent">
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
                     <span className={`h-2 w-2 rounded-full mr-2 ${

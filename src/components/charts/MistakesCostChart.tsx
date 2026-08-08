@@ -50,7 +50,7 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white dark:bg-[#1d1f2b] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
+        <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
           <p className="text-slate-850 dark:text-slate-100 font-bold mb-1.5">{data.name}</p>
           <p className={`text-xs font-semibold ${data.cost < 0 ? 'text-rose-600 dark:text-red-400' : 'text-emerald-600 dark:text-green-400'} mb-1`}>
             Total Impact: <span className="font-mono font-bold">{formatCurrency(data.cost)}</span>
@@ -98,7 +98,7 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
   return (
     <div className="w-full space-y-4">
       {/* Financial Leak & Discipline Impact Banner */}
-      <div className="bg-slate-50 dark:bg-[#090D16] border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs font-sans">
+      <div className="bg-slate-50 dark:bg-[var(--surface-0)] border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-xs font-sans">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider text-[11px] mb-1">
