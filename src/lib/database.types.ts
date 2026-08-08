@@ -142,6 +142,10 @@ export type Database = {
           full_name: string | null
           id: string
           settings: Json | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          subscription_tier: string | null
           updated_at: string
           username: string | null
         }
@@ -152,6 +156,10 @@ export type Database = {
           full_name?: string | null
           id: string
           settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -162,6 +170,10 @@ export type Database = {
           full_name?: string | null
           id?: string
           settings?: Json | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          subscription_tier?: string | null
           updated_at?: string
           username?: string | null
         }

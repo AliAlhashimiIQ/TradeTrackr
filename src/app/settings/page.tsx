@@ -60,10 +60,9 @@ function SettingsContent() {
             .eq('id', user.id)
             .single();
 
-          if (error && error.code !== 'PGRST116') throw error;
-          
-          if (data?.subscription_tier) setSubscriptionTier(data.subscription_tier);
-          if (data?.subscription_status) setSubscriptionStatus(data.subscription_status);
+          const profileData = data as any;
+          if (profileData?.subscription_tier) setSubscriptionTier(profileData.subscription_tier);
+          if (profileData?.subscription_status) setSubscriptionStatus(profileData.subscription_status);
 
           const settings = (data?.settings as any) || {};
           
