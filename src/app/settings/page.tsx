@@ -19,10 +19,13 @@ function SettingsContent() {
   const { colorblindMode, setColorblindMode } = useSettings();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeSection, setActiveSection] = useState<'general' | 'notifications' | 'data' | 'danger' | 'account'>(
+  const [activeSection, setActiveSection] = useState<'general' | 'notifications' | 'data' | 'danger' | 'account' | 'billing'>(
     (searchParams?.get('tab') as any) || 'general'
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [subscriptionTier, setSubscriptionTier] = useState<string>('free');
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>('active');
 
   // General settings state
   const [currency, setCurrency] = useState('USD');
@@ -53,12 +56,15 @@ function SettingsContent() {
         try {
           const { data, error } = await supabase
             .from('profiles')
-            .select('settings')
+            .select('settings, subscription_tier, subscription_status')
             .eq('id', user.id)
             .single();
 
           if (error && error.code !== 'PGRST116') throw error;
           
+          if (data?.subscription_tier) setSubscriptionTier(data.subscription_tier);
+          if (data?.subscription_status) setSubscriptionStatus(data.subscription_status);
+
           const settings = (data?.settings as any) || {};
           
           if (settings.currency) setCurrency(settings.currency);
@@ -202,6 +208,26 @@ function SettingsContent() {
     }
   };
 
+  const handleCheckout = async (priceId: string, tier: string) => {
+    try {
+      setIsCheckingOut(true);
+      const res = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId, tier }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to initialize checkout');
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Checkout failed');
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   const handleExportData = () => {
     toast.success('Data export started. Check your downloads folder.');
   };
@@ -237,6 +263,11 @@ function SettingsContent() {
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )},
+    { id: 'billing' as const, label: 'Billing & Subscription', icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
     )},
     { id: 'account' as const, label: 'Prop Firm', icon: (
@@ -431,6 +462,125 @@ function SettingsContent() {
                       className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                     >
                       {isSaving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Billing & Subscription */}
+            {activeSection === 'billing' && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="card bg-white dark:bg-[#0d0e16] rounded-2xl border border-slate-200 dark:border-white/[0.08] p-6 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Billing & Subscriptions</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your active subscription tier and billing details</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Status:</span>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                      subscriptionStatus === 'active' 
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                    }`}>
+                      {subscriptionStatus} ({subscriptionTier})
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                  {/* Free Tier */}
+                  <div className={`rounded-2xl p-5 border flex flex-col justify-between transition-all ${
+                    subscriptionTier === 'free'
+                      ? 'border-indigo-500 bg-indigo-500/5 ring-1 ring-indigo-500/30'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-950/40'
+                  }`}>
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-slate-900 dark:text-white">Free Sandbox</h3>
+                        {subscriptionTier === 'free' && (
+                          <span className="text-[10px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">Current Plan</span>
+                        )}
+                      </div>
+                      <div className="text-2xl font-black text-slate-900 dark:text-white mb-2">$0 <span className="text-xs text-slate-500 font-normal">/month</span></div>
+                      <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 mb-6">
+                        <li className="flex items-center gap-2">✓ Up to 25 manual trades / mo</li>
+                        <li className="flex items-center gap-2">✓ Standard metrics & calendar</li>
+                        <li className="flex items-center gap-2">✓ 1 trading account link</li>
+                      </ul>
+                    </div>
+                    <button
+                      disabled={subscriptionTier === 'free'}
+                      className="w-full py-2 px-4 rounded-xl text-xs font-semibold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 disabled:opacity-50"
+                    >
+                      {subscriptionTier === 'free' ? 'Active Plan' : 'Free Tier'}
+                    </button>
+                  </div>
+
+                  {/* Pro Tier */}
+                  <div className={`rounded-2xl p-5 border flex flex-col justify-between transition-all relative overflow-hidden ${
+                    subscriptionTier === 'pro'
+                      ? 'border-indigo-500 bg-indigo-500/5 ring-1 ring-indigo-500/30'
+                      : 'border-indigo-500/30 bg-indigo-500/[0.02] dark:bg-slate-950/60 hover:border-indigo-500/60'
+                  }`}>
+                    <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                      Popular
+                    </div>
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-slate-900 dark:text-white">Pro Trader</h3>
+                        {subscriptionTier === 'pro' && (
+                          <span className="text-[10px] bg-indigo-500 text-white font-bold px-2 py-0.5 rounded-full">Current Plan</span>
+                        )}
+                      </div>
+                      <div className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mb-2">$29 <span className="text-xs text-slate-500 font-normal">/month</span></div>
+                      <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 mb-6">
+                        <li className="flex items-center gap-2">✓ Unlimited trade logging</li>
+                        <li className="flex items-center gap-2">✓ MT5 & CSV import parsers</li>
+                        <li className="flex items-center gap-2">✓ Advanced Sharpe & Sortino metrics</li>
+                        <li className="flex items-center gap-2">✓ 3 Trading accounts link</li>
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => handleCheckout('price_pro_monthly', 'pro')}
+                      disabled={isCheckingOut || subscriptionTier === 'pro'}
+                      className="w-full py-2 px-4 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-md shadow-indigo-500/20 disabled:opacity-50"
+                    >
+                      {isCheckingOut ? 'Loading...' : subscriptionTier === 'pro' ? 'Active Plan' : 'Upgrade to Pro'}
+                    </button>
+                  </div>
+
+                  {/* Institutional Tier */}
+                  <div className={`rounded-2xl p-5 border flex flex-col justify-between transition-all ${
+                    subscriptionTier === 'institutional'
+                      ? 'border-purple-500 bg-purple-500/5 ring-1 ring-purple-500/30'
+                      : 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-950/40 hover:border-purple-500/50'
+                  }`}>
+                    <div>
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-slate-900 dark:text-white">Institutional</h3>
+                        {subscriptionTier === 'institutional' && (
+                          <span className="text-[10px] bg-purple-500 text-white font-bold px-2 py-0.5 rounded-full">Current Plan</span>
+                        )}
+                      </div>
+                      <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mb-2">$79 <span className="text-xs text-slate-500 font-normal">/month</span></div>
+                      <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 mb-6">
+                        <li className="flex items-center gap-2">✓ Real-time Prop Firm Drawdown Locks</li>
+                        <li className="flex items-center gap-2">✓ "What-If" Mistake Simulator</li>
+                        <li className="flex items-center gap-2">✓ AI Pattern & Psychology Coach</li>
+                        <li className="flex items-center gap-2">✓ Unlimited accounts & replay</li>
+                      </ul>
+                    </div>
+                    <button
+                      onClick={() => handleCheckout('price_institutional_monthly', 'institutional')}
+                      disabled={isCheckingOut || subscriptionTier === 'institutional'}
+                      className="w-full py-2 px-4 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white transition-all shadow-md shadow-purple-500/20 disabled:opacity-50"
+                    >
+                      {isCheckingOut ? 'Loading...' : subscriptionTier === 'institutional' ? 'Active Plan' : 'Upgrade to Institutional'}
                     </button>
                   </div>
                 </div>

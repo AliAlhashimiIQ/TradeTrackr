@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   email TEXT NOT NULL,
   avatar_url TEXT,
+  stripe_customer_id TEXT UNIQUE,
+  stripe_subscription_id TEXT UNIQUE,
+  subscription_tier VARCHAR(30) DEFAULT 'free',
+  subscription_status VARCHAR(30) DEFAULT 'active',
   settings JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
