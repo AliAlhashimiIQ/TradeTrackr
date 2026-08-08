@@ -1235,7 +1235,7 @@ export default function AnalyticsPage() {
                 </div>
                 
                 {excludedMistakes.length > 0 && (
-                  <p className="text-[10px] text-slate-400 dark:text-gray-505 mt-3 text-center border-t border-slate-100 dark:border-white/[0.04] pt-2">
+                  <p className="text-[10px] text-slate-400 dark:text-gray-400 mt-3 text-center border-t border-slate-100 dark:border-white/[0.04] pt-2">
                     Simulating {simulatedMetrics?.simTradesCount} trades out of {filteredTrades.length}
                   </p>
                 )}

@@ -378,12 +378,12 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
       <div className="px-5 py-4 border-t border-black/10 dark:border-white/[0.05] flex items-center justify-between bg-gray-50 dark:bg-black/20">
         <div className="flex items-center gap-2">
           {tier.trailingDrawdown && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-505 dark:text-amber-400 border border-amber-500/20 font-bold uppercase tracking-wider">
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-bold uppercase tracking-wider">
               Trailing DD
             </span>
           )}
           {tier.consistencyRule && (
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-indigo-650 dark:text-blue-400 border border-blue-500/20 font-bold uppercase tracking-wider">
+            <span className="text-[9px] px-2 py-0.5 rounded-full bg-blue-500/10 text-indigo-600 dark:text-blue-400 border border-blue-500/20 font-bold uppercase tracking-wider">
               Consistency Rule
             </span>
           )}
