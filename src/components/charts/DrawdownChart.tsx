@@ -20,6 +20,7 @@ interface DrawdownChartProps {
 }
 
 const formatPercentage = (value: number) => {
+  if (value === undefined || value === null || isNaN(value)) return '0%';
   return `${value.toFixed(2)}%`;
 };
 

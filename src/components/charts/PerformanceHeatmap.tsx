@@ -130,6 +130,14 @@ const HeatMapCell = (props: any) => {
   );
 };
 
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const HOURS = [
+  '12am', '1am', '2am', '3am', '4am', '5am',
+  '6am', '7am', '8am', '9am', '10am', '11am',
+  '12pm', '1pm', '2pm', '3pm', '4pm', '5pm',
+  '6pm', '7pm', '8pm', '9pm', '10pm', '11pm'
+];
+
 /**
  * PerformanceHeatmap displays a heatmap of trading performance by day and time
  */
@@ -164,19 +172,10 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
     );
   }
   
-  // Transform data for the heatmap (convert to x,y coordinates)
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const hours = [
-    '12am', '1am', '2am', '3am', '4am', '5am',
-    '6am', '7am', '8am', '9am', '10am', '11am',
-    '12pm', '1pm', '2pm', '3pm', '4pm', '5pm',
-    '6pm', '7pm', '8pm', '9pm', '10pm', '11pm'
-  ];
-  
   // Create data points with x, y coordinates for the scatter chart
   const heatmapPoints = data.map(item => ({
-    x: hours.indexOf(item.hour),
-    y: days.indexOf(item.day),
+    x: HOURS.indexOf(item.hour),
+    y: DAYS.indexOf(item.day),
     day: item.day,
     hour: item.hour,
     value: item[metric],
@@ -191,10 +190,10 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
   // Find max absolute value for color scaling
   let colorScale: number;
   if (metric === 'pnL') {
-    const maxAbsPnL = Math.max(...data.map(item => Math.abs(item.pnL)));
+    const maxAbsPnL = Math.max(...data.map(item => Math.abs(item.pnL)), 1);
     colorScale = maxAbsPnL;
   } else if (metric === 'trades') {
-    const maxTrades = Math.max(...data.map(item => item.trades));
+    const maxTrades = Math.max(...data.map(item => item.trades), 1);
     colorScale = maxTrades;
   } else {
     colorScale = 100; // Win rate is always 0-100
@@ -204,7 +203,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
   const hourlyMetrics = useMemo(() => {
     const metrics: Record<string, { pnL: number, trades: number, winRate: number }> = {};
     
-    hours.forEach(hour => {
+    HOURS.forEach(hour => {
       const hourData = data.filter(item => item.hour === hour);
       if (hourData.length === 0) {
         metrics[hour] = { pnL: 0, trades: 0, winRate: 0 };
@@ -212,8 +211,8 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
         const totalPnL = hourData.reduce((sum, item) => sum + item.pnL, 0);
         const totalTrades = hourData.reduce((sum, item) => sum + item.trades, 0);
         // Calculate weighted win rate
-        const weightedWinRate = hourData.reduce((sum, item) => 
-          sum + (item.winRate * item.trades), 0) / totalTrades;
+        const weightedWinRate = totalTrades > 0 ? hourData.reduce((sum, item) => 
+          sum + (item.winRate * item.trades), 0) / totalTrades : 0;
         
         metrics[hour] = { 
           pnL: totalPnL, 
@@ -224,12 +223,12 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
     });
     
     return metrics;
-  }, [data, hours]);
+  }, [data]);
   
   const dailyMetrics = useMemo(() => {
     const metrics: Record<string, { pnL: number, trades: number, winRate: number }> = {};
     
-    days.forEach(day => {
+    DAYS.forEach(day => {
       const dayData = data.filter(item => item.day === day);
       if (dayData.length === 0) {
         metrics[day] = { pnL: 0, trades: 0, winRate: 0 };
@@ -237,8 +236,8 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
         const totalPnL = dayData.reduce((sum, item) => sum + item.pnL, 0);
         const totalTrades = dayData.reduce((sum, item) => sum + item.trades, 0);
         // Calculate weighted win rate
-        const weightedWinRate = dayData.reduce((sum, item) => 
-          sum + (item.winRate * item.trades), 0) / totalTrades;
+        const weightedWinRate = totalTrades > 0 ? dayData.reduce((sum, item) => 
+          sum + (item.winRate * item.trades), 0) / totalTrades : 0;
         
         metrics[day] = { 
           pnL: totalPnL, 
@@ -249,7 +248,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
     });
     
     return metrics;
-  }, [data, days]);
+  }, [data]);
   
   // Get the best and worst times
   const getBestWorstTimes = () => {
@@ -421,11 +420,11 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
               name="hour" 
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => {
-                const hour = hours[value] || '';
+                const hour = HOURS[value] || '';
                 return isClient && highlightedHour === hour ? `★ ${hour}` : hour;
               }}
               domain={[0, 23]}
-              onClick={isClient ? (data) => handleAxisLabelClick(hours[data.value], 'hour') : undefined}
+              onClick={isClient ? (data) => handleAxisLabelClick(HOURS[data.value], 'hour') : undefined}
             />
             <YAxis 
               type="number" 
@@ -433,12 +432,12 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
               name="day" 
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => {
-                const day = days[value] || '';
+                const day = DAYS[value] || '';
                 return isClient && highlightedDay === day ? `★ ${day}` : day;
               }}
               domain={[0, 6]}
               reversed
-              onClick={isClient ? (data) => handleAxisLabelClick(days[data.value], 'day') : undefined}
+              onClick={isClient ? (data) => handleAxisLabelClick(DAYS[data.value], 'day') : undefined}
             />
             <Tooltip
               cursor={{ stroke: 'white', strokeWidth: 2, fill: 'transparent' }}

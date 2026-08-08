@@ -92,7 +92,7 @@ const renderActiveShape = (props: any) => {
         {payload.type}
       </text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={14} textAnchor={textAnchor} fill="#e5e7eb" fontSize={10}>
-        {`${formatCurrency(value)} (${(percent * 100).toFixed(0)}%)`}
+        {`${formatCurrency(value || 0)} (${percent !== undefined && percent !== null && !isNaN(percent) ? (percent * 100).toFixed(0) : '0'}%)`}
       </text>
       <text x={ex + (cos >= 0 ? 1 : -1) * 12} y={ey} dy={28} textAnchor={textAnchor} fill="#e5e7eb" fontSize={10}>
         {`Win Rate: ${formatPercent(winRate)}`}
@@ -394,19 +394,19 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
           <div className="flex space-x-1 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
             <button
               onClick={() => setViewMode('pie')}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'pie' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'pie' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Pie
             </button>
             <button
               onClick={() => setViewMode('bar')}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'bar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'bar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Bar
             </button>
             <button
               onClick={() => setViewMode('radar')}
-              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'radar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${viewMode === 'radar' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
             >
               Radar
             </button>
@@ -425,23 +425,23 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
             <div>
               <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Count</div>
               <div className="text-base font-bold text-slate-900 dark:text-white">{longData.trades}</div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-slate-500 dark:text-gray-400">
                 {((longData.trades / totalTrades) * 100).toFixed(0)}% of total
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-400">Win Rate</div>
-              <div className="text-base font-semibold text-white flex items-center">
+              <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Win Rate</div>
+              <div className="text-base font-bold text-slate-900 dark:text-white flex items-center">
                 {formatPercent(longData.winRate)}
-                {betterWinRate === 'Long' && <span className="ml-1 text-green-400 text-xs">★</span>}
+                {betterWinRate === 'Long' && <span className="ml-1 text-emerald-500 text-xs">★</span>}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-slate-500 dark:text-gray-400">
                 {longData.profitFactor.toFixed(2)} profit factor
               </div>
             </div>
             <div>
               <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">P&L</div>
-              <div className={`text-base font-bold ${longData.pnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
+              <div className={`text-base font-bold ${longData.pnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                 {formatCurrency(longData.pnL)}
               </div>
               <div className="text-[10px] text-slate-400 dark:text-gray-500">
@@ -488,10 +488,10 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       </div>
       
       {/* Summary banner */}
-      <div className="bg-slate-50 dark:bg-[var(--surface-3)]/50 border border-slate-200 dark:border-white/5 p-3.5 rounded-xl mb-4">
-        <div className="text-xs text-slate-655 dark:text-gray-300 flex flex-col sm:flex-row justify-between gap-2">
+      <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] p-3.5 rounded-xl mb-4">
+        <div className="text-xs text-slate-700 dark:text-slate-200 flex flex-col sm:flex-row justify-between gap-2">
           <span>Total P&L: 
-            <span className={`font-bold ml-1 ${totalPnL >= 0 ? 'text-emerald-600 dark:text-green-400' : 'text-rose-600 dark:text-red-400'}`}>
+            <span className={`font-bold ml-1 ${totalPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
               {formatCurrency(totalPnL)}
             </span>
           </span>
@@ -501,7 +501,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
             </span>
           </span>
           <span>Edge: 
-            <span className={`font-bold ml-1 ${Math.abs(longData.winRate - shortData.winRate) > 10 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}`}>
+            <span className={`font-bold ml-1 ${Math.abs(longData.winRate - shortData.winRate) > 10 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-300'}`}>
               {Math.abs(longData.winRate - shortData.winRate).toFixed(1)}% win rate difference
             </span>
           </span>
@@ -512,7 +512,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       {renderView()}
       
       {/* Insight text */}
-      <div className="text-xs text-slate-650 dark:text-slate-350 mt-4 bg-slate-50 dark:bg-[var(--surface-3)]/50 border border-slate-200 dark:border-white/5 p-3 rounded-xl">
+      <div className="text-xs text-slate-700 dark:text-slate-200 mt-4 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] p-3.5 rounded-xl">
         {longData.pnL > shortData.pnL ? (
           <p>
             Your <span className="font-bold text-indigo-600 dark:text-indigo-400">long trades</span> are more profitable overall 

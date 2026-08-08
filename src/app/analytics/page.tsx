@@ -137,10 +137,9 @@ export default function AnalyticsPage() {
     processTrades();
   }, [user?.id, cachedTrades, tradesLoading]);
   
-  // ── 6.3 Offload heavy chart data calculations to a Web Worker ────────────────
-  // Prevents blocking/freezing the main UI thread when loading thousands of trades.
+  // ── 6.3 Calculate chart metrics for filtered trades ────────────────
   useEffect(() => {
-    if (!filteredTrades.length) {
+    if (!filteredTrades || !filteredTrades.length) {
       setMetrics(null);
       setEquityCurveData([]);
       setDistributionData([]);
@@ -156,77 +155,33 @@ export default function AnalyticsPage() {
     }
 
     setIsCalculating(true);
-
-    const calculateDirectly = (tradesToCalc: Trade[]) => {
-      try {
-        const metricsRes = calculatePerformanceMetrics(tradesToCalc);
-        const equityRes = generateEquityCurveData(tradesToCalc);
-        const distRes = generatePnLDistributionData(tradesToCalc, 10);
-        const monthRes = generateMonthlyPerformanceData(tradesToCalc);
-        const stratRes = generateStrategyPerformanceData(tradesToCalc);
-        const symRes = generateSymbolPerformanceData(tradesToCalc);
-        const typeRes = generateTradeTypePerformanceData(tradesToCalc);
-        const timeRes = generateTimeOfDayPerformanceData(tradesToCalc);
-        const heatRes = generatePerformanceHeatmapData(tradesToCalc);
-        const pipsRes = tradesToCalc.reduce((s, t) => s + (t.pips || 0), 0);
-
-        setMetrics(metricsRes);
-        setEquityCurveData(equityRes || []);
-        setDistributionData(distRes || []);
-        setMonthlyData(monthRes || []);
-        setStrategyData(stratRes || []);
-        setSymbolData(symRes || []);
-        setTradeTypeData(typeRes || []);
-        setTimeOfDayData(timeRes || []);
-        setHeatmapData(heatRes || []);
-        setTotalPips(pipsRes || 0);
-      } catch (calcErr) {
-        console.error('Direct calculation error:', calcErr);
-      } finally {
-        setIsCalculating(false);
-      }
-    };
-    
-    let worker: Worker | null = null;
     try {
-      worker = new Worker(new URL('./analytics.worker.ts', import.meta.url));
+      const metricsRes = calculatePerformanceMetrics(filteredTrades);
+      const equityRes = generateEquityCurveData(filteredTrades);
+      const distRes = generatePnLDistributionData(filteredTrades, 10);
+      const monthRes = generateMonthlyPerformanceData(filteredTrades);
+      const stratRes = generateStrategyPerformanceData(filteredTrades);
+      const symRes = generateSymbolPerformanceData(filteredTrades);
+      const typeRes = generateTradeTypePerformanceData(filteredTrades);
+      const timeRes = generateTimeOfDayPerformanceData(filteredTrades);
+      const heatRes = generatePerformanceHeatmapData(filteredTrades);
+      const pipsRes = filteredTrades.reduce((s, t) => s + (t.pips || 0), 0);
 
-      worker.postMessage({ trades: filteredTrades });
-
-      worker.onmessage = (event) => {
-        const data = event.data;
-        if (data.error) {
-          console.error('Analytics Web Worker error, falling back:', data.error);
-          calculateDirectly(filteredTrades);
-        } else {
-          setMetrics(data.metrics || null);
-          setEquityCurveData(data.equityCurve || []);
-          setDistributionData(data.distribution || []);
-          setMonthlyData(data.monthly || []);
-          setStrategyData(data.strategy || []);
-          setSymbolData(data.symbol || []);
-          setTradeTypeData(data.tradeType || []);
-          setTimeOfDayData(data.timeOfDay || []);
-          setHeatmapData(data.heatmap || []);
-          setTotalPips(data.totalPips || 0);
-          setIsCalculating(false);
-        }
-        if (worker) worker.terminate();
-      };
-
-      worker.onerror = (err) => {
-        console.error('Analytics Web Worker onerror, falling back:', err);
-        calculateDirectly(filteredTrades);
-        if (worker) worker.terminate();
-      };
-    } catch (workerErr) {
-      console.warn('Web Worker initialization failed, using direct calculation:', workerErr);
-      calculateDirectly(filteredTrades);
+      setMetrics(metricsRes || null);
+      setEquityCurveData(equityRes || []);
+      setDistributionData(distRes || []);
+      setMonthlyData(monthRes || []);
+      setStrategyData(stratRes || []);
+      setSymbolData(symRes || []);
+      setTradeTypeData(typeRes || []);
+      setTimeOfDayData(timeRes || []);
+      setHeatmapData(heatRes || []);
+      setTotalPips(pipsRes || 0);
+    } catch (calcErr) {
+      console.error('Analytics calculation error:', calcErr);
+    } finally {
+      setIsCalculating(false);
     }
-
-    return () => {
-      if (worker) worker.terminate();
-    };
   }, [filteredTrades]);
   
   // Apply time period filter
