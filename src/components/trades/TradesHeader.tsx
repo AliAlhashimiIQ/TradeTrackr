@@ -44,10 +44,10 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleFilters}
-            className={`p-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
+            className={`p-2.5 min-h-[44px] min-w-[44px] justify-center rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
               showFilters
                 ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.12)]'
-                : 'bg-black/[0.04] dark:bg-[#0d0e16] text-gray-500 dark:text-gray-400 border-black/[0.08] dark:border-white/[0.06] hover:text-gray-700 dark:hover:text-white hover:border-black/[0.15] dark:hover:border-white/[0.12]'
+                : 'bg-black/[0.04] dark:bg-[var(--surface-1)] text-gray-500 dark:text-gray-400 border-black/[0.08] dark:border-white/[0.06] hover:text-gray-700 dark:hover:text-white hover:border-black/[0.15] dark:hover:border-white/[0.12]'
             }`}
             title="Toggle Filter Panel"
           >
@@ -57,7 +57,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
           </button>
           <button
             onClick={onLogTradeClick}
-            className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+            className="px-5 py-2.5 min-h-[44px] bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold rounded-xl hover:from-indigo-500 hover:to-violet-500 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all duration-200 flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -68,7 +68,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
       </div>
 
       {/* Metrics Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           {
             label: 'Total P&L',

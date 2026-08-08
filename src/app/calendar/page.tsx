@@ -491,7 +491,8 @@ export default function CalendarPage() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   onClick={goToPrevious}
-                  className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  aria-label="Previous Period"
                 >
                   <ChevronLeft />
                 </button>
@@ -500,7 +501,8 @@ export default function CalendarPage() {
                 </h2>
                 <button
                   onClick={goToNext}
-                  className="p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-655 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  className="p-1.5 sm:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#121420] text-slate-655 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer"
+                  aria-label="Next Period"
                 >
                   <ChevronRight />
                 </button>
