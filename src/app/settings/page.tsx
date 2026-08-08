@@ -614,7 +614,7 @@ function SettingsContent() {
                   }`}>
                     {/* Popular Shimmer Ribbon */}
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-extrabold px-3.5 py-1 rounded-full uppercase tracking-wider shadow-md border border-indigo-400/30">
-                      ⚡ Most Popular
+                      Most Popular
                     </div>
 
                     <div>
@@ -635,12 +635,12 @@ function SettingsContent() {
                       <div className="my-6">
                         <div className="flex items-baseline gap-1">
                           <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
-                            ${billingInterval === 'yearly' ? '23' : '29'}
+                            ${billingInterval === 'yearly' ? '8' : '10'}
                           </span>
                           <span className="text-xs text-slate-500 font-medium">/ month</span>
                         </div>
                         {billingInterval === 'yearly' && (
-                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $276 annually (Save $72)</p>
+                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $96 annually (Save $24)</p>
                         )}
                       </div>
 
@@ -705,12 +705,12 @@ function SettingsContent() {
                       <div className="my-6">
                         <div className="flex items-baseline gap-1">
                           <span className="text-4xl font-black text-purple-600 dark:text-purple-400 tracking-tight">
-                            ${billingInterval === 'yearly' ? '63' : '79'}
+                            ${billingInterval === 'yearly' ? '24' : '30'}
                           </span>
                           <span className="text-xs text-slate-500 font-medium">/ month</span>
                         </div>
                         {billingInterval === 'yearly' && (
-                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $756 annually (Save $192)</p>
+                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $288 annually (Save $72)</p>
                         )}
                       </div>
 
@@ -762,10 +762,10 @@ function SettingsContent() {
                     <span><strong>256-Bit SSL Encrypted</strong> Checkout</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>⚡ Powered by <strong>Stripe</strong></span>
+                    <span>Powered by <strong>Stripe</strong></span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>🔄 Cancel or switch tiers anytime in 1 click</span>
+                    <span>Cancel or switch tiers anytime in 1 click</span>
                   </div>
                 </div>
               </motion.div>
