@@ -54,10 +54,6 @@ export async function POST(req: NextRequest) {
 
     const { priceId, tier } = await req.json();
 
-    if (!priceId) {
-      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
-    }
-
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -90,21 +86,44 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_SITE_URL || 
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
 
+    // Build dynamic line items so no pre-existing Stripe Price ID configuration is required
+    const isInstitutional = tier === 'institutional' || priceId === 'price_institutional_monthly';
+    let lineItems: any[];
+
+    if (priceId && priceId.startsWith('price_1')) {
+      lineItems = [{ price: priceId, quantity: 1 }];
+    } else {
+      const unitAmount = isInstitutional ? 7900 : 2900;
+      const productName = isInstitutional ? 'TradeTrackr Institutional Plan' : 'TradeTrackr Pro Plan';
+
+      lineItems = [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: productName,
+              description: isInstitutional ? 'Unlimited access, Prop Firm Locks & AI Coach' : 'Unlimited trade logging & Advanced Analytics',
+            },
+            unit_amount: unitAmount,
+            recurring: {
+              interval: 'month',
+            },
+          },
+          quantity: 1,
+        },
+      ];
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       mode: 'subscription',
-      line_items: [
-        {
-          price: priceId,
-          quantity: 1,
-        },
-      ],
+      line_items: lineItems,
       success_url: `${siteUrl}/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/settings?billing=canceled`,
       metadata: {
         userId: userId,
-        tier: tier || 'pro',
+        tier: isInstitutional ? 'institutional' : 'pro',
       },
     });
 
