@@ -414,34 +414,34 @@ export default function AccountsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/[0.04] pb-4">
           <div className="flex items-center gap-4">
             {/* Tabs */}
-            <div className="flex bg-white/[0.03] border border-white/[0.05] p-1 rounded-xl">
+            <div className="flex bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] p-1 rounded-2xl">
               <button
                 onClick={() => setActiveTab('accounts')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 ${
                   activeTab === 'accounts'
-                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/20'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white shadow-md shadow-indigo-500/20'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
                 Accounts
               </button>
               <button
                 onClick={() => setActiveTab('portfolios')}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-white flex items-center gap-1.5 cursor-not-allowed"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1.5 cursor-not-allowed"
                 title="Portfolios Pro features coming soon"
                 disabled
               >
                 Portfolios
-                <span className="text-[10px] font-semibold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider scale-90">
+                <span className="text-[9px] font-extrabold bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                   Pro
                 </span>
               </button>
             </div>
             
             {/* Limit text */}
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-gray-500 bg-white/[0.02] border border-white/[0.04] px-2.5 py-1 rounded-lg">
+            <div className="hidden md:flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-400 bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] px-3 py-1.5 rounded-xl">
               <span>{accounts.length}/3 Accounts Linked</span>
-              <div className="w-16 h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="w-16 h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div 
                   className="bg-indigo-500 h-full rounded-full transition-all" 
                   style={{ width: `${Math.min(100, (accounts.length / 3) * 100)}%` }}
@@ -455,7 +455,7 @@ export default function AccountsPage() {
             <button
               onClick={handleSyncAll}
               disabled={syncingAccountId !== null || accounts.length === 0}
-              className="flex-1 sm:flex-none px-4 py-2.5 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.06] hover:border-white/[0.1] text-gray-300 hover:text-white font-medium rounded-xl text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
             >
               <svg 
                 className={`w-4 h-4 ${syncingAccountId === 'all' ? 'animate-spin' : ''}`} 

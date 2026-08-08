@@ -58,7 +58,7 @@ export default function AccountSwitcher() {
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[var(--surface-1)] hover:bg-slate-50 dark:hover:bg-[var(--surface-2)] border border-slate-250 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200"
+        className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-[var(--surface-1)] hover:bg-slate-50 dark:hover:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold select-none shadow-sm transition-all duration-200"
       >
         <div className="flex items-center gap-1.5">
           <div className="relative flex h-2 w-2">
@@ -92,7 +92,7 @@ export default function AccountSwitcher() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute bottom-full mb-2 left-0 w-72 bg-white dark:bg-[var(--surface-1)] border border-slate-250 dark:border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100]"
+            className="absolute bottom-full mb-2 left-0 w-72 bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden py-1.5 z-[100]"
           >
             {/* Header */}
             <div className="px-4 py-2.5 border-b border-slate-100 dark:border-white/[0.06] flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">

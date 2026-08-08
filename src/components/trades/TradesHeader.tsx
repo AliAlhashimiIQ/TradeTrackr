@@ -111,10 +111,10 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
             )
           },
         ].map((m, i) => (
-          <div key={i} className="stat-card group relative p-5 hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between rounded-2xl border border-slate-250 dark:border-white/[0.06] bg-white dark:bg-[#0d0e16] shadow-sm">
+          <div key={i} className="stat-card group relative p-5 hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] shadow-sm">
             <div>
               <div className="flex items-center justify-between mb-3 relative z-10">
-                <span className="text-[11px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">{m.label}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{m.label}</span>
                 <div className="p-2 rounded-lg group-hover:scale-110 transition-transform duration-300" style={{ background: `${m.color}12`, color: m.color }}>{m.icon}</div>
               </div>
               <div className="text-2xl font-black tracking-tight relative z-10" style={{ color: m.color }}>

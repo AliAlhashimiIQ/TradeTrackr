@@ -391,7 +391,7 @@ export default function CalendarPage() {
     const isSelected = selectedDate && isSameDay(date, selectedDate);
 
     // Color-coded borders and backgrounds for winning/losing days
-    let dayCellClasses = 'bg-white dark:bg-[#0d0e16] border-slate-250 dark:border-white/[0.06]';
+    let dayCellClasses = 'bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.06]';
     if (dayTrades.length > 0) {
       if (isProfit) {
         dayCellClasses = 'bg-[#e6f4ea] dark:bg-emerald-950/45 border-[#ceead6] dark:border-emerald-500/35';
@@ -410,11 +410,11 @@ export default function CalendarPage() {
             ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/10 dark:ring-indigo-400/10 bg-indigo-50/50 dark:bg-indigo-950/10'
             : isOutsideMonth
               ? 'opacity-25 bg-slate-50/20 dark:bg-white/[0.01] border-slate-200 dark:border-white/[0.03]'
-              : 'shadow-sm hover:border-slate-350 dark:hover:border-white/10 hover:shadow'
+              : 'shadow-sm hover:border-slate-300 dark:hover:border-white/10 hover:shadow'
         } ${isSelected ? 'ring-2 ring-indigo-600 dark:ring-indigo-400 border-transparent shadow-lg' : ''}`}
       >
         <div className="flex justify-between items-center w-full">
-          <span className={`text-[10px] sm:text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-650 dark:text-slate-400'}`}>
+          <span className={`text-[10px] sm:text-xs font-bold font-mono ${isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}`}>
             {date.getDate()}
           </span>
           {isToday && (
@@ -429,7 +429,7 @@ export default function CalendarPage() {
             <span className="hidden sm:inline-block text-[9px] text-slate-400 dark:text-gray-500 font-semibold uppercase tracking-wider">
               {dayTrades.length} trade{dayTrades.length > 1 ? 's' : ''}
             </span>
-            <span className={`text-[9px] sm:text-sm font-black tracking-tight leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
+            <span className={`text-[9px] sm:text-sm font-black tracking-tight leading-none ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500'}`}>
               {pnl > 0 ? '+' : ''}${Math.abs(pnl) >= 1000 ? `${(pnl / 1000).toFixed(1)}k` : Math.abs(pnl).toFixed(0)}
             </span>
           </div>
@@ -885,7 +885,7 @@ export default function CalendarPage() {
                             }`}>
                               {trade.type}
                             </span>
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-250 font-mono">
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono">
                               {trade.symbol}
                             </span>
                           </div>
@@ -950,7 +950,7 @@ export default function CalendarPage() {
               const isLoss = stat.pnl < 0;
 
               // Soft green/red monthly card styling
-              let monthCardClasses = 'bg-white dark:bg-[#0d0e16] border-slate-250 dark:border-white/[0.06]';
+              let monthCardClasses = 'bg-white dark:bg-[#0d0e16] border-slate-200 dark:border-white/[0.06]';
               if (stat.tradesCount > 0) {
                 if (isProfit) {
                   monthCardClasses = 'bg-[#e6f4ea] dark:bg-emerald-950/45 border-[#ceead6] dark:border-emerald-500/35';
