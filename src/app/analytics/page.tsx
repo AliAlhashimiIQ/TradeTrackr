@@ -34,7 +34,16 @@ import {
   SymbolPerformance as SymbolPerformanceType,
   TradeTypePerformance as TradeTypePerformanceType,
   TimeOfDayPerformance as TimeOfDayPerformanceType,
-  HeatmapData
+  HeatmapData,
+  calculatePerformanceMetrics,
+  generateEquityCurveData,
+  generatePnLDistributionData,
+  generateMonthlyPerformanceData,
+  generateStrategyPerformanceData,
+  generateSymbolPerformanceData,
+  generateTradeTypePerformanceData,
+  generateTimeOfDayPerformanceData,
+  generatePerformanceHeatmapData,
 } from '@/lib/tradeMetrics';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import AIInsights from '@/components/dashboard/AIInsights';
@@ -142,43 +151,81 @@ export default function AnalyticsPage() {
       setTimeOfDayData([]);
       setHeatmapData([]);
       setTotalPips(0);
+      setIsCalculating(false);
       return;
     }
 
     setIsCalculating(true);
-    
-    const worker = new Worker(new URL('./analytics.worker.ts', import.meta.url));
 
-    worker.postMessage({ trades: filteredTrades });
+    const calculateDirectly = (tradesToCalc: Trade[]) => {
+      try {
+        const metricsRes = calculatePerformanceMetrics(tradesToCalc);
+        const equityRes = generateEquityCurveData(tradesToCalc);
+        const distRes = generatePnLDistributionData(tradesToCalc, 10);
+        const monthRes = generateMonthlyPerformanceData(tradesToCalc);
+        const stratRes = generateStrategyPerformanceData(tradesToCalc);
+        const symRes = generateSymbolPerformanceData(tradesToCalc);
+        const typeRes = generateTradeTypePerformanceData(tradesToCalc);
+        const timeRes = generateTimeOfDayPerformanceData(tradesToCalc);
+        const heatRes = generatePerformanceHeatmapData(tradesToCalc);
+        const pipsRes = tradesToCalc.reduce((s, t) => s + (t.pips || 0), 0);
 
-    worker.onmessage = (event) => {
-      const data = event.data;
-      if (data.error) {
-        console.error('Analytics Web Worker error:', data.error);
-      } else {
-        setMetrics(data.metrics);
-        setEquityCurveData(data.equityCurve);
-        setDistributionData(data.distribution);
-        setMonthlyData(data.monthly);
-        setStrategyData(data.strategy);
-        setSymbolData(data.symbol);
-        setTradeTypeData(data.tradeType);
-        setTimeOfDayData(data.timeOfDay);
-        setHeatmapData(data.heatmap);
-        setTotalPips(data.totalPips);
+        setMetrics(metricsRes);
+        setEquityCurveData(equityRes || []);
+        setDistributionData(distRes || []);
+        setMonthlyData(monthRes || []);
+        setStrategyData(stratRes || []);
+        setSymbolData(symRes || []);
+        setTradeTypeData(typeRes || []);
+        setTimeOfDayData(timeRes || []);
+        setHeatmapData(heatRes || []);
+        setTotalPips(pipsRes || 0);
+      } catch (calcErr) {
+        console.error('Direct calculation error:', calcErr);
+      } finally {
+        setIsCalculating(false);
       }
-      setIsCalculating(false);
-      worker.terminate();
     };
+    
+    let worker: Worker | null = null;
+    try {
+      worker = new Worker(new URL('./analytics.worker.ts', import.meta.url));
 
-    worker.onerror = (err) => {
-      console.error('Analytics Web Worker onerror:', err);
-      setIsCalculating(false);
-      worker.terminate();
-    };
+      worker.postMessage({ trades: filteredTrades });
+
+      worker.onmessage = (event) => {
+        const data = event.data;
+        if (data.error) {
+          console.error('Analytics Web Worker error, falling back:', data.error);
+          calculateDirectly(filteredTrades);
+        } else {
+          setMetrics(data.metrics || null);
+          setEquityCurveData(data.equityCurve || []);
+          setDistributionData(data.distribution || []);
+          setMonthlyData(data.monthly || []);
+          setStrategyData(data.strategy || []);
+          setSymbolData(data.symbol || []);
+          setTradeTypeData(data.tradeType || []);
+          setTimeOfDayData(data.timeOfDay || []);
+          setHeatmapData(data.heatmap || []);
+          setTotalPips(data.totalPips || 0);
+          setIsCalculating(false);
+        }
+        if (worker) worker.terminate();
+      };
+
+      worker.onerror = (err) => {
+        console.error('Analytics Web Worker onerror, falling back:', err);
+        calculateDirectly(filteredTrades);
+        if (worker) worker.terminate();
+      };
+    } catch (workerErr) {
+      console.warn('Web Worker initialization failed, using direct calculation:', workerErr);
+      calculateDirectly(filteredTrades);
+    }
 
     return () => {
-      worker.terminate();
+      if (worker) worker.terminate();
     };
   }, [filteredTrades]);
   

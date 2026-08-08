@@ -43,15 +43,17 @@ const formatCurrency = (value: number) => {
 };
 
 const formatPercent = (value: number) => {
+  if (value === undefined || value === null || isNaN(value)) return '0%';
   return `${value.toFixed(1)}%`;
 };
 
-const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ data, loading = false }) => {
+const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ data = [], loading = false }) => {
   const [metric, setMetric] = useState<'pnL' | 'winRate' | 'trades'>('pnL');
   const [chartType, setChartType] = useState<'bar' | 'radar'>('bar');
 
   // Filter out any strategies with no name or no trades
-  const strategies = data.filter((s) => s.strategy && s.trades > 0);
+  const safeData = Array.isArray(data) ? data : [];
+  const strategies = safeData.filter((s) => s && s.strategy && s.trades > 0);
 
   // Normalize data for radar chart (0-100 scale)
   const maxPnL = Math.max(...strategies.map((s) => Math.abs(s.pnL)), 1);

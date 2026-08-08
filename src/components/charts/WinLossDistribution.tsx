@@ -91,21 +91,33 @@ const formatCurrency = (value: number) => {
   })}`;
 };
 
+const formatRangeLabel = (range: string) => {
+  if (!range) return '';
+  const parts = range.split(' to ');
+  if (parts.length !== 2) return range;
+  const num1 = parseFloat(parts[0]);
+  const num2 = parseFloat(parts[1]);
+  const fmt1 = isNaN(num1) ? parts[0] : `${num1 >= 0 ? '$' : '-$'}${Math.abs(Math.round(num1))}`;
+  const fmt2 = isNaN(num2) ? parts[1] : `${num2 >= 0 ? '$' : '-$'}${Math.abs(Math.round(num2))}`;
+  return `${fmt1} to ${fmt2}`;
+};
+
 const customLabel = (props: any) => {
   const { x, y, width, value } = props;
   
   // Only show labels for bars with significant percentages
-  if (value < 3) return null;
+  if (value === undefined || value === null || isNaN(Number(value)) || Number(value) < 3) return null;
   
   return (
     <text 
       x={x + width / 2} 
-      y={y - 10} 
+      y={y - 8} 
       fill="#9ca3af" 
       textAnchor="middle" 
       fontSize={10}
+      fontWeight="bold"
     >
-      {value}%
+      {Number(value).toFixed(1)}%
     </text>
   );
 };
@@ -273,6 +285,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
               stroke="#64748b"
               tick={{ fontSize: 10, fill: '#94a3b8' }}
               tickLine={{ stroke: '#334155' }}
+              tickFormatter={formatRangeLabel}
               angle={-45}
               textAnchor="end"
               interval={0}

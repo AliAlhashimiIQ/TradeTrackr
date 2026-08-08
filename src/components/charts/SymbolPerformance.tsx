@@ -29,6 +29,7 @@ const formatCurrency = (value: number) => {
 };
 
 const formatPercent = (value: number) => {
+  if (value === undefined || value === null || isNaN(value)) return '0%';
   return `${value.toFixed(1)}%`;
 };
 
@@ -36,7 +37,7 @@ const formatPercent = (value: number) => {
  * SymbolPerformance component displays performance breakdown by trading symbol
  */
 const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
-  data,
+  data = [],
   loading = false,
 }) => {
   const [metric, setMetric] = useState<'pnL' | 'winRate' | 'trades'>('pnL');
@@ -49,7 +50,9 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
     );
   }
 
-  if (!data || data.length === 0) {
+  const safeData = Array.isArray(data) ? data : [];
+
+  if (!safeData.length) {
     return (
       <div className="w-full h-80 bg-white dark:bg-[var(--surface-2)] border border-slate-200 dark:border-white/[0.05] rounded-2xl flex items-center justify-center">
         <p className="text-slate-400 dark:text-gray-500">No data available</p>
