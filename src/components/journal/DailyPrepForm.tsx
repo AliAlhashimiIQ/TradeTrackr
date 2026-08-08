@@ -115,11 +115,6 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
     setChecklist((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const insertChipText = (setter: React.Dispatch<React.SetStateAction<string>>, current: string, chipText: string) => {
-    if (current.includes(chipText)) return;
-    setter((prev) => (prev ? `${prev} • ${chipText}` : chipText));
-  };
-
   const completedRulesCount = checklist.filter((c) => c.checked).length;
   const checklistPct = checklist.length > 0 ? Math.round((completedRulesCount / checklist.length) * 100) : 0;
 
@@ -362,23 +357,9 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
             
             {/* Daily Process Goal */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Daily Process Goal & Plan
-                </label>
-                <div className="flex gap-1.5">
-                  {['Orderblocks', 'Wait 9:30 AM', '1% Risk Limit'].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => insertChipText(setDailyGoal, dailyGoal, chip)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
-                    >
-                      + {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                Daily Process Goal & Plan
+              </label>
               <textarea
                 value={dailyGoal}
                 onChange={(e) => setDailyGoal(e.target.value)}
@@ -390,23 +371,9 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
 
             {/* Key Technical Levels */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Key Technical Levels
-                </label>
-                <div className="flex gap-1.5">
-                  {['EURUSD 1.0820', 'Gold 2365', 'Daily Open'].map((chip) => (
-                    <button
-                      key={chip}
-                      type="button"
-                      onClick={() => insertChipText(setKeyLevels, keyLevels, chip)}
-                      className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
-                    >
-                      + {chip}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                Key Technical Levels
+              </label>
               <textarea
                 value={keyLevels}
                 onChange={(e) => setKeyLevels(e.target.value)}
@@ -419,23 +386,9 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
 
           {/* Economic Calendar Events */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Economic Calendar Events & Macro Drivers
-              </label>
-              <div className="flex gap-1.5">
-                {['CPI 8:30 AM', 'FOMC 2:00 PM', 'NFP Release'].map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => insertChipText(setEconomicNotes, economicNotes, chip)}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20 transition-all"
-                  >
-                    + {chip}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+              Economic Calendar Events & Macro Drivers
+            </label>
             <textarea
               value={economicNotes}
               onChange={(e) => setEconomicNotes(e.target.value)}
@@ -578,23 +531,9 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
 
           {/* Post-Market Reflection */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Post-Market Reflection & Takeaways
-              </label>
-              <div className="flex gap-1.5">
-                {['Stuck to Stop Loss', 'Held Winner', 'Revenge Traded'].map((chip) => (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() => insertChipText(setReflection, reflection, chip)}
-                    className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all"
-                  >
-                    + {chip}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+              Post-Market Reflection & Takeaways
+            </label>
             <textarea
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}
