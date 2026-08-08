@@ -9,6 +9,7 @@ import { Trade } from '@/lib/types';
 import { toLocalYMD } from '@/lib/utils';
 import { useAccount } from '@/providers/AccountProvider';
 import { SkeletonCard } from '@/components/ui/SkeletonLoader';
+import DatePickerPopover from '@/components/ui/DatePickerPopover';
 
 export default function JournalPage() {
   const { user } = useAuth();
@@ -44,22 +45,6 @@ export default function JournalPage() {
     loadDayTrades();
   }, [user, selectedDate, selectedAccountIds]);
 
-  const handlePrevDay = () => {
-    const d = new Date(selectedDate);
-    d.setDate(d.getDate() - 1);
-    setSelectedDate(toLocalYMD(d.toISOString()));
-  };
-
-  const handleNextDay = () => {
-    const d = new Date(selectedDate);
-    d.setDate(d.getDate() + 1);
-    setSelectedDate(toLocalYMD(d.toISOString()));
-  };
-
-  const handleToday = () => {
-    setSelectedDate(toLocalYMD(new Date().toISOString()));
-  };
-
   const netPnL = dayTrades.reduce((sum, t) => sum + (t.profit_loss || 0), 0);
 
   return (
@@ -76,42 +61,11 @@ export default function JournalPage() {
             </p>
           </div>
 
-          {/* Date Selector Navigation */}
-          <div className="flex items-center gap-2 bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-white/[0.08] p-1.5 rounded-2xl shadow-sm">
-            <button
-              onClick={handlePrevDay}
-              className="p-2 min-w-[36px] flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-all font-semibold text-xs"
-              title="Previous Day"
-              aria-label="Previous Day"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-
-            <div className="relative flex items-center">
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-slate-50 dark:bg-white/[0.04] text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/[0.08] px-3 py-1.5 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer"
-              />
-            </div>
-
-            <button
-              onClick={handleToday}
-              className="px-3 py-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 rounded-xl transition-all font-extrabold text-xs"
-            >
-              Today
-            </button>
-
-            <button
-              onClick={handleNextDay}
-              className="p-2 min-w-[36px] flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-all font-semibold text-xs"
-              title="Next Day"
-              aria-label="Next Day"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
+          {/* Interactive Mini Calendar Popover & Navigation */}
+          <DatePickerPopover
+            selectedDate={selectedDate}
+            onChange={setSelectedDate}
+          />
         </div>
 
         {/* Daily Prep Form */}
