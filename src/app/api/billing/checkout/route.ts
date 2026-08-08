@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { authenticateRequest } from '@/lib/apiAuth';
+import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
@@ -7,15 +9,47 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2023-10-16' as any,
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    let userId: string | undefined;
+    let userEmail: string | undefined;
 
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // 1. Try Bearer token authorization header first
+    const authHeader = req.headers.get('authorization');
+    const token = authHeader?.replace('Bearer ', '');
+
+    if (token) {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+      const supabase = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: { user } } = await supabase.auth.getUser(token);
+      if (user) {
+        userId = user.id;
+        userEmail = user.email;
+      }
+    }
+
+    // 2. Fallback to Supabase auth helper cookies
+    if (!userId) {
+      const routeSupabase = createRouteHandlerClient({ cookies });
+      const { data: { session } } = await routeSupabase.auth.getSession();
+      if (session?.user) {
+        userId = session.user.id;
+        userEmail = session.user.email;
+      }
+    }
+
+    // 3. Fallback to authenticateRequest helper
+    if (!userId) {
+      const auth = await authenticateRequest(req);
+      if (!('error' in auth) && auth.user) {
+        userId = auth.user.id;
+        userEmail = auth.user.email;
+      }
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized. Please log in again.' }, { status: 401 });
     }
 
     const { priceId, tier } = await req.json();
@@ -24,20 +58,24 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Get or create customer ID in profiles
     const { data: profile } = await supabase
       .from('profiles')
       .select('stripe_customer_id, email')
-      .eq('id', session.user.id)
+      .eq('id', userId)
       .single();
 
     let customerId = profile?.stripe_customer_id;
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: session.user.email || profile?.email,
+        email: userEmail || profile?.email,
         metadata: {
-          userId: session.user.id,
+          userId: userId,
         },
       });
       customerId = customer.id;
@@ -45,7 +83,7 @@ export async function POST(req: Request) {
       await supabase
         .from('profiles')
         .update({ stripe_customer_id: customerId })
-        .eq('id', session.user.id);
+        .eq('id', userId);
     }
 
     const siteUrl = 
@@ -65,7 +103,7 @@ export async function POST(req: Request) {
       success_url: `${siteUrl}/settings?billing=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/settings?billing=canceled`,
       metadata: {
-        userId: session.user.id,
+        userId: userId,
         tier: tier || 'pro',
       },
     });

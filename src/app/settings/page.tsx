@@ -210,9 +210,19 @@ function SettingsContent() {
   const handleCheckout = async (priceId: string, tier: string) => {
     try {
       setIsCheckingOut(true);
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ priceId, tier }),
       });
       const data = await res.json();
