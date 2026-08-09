@@ -189,6 +189,12 @@ export default function AnalyticsPage() {
     if (allTrades.length > 0) {
       let filtered = filterTradesByTimePeriod(allTrades, timePeriod);
       
+      // Auto-fallback to 'all' time if 30d produces 0 trades but user has trades in account history
+      if (filtered.length === 0 && timePeriod === '30d') {
+        setTimePeriod('all');
+        filtered = allTrades;
+      }
+
       // Apply advanced filters if any
       if (activeFilters) {
         filtered = applyAdvancedFilters(filtered, activeFilters);

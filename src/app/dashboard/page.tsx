@@ -245,7 +245,14 @@ export default function Dashboard() {
 
 
 
-  const { trades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange, selectedAccountIds)
+  const { trades, allTimeTrades, metrics, equityData, advancedMetrics, initialCapital, isLoading } = useDashboardData(user?.id, dateRange, selectedAccountIds)
+
+  // Auto-switch to 'all' time if selected date range (e.g. 30d) has 0 trades but user has trades in account history
+  useEffect(() => {
+    if (!isLoading && dateRange === '30d' && trades.length === 0 && allTimeTrades.length > 0) {
+      setDateRange('all');
+    }
+  }, [isLoading, dateRange, trades.length, allTimeTrades.length]);
 
   const equityChartData = useMemo(() =>
     equityData.labels.map((d, i) => ({ date: d, equity: equityData.values[i] })),
@@ -331,7 +338,7 @@ export default function Dashboard() {
     )
   }
 
-  const noTrades = trades.length === 0;
+  const noTrades = allTimeTrades.length === 0;
   
   return (
     <AuthenticatedLayout>

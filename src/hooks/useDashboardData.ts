@@ -53,9 +53,10 @@ export function useDashboardData(
         ? undefined
         : accountSelection as string[];
     
-    // Fetch trades, profile settings, and accounts in parallel
-    const [tradesResponse, profileRes, accountsRes] = await Promise.all([
+    // Fetch trades, all-time trades, profile settings, and accounts in parallel
+    const [tradesResponse, allTimeTradesRes, profileRes, accountsRes] = await Promise.all([
       getAllTrades(userId, { ...bounds, accountIds }),
+      getAllTrades(userId, { accountIds }),
       supabase.from('profiles').select('settings').eq('id', userId).single(),
       accountIds && accountIds.length > 0
         ? supabase.from('trading_accounts').select('balance, initial_balance').in('id', accountIds)
@@ -87,11 +88,12 @@ export function useDashboardData(
     const equityCurve = generateEquityCurveData(tradesResponse, cap);
     
     return {
-      trades:        tradesResponse,
-      metrics:       toTradeMetrics(advanced),
-      equityData:    { labels: equityCurve.map(p => p.date), values: equityCurve.map(p => p.equity) },
-      advancedMetrics: advanced,
-      initialCapital: cap,
+      trades:             tradesResponse,
+      allTimeTrades:      allTimeTradesRes || [],
+      metrics:            toTradeMetrics(advanced),
+      equityData:         { labels: equityCurve.map(p => p.date), values: equityCurve.map(p => p.equity) },
+      advancedMetrics:    advanced,
+      initialCapital:     cap,
     };
   };
 
@@ -111,6 +113,7 @@ export function useDashboardData(
 
   return {
     trades:         data?.trades          || [],
+    allTimeTrades:  data?.allTimeTrades   || [],
     metrics:        data?.metrics || {
       total_pnl: 0, win_rate: 0, avg_win: 0, avg_loss: 0,
       total_trades: 0, winning_trades: 0, losing_trades: 0,
@@ -118,7 +121,6 @@ export function useDashboardData(
     equityData:       data?.equityData      || { labels: [], values: [] },
     advancedMetrics:  data?.advancedMetrics || null,
     initialCapital:   data?.initialCapital  ?? 10000,
-    allTrades:        data?.trades          || [],
     isLoading:        !data && !error,
     hasError:         !!error,
   };
