@@ -33,17 +33,6 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
   const [localNotes, setLocalNotes] = useState(trade.notes || '');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesChanged, setNotesChanged] = useState(false);
-  const [authToken, setAuthToken] = useState<string>('');
-
-  useEffect(() => {
-    async function fetchToken() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.access_token) {
-        setAuthToken(session.access_token);
-      }
-    }
-    fetchToken();
-  }, []);
 
   // Format currency
   const formatCurrency = (value: number): string => {
@@ -90,7 +79,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
 
   // Open screenshot in modal
   const openScreenshot = (screenshotUrl: string) => {
-    setSelectedScreenshot(resolveTradingViewUrl(screenshotUrl, authToken));
+    setSelectedScreenshot(resolveTradingViewUrl(screenshotUrl));
     setZoomLevel(1);
     setDragPosition({ x: 0, y: 0 });
   };
@@ -405,7 +394,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                 {trade.screenshot_url && typeof trade.screenshot_url === 'string' && (
                   <div className="bg-[var(--surface-3)] rounded-lg p-4">
                     <h3 className="text-gray-400 text-sm mb-3">Screenshot</h3>
-                    <a href={resolveTradingViewUrl(trade.screenshot_url, authToken)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
+                    <a href={resolveTradingViewUrl(trade.screenshot_url)} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline">View Screenshot</a>
                   </div>
                 )}
 
@@ -457,7 +446,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                           className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                         >
                           <Image
-                            src={resolveTradingViewUrl(url ?? '', authToken)}
+                            src={resolveTradingViewUrl(url ?? '')}
                             alt={`Trade Screenshot ${index + 1}`}
                             layout="fill"
                             objectFit="cover"
@@ -479,7 +468,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
                         className="relative aspect-video rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all group"
                       >
                         <Image
-                          src={resolveTradingViewUrl(trade.screenshot_url ?? '', authToken)}
+                          src={resolveTradingViewUrl(trade.screenshot_url ?? '')}
                           alt="Trade Screenshot"
                           layout="fill"
                           objectFit="cover"
@@ -572,7 +561,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
               <div className="w-full max-w-4xl relative aspect-video rounded-2xl overflow-hidden border border-white/[0.08] bg-[var(--surface-1)] shadow-2xl">
                 <video
                   ref={videoRef}
-                  src={resolveTradingViewUrl(trade.video_url, authToken)}
+                  src={resolveTradingViewUrl(trade.video_url)}
                   controls
                   className="w-full h-full object-contain"
                 />
