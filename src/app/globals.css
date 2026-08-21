@@ -958,7 +958,21 @@
 :root:not(.dark) nav a.text-white,
 :root:not(.dark) nav a.text-white *,
 :root:not(.dark) .btn-primary,
-:root:not(.dark) .btn-primary * {
+:root:not(.dark) .btn-primary *,
+:root:not(.dark) [class*="bg-indigo-600"],
+:root:not(.dark) [class*="bg-indigo-600"] *,
+:root:not(.dark) [class*="bg-indigo-500"],
+:root:not(.dark) [class*="bg-indigo-500"] *,
+:root:not(.dark) [class*="bg-emerald-600"],
+:root:not(.dark) [class*="bg-emerald-600"] *,
+:root:not(.dark) [class*="bg-rose-600"],
+:root:not(.dark) [class*="bg-rose-600"] *,
+:root:not(.dark) [class*="bg-slate-900"],
+:root:not(.dark) [class*="bg-slate-900"] *,
+:root:not(.dark) [class*="bg-black"],
+:root:not(.dark) [class*="bg-black"] *,
+:root:not(.dark) button[class*="bg-indigo"],
+:root:not(.dark) button[class*="bg-indigo"] * {
   color: #ffffff !important;
 }
 

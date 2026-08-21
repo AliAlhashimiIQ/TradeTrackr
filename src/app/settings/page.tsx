@@ -616,8 +616,9 @@ function SettingsContent() {
                       : 'border-indigo-500/60 dark:border-indigo-500/80 bg-white dark:bg-[#0e111d] shadow-xl shadow-indigo-500/5 hover:border-indigo-500'
                   }`}>
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-sm mb-3 whitespace-nowrap">
-                        <Zap className="w-3 h-3 fill-current shrink-0" /> MOST POPULAR · PROP READY
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-sans font-bold uppercase tracking-wider bg-indigo-600 !text-white shadow-sm mb-3 whitespace-nowrap">
+                        <Zap className="w-3 h-3 !text-white fill-white shrink-0" />
+                        <span className="!text-white font-bold">Most Popular · Prop Ready</span>
                       </div>
 
                       <div className="flex justify-between items-start mb-4">
