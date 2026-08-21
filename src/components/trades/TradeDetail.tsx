@@ -9,6 +9,8 @@ import { resolveTradingViewUrl, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
 import toast from 'react-hot-toast';
 import TradingViewChart from './TradingViewChart';
+import TradeShareModal from './TradeShareModal';
+import { Share2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
 interface TradeDetailProps {
@@ -33,6 +35,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
   const [localNotes, setLocalNotes] = useState(trade.notes || '');
   const [notesSaving, setNotesSaving] = useState(false);
   const [notesChanged, setNotesChanged] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Format currency
   const formatCurrency = (value: number): string => {
@@ -166,6 +169,16 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
           
           {/* Floating action buttons */}
           <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowShareModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
+              title="Share Social P&L Card"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Share Card</span>
+            </button>
+
             {onEdit && (
               <button 
                 onClick={onEdit}
@@ -661,6 +674,13 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
           </div>
         </div>
       )}
+
+      {/* Social P&L Card Share Modal */}
+      <TradeShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        trade={trade}
+      />
     </div>
   );
 } 

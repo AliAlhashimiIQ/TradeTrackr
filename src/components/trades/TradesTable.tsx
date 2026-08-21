@@ -5,6 +5,8 @@ import { isForexPair, formatLots, formatPips } from '@/lib/forexUtils';
 import { resolveTradingViewUrl, getTagStyle, getPLColorClasses, toLocalYMD, toLocalISOString, toLocalDatetimeLocal, fromLocalDatetimeLocal } from '@/lib/utils';
 import EmptyState from '@/components/ui/EmptyState';
 import InlineTagPopover from './InlineTagPopover';
+import TradeShareModal from './TradeShareModal';
+import { Share2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useSettings } from '@/providers/SettingsProvider';
 import { Tooltip } from '@/components/ui/Tooltip';
@@ -246,6 +248,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
   const [activePopover, setActivePopover] = useState<{ tradeId: string; type: 'tags' | 'mistakes' | 'note-preview' | 'mindset' | 'strategy' } | null>(null);
   const [popoverAnchorEl, setPopoverAnchorEl] = useState<HTMLElement | null>(null);
   const [showInlineScreenshotModal, setShowInlineScreenshotModal] = useState(false);
+  const [shareTrade, setShareTrade] = useState<Trade | null>(null);
 
   // Column drag-reorder state
   const dragColRef = useRef<string | null>(null);
@@ -1535,6 +1538,19 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                           </button>
                         </Tooltip>
                       )}
+                      <Tooltip label="Share P&L Card" position="top">
+                        <button
+                          type="button"
+                          onClick={() => setShareTrade(trade)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{ color: 'var(--muted-foreground, #6b7280)' }}
+                          onMouseEnter={e => (e.currentTarget.style.color = '#818cf8')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground, #6b7280)')}
+                          aria-label={`Share ${trade.symbol} trade card`}
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+                      </Tooltip>
                       <Tooltip label="View details" position="top">
                         <button
                           onClick={() => onDetailTradeClick(trade)}
@@ -1994,6 +2010,15 @@ export const TradesTable: React.FC<TradesTableProps> = ({
             </div>
           </motion.div>
         </div>
+      )}
+
+      {/* Social P&L Card Share Modal */}
+      {shareTrade && (
+        <TradeShareModal
+          isOpen={!!shareTrade}
+          onClose={() => setShareTrade(null)}
+          trade={shareTrade}
+        />
       )}
     </>
   );
