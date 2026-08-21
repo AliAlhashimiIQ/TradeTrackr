@@ -19,7 +19,6 @@ import {
   Twitter,
   Clock,
   Crosshair,
-  Layers,
   Sparkles,
   Flame,
   Terminal,
@@ -168,6 +167,13 @@ export default function TradeShareModal({
   }
 
   const activeTheme = themesConfig[theme]
+
+  // Sub-metrics inside hero box (guaranteed no orphan bullets)
+  const heroSubMetrics = [
+    rMultiple ? { label: 'RETURN', value: `${Number(rMultiple) > 0 ? '+' : ''}${rMultiple}R`, color: Number(rMultiple) >= 0 ? 'text-emerald-400' : 'text-rose-400' } : null,
+    pips ? { label: 'PIPS', value: `${Number(pips) > 0 ? '+' : ''}${pips}`, color: Number(pips) >= 0 ? 'text-emerald-400' : 'text-rose-400' } : null,
+    { label: 'EXECUTION', value: isWin ? '100% WIN' : 'STOPPED OUT', color: isWin ? 'text-emerald-400' : 'text-rose-400' }
+  ].filter(Boolean) as Array<{ label: string; value: string; color: string }>
 
   // Copy Image to Clipboard
   const handleCopyImage = async () => {
@@ -365,12 +371,12 @@ Verified on @TradeTrackr 🚀
                 </div>
 
                 {/* Account / Date Meta */}
-                <div className="text-right">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider font-mono bg-white/[0.04] border-white/[0.08] text-gray-300">
+                <div className="text-right flex flex-col items-end">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider font-mono bg-white/[0.04] border-white/[0.08] text-gray-300 whitespace-nowrap">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     {accountName || 'Prop Verified'}
                   </div>
-                  <div className="text-[9px] text-gray-400 font-mono mt-0.5">
+                  <div className="text-[9px] text-gray-400 font-mono mt-1 whitespace-nowrap">
                     {formattedDate} • {formattedTime} UTC
                   </div>
                 </div>
@@ -384,7 +390,7 @@ Verified on @TradeTrackr 🚀
                       {trade.symbol}
                     </h3>
                     <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm ${
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm whitespace-nowrap ${
                         trade.type === 'Long'
                           ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                           : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
@@ -395,29 +401,29 @@ Verified on @TradeTrackr 🚀
                     </span>
                   </div>
 
-                  {/* Strategy & Tags HUD pills */}
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                  {/* Strategy & Tags HUD pills (No line breaking glitch) */}
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     {trade.strategy && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-300 font-mono">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-200 font-mono whitespace-nowrap">
                         {trade.strategy}
                       </span>
                     )}
                     {trade.emotional_state && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold capitalize tracking-wide bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 font-mono">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold capitalize tracking-wide bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono whitespace-nowrap">
                         {trade.emotional_state}
                       </span>
                     )}
                     {trade.lots && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-400 font-mono">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-300 font-mono whitespace-nowrap">
                         {trade.lots} Lots
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Duration & Execution Mode Pill */}
+                {/* Duration Pill */}
                 {durationStr && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.06] text-gray-300 text-[11px] font-mono shrink-0">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.06] text-gray-300 text-[11px] font-mono shrink-0 whitespace-nowrap">
                     <Clock className="w-3 h-3 text-gray-400" />
                     <span>{durationStr}</span>
                   </div>
@@ -446,70 +452,55 @@ Verified on @TradeTrackr 🚀
                   )}
                 </div>
 
-                {/* Sub-Metrics Strip inside Hero */}
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-white/[0.06] text-xs font-mono">
-                  {rMultiple && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-400 font-semibold">RETURN:</span>
-                      <span className={`font-bold ${Number(rMultiple) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {Number(rMultiple) > 0 ? '+' : ''}{rMultiple}R
-                      </span>
-                    </div>
-                  )}
-                  {pips && (
-                    <>
-                      <span className="text-gray-600">•</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-gray-400 font-semibold">PIPS:</span>
-                        <span className={`font-bold ${Number(pips) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {Number(pips) > 0 ? '+' : ''}{pips}
-                        </span>
+                {/* Clean Sub-Metrics Strip (No floating orphan dots) */}
+                <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-white/[0.06] text-xs font-mono">
+                  {heroSubMetrics.map((metric, idx) => (
+                    <React.Fragment key={idx}>
+                      {idx > 0 && <span className="text-gray-600">•</span>}
+                      <div className="inline-flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-gray-400 font-semibold">{metric.label}:</span>
+                        <span className={`font-bold ${metric.color}`}>{metric.value}</span>
                       </div>
-                    </>
-                  )}
-                  <span className="text-gray-600">•</span>
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400 font-semibold">WIN RATE:</span>
-                    <span className="text-white font-bold">{isWin ? '100%' : '0%'}</span>
-                  </div>
+                    </React.Fragment>
+                  ))}
                 </div>
               </div>
 
               {/* ── EXECUTION TELEMETRY (Entry / Exit / Risk) ── */}
-              <div className="relative z-10 grid grid-cols-3 gap-2 pt-2 border-t border-white/[0.08]">
+              <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
                 {/* Entry Price */}
-                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
                     Entry Level
                   </span>
-                  <span className="text-sm font-bold font-mono text-white tabular-nums">
+                  <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
                     {trade.entry_price != null ? trade.entry_price : '—'}
                   </span>
                 </div>
 
                 {/* Exit Price */}
-                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
                     Exit Level
                   </span>
-                  <span className="text-sm font-bold font-mono text-white tabular-nums">
+                  <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
                     {trade.exit_price != null ? trade.exit_price : '—'}
                   </span>
                 </div>
 
-                {/* Risk-Reward / Pips */}
-                <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/[0.04]">
-                  <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-0.5">
+                {/* Risk Factor */}
+                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
                     Risk Factor
                   </span>
-                  <span className={`text-sm font-bold font-mono tabular-nums ${isWin ? 'text-emerald-400' : 'text-gray-300'}`}>
+                  <span className={`text-sm sm:text-base font-bold font-mono tabular-nums truncate ${isWin ? 'text-emerald-400' : 'text-gray-300'}`}>
                     {rMultiple ? `${rMultiple}R` : '1.0R'}
                   </span>
                 </div>
               </div>
 
               {/* Footer Stamp */}
-              <div className="relative z-10 flex items-center justify-between mt-4 pt-3 text-[9px] text-gray-500 font-mono border-t border-white/[0.04]">
+              <div className="relative z-10 flex items-center justify-between mt-5 pt-3 text-[9px] text-gray-500 font-mono border-t border-white/[0.04]">
                 <span className="tracking-widest uppercase">tradetrackr.com // Edge Command</span>
                 <span className="text-gray-400 font-bold">#TradeTrackr</span>
               </div>
