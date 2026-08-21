@@ -213,6 +213,18 @@ CREATE TABLE IF NOT EXISTS public.market_data_cache (
 );
 
 
+-- ── 2.1 INDEXES FOR FOREIGN KEYS & QUERY ACCELERATION ────────────────────────
+CREATE INDEX IF NOT EXISTS idx_trading_accounts_user_id ON public.trading_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_trades_user_id_entry_time ON public.trades(user_id, entry_time DESC);
+CREATE INDEX IF NOT EXISTS idx_trades_user_symbol ON public.trades(user_id, symbol);
+CREATE INDEX IF NOT EXISTS idx_trade_notes_trade_id ON public.trade_notes(trade_id);
+CREATE INDEX IF NOT EXISTS idx_trade_notes_user_id ON public.trade_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_trade_tags_tag_id ON public.trade_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_trade_tags_trade_id ON public.trade_tags(trade_id);
+CREATE INDEX IF NOT EXISTS idx_open_positions_user_id ON public.open_positions(user_id);
+CREATE INDEX IF NOT EXISTS idx_import_history_user_id ON public.import_history(user_id);
+
+
 -- ── 3. WIRE TRIGGERS ─────────────────────────────────────────────────────────
 
 -- Trigger for profile creation on signup
@@ -275,69 +287,66 @@ ALTER TABLE public.market_data_cache ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
 CREATE POLICY "Users can view their own profile"
-  ON public.profiles FOR SELECT USING (auth.uid() = id);
+  ON public.profiles FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = id);
 
 CREATE POLICY "Users can insert their own profile"
-  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+  ON public.profiles FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = id);
 
 CREATE POLICY "Users can update their own profile"
-  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+  ON public.profiles FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = id);
 
 -- Trading Accounts Policies
 CREATE POLICY "Users can manage their own trading accounts"
-  ON public.trading_accounts FOR ALL USING (auth.uid() = user_id);
+  ON public.trading_accounts FOR ALL USING ((select auth.uid()) = user_id);
 
 -- Trades Policies
 CREATE POLICY "Users can view their own trades"
-  ON public.trades FOR SELECT USING (auth.uid() = user_id);
+  ON public.trades FOR SELECT USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert their own trades"
-  ON public.trades FOR INSERT WITH CHECK (auth.uid() = user_id);
+  ON public.trades FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can update their own trades"
-  ON public.trades FOR UPDATE USING (auth.uid() = user_id);
+  ON public.trades FOR UPDATE USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete their own trades"
-  ON public.trades FOR DELETE USING (auth.uid() = user_id);
+  ON public.trades FOR DELETE USING ((select auth.uid()) = user_id);
 
 -- Trade Notes Policies
 CREATE POLICY "Users can view their own trade notes"
-  ON public.trade_notes FOR SELECT USING (auth.uid() = user_id);
+  ON public.trade_notes FOR SELECT USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can insert their own trade notes"
-  ON public.trade_notes FOR INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
+  ON public.trade_notes FOR INSERT WITH CHECK ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can update their own trade notes"
-  ON public.trade_notes FOR UPDATE USING (auth.uid() = user_id);
+  ON public.trade_notes FOR UPDATE USING ((select auth.uid()) = user_id);
 
 CREATE POLICY "Users can delete their own trade notes"
-  ON public.trade_notes FOR DELETE USING (auth.uid() = user_id);
+  ON public.trade_notes FOR DELETE USING ((select auth.uid()) = user_id);
 
 -- Tags Policies
-CREATE POLICY "Users can view their own tags"
-  ON public.tags FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert their own tags"
-  ON public.tags FOR INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
-
-CREATE POLICY "Users can update their own tags"
-  ON public.tags FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete their own tags"
-  ON public.tags FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Users can manage their own tags"
+  ON public.tags FOR ALL USING ((select auth.uid()) = user_id);
 
 -- Trade Tags Policies (Owner-bound only)
 CREATE POLICY "Users can view tags on their own trades"
   ON public.trade_tags FOR SELECT
-  USING (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = (select auth.uid())));
 
 CREATE POLICY "Users can add tags to their own trades"
   ON public.trade_tags FOR INSERT
-  WITH CHECK (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = auth.uid()));
+  WITH CHECK (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = (select auth.uid())));
 
 CREATE POLICY "Users can delete their own trade tags"
   ON public.trade_tags FOR DELETE
-  USING (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = auth.uid()));
+  USING (EXISTS (SELECT 1 FROM public.trades WHERE trades.id = trade_tags.trade_id AND trades.user_id = (select auth.uid())));
 
 -- Open Positions Policies
 CREATE POLICY "Users can view their own positions"
