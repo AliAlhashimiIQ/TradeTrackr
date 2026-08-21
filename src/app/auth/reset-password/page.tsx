@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import COLORS, { TRANSITIONS } from '@/lib/colorSystem';
-import { TEXT, BUTTONS, FORMS, LAYOUT } from '@/lib/designSystem';
+import Logo from '@/components/ui/Logo';
+import { Lock, CheckCircle2, AlertCircle, ArrowLeft, KeyRound } from 'lucide-react';
 
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState('');
@@ -20,7 +21,6 @@ export default function ResetPassword() {
     if (!/[A-Z]/.test(password)) return false;
     if (!/[a-z]/.test(password)) return false;
     if (!/[0-9]/.test(password)) return false;
-    if (!/[^A-Za-z0-9]/.test(password)) return false;
     return true;
   };
 
@@ -31,7 +31,7 @@ export default function ResetPassword() {
 
     // Validate password strength
     if (!validatePassword(newPassword)) {
-      setError('Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters');
+      setError('Password must be at least 8 characters long and contain uppercase, lowercase, and numbers.');
       setLoading(false);
       return;
     }
@@ -46,10 +46,9 @@ export default function ResetPassword() {
     try {
       await updatePassword(newPassword);
       setSuccess(true);
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         router.push('/login');
-      }, 3000);
+      }, 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update password');
     } finally {
@@ -58,81 +57,103 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className={`${LAYOUT.flexCenter} min-h-screen w-full py-12 px-4 bg-gradient-to-b from-[#0c0d14] to-[#0f1117]`}>
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className={TEXT.heading.h1}>Reset Your Password</h2>
-          <p className={`mt-2 ${TEXT.body.regular} text-[${COLORS.text.secondary}]`}>
-            Please enter your new password below
+    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950 transition-colors">
+      <div className="max-w-md w-full space-y-6">
+        <div className="flex flex-col items-center text-center">
+          <Logo />
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mt-6 mb-1">
+            Create New Password
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
+            Choose a strong password to secure your TradeTrackr journal and telemetry data.
           </p>
         </div>
 
-        <div className="gradient-border">
-          <div className={`bg-[${COLORS.background.dark}] rounded-xl p-8`}>
-            {success ? (
-              <div className={`bg-[${COLORS.success}]/10 border border-[${COLORS.success}]/30 text-[${COLORS.successLight}] ${TEXT.body.small} p-4 rounded-lg flex items-start`}>
-                <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>Password updated successfully! Redirecting to login...</span>
+        <div className="rounded-3xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-8 shadow-xl backdrop-blur-xl">
+          {success ? (
+            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="text-xs leading-relaxed">
+                <strong className="font-bold block mb-0.5">Password updated successfully!</strong>
+                Redirecting you to the sign-in page in a moment…
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className={`bg-[${COLORS.danger}]/10 border border-[${COLORS.danger}]/30 text-[${COLORS.dangerLight}] ${TEXT.body.small} p-4 rounded-lg flex items-start`}>
-                    <svg className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{error}</span>
-                  </div>
-                )}
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
 
-                <div className={FORMS.group}>
-                  <label htmlFor="newPassword" className={FORMS.label.primary}>New Password</label>
+              <div>
+                <label htmlFor="newPassword" className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  New Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
                   <input
                     id="newPassword"
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter your new password"
-                    className={FORMS.input}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono"
                     required
                   />
                 </div>
+              </div>
 
-                <div className={FORMS.group}>
-                  <label htmlFor="confirmPassword" className={FORMS.label.primary}>Confirm New Password</label>
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-mono font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <KeyRound className="w-4 h-4" />
+                  </div>
                   <input
                     id="confirmPassword"
                     type="password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Confirm your new password"
-                    className={FORMS.input}
+                    placeholder="••••••••••••"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-white/[0.08] rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono"
                     required
                   />
                 </div>
+              </div>
 
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full ${LAYOUT.flexCenter} px-4 py-3 bg-gradient-to-r from-[${COLORS.primary}] to-[${COLORS.primaryDark}] hover:from-[${COLORS.primaryLight}] hover:to-[${COLORS.primary}] text-[${COLORS.text.primary}] font-medium rounded-lg ${TRANSITIONS.medium} transform hover:translate-y-[-1px] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
-                  >
-                    {loading && (
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    )}
-                    {loading ? 'Updating Password...' : 'Reset Password'}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-mono font-bold text-xs rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Updating Password…
+                  </>
+                ) : (
+                  'Reset Password'
+                )}
+              </button>
+
+              <div className="text-center pt-2">
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-medium transition-colors"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
+                </Link>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
   );
-} 
+}

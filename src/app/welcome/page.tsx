@@ -155,18 +155,19 @@ export default function WelcomePage() {
                     {CURRENCIES.map(c => (
                       <button
                         key={c.code}
+                        type="button"
                         onClick={() => setCurrency(c.code)}
-                        className={`py-4 px-3 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 group ${
+                        className={`py-4 px-3 rounded-2xl border transition-all duration-200 flex flex-col items-center justify-center gap-1.5 group active:scale-95 ${
                           currency === c.code
-                            ? 'bg-indigo-500/10 border-indigo-500/30 shadow-lg text-indigo-600 dark:text-indigo-400'
-                            : 'bg-white dark:bg-white/[0.01] border-black/10 dark:border-white/[0.04] hover:bg-black/[0.02] dark:hover:bg-white/[0.03] hover:border-black/20 dark:hover:border-white/[0.08] text-gray-700 dark:text-gray-400'
+                            ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-600/25 text-white'
+                            : 'bg-slate-100 dark:bg-white/[0.04] border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] text-slate-700 dark:text-slate-300'
                         }`}
                       >
-                        <span className={`text-xl font-bold transition-colors ${
-                          currency === c.code ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white'
+                        <span className={`text-xl font-bold font-mono transition-colors ${
+                          currency === c.code ? 'text-white' : 'text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
                         }`}>{c.symbol}</span>
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                          currency === c.code ? 'text-indigo-700 dark:text-white' : 'text-gray-500'
+                        <span className={`text-[10px] font-bold font-mono uppercase tracking-wider ${
+                          currency === c.code ? 'text-white/90' : 'text-slate-500 dark:text-gray-400'
                         }`}>{c.code}</span>
                       </button>
                     ))}
@@ -175,8 +176,9 @@ export default function WelcomePage() {
 
                 <div className="mt-8 flex justify-end">
                   <button 
+                    type="button"
                     onClick={nextStep} 
-                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold font-mono rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 active:scale-95"
                   >
                     Continue
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -198,10 +200,10 @@ export default function WelcomePage() {
               >
                 <div>
                   <div className="text-center mb-8">
-                    <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">
+                    <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
                       Starting Capital
                     </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">
+                    <p className="text-slate-500 dark:text-gray-400 text-sm">
                       Enter the starting balance for your primary trading account to calculate growth.
                     </p>
                   </div>
@@ -209,7 +211,7 @@ export default function WelcomePage() {
                   <div className="max-w-xs mx-auto">
                     <div className="relative group">
                       <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                        <span className="text-xl font-bold text-gray-500 group-focus-within:text-indigo-500 transition-colors">
+                        <span className="text-xl font-bold text-slate-500 group-focus-within:text-indigo-500 transition-colors">
                           {CURRENCIES.find(c => c.code === currency)?.symbol}
                         </span>
                       </div>
@@ -218,25 +220,27 @@ export default function WelcomePage() {
                         value={balance}
                         onChange={e => setBalance(e.target.value)}
                         placeholder="10000"
-                        className="w-full pl-12 pr-5 py-4 bg-white dark:bg-slate-950/60 border border-black/15 dark:border-white/10 rounded-xl text-2xl font-bold text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-800 focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner font-mono text-center"
+                        className="w-full pl-12 pr-5 py-4 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-2xl text-2xl font-bold font-mono text-slate-900 dark:text-white placeholder-slate-300 dark:placeholder-gray-700 focus:outline-none focus:border-indigo-500/50 transition-colors shadow-inner text-center"
                       />
                     </div>
                     {errorMsg && (
-                      <p className="text-red-500 dark:text-red-400 text-center mt-3 text-xs font-semibold">{errorMsg}</p>
+                      <p className="text-rose-500 text-center mt-3 text-xs font-semibold">{errorMsg}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="mt-8 flex justify-between">
+                <div className="mt-8 flex justify-between items-center">
                   <button 
+                    type="button"
                     onClick={() => setStep(1)} 
-                    className="px-5 py-3 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold transition-colors"
+                    className="px-5 py-3 text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold transition-colors"
                   >
                     Back
                   </button>
                   <button 
+                    type="button"
                     onClick={nextStep} 
-                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                    className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold font-mono rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center gap-2 active:scale-95"
                   >
                     Continue
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,30 +267,32 @@ export default function WelcomePage() {
                     </svg>
                   </div>
                   
-                  <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">
+                  <h1 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
                     Setup Complete
                   </h1>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm">
+                  <p className="text-slate-500 dark:text-gray-400 text-sm max-w-sm">
                     Your journal is ready. Proceed to the Command Center to import your trade history or log executions.
                   </p>
 
                   {errorMsg && (
-                    <p className="text-red-500 dark:text-red-400 mt-4 text-xs font-semibold">{errorMsg}</p>
+                    <p className="text-rose-500 mt-4 text-xs font-semibold">{errorMsg}</p>
                   )}
                 </div>
 
                 <div className="mt-8 w-full flex justify-between items-center gap-4">
                   <button 
+                    type="button"
                     onClick={() => setStep(2)} 
                     disabled={isSaving} 
-                    className="px-5 py-3 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold transition-colors disabled:opacity-50"
+                    className="px-5 py-3 text-slate-500 hover:text-slate-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold transition-colors disabled:opacity-50"
                   >
                     Back
                   </button>
                   <button 
+                    type="button"
                     onClick={handleComplete} 
                     disabled={isSaving}
-                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-75"
+                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold font-mono rounded-xl shadow-md shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 disabled:opacity-75 active:scale-95"
                   >
                     {isSaving ? (
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
