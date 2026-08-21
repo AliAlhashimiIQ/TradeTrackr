@@ -1,17 +1,25 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import { Plus_Jakarta_Sans, JetBrains_Mono } from 'next/font/google'
 import ClientNetworkWrapper from '@/components/common/ClientNetworkWrapper'
 import PageTransitionProvider from '@/providers/PageTransitionProvider'
 import { Providers } from '@/providers/Providers'
 import ToastProvider from '@/components/ui/ToastProvider'
 
-// Modern sans-serif font
+// Modern UI sans-serif font
 const jakarta = Plus_Jakarta_Sans({ 
   subsets: ['latin'],
   variable: '--font-jakarta',
   display: 'swap',
-  weight: ['400', '500', '600', '700']
+  weight: ['400', '500', '600', '700', '800']
+})
+
+// Institutional trading telemetry monospace font
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+  weight: ['400', '500', '600', '700', '800']
 })
 
 export const metadata: Metadata = {
@@ -49,7 +57,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${jakarta.variable} font-sans antialiased text-slate-100 min-h-screen flex flex-col`}>
+      <body className={`${jakarta.variable} ${jetbrainsMono.variable} font-sans antialiased text-slate-100 min-h-screen flex flex-col`}>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-indigo-600 focus:text-white focus:rounded-lg focus:shadow-lg">
           Skip to main content
         </a>

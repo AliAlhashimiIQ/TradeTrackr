@@ -25,6 +25,12 @@
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
     },
+    "font-pairing-suggester": {
+      "source": "onewave-ai/claude-skills",
+      "sourceType": "github",
+      "skillPath": "font-pairing-suggester/SKILL.md",
+      "computedHash": "018187bb7da8f970ee06474e1f32d3fa232c7d0bf25ebf0b4912d41f25e503ab"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",
@@ -36,6 +42,12 @@
       "sourceType": "github",
       "skillPath": "skills/frontend-design-deslop/SKILL.md",
       "computedHash": "98df07ddc1a9bf0a3de6466e392361f3c761ed46fc64b42df1d3b7fc1513f3f6"
+    },
+    "google-fonts": {
+      "source": "sliday/google-fonts-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "69e7d4c71b9740f74b7a1905477e1fb7c7c36263be9ebbbfb9adbeb1ffba2622"
     },
     "production-audit": {
       "source": "affaan-m/ecc",
