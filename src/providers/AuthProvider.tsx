@@ -122,8 +122,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setAuthError(error)
         throw error
       }
-    } catch (error: any) {
-      if (error?.message !== 'Auth session missing!') {
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : String(error)
+      if (msg !== 'Auth session missing!') {
         console.error('Error signing out:', error)
       }
     } finally {
