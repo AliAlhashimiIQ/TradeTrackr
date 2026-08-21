@@ -225,8 +225,8 @@ export default function ImportPage() {
 
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-1">Import Trades</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white mb-1">Import Trades</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
             Import from MT5 HTML statements or any CSV file. Duplicates are detected and skipped automatically.
           </p>
         </div>
@@ -242,15 +242,16 @@ export default function ImportPage() {
               className="space-y-6"
             >
               {/* Format Tabs */}
-              <div className="flex items-center gap-2">
+              <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]">
                 {(['mt5', 'csv'] as FileFormat[]).map((fmt) => (
                   <button
                     key={fmt}
+                    type="button"
                     onClick={() => setFileFormat(fmt)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                       fileFormat === fmt
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                        : 'bg-white/[0.04] text-gray-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.07]'
+                        ? 'bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-indigo-500'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {fmt === 'mt5' ? 'MT5 HTML Statement' : 'CSV File'}
@@ -265,19 +266,20 @@ export default function ImportPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="card p-6 space-y-4 overflow-hidden"
+                    className="card p-6 space-y-4 overflow-hidden border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-white/[0.02]"
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-white">Column Mapping</h3>
-                      <div className="flex gap-2">
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-white">Column Mapping</h3>
+                      <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]">
                         {COLUMN_PRESETS.map((p) => (
                           <button
                             key={p.id}
+                            type="button"
                             onClick={() => handleCsvPresetChange(p.id)}
-                            className={`px-3 py-1 text-xs rounded-lg transition-all ${
+                            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                               csvPreset === p.id
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-white/[0.04] text-gray-400 hover:text-white border border-white/[0.07]'
+                                ? 'bg-indigo-600 text-white font-bold shadow-sm'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                             }`}
                           >
                             {p.label}
@@ -314,21 +316,21 @@ export default function ImportPage() {
                   relative flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed
                   cursor-pointer transition-all duration-300 py-20 px-8 text-center
                   ${dragging
-                    ? 'border-indigo-400 bg-indigo-500/10 scale-[1.01]'
-                    : 'border-white/[0.08] bg-white/[0.02] hover:border-indigo-500/50 hover:bg-white/[0.04]'
+                    ? 'border-indigo-500 bg-indigo-500/10 scale-[1.01]'
+                    : 'border-slate-300/80 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-white/[0.04]'
                   }
                 `}
               >
-                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${dragging ? 'bg-indigo-500/20' : 'bg-white/[0.05]'}`}>
-                  <svg className={`w-8 h-8 transition-colors ${dragging ? 'text-indigo-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${dragging ? 'bg-indigo-500/20' : 'bg-slate-100 dark:bg-white/[0.05]'}`}>
+                  <svg className={`w-8 h-8 transition-colors ${dragging ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                   </svg>
                 </div>
                 <div>
-                  <p className="text-white font-semibold">
+                  <p className="text-slate-900 dark:text-white font-semibold">
                     {dragging ? 'Drop to parse…' : 'Drop your file here or click to browse'}
                   </p>
-                  <p className="text-gray-500 text-sm mt-1">
+                  <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                     {fileFormat === 'mt5'
                       ? 'Accepts MT5 .html or .htm statement files'
                       : 'Accepts .csv files with your configured column names'}
