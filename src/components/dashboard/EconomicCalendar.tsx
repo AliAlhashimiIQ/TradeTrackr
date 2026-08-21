@@ -313,17 +313,20 @@ const EconomicCalendar: React.FC<EconomicCalendarProps> = ({
           {/* Search */}
           <div className="relative">
             <input
-              type="text"
-              placeholder="Filter events..."
+              type="search"
+              aria-label="Filter economic calendar events"
+              placeholder="Filter events…"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 text-gray-900 dark:text-white text-xs w-36 sm:w-48 focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
+              className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-950/60 border border-black/10 dark:border-white/10 text-gray-900 dark:text-white text-xs w-36 sm:w-48 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50"
             />
             <button
+              type="button"
               onClick={() => setFilter('')}
-              className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 ${!filter && 'hidden'}`}
+              aria-label="Clear event filter"
+              className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ${!filter && 'hidden'}`}
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>

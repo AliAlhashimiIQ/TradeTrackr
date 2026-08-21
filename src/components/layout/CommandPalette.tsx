@@ -331,12 +331,13 @@ export default function CommandPalette() {
       >
         {/* Search header */}
         <div className="flex items-center border-b border-slate-200 dark:border-slate-800/80 px-4 py-3.5 bg-slate-50/80 dark:bg-slate-900/40 gap-3">
-          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
+          <Search className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
-            type="text"
+            type="search"
+            aria-label="Command palette search"
             className="w-full bg-transparent text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none border-none outline-none ring-0 p-0"
-            placeholder="Type a command (e.g. /log buy 1.0 XAUUSD @ 2350) or search..."
+            placeholder="Type a command (e.g. /log buy 1.0 XAUUSD @ 2350) or search…"
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -347,10 +348,12 @@ export default function CommandPalette() {
             ESC
           </kbd>
           <button 
+            type="button"
             onClick={() => setIsOpen(false)}
-            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
+            aria-label="Close command palette"
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-md focus-visible:ring-2 focus-visible:ring-indigo-500 focus:outline-none"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
 

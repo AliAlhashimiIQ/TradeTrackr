@@ -1491,12 +1491,13 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                                 const style = getTagStyle(tc?.color, true);
                                 return (
                                   <span key={mistake} style={style} className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0">
-                                    {mistake}<button onClick={() => onToggleTag(trade, mistake, true)} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
+                                    {mistake}<button type="button" onClick={() => onToggleTag(trade, mistake, true)} aria-label={`Remove mistake ${mistake}`} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
                                   </span>
                                 );
                               })}
                             </div>
                             <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
+                              aria-label={`Add mistake tag to ${trade.symbol} trade`}
                               className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-red-500/10 dark:hover:bg-red-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-red-650 dark:hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}
@@ -1505,11 +1506,14 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         );
                         case 'notes': return (
                           <div key={colKey} className="relative pr-4 min-w-0 overflow-hidden text-left h-full pr-2">
-                            <div onClick={() => onNotesEditClick(trade)}
-                              className="text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1.5 rounded-lg border border-transparent hover:border-white/[0.04] transition-all min-h-[24px]"
+                            <button 
+                              type="button" 
+                              onClick={() => onNotesEditClick(trade)}
+                              aria-label={`View or edit notes for trade on ${trade.symbol}`}
+                              className="w-full text-left text-xs text-gray-400 hover:text-white cursor-pointer select-none truncate hover:bg-white/[0.02] p-1.5 rounded-lg border border-transparent hover:border-white/[0.04] transition-all min-h-[24px] focus-visible:ring-1 focus-visible:ring-indigo-500 focus:outline-none"
                               title="Click to view/edit learnings">
                               {trade.notes || <span className="text-gray-600 italic text-[10px]">Click to add note...</span>}
-                            </div>
+                            </button>
                           </div>
                         );
                         default: return <div key={colKey} />;

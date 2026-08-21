@@ -79,7 +79,7 @@ const TradeAIChatBox: React.FC<TradeAIChatBoxProps> = ({ selectedTrades }) => {
         </button>
       </div>
       {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-white dark:bg-[#181e2e]" style={{ minHeight: 220, maxHeight: 320 }}>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 bg-white dark:bg-[#181e2e]" style={{ minHeight: 220, maxHeight: 320 }} aria-live="polite">
         {chat.length === 0 && <div className="text-gray-400 text-center">Ask anything about your selected trades...</div>}
         {chat.map((msg, i) => (
           <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -99,24 +99,28 @@ const TradeAIChatBox: React.FC<TradeAIChatBoxProps> = ({ selectedTrades }) => {
       {/* Input */}
       <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-[#23273a] rounded-b-xl">
         <input
-          className="flex-1 p-2 rounded-lg bg-gray-100 dark:bg-[#23273a] text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          placeholder="Ask about your trades..."
+          type="text"
+          aria-label="Ask AI about trades"
+          className="flex-1 p-2 rounded-lg bg-gray-100 dark:bg-[#23273a] text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+          placeholder="Ask about your trades…"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') handleSend(); }}
           disabled={isLoading}
         />
         <button
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2"
+          type="button"
+          aria-label="Send AI question"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold disabled:opacity-50 flex items-center gap-2 focus-visible:ring-2 focus-visible:ring-blue-400 focus:outline-none"
           onClick={handleSend}
           disabled={isLoading || !input.trim()}
         >
           {isLoading ? (
-            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
+            <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24" aria-hidden="true"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
           ) : (
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
+            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" /></svg>
           )}
-          {isLoading ? 'Asking...' : 'Ask'}
+          {isLoading ? 'Asking…' : 'Ask'}
         </button>
       </div>
       <div className="px-4 pb-2 pt-1 text-xs text-gray-400 dark:text-gray-500 text-right">
