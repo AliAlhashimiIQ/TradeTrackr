@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, ShieldCheck, Zap, Crown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PROP_FIRMS } from '@/lib/propFirms';
 import PropFirmLogo from '@/components/ui/PropFirmLogo';
@@ -497,55 +497,57 @@ function SettingsContent() {
                 <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/15 rounded-full blur-3xl pointer-events-none -z-10" />
 
                 {/* Section Header & Live Status */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-100 dark:border-white/[0.06]">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200/80 dark:border-white/[0.06]">
                   <div>
-                    <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                    <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
                       <span>Billing & Subscriptions</span>
-                      <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                        SaaS Tiers
+                      <span className="text-[11px] px-2.5 py-0.5 rounded-md font-mono font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                        Trader Plans
                       </span>
                     </h2>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      Unlock real-time prop firm drawdown locks, AI psychology insights, and unlimited backtesting.
+                      Institutional prop firm drawdown locks, AI psychology insights, and unlimited backtesting.
                     </p>
                   </div>
                   
                   {/* Status Badge */}
-                  <div className="flex items-center gap-2.5 self-start md:self-auto bg-slate-50 dark:bg-white/[0.03] px-3.5 py-2 rounded-2xl border border-slate-200/60 dark:border-white/[0.06]">
-                    <span className="relative flex h-2.5 w-2.5">
+                  <div className="flex items-center gap-2.5 self-start md:self-auto bg-slate-100 dark:bg-white/[0.04] px-3.5 py-2 rounded-2xl border border-slate-200 dark:border-white/[0.08]">
+                    <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                     </span>
-                    <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold">
-                      Current Plan: <span className="font-extrabold uppercase text-indigo-600 dark:text-indigo-400">{subscriptionTier}</span>
+                    <span className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+                      Current Plan: <span className="font-mono font-bold uppercase text-indigo-600 dark:text-indigo-400">{subscriptionTier}</span>
                     </span>
                   </div>
                 </div>
 
                 {/* Billing Cycle Switcher (Monthly vs Yearly) */}
                 <div className="flex justify-center mb-8">
-                  <div className="inline-flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950/60 border border-slate-200/80 dark:border-white/[0.08] shadow-inner">
+                  <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]">
                     <button
+                      type="button"
                       onClick={() => setBillingInterval('monthly')}
                       className={`px-5 py-2 text-xs font-bold rounded-xl transition-all ${
                         billingInterval === 'monthly'
-                          ? 'bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-md'
+                          ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-white/10'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       Monthly Billing
                     </button>
                     <button
+                      type="button"
                       onClick={() => setBillingInterval('yearly')}
-                      className={`px-5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 ${
+                      className={`px-5 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 ${
                         billingInterval === 'yearly'
-                          ? 'bg-white dark:bg-indigo-600 text-slate-900 dark:text-white shadow-md'
+                          ? 'bg-white dark:bg-white/10 text-slate-900 dark:text-white shadow-sm border border-slate-200/60 dark:border-white/10'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <span>Annual Billing</span>
-                      <span className="px-1.5 py-0.5 text-[9px] font-extrabold rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 animate-pulse">
-                        Save 20%
+                      <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                        SAVE 20%
                       </span>
                     </button>
                   </div>
@@ -557,127 +559,118 @@ function SettingsContent() {
                   {/* 1. Free Sandbox Tier */}
                   <div className={`relative rounded-3xl p-6 border flex flex-col justify-between transition-all duration-300 ${
                     subscriptionTier === 'free'
-                      ? 'border-indigo-500/80 bg-indigo-500/[0.03] dark:bg-indigo-500/[0.05] ring-2 ring-indigo-500/20 shadow-lg'
-                      : 'border-slate-200 dark:border-white/[0.08] bg-slate-50/70 dark:bg-slate-950/40 hover:border-slate-300 dark:hover:border-white/[0.15]'
+                      ? 'border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.03] shadow-md'
+                      : 'border-slate-200 dark:border-white/[0.06] bg-slate-50/50 dark:bg-white/[0.01]'
                   }`}>
                     <div>
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Free Sandbox</h3>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white">Free Sandbox</h3>
                           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Basic manual journal</p>
                         </div>
                         {subscriptionTier === 'free' && (
-                          <span className="text-[10px] bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold px-2.5 py-1 rounded-full border border-slate-300 dark:border-white/15">
+                          <span className="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 font-mono font-bold px-2.5 py-0.5 rounded-full border border-slate-200 dark:border-white/15">
                             Active
                           </span>
                         )}
                       </div>
 
                       <div className="my-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">$0</span>
-                          <span className="text-xs text-slate-500 font-medium">/ month</span>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-4xl font-black font-mono text-slate-900 dark:text-white tracking-tight">$0</span>
+                          <span className="text-xs text-slate-500 font-mono font-semibold">/ month</span>
                         </div>
                       </div>
 
-                      <div className="w-full h-px bg-slate-200/80 dark:bg-white/[0.06] mb-6" />
+                      <div className="w-full h-px bg-slate-200 dark:bg-white/[0.06] mb-6" />
 
-                      <ul className="space-y-3 text-xs text-slate-700 dark:text-slate-300 mb-8 font-medium">
+                      <ul className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300 mb-8 font-medium">
                         <li className="flex items-center gap-2.5">
-                          <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
-                          <span>Up to <strong>25 manual trades</strong> / mo</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span>Up to <strong className="font-mono font-bold">25 manual trades</strong> / mo</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
                           <span>Standard metrics & performance calendar</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
-                          <span>1 Trading account link</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-mono font-bold">1</strong> Trading account link</span>
                         </li>
                       </ul>
                     </div>
 
                     <button
+                      type="button"
                       disabled={subscriptionTier === 'free'}
-                      className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-slate-200/80 dark:bg-white/10 text-slate-600 dark:text-slate-400 disabled:opacity-60 cursor-not-allowed"
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold font-mono bg-slate-100 dark:bg-white/[0.05] text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-white/[0.06] cursor-not-allowed"
                     >
                       {subscriptionTier === 'free' ? 'Current Active Plan' : 'Free Tier'}
                     </button>
                   </div>
 
-                  {/* 2. Pro Trader (POPULAR / FEATURED) */}
-                  <div className={`relative rounded-3xl p-6 border flex flex-col justify-between transition-all duration-300 ${
+                  {/* 2. Pro Trader (FEATURED / PROP READY) */}
+                  <div className={`relative rounded-3xl p-6 border-2 flex flex-col justify-between transition-all duration-300 ${
                     subscriptionTier === 'pro'
-                      ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/40 shadow-2xl shadow-indigo-500/20'
-                      : 'border-indigo-500/50 bg-gradient-to-b from-indigo-500/[0.06] via-purple-500/[0.02] to-transparent dark:from-indigo-500/15 dark:to-slate-950/80 hover:border-indigo-500 shadow-xl shadow-indigo-500/10'
+                      ? 'border-indigo-500 bg-indigo-500/[0.04] dark:bg-indigo-950/30 shadow-xl shadow-indigo-500/10'
+                      : 'border-indigo-500/60 dark:border-indigo-500/80 bg-white dark:bg-[#0e111d] shadow-xl shadow-indigo-500/5 hover:border-indigo-500'
                   }`}>
-                    {/* Popular Shimmer Ribbon */}
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-[10px] font-extrabold px-3.5 py-1 rounded-full uppercase tracking-wider shadow-md border border-indigo-400/30">
-                      Most Popular
-                    </div>
-
                     <div>
-                      <div className="flex justify-between items-start mb-4 mt-2">
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-sm mb-3">
+                        <Zap className="w-3 h-3 fill-current" /> Most Popular · Prop Ready
+                      </div>
+
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <span>Pro Trader</span>
-                          </h3>
-                          <p className="text-xs text-indigo-600 dark:text-indigo-300 font-medium mt-0.5">For active profitable traders</p>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white">Pro Trader</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">For active funded & retail traders</p>
                         </div>
                         {subscriptionTier === 'pro' && (
-                          <span className="text-[10px] bg-indigo-600 text-white font-bold px-2.5 py-1 rounded-full shadow">
+                          <span className="text-[10px] bg-indigo-600 text-white font-mono font-bold px-2.5 py-0.5 rounded-full shadow-sm">
                             Active
                           </span>
                         )}
                       </div>
 
                       <div className="my-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-tight">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-4xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
                             ${billingInterval === 'yearly' ? '8' : '10'}
                           </span>
-                          <span className="text-xs text-slate-500 font-medium">/ month</span>
+                          <span className="text-xs text-slate-500 font-mono font-semibold">/ month</span>
                         </div>
                         {billingInterval === 'yearly' && (
-                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $96 annually (Save $24)</p>
+                          <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-1">Billed $96 annually (Save $24)</p>
                         )}
                       </div>
 
-                      <div className="w-full h-px bg-indigo-500/20 dark:bg-white/[0.08] mb-6" />
+                      <div className="w-full h-px bg-slate-200 dark:bg-white/[0.06] mb-6" />
 
-                      <ul className="space-y-3 text-xs text-slate-700 dark:text-slate-200 mb-8 font-medium">
+                      <ul className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300 mb-8 font-medium">
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span><strong>Unlimited</strong> trade logging</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">Unlimited</strong> trade logging</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>MT5 & CSV statement parsers</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">MT4/MT5 & CSV</strong> statement parsers</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>Sharpe & Sortino risk metrics</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">Sharpe & Sortino</strong> risk telemetry</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>3 Trading accounts link</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-mono font-bold">3</strong> Trading accounts link</span>
                         </li>
                       </ul>
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => handleCheckout('price_pro_monthly', 'pro')}
                       disabled={isCheckingOut || subscriptionTier === 'pro'}
-                      className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white transition-all shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold font-mono tracking-wide bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-md shadow-indigo-600/25 active:scale-[0.98] disabled:opacity-50"
                     >
                       {isCheckingOut ? 'Opening Stripe Checkout...' : subscriptionTier === 'pro' ? 'Current Active Plan' : 'Upgrade to Pro'}
                     </button>
@@ -686,68 +679,65 @@ function SettingsContent() {
                   {/* 3. Institutional Tier */}
                   <div className={`relative rounded-3xl p-6 border flex flex-col justify-between transition-all duration-300 ${
                     subscriptionTier === 'institutional'
-                      ? 'border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/30 shadow-2xl shadow-purple-500/20'
-                      : 'border-purple-500/30 bg-purple-500/[0.02] dark:bg-slate-950/40 hover:border-purple-500/60'
+                      ? 'border-slate-800 dark:border-white/30 bg-white dark:bg-white/[0.04] shadow-xl'
+                      : 'border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] hover:border-slate-300 dark:hover:border-white/[0.15]'
                   }`}>
                     <div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/15 mb-3">
+                        <Crown className="w-3 h-3 text-amber-500 fill-amber-500" /> Apex Intelligence
+                      </div>
+
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Institutional</h3>
-                          <p className="text-xs text-purple-600 dark:text-purple-300 font-medium mt-0.5">Prop firm & AI power tools</p>
+                          <h3 className="text-base font-bold text-slate-900 dark:text-white">Institutional</h3>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Prop firm & AI power tools</p>
                         </div>
                         {subscriptionTier === 'institutional' && (
-                          <span className="text-[10px] bg-purple-600 text-white font-bold px-2.5 py-1 rounded-full shadow">
+                          <span className="text-[10px] bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-mono font-bold px-2.5 py-0.5 rounded-full shadow">
                             Active
                           </span>
                         )}
                       </div>
 
                       <div className="my-6">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-4xl font-black text-purple-600 dark:text-purple-400 tracking-tight">
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-4xl font-black font-mono text-slate-900 dark:text-white tracking-tight">
                             ${billingInterval === 'yearly' ? '24' : '30'}
                           </span>
-                          <span className="text-xs text-slate-500 font-medium">/ month</span>
+                          <span className="text-xs text-slate-500 font-mono font-semibold">/ month</span>
                         </div>
                         {billingInterval === 'yearly' && (
-                          <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">Billed $288 annually (Save $72)</p>
+                          <p className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold mt-1">Billed $288 annually (Save $72)</p>
                         )}
                       </div>
 
-                      <div className="w-full h-px bg-purple-500/20 dark:bg-white/[0.08] mb-6" />
+                      <div className="w-full h-px bg-slate-200 dark:bg-white/[0.06] mb-6" />
 
-                      <ul className="space-y-3 text-xs text-slate-700 dark:text-slate-200 mb-8 font-medium">
+                      <ul className="space-y-3.5 text-xs text-slate-700 dark:text-slate-300 mb-8 font-medium">
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span><strong>Prop Firm Drawdown Locks</strong></span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">Prop Firm Drawdown Locks</strong></span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>"What-If" Mistake Simulator</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">"What-If" Mistake</strong> Simulator</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>AI Pattern & Psychology Coach</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">AI Pattern & Psychology</strong> Coach</span>
                         </li>
                         <li className="flex items-center gap-2.5">
-                          <div className="w-4 h-4 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                          </div>
-                          <span>Unlimited accounts & replay</span>
+                          <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span><strong className="font-bold">Unlimited accounts</strong> & replay</span>
                         </li>
                       </ul>
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => handleCheckout('price_institutional_monthly', 'institutional')}
                       disabled={isCheckingOut || subscriptionTier === 'institutional'}
-                      className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold font-mono tracking-wide bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
                     >
                       {isCheckingOut ? 'Opening Stripe Checkout...' : subscriptionTier === 'institutional' ? 'Current Active Plan' : 'Upgrade to Institutional'}
                     </button>
@@ -756,13 +746,13 @@ function SettingsContent() {
                 </div>
 
                 {/* Trust & Guarantee Footer */}
-                <div className="mt-8 pt-6 border-t border-slate-100 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-3">
+                <div className="mt-8 pt-6 border-t border-slate-200/80 dark:border-white/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-3">
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.013C3.147 7.08 3 7.828 3 8.582c0 5.253 3.32 9.774 8 11.198 4.68-1.424 8-5.945 8-11.198 0-.754-.147-1.502-.382-2.256z" /></svg>
-                    <span><strong>256-Bit SSL Encrypted</strong> Checkout</span>
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span><strong className="font-semibold text-slate-700 dark:text-slate-300">256-Bit SSL Encrypted</strong> Checkout</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span>Powered by <strong>Stripe</strong></span>
+                    <span>Powered by <strong className="font-semibold text-slate-700 dark:text-slate-300">Stripe</strong></span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span>Cancel or switch tiers anytime in 1 click</span>
