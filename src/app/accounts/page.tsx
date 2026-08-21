@@ -711,8 +711,8 @@ export default function AccountsPage() {
                         </td>
                         
                         {/* Connection Method */}
-                        <td className="p-4 text-gray-400">
-                          <span className="text-xs font-semibold px-2 py-0.5 bg-white/[0.04] border border-white/[0.06] rounded-md">
+                        <td className="p-4">
+                          <span className="text-xs font-mono font-bold px-2 py-0.5 bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/[0.08] rounded-md shadow-sm">
                             {acc.connection_type}
                           </span>
                         </td>

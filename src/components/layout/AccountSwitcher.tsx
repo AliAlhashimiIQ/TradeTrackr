@@ -157,21 +157,21 @@ export default function AccountSwitcher() {
                     <button
                       key={acc.id}
                       onClick={() => selectAccount(acc.id)}
-                      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs text-left transition-colors ${
+                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-xs text-left transition-colors rounded-xl mx-auto ${
                         checked
-                          ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 font-bold'
-                          : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10'
+                          ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 font-bold'
+                          : 'text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/[0.06]'
                       }`}
                     >
                       {/* Checkbox */}
-                      <div className={`w-4 h-4 rounded flex items-center justify-center border flex-shrink-0 transition-colors ${
+                      <div className={`w-4 h-4 rounded-md flex items-center justify-center border flex-shrink-0 transition-all ${
                         checked
-                          ? 'bg-indigo-600 border-indigo-600'
-                          : 'border-slate-300 dark:border-white/[0.2] bg-slate-50 dark:bg-white/[0.05]'
+                          ? 'bg-indigo-600 border-indigo-600 shadow-sm shadow-indigo-600/30'
+                          : 'border-slate-300 dark:border-white/20 bg-white dark:bg-white/[0.05]'
                       }`}>
                         {checked && (
-                          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                          <svg className="w-2.5 h-2.5 text-white stroke-[3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
                       </div>
@@ -186,7 +186,7 @@ export default function AccountSwitcher() {
 
                       {/* Connection badge */}
                       {acc.connection_status === 'CONNECTED' && (
-                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide flex-shrink-0">
+                        <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wide flex-shrink-0 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
                           Live
                         </span>
                       )}

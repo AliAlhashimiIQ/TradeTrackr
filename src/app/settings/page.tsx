@@ -616,8 +616,8 @@ function SettingsContent() {
                       : 'border-indigo-500/60 dark:border-indigo-500/80 bg-white dark:bg-[#0e111d] shadow-xl shadow-indigo-500/5 hover:border-indigo-500'
                   }`}>
                     <div>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-sm mb-3">
-                        <Zap className="w-3 h-3 fill-current" /> Most Popular · Prop Ready
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-600 text-white shadow-sm mb-3 whitespace-nowrap">
+                        <Zap className="w-3 h-3 fill-current shrink-0" /> MOST POPULAR · PROP READY
                       </div>
 
                       <div className="flex justify-between items-start mb-4">
@@ -737,7 +737,7 @@ function SettingsContent() {
                       type="button"
                       onClick={() => handleCheckout('price_institutional_monthly', 'institutional')}
                       disabled={isCheckingOut || subscriptionTier === 'institutional'}
-                      className="w-full py-3 px-4 rounded-xl text-xs font-bold font-mono tracking-wide bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+                      className="w-full py-3 px-4 rounded-xl text-xs font-bold font-mono tracking-wide bg-slate-900 text-white hover:bg-slate-800 dark:bg-indigo-600 dark:text-white dark:hover:bg-indigo-500 transition-all shadow-md shadow-indigo-600/25 active:scale-[0.98] disabled:opacity-50"
                     >
                       {isCheckingOut ? 'Opening Stripe Checkout...' : subscriptionTier === 'institutional' ? 'Current Active Plan' : 'Upgrade to Institutional'}
                     </button>
