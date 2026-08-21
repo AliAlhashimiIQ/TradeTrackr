@@ -341,13 +341,13 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                     type="button"
                     onClick={() => setConfidence(star)}
                     aria-label={`Rate conviction ${star} out of 5 stars`}
-                    className={`flex-1 py-2.5 rounded-xl transition-all duration-200 flex justify-center items-center ${
+                    className={`flex-1 py-3 rounded-2xl transition-all duration-200 flex justify-center items-center active:scale-95 ${
                       star <= confidence
-                        ? 'text-amber-400 bg-amber-500/15 border border-amber-500/40 shadow-sm shadow-amber-500/10 scale-[1.02]'
-                        : 'text-slate-300 dark:text-slate-700 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] hover:text-slate-400 dark:hover:text-slate-500'
+                        ? 'text-amber-400 bg-amber-500/15 border border-amber-500/40 shadow-md shadow-amber-500/15 scale-[1.03]'
+                        : 'text-slate-300 dark:text-slate-600 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] hover:text-slate-400 dark:hover:text-slate-400'
                     }`}
                   >
-                    <Star className="w-4 h-4 fill-current" />
+                    <Star className="w-5 h-5 fill-current" />
                   </button>
                 ))}
               </div>
