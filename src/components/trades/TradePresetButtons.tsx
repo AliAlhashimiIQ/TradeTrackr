@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface TradePresetButtonsProps {
   onSelectPreset: (symbol: string) => void;
@@ -150,7 +151,7 @@ const TradePresetButtons: React.FC<TradePresetButtonsProps> = ({
     
     // Check if symbol already exists
     if (customSymbols.some(s => s.name === formattedSymbol)) {
-      alert(`Symbol ${formattedSymbol} already exists in your custom list`);
+      toast.error(`Symbol ${formattedSymbol} already exists in your custom list`);
       return;
     }
     

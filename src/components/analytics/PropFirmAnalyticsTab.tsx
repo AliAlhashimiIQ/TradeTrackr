@@ -7,6 +7,7 @@ import type { Trade } from '@/lib/types'
 import { ChallengeStatus } from '@/lib/propFirms'
 import PropFirmSimulator from '@/components/analytics/PropFirmSimulator'
 import PropFirmLogo from '@/components/ui/PropFirmLogo'
+import { AlertTriangle, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   trades: Trade[]
@@ -122,13 +123,13 @@ export default function PropFirmAnalyticsTab({ trades, challengeStatus }: Props)
           </div>
         </div>
         {isViolated && (
-          <span className="px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold border border-red-500/30">
-            ⚠ VIOLATED
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/15 text-red-400 text-xs font-bold border border-red-500/30 font-mono">
+            <AlertTriangle className="w-3.5 h-3.5" /> VIOLATED
           </span>
         )}
         {!isViolated && pnl >= profitTargetAmount && (
-          <span className="px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/30">
-            ✓ TARGET HIT
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 text-xs font-bold border border-emerald-500/30 font-mono">
+            <CheckCircle2 className="w-3.5 h-3.5" /> TARGET HIT
           </span>
         )}
       </div>

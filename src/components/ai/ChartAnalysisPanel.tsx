@@ -734,7 +734,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
                       }));
                       
                       // Show success message
-                      alert("Test pattern added successfully. Check if it appears in the pattern list above.");
+                      toast.success("Test pattern added successfully. Check if it appears in the pattern list above.");
                     }}
                     className="text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-900/30 px-2 py-0.5 rounded"
                   >
