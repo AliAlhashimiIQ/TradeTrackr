@@ -203,7 +203,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
           <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">
             {isWin ? 'Winning' : 'Losing'} Trades Range
           </p>
-          <p className="text-slate-650 dark:text-slate-300 mb-1">Range: <span className="font-mono font-semibold">{formatCurrency(values[0])} to {formatCurrency(values[1])}</span></p>
+          <p className="text-slate-600 dark:text-slate-300 mb-1">Range: <span className="font-mono font-semibold">{formatCurrency(values[0])} to {formatCurrency(values[1])}</span></p>
           <p className="text-slate-655 dark:text-slate-300 mb-1">Frequency: <span className="font-mono font-semibold">{item.percentage.toFixed(2)}%</span></p>
           <p className="text-slate-655 dark:text-slate-300">Count: <span className="font-mono font-bold text-slate-900 dark:text-white">{item.count} trades</span></p>
         </div>
@@ -225,7 +225,7 @@ const WinLossDistribution: React.FC<WinLossDistributionProps> = ({
                 type="checkbox"
                 checked={showLabels}
                 onChange={(e) => setShowLabels(e.target.checked)}
-                className="rounded text-indigo-650 focus:ring-indigo-500 h-3.5 w-3.5 border-slate-300 dark:border-white/10 dark:bg-slate-900"
+                className="rounded text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 border-slate-300 dark:border-white/10 dark:bg-slate-900"
               />
               <span>Show Labels</span>
             </label>

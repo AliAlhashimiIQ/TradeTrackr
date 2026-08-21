@@ -515,7 +515,7 @@ export default function CalendarPage() {
                     onClick={() => setViewMode(mode)}
                     className={`px-2.5 sm:px-4 py-1 text-[11px] sm:text-xs font-bold rounded-lg transition-all cursor-pointer ${
                       viewMode === mode
-                        ? 'bg-indigo-650 text-white shadow'
+                        ? 'bg-indigo-600 text-white shadow'
                         : 'text-slate-655 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
@@ -566,7 +566,7 @@ export default function CalendarPage() {
 
                     <div className="flex items-end justify-between mt-1">
                       <div className="flex flex-col gap-0.5">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-450'}`}>
+                        <span className={`text-[10px] font-black uppercase tracking-wider ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : isLoss ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400'}`}>
                           {isProfit ? 'WIN' : isLoss ? 'LOSS' : 'BE'}
                         </span>
                         <span className="text-[10px] text-slate-500 dark:text-gray-400 font-semibold font-mono">
@@ -668,7 +668,7 @@ export default function CalendarPage() {
 
           <Link
             href="/trades/new"
-            className="flex items-center px-4 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/10 cursor-pointer self-start md:self-auto"
+            className="flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm transition-all shadow-md shadow-indigo-600/10 cursor-pointer self-start md:self-auto"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -682,7 +682,7 @@ export default function CalendarPage() {
           {/* Card 1: Net P&L (with Sparkline + Gain %) */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col gap-1.5 relative overflow-hidden col-span-2 sm:col-span-1">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Net P&L</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Net P&L</span>
               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
                 monthStats.pnl >= 0 ? 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400' : 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400'
               }`}>
@@ -708,7 +708,7 @@ export default function CalendarPage() {
           {/* Card 2: Win Rate */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Win Rate</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Win Rate</span>
               <svg className="w-5 h-5 transform -rotate-90" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" r="15.9155" className="stroke-slate-100 dark:stroke-white/[0.05]" strokeWidth="3.5" fill="none" />
                 <circle cx="18" cy="18" r="15.9155" className="stroke-indigo-600 dark:stroke-indigo-400" strokeWidth="3.5" strokeDasharray={`${monthStats.winRate}, 100`} strokeLinecap="round" fill="none" />
@@ -721,7 +721,7 @@ export default function CalendarPage() {
 
           {/* Card 3: Wins */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
-            <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Wins</span>
+            <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Wins</span>
             <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight">
               {monthStats.wins}
             </span>
@@ -729,7 +729,7 @@ export default function CalendarPage() {
 
           {/* Card 4: Losses */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
-            <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Losses</span>
+            <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Losses</span>
             <span className="text-xl font-black text-rose-600 dark:text-rose-400 tabular-nums tracking-tight">
               {monthStats.losses}
             </span>
@@ -738,7 +738,7 @@ export default function CalendarPage() {
           {/* Card 5: Total Trades */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Trades</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Trades</span>
               <span className="text-[8px] font-black uppercase bg-slate-100 dark:bg-white/[0.04] px-1.5 py-0.5 rounded text-slate-500 font-mono">Month</span>
             </div>
             <span className="text-xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
@@ -749,7 +749,7 @@ export default function CalendarPage() {
           {/* Card 6: Best Day */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Best Day</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Best Day</span>
               <span className="text-emerald-500"><TrendUp /></span>
             </div>
             <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight mt-1">
@@ -760,7 +760,7 @@ export default function CalendarPage() {
           {/* Card 7: Worst Day */}
           <div className="bg-white dark:bg-[#0d0e16] border border-slate-200 dark:border-white/[0.06] p-4 rounded-2xl shadow-sm flex flex-col justify-between min-h-[90px]">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">Worst Day</span>
+              <span className="text-[10px] text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">Worst Day</span>
               <span className="text-rose-500"><TrendDown /></span>
             </div>
             <span className="text-xl font-black text-rose-600 dark:text-rose-400 tabular-nums tracking-tight mt-1">
@@ -969,7 +969,7 @@ export default function CalendarPage() {
                   className={`p-3.5 rounded-xl flex flex-col justify-between text-center transition-all border ${monthCardClasses} ${
                     isActive
                       ? 'ring-2 ring-indigo-500 border-transparent shadow-md'
-                      : 'hover:border-slate-350 dark:hover:border-white/12'
+                      : 'hover:border-slate-300 dark:hover:border-white/12'
                   }`}
                 >
                   <span className={`text-[10px] tracking-wider font-black ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-gray-500'}`}>
@@ -985,8 +985,8 @@ export default function CalendarPage() {
                     {stat.tradesCount > 0 ? (
                       <span className={`text-[8px] font-black px-1 py-0.2 rounded border ${
                         stat.winRate >= 50
-                          ? 'bg-emerald-500/10 text-emerald-650 dark:text-emerald-400 border-emerald-500/15'
-                          : 'bg-red-500/10 text-red-650 dark:text-red-400 border-red-500/15'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/15'
+                          : 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/15'
                       }`}>
                         {stat.winRate}% WR
                       </span>
@@ -1006,7 +1006,7 @@ export default function CalendarPage() {
             </span>
             <Link
               href="/trades"
-              className="text-xs text-indigo-650 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1 transition-all"
+              className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1 transition-all"
             >
               <span>Full Journal</span>
               <ChevronRight />

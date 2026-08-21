@@ -2245,7 +2245,7 @@ export default function BacktestSessionPage() {
                       <button onClick={(e) => { e.stopPropagation(); handleStepBackward(); }} disabled={currentIndex <= 50 || isPlaying} className="p-1 px-2 border border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-300">
                         ←
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }} className="p-1 px-3 bg-indigo-650 text-white rounded text-[10px] font-bold min-w-[55px]">
+                      <button onClick={(e) => { e.stopPropagation(); setIsPlaying(!isPlaying); }} className="p-1 px-3 bg-indigo-600 text-white rounded text-[10px] font-bold min-w-[55px]">
                         {isPlaying ? 'Pause' : 'Play'}
                       </button>
                       <button onClick={(e) => { e.stopPropagation(); handleStepForward(); }} disabled={currentIndex >= candles.length - 1 || isPlaying} className="p-1 px-2 border border-white/[0.06] rounded text-[10px] disabled:opacity-20 font-bold flex items-center justify-center text-slate-300">
@@ -2375,20 +2375,20 @@ export default function BacktestSessionPage() {
                         {[...trades].reverse().map((trade) => (
                           <tr key={trade.id} className="hover:bg-white/[0.01]">
                             <td className="py-2">
-                              <span className={`px-1.5 py-0.5 rounded font-extrabold text-[9px] uppercase ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-450'}`}>
+                              <span className={`px-1.5 py-0.5 rounded font-extrabold text-[9px] uppercase ${trade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                 {trade.type}
                               </span>
                             </td>
                             <td className="py-2">{trade.quantity}</td>
                             <td className="py-2">{trade.entry_price.toFixed(5)}</td>
                             <td className="py-2">{trade.exit_price?.toFixed(5)}</td>
-                            <td className={`py-2 ${(trade.pips || 0) >= 0 ? 'text-emerald-400' : 'text-rose-450'}`}>
+                            <td className={`py-2 ${(trade.pips || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {(trade.pips || 0) > 0 ? '+' : ''}{(trade.pips || 0).toFixed(1)}
                             </td>
-                            <td className={`py-2 ${(trade.r_multiple || 0) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-450 font-bold'}`}>
+                            <td className={`py-2 ${(trade.r_multiple || 0) >= 0 ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}`}>
                               {(trade.r_multiple || 0) > 0 ? '+' : ''}{(trade.r_multiple || 0).toFixed(2)}R
                             </td>
-                            <td className={`py-2 ${(trade.profit_loss || 0) >= 0 ? 'text-emerald-400' : 'text-rose-450'}`}>
+                            <td className={`py-2 ${(trade.profit_loss || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                               {(trade.profit_loss || 0) >= 0 ? '+' : ''}{formatCurrency(trade.profit_loss || 0)}
                             </td>
                             <td className="py-2 text-[10px] text-slate-500 font-sans">{trade.close_reason || 'Exit Limit hit'}</td>
@@ -2542,13 +2542,13 @@ export default function BacktestSessionPage() {
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleOpenPosition('Long')}
-                        className="py-2.5 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-450 border border-emerald-500/30 hover:border-emerald-500/50 shadow-sm transition-all active:scale-95 cursor-pointer"
+                        className="py-2.5 rounded-xl text-xs font-bold bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:border-emerald-500/50 shadow-sm transition-all active:scale-95 cursor-pointer"
                       >
                         {orderType === 'market' ? 'Buy Market' : 'Buy Limit/Stop'}
                       </button>
                       <button
                         onClick={() => handleOpenPosition('Short')}
-                        className="py-2.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/30 hover:border-rose-500/50 shadow-sm transition-all active:scale-95 cursor-pointer"
+                        className="py-2.5 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:border-rose-500/50 shadow-sm transition-all active:scale-95 cursor-pointer"
                       >
                         {orderType === 'market' ? 'Sell Market' : 'Sell Limit/Stop'}
                       </button>
@@ -2643,7 +2643,7 @@ export default function BacktestSessionPage() {
                     <div className="absolute top-0 right-0 w-12 h-12 bg-indigo-500/5 rounded-full blur-xl" />
                     
                     <div className="flex justify-between items-center">
-                      <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${activeTrade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'}`}>
+                      <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded ${activeTrade.type === 'Long' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}`}>
                         {activeTrade.type} POSITION
                       </span>
                       <span className="text-[10px] font-mono text-slate-400">{activeTrade.qty} Lot(s)</span>
@@ -2679,7 +2679,7 @@ export default function BacktestSessionPage() {
                         </div>
                         <button 
                           onClick={handleModifyLimits}
-                          className="w-full py-1.5 bg-indigo-650 hover:bg-indigo-600 text-white rounded text-[10px] font-bold transition-all"
+                          className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-600 text-white rounded text-[10px] font-bold transition-all"
                         >
                           Modify SL/TP Limits
                         </button>
@@ -2751,7 +2751,7 @@ export default function BacktestSessionPage() {
                       <div key={o.id} className="bg-slate-950 p-2.5 rounded-xl border border-white/[0.04] text-[10px] space-y-1.5 flex justify-between items-center">
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <span className={`font-bold ${o.side === 'Long' ? 'text-emerald-400' : 'text-rose-450'}`}>{o.type}</span>
+                            <span className={`font-bold ${o.side === 'Long' ? 'text-emerald-400' : 'text-rose-400'}`}>{o.type}</span>
                             <span className="text-slate-400">•</span>
                             <span className="font-mono text-white">{o.qty} Lots</span>
                           </div>

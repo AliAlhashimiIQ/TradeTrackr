@@ -119,7 +119,7 @@ export default function PropFirmSimulator({
           <Sliders className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
           <h2 className="text-gray-900 dark:text-white font-bold text-base">Interactive Challenge Projection Simulator</h2>
         </div>
-        <div className="text-[10px] bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/25 uppercase tracking-wide">
+        <div className="text-[10px] bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold px-2 py-0.5 rounded border border-indigo-500/25 uppercase tracking-wide">
           Phase 1 Gating
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function PropFirmSimulator({
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-gray-500 dark:text-gray-400">Estimated Win Rate</span>
-              <span className="text-indigo-650 dark:text-indigo-400">{winRate}%</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{winRate}%</span>
             </div>
             <input 
               type="range" 
@@ -151,7 +151,7 @@ export default function PropFirmSimulator({
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-gray-500 dark:text-gray-400">Risk-to-Reward Ratio</span>
-              <span className="text-indigo-650 dark:text-indigo-400">{riskReward.toFixed(1)}:1</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{riskReward.toFixed(1)}:1</span>
             </div>
             <input 
               type="range" 
@@ -168,7 +168,7 @@ export default function PropFirmSimulator({
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-gray-500 dark:text-gray-400">Risk Per Trade</span>
-              <span className="text-indigo-650 dark:text-indigo-400">{riskPerTrade.toFixed(1)}%</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{riskPerTrade.toFixed(1)}%</span>
             </div>
             <input 
               type="range" 
@@ -185,7 +185,7 @@ export default function PropFirmSimulator({
           <div className="space-y-2">
             <div className="flex justify-between text-xs font-semibold">
               <span className="text-gray-500 dark:text-gray-400">Trades Per Day</span>
-              <span className="text-indigo-650 dark:text-indigo-400">{tradesPerDay.toFixed(1)}</span>
+              <span className="text-indigo-600 dark:text-indigo-400">{tradesPerDay.toFixed(1)}</span>
             </div>
             <input 
               type="range" 
@@ -208,7 +208,7 @@ export default function PropFirmSimulator({
                 Projected Days to Pass
               </span>
               <div className="flex items-baseline gap-1">
-                <span className={`text-2xl font-black ${stats.projectedDays > 0 && stats.projectedDays <= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-650 dark:text-indigo-400'}`}>
+                <span className={`text-2xl font-black ${stats.projectedDays > 0 && stats.projectedDays <= 30 ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
                   {stats.projectedDays > 0 ? `${stats.projectedDays} Days` : 'Never'}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export default function PropFirmSimulator({
               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">
                 Expected Value (EV)
               </span>
-              <span className={`text-2xl font-black ${stats.expectedValue >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-650 dark:text-red-400'}`}>
+              <span className={`text-2xl font-black ${stats.expectedValue >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-red-400'}`}>
                 {stats.expectedValue >= 0 ? '+' : ''}${Math.round(stats.expectedValue)}
               </span>
               <span className="text-[9px] text-gray-500 mt-1 block">
@@ -236,7 +236,7 @@ export default function PropFirmSimulator({
                 Drawdown Breach Risk
               </span>
               <div className="flex items-center gap-1.5">
-                <span className={`text-2xl font-black ${stats.riskOfDrawdown > 50 ? 'text-rose-650 dark:text-red-400' : stats.riskOfDrawdown > 20 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                <span className={`text-2xl font-black ${stats.riskOfDrawdown > 50 ? 'text-rose-600 dark:text-red-400' : stats.riskOfDrawdown > 20 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                   {stats.riskOfDrawdown.toFixed(1)}%
                 </span>
                 {stats.riskOfDrawdown > 30 && (
@@ -290,13 +290,13 @@ export default function PropFirmSimulator({
             
             {/* Legend Labels Overlaid */}
             <div className="absolute top-3 left-4 flex gap-4 text-[9px] font-bold tracking-wider uppercase">
-              <span className="text-indigo-650 dark:text-indigo-400 flex items-center gap-1">
+              <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full inline-block" /> Projected Growth
               </span>
               <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full inline-block" /> Profit Target (${targetBalance.toLocaleString()})
               </span>
-              <span className="text-red-650 dark:text-red-400 flex items-center gap-1">
+              <span className="text-red-600 dark:text-red-400 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-red-500 rounded-full inline-block" /> Max Drawdown (${liquidationBalance.toLocaleString()})
               </span>
             </div>

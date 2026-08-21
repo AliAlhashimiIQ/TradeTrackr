@@ -185,7 +185,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-450 dark:text-gray-500">Density</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-500">Density</span>
             <div className="flex rounded-xl p-0.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/[0.06] shadow-sm">
               <button
                 onClick={() => onDensityChange('compact')}
@@ -414,7 +414,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   <span className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {trade.symbol}
                                   </span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-slate-200/50 dark:bg-white/[0.04] text-gray-650 dark:text-gray-400 uppercase">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold bg-slate-200/50 dark:bg-white/[0.04] text-gray-600 dark:text-gray-400 uppercase">
                                     {trade.type} {trade.lots ? `${trade.lots} Lot` : ''}
                                   </span>
                                   {trade.profit_loss !== undefined && (
@@ -429,7 +429,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   {/* Strategy Tags or Fallback */}
                                   {hasStrategyTags ? (
                                     trade.tags?.map(tag => (
-                                      <span key={tag} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-indigo-500/10 text-indigo-650 dark:text-indigo-400 border border-indigo-500/20">
+                                      <span key={tag} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
                                         {tag}
                                       </span>
                                     ))
@@ -442,7 +442,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                   {reasons.filter(r => r !== 'no-plan').map(reason => {
                                     if (reason === 'fomo') {
                                       return (
-                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-650 dark:text-orange-400 border border-orange-500/20">
+                                        <span key={reason} className="text-[9px] px-2 py-0.5 rounded font-semibold bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
                                           FOMO
                                         </span>
                                       );
@@ -469,7 +469,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               <div className="text-right">
                                 <span className="text-[10px] text-gray-500 block">Score</span>
                                 <span className={`text-xs font-bold font-mono ${
-                                  quality >= 70 ? 'text-emerald-600 dark:text-emerald-400' : quality >= 50 ? 'text-amber-650 dark:text-amber-400' : 'text-rose-600 dark:text-red-400'
+                                  quality >= 70 ? 'text-emerald-600 dark:text-emerald-400' : quality >= 50 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-red-400'
                                 }`}>
                                   {quality}%
                                 </span>
@@ -518,7 +518,7 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-1.5">
                     Period
                     {(startDate || endDate) && (
-                      <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30 uppercase tracking-wide font-bold">Custom</span>
+                      <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 dark:border-indigo-500/30 uppercase tracking-wide font-bold">Custom</span>
                     )}
                   </label>
                   <select value={dateFilter} onChange={e => onFilterChange('dateFilter', e.target.value)}
@@ -571,11 +571,11 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
             className="mb-4 p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-sm text-indigo-650 dark:text-indigo-300 font-semibold">{selectedTradeIds.length} selected</span>
+              <span className="text-sm text-indigo-600 dark:text-indigo-300 font-semibold">{selectedTradeIds.length} selected</span>
               <div className="flex gap-1.5">
-                <button onClick={() => onBulkAction('delete')} className="px-3 py-1.5 text-xs font-semibold bg-red-500/10 text-red-650 dark:text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
-                <button onClick={() => onBulkAction('export')} className="px-3 py-1.5 text-xs font-semibold bg-blue-500/10 text-blue-650 dark:text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
-                <button onClick={() => onBulkAction('tag')} className="px-3 py-1.5 text-xs font-semibold bg-purple-500/10 text-purple-650 dark:text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
+                <button onClick={() => onBulkAction('delete')} className="px-3 py-1.5 text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
+                <button onClick={() => onBulkAction('export')} className="px-3 py-1.5 text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
+                <button onClick={() => onBulkAction('tag')} className="px-3 py-1.5 text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
               </div>
             </div>
             <button onClick={onClearSelection} className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors font-medium">Clear</button>

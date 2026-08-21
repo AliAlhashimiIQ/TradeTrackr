@@ -397,7 +397,7 @@ export default function AnalyticsPage() {
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
               >
-                <svg className="w-4 h-4 mr-2 text-indigo-550 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>{timePeriod === 'all' ? 'All Time' : `Last ${timePeriod}`}</span>
@@ -429,7 +429,7 @@ export default function AnalyticsPage() {
               onClick={() => setShowAdvancedFilters(true)}
               className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
             >
-              <svg className="w-4 h-4 mr-2 text-indigo-550 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
               <span>Advanced Filters</span>
@@ -1127,7 +1127,7 @@ export default function AnalyticsPage() {
                   {excludedMistakes.length > 0 && (
                     <button 
                       onClick={() => setExcludedMistakes([])}
-                      className="text-xs text-indigo-650 dark:text-indigo-400 hover:text-indigo-500 font-bold"
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold"
                     >
                       Reset All
                     </button>
@@ -1200,7 +1200,7 @@ export default function AnalyticsPage() {
                           <div className={`border rounded-2xl p-4 text-center ${
                             isPositive 
                               ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-400' 
-                              : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-550/25 text-rose-700 dark:text-rose-400'
+                              : 'bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-500/25 text-rose-700 dark:text-rose-400'
                           }`}>
                             <span className="text-[9px] font-bold uppercase tracking-wider block mb-1">
                               {isPositive ? 'Simulated Recovery Profit' : 'Simulated Net Loss Impact'}
@@ -1269,7 +1269,7 @@ export default function AnalyticsPage() {
                   <h2 className="text-slate-900 dark:text-white font-semibold">Dollar Cost of Each Mistake</h2>
                   <p className="text-slate-500 dark:text-gray-400 text-xs mt-0.5">Total P&L impact when this mistake was present</p>
                 </div>
-                <div className="bg-red-50 dark:bg-red-500/10 text-red-650 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-200 dark:border-red-500/10 uppercase tracking-tighter">Mistake Tracker</div>
+                <div className="bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded border border-red-200 dark:border-red-500/10 uppercase tracking-tighter">Mistake Tracker</div>
               </div>
               <MistakesCostChart trades={filteredTrades} />
             </div>

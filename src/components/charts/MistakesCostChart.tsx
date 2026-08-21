@@ -51,7 +51,7 @@ const MistakesCostChart: React.FC<MistakesCostChartProps> = ({ trades }) => {
       const data = payload[0].payload;
       return (
         <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs">
-          <p className="text-slate-850 dark:text-slate-100 font-bold mb-1.5">{data.name}</p>
+          <p className="text-slate-800 dark:text-slate-100 font-bold mb-1.5">{data.name}</p>
           <p className={`text-xs font-semibold ${data.cost < 0 ? 'text-rose-600 dark:text-red-400' : 'text-emerald-600 dark:text-green-400'} mb-1`}>
             Total Impact: <span className="font-mono font-bold">{formatCurrency(data.cost)}</span>
           </p>

@@ -242,7 +242,7 @@ export default function Header() {
               ) : (
                 <button
                   onClick={() => setStreakPanelOpen(true)}
-                  className="w-full flex items-center gap-2 px-3 py-2 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.04] border border-black/10 dark:border-white/[0.06] text-gray-450 dark:text-gray-500 rounded-xl text-xs font-semibold cursor-pointer select-none transition-colors duration-150"
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-black/[0.02] dark:bg-white/[0.02] hover:bg-black/[0.05] dark:hover:bg-white/[0.04] border border-black/10 dark:border-white/[0.06] text-gray-400 dark:text-gray-500 rounded-xl text-xs font-semibold cursor-pointer select-none transition-colors duration-150"
                   title="View streak details"
                 >
                   <svg className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -350,7 +350,7 @@ export default function Header() {
                         onClick={() => setMobileMenuOpen(false)}
                         className={`flex items-center gap-4 px-4 py-3.5 rounded-xl text-sm font-medium transition-all ${
                           isActive 
-                            ? 'bg-indigo-600/10 text-indigo-650 dark:text-indigo-400 border border-indigo-500/20' 
+                            ? 'bg-indigo-600/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20' 
                             : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/5'
                         }`}
                       >

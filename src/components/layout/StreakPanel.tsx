@@ -323,7 +323,7 @@ function ActivityHeatmap({ tradeDates, frozenDates }: { tradeDates: string[]; fr
         {weeks.map((_, wi) => {
           const label = monthLabels.find(l => l.col === wi)
           return (
-            <div key={wi} className="flex-1 text-[8px] text-gray-400 dark:text-gray-650 font-medium" style={{ minWidth: 12, maxWidth: 12 }}>
+            <div key={wi} className="flex-1 text-[8px] text-gray-400 dark:text-gray-600 font-medium" style={{ minWidth: 12, maxWidth: 12 }}>
               {label?.label ?? ''}
             </div>
           )
@@ -335,7 +335,7 @@ function ActivityHeatmap({ tradeDates, frozenDates }: { tradeDates: string[]; fr
         {/* Day labels */}
         <div className="flex flex-col gap-[3px]">
           {DAY_LABELS.map((label, i) => (
-            <div key={i} className="h-[12px] text-[8px] text-gray-400 dark:text-gray-650 leading-none flex items-center justify-end pr-1" style={{ width: 16 }}>
+            <div key={i} className="h-[12px] text-[8px] text-gray-400 dark:text-gray-600 leading-none flex items-center justify-end pr-1" style={{ width: 16 }}>
               {label}
             </div>
           ))}
@@ -378,7 +378,7 @@ function ActivityHeatmap({ tradeDates, frozenDates }: { tradeDates: string[]; fr
         ].map(item => (
           <div key={item.label} className="flex items-center gap-1.5">
             <div className={`w-[10px] h-[10px] rounded-[2px] ${item.className}`} />
-            <span className="text-[8px] text-gray-500 dark:text-gray-650 font-medium uppercase tracking-wider">{item.label}</span>
+            <span className="text-[8px] text-gray-500 dark:text-gray-600 font-medium uppercase tracking-wider">{item.label}</span>
           </div>
         ))}
       </div>
@@ -620,10 +620,10 @@ export function StreakPanel({
                 <div>
                   <SectionHeader
                     title="Freeze Tokens"
-                    right={<span className="text-[9px] text-gray-500 dark:text-gray-650 font-medium">Every 5-day milestone</span>}
+                    right={<span className="text-[9px] text-gray-500 dark:text-gray-600 font-medium">Every 5-day milestone</span>}
                   />
                   <FreezeTokens count={streakFreezes} />
-                  <p className="text-[10px] text-gray-500 dark:text-gray-650 mt-2 leading-relaxed pl-0.5 font-medium">
+                  <p className="text-[10px] text-gray-500 dark:text-gray-600 mt-2 leading-relaxed pl-0.5 font-medium">
                     Tokens automatically protect your streak when a weekday is missed.
                   </p>
                 </div>
@@ -633,7 +633,7 @@ export function StreakPanel({
                   <SectionHeader
                     title="Badges"
                     right={
-                      <span className="text-[10px] font-semibold tabular-nums px-2.5 py-1 rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 text-indigo-650 dark:text-indigo-400">
+                      <span className="text-[10px] font-semibold tabular-nums px-2.5 py-1 rounded-full bg-indigo-500/5 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                         {earnedBadges.length} / {BADGES.length}
                       </span>
                     }

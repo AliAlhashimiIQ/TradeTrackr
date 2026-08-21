@@ -55,12 +55,12 @@ const OpenPositions: React.FC<OpenPositionProps> = ({ positions, isLoading }) =>
                 <div className="flex justify-between items-center">
                   <div className="flex items-center">
                     <span className={`h-2 w-2 rounded-full mr-2 ${
-                      isProfitable ? 'bg-green-550 dark:bg-green-500' : 'bg-red-550 dark:bg-red-500'
+                      isProfitable ? 'bg-green-500 dark:bg-green-500' : 'bg-red-500 dark:bg-red-500'
                     }`}></span>
                     <span className="text-gray-900 dark:text-white font-medium">{position.symbol}</span>
                   </div>
                   <span className={`text-sm font-medium ${
-                    isProfitable ? 'text-green-600 dark:text-green-400' : 'text-red-650 dark:text-red-400'
+                    isProfitable ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}>
                     {isProfitable ? '+' : ''}${Math.abs(pnl).toFixed(2)}
                   </span>
@@ -202,7 +202,7 @@ export default function DashboardSummary() {
             {/* P/L Chart */}
             <div className="bg-white dark:bg-gradient-to-br dark:from-[#181e2e]/80 dark:to-[#232a3d]/80 rounded-2xl shadow-xl border border-black/5 dark:border-blue-900/20 hover:shadow-2xl transition-all p-5">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <svg className="w-6 h-6 text-indigo-650 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" /></svg>
+                <svg className="w-6 h-6 text-indigo-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17l6-6 4 4 8-8" /></svg>
                 P/L Chart
               </h3>
               <EquityChart data={equityData} isLoading={isLoading} />

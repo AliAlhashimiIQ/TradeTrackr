@@ -913,7 +913,7 @@ function SettingsContent() {
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {[
                           { label: 'Profit Target', value: `${tier.profitTargetPercent}%`, color: 'text-emerald-500 dark:text-emerald-400' },
-                          { label: 'Daily DD Limit', value: `${tier.maxDailyLossPercent}%`, color: 'text-amber-550 dark:text-amber-400' },
+                          { label: 'Daily DD Limit', value: `${tier.maxDailyLossPercent}%`, color: 'text-amber-500 dark:text-amber-400' },
                           { label: 'Total DD Limit', value: `${tier.maxTotalLossPercent}%`, color: 'text-red-500 dark:text-red-400' },
                           { label: 'Min Days', value: tier.minTradingDays ? `${tier.minTradingDays}d` : 'None', color: 'text-blue-500 dark:text-blue-400' },
                         ].map(item => (

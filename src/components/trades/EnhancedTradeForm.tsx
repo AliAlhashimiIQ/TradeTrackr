@@ -497,7 +497,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   onClick={() => handleChange('type', 'Short')}
                   className={`relative py-4 rounded-xl font-bold text-sm transition-all duration-200 overflow-hidden border-2 ${
                     formData.type === 'Short'
-                      ? 'text-red-650 dark:text-red-400 border-red-500/40'
+                      ? 'text-red-600 dark:text-red-400 border-red-500/40'
                       : 'text-gray-500 border-black/5 dark:border-transparent bg-white dark:bg-[var(--surface-1)] hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-50'
                   }`}
                 >
@@ -839,7 +839,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   {formData.tags && formData.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-6">
                       {formData.tags.map(tag => (
-                        <span key={tag} className="px-2 py-0.5 text-[10px] font-medium rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-650 dark:text-indigo-300">
+                        <span key={tag} className="px-2 py-0.5 text-[10px] font-medium rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300">
                           {tag}
                         </span>
                       ))}

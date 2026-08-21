@@ -243,7 +243,7 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
                 : val;
 
             return (
-              <p key={idx} className="text-xs font-semibold text-slate-650 dark:text-slate-400 mb-1 flex items-center gap-1.5">
+              <p key={idx} className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.fill || p.stroke }} />
                 <span>{p.name}:</span>
                 <span className="font-mono font-bold text-slate-900 dark:text-white">{displayVal}</span>

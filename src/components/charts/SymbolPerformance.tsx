@@ -124,19 +124,19 @@ const SymbolPerformance: React.FC<SymbolPerformanceProps> = ({
         <div className="flex space-x-1 bg-slate-100 dark:bg-slate-950/40 p-1 rounded-xl border border-slate-200/60 dark:border-white/5">
           <button
             onClick={() => setMetric('pnL')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'pnL' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             P&L
           </button>
           <button
             onClick={() => setMetric('winRate')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'winRate' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Win Rate
           </button>
           <button
             onClick={() => setMetric('trades')}
-            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
+            className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${metric === 'trades' ? 'bg-indigo-600 text-white shadow' : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Trades
           </button>

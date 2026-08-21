@@ -146,14 +146,14 @@ export const FormTags: React.FC<FormTagsProps> = ({
                     onClick={() => onToggleTag(rule)}
                     className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
                       isChecked
-                        ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-750 dark:text-white shadow-md'
+                        ? 'bg-indigo-500/10 border-indigo-500/40 text-indigo-700 dark:text-white shadow-md'
                         : 'bg-white/40 dark:bg-[#0d0e16]/40 border-black/5 dark:border-white/[0.03] text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-white/70 dark:hover:bg-[#0d0e16]/60'
                     }`}
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 ${
                       isChecked
                         ? 'bg-indigo-500 border-indigo-500 text-white'
-                        : 'border-slate-350 dark:border-slate-700 text-transparent'
+                        : 'border-slate-300 dark:border-slate-700 text-transparent'
                     }`}>
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" />
@@ -215,7 +215,7 @@ export const FormTags: React.FC<FormTagsProps> = ({
                 setCustomTag('');
               }
             }}
-            className="px-3.5 py-2.5 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-gray-650 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white text-base transition-colors"
+            className="px-3.5 py-2.5 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white text-base transition-colors"
           >
             Add
           </button>
@@ -269,7 +269,7 @@ export const FormTags: React.FC<FormTagsProps> = ({
                 setCustomMistake('');
               }
             }}
-            className="px-3.5 py-2.5 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-gray-650 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white text-base transition-colors"
+            className="px-3.5 py-2.5 bg-white dark:bg-[#0d0e16] border border-black/10 dark:border-white/[0.06] rounded-lg text-gray-600 dark:text-gray-300 hover:text-gray-950 dark:hover:text-white text-base transition-colors"
           >
             Add
           </button>

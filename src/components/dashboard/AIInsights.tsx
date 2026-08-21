@@ -72,7 +72,7 @@ export default function AIInsights({ insights: initialInsights, isLoading: initi
   return (
     <div className="bg-white dark:bg-[var(--surface-1)] rounded-lg p-4 border border-black/5 dark:border-transparent">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-        <svg className="w-5 h-5 mr-2 text-indigo-650 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 mr-2 text-indigo-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
         </svg>
         AI Insights

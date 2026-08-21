@@ -115,7 +115,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
               activeMetric === 'pnL' 
                 ? 'bg-indigo-600 text-white shadow' 
-                : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             P&L
@@ -125,7 +125,7 @@ const MonthlyPerformance: React.FC<MonthlyPerformanceProps> = ({
             className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
               activeMetric === 'winRate' 
                 ? 'bg-indigo-600 text-white shadow' 
-                : 'text-slate-650 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             Win Rate

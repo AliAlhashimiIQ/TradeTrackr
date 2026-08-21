@@ -166,7 +166,7 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
           <svg className="w-4 h-4 text-red-500 dark:text-red-400 flex-shrink-0 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
-          <span className="text-red-650 dark:text-red-300 text-xs font-semibold">
+          <span className="text-red-600 dark:text-red-300 text-xs font-semibold">
             {isViolated 
               ? violationReason 
               : `Consistency rule breached (Best day ${consistencyStats?.percentage.toFixed(1)}% of target exceeds 40% limit)`
@@ -210,7 +210,7 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
               <span className={`text-sm font-bold ${isWinning ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-red-400'}`}>
                 {fmt(pnl)}
               </span>
-              <span className="text-gray-400 dark:text-gray-650 text-xs font-semibold">/ {fmt(profitTargetAmount)}</span>
+              <span className="text-gray-400 dark:text-gray-600 text-xs font-semibold">/ {fmt(profitTargetAmount)}</span>
             </div>
           </div>
           <div className="h-2.5 bg-black/5 dark:bg-white/[0.05] rounded-full overflow-hidden">
@@ -223,7 +223,7 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium">0%</span>
-            <span className="text-[10px] text-gray-500 dark:text-gray-450 font-semibold">{progressPercent.toFixed(1)}% of target</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold">{progressPercent.toFixed(1)}% of target</span>
             <span className="text-[10px] text-gray-400 dark:text-gray-600 font-medium">{tier.profitTargetPercent}%</span>
           </div>
         </div>
@@ -236,14 +236,14 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
               <div className="flex items-baseline gap-1 text-xs">
                 <span className={`font-bold ${
                   consistencyStats.isBreached 
-                    ? 'text-red-650 dark:text-red-400' 
+                    ? 'text-red-600 dark:text-red-400' 
                     : consistencyStats.isClose 
                     ? 'text-amber-600 dark:text-amber-400' 
                     : 'text-gray-700 dark:text-gray-300'
                 }`}>
                   {consistencyStats.percentage.toFixed(1)}%
                 </span>
-                <span className="text-gray-400 dark:text-gray-550 font-semibold">/ 40.0% limit</span>
+                <span className="text-gray-400 dark:text-gray-500 font-semibold">/ 40.0% limit</span>
               </div>
             </div>
             <div className="h-2 bg-black/5 dark:bg-white/[0.05] rounded-full overflow-hidden">
@@ -266,7 +266,7 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
                   <svg className="w-3.5 h-3.5 text-red-500 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <span className="text-red-650 dark:text-red-300">Consistency rule breached: Best day profit exceeds 40% of target.</span>
+                  <span className="text-red-600 dark:text-red-300">Consistency rule breached: Best day profit exceeds 40% of target.</span>
                 </>
               ) : consistencyStats.isClose ? (
                 <>
@@ -331,14 +331,14 @@ export default function ChallengeDashboardWidget({ status, trades = [] }: Props)
         {/* Quick Numbers */}
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-gray-50 dark:bg-white/[0.03] rounded-xl p-3 border border-black/5 dark:border-white/[0.05]">
-            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-450 uppercase tracking-wider mb-1">Today's P&L</p>
+            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Today's P&L</p>
             <p className={`text-lg font-black ${todayPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-red-400'}`}>
               {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
             </p>
           </div>
 
           <div className="bg-gray-50 dark:bg-white/[0.03] rounded-xl p-3 border border-black/5 dark:border-white/[0.05]">
-            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-450 uppercase tracking-wider mb-1">
+            <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
               {daysRemaining !== null ? 'Days Left' : 'Day'}
             </p>
             <p className={`text-lg font-black ${

@@ -221,7 +221,7 @@ export default function EmptyState({
           transition={{ duration: 0.4 }}
           className="text-center mb-10"
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-150 dark:border-indigo-500/25 text-indigo-650 dark:text-indigo-400 text-xs font-bold mb-4 uppercase tracking-widest">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-4 uppercase tracking-widest">
             🏁 Getting Started Onboarding
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mb-3">Welcome to TradeTrackr!</h2>

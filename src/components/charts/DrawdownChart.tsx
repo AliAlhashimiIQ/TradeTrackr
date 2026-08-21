@@ -64,7 +64,7 @@ const DrawdownChart: React.FC<DrawdownChartProps> = ({
       const val = payload[0].value;
       return (
         <div className="bg-white dark:bg-[var(--tooltip-bg)] p-3.5 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 text-xs animate-in fade-in zoom-in duration-100">
-          <p className="font-bold text-slate-850 dark:text-slate-200 mb-1.5">{formatDate(label)}</p>
+          <p className="font-bold text-slate-800 dark:text-slate-200 mb-1.5">{formatDate(label)}</p>
           <p className="text-xs font-semibold text-rose-600 dark:text-red-400">
             Drawdown: <span className="font-mono font-bold">{val.toFixed(2)}%</span>
           </p>

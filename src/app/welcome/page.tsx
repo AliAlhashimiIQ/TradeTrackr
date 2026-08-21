@@ -122,7 +122,7 @@ export default function WelcomePage() {
               </div>
               {idx < 2 && (
                 <div className={`flex-1 h-[1px] mx-4 -mt-2 transition-colors duration-500 ${
-                  step > item.stepNum ? 'bg-emerald-500/30' : 'bg-gray-250 dark:bg-white/[0.04]'
+                  step > item.stepNum ? 'bg-emerald-500/30' : 'bg-gray-200 dark:bg-white/[0.04]'
                 }`} />
               )}
             </React.Fragment>
@@ -176,7 +176,7 @@ export default function WelcomePage() {
                 <div className="mt-8 flex justify-end">
                   <button 
                     onClick={nextStep} 
-                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-150 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
                   >
                     Continue
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -236,7 +236,7 @@ export default function WelcomePage() {
                   </button>
                   <button 
                     onClick={nextStep} 
-                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-150 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
+                    className="px-6 py-3 bg-gray-900 hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-100 text-white dark:text-black text-xs font-bold rounded-xl shadow-lg transition-colors flex items-center gap-2"
                   >
                     Continue
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

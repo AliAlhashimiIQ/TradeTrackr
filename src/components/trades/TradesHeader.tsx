@@ -125,7 +125,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
             {/* Custom Visual Mini Charts */}
             {m.label === 'Total P&L' && (
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] space-y-2 relative z-10">
-                <div className="flex justify-between text-xs text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">
+                <div className="flex justify-between text-xs text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">
                   <span>Avg Win</span>
                   <span>Avg Loss</span>
                 </div>
@@ -176,7 +176,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
                     </defs>
                   </svg>
                 </div>
-                <div className="flex justify-between items-center text-xs text-slate-450 dark:text-gray-500 font-bold tracking-wide px-1">
+                <div className="flex justify-between items-center text-xs text-slate-400 dark:text-gray-500 font-bold tracking-wide px-1">
                   <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
                     <span>{Math.round((quickMetrics.winRate / 100) * filteredTradesCount)} Wins</span>
@@ -193,7 +193,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
               const gpRatio = quickMetrics.profitFactor > 0 ? (quickMetrics.profitFactor / (quickMetrics.profitFactor + 1)) * 100 : 50;
               return (
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] flex items-center justify-between gap-3 relative z-10">
-                  <div className="text-xs text-slate-450 dark:text-gray-500 leading-normal font-bold max-w-[65%]">
+                  <div className="text-xs text-slate-400 dark:text-gray-500 leading-normal font-bold max-w-[65%]">
                     <span>Proportion of gross profit vs gross loss</span>
                   </div>
                   <svg className="w-12 h-12 shrink-0 transform -rotate-90" viewBox="0 0 36 36">
@@ -220,7 +220,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
               const longPct = total > 0 ? (longCount / total) * 100 : 50;
               return (
                 <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.04] space-y-2 relative z-10">
-                  <div className="flex justify-between text-xs text-slate-450 dark:text-gray-500 font-bold uppercase tracking-wider">
+                  <div className="flex justify-between text-xs text-slate-400 dark:text-gray-500 font-bold uppercase tracking-wider">
                     <span>Buy ({longCount})</span>
                     <span>Sell ({shortCount})</span>
                   </div>

@@ -82,7 +82,7 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
         </h3>
         <Link 
           href="/trades" 
-          className="text-[10px] font-bold text-indigo-650 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors"
+          className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 uppercase tracking-wider transition-colors"
         >
           View All
         </Link>
@@ -153,12 +153,12 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
                   </td>
 
                   {/* Entry Price */}
-                  <td className="px-5 py-3 whitespace-nowrap text-right text-xs text-gray-650 dark:text-gray-400 font-mono font-medium">
+                  <td className="px-5 py-3 whitespace-nowrap text-right text-xs text-gray-600 dark:text-gray-400 font-mono font-medium">
                     {trade.entry_price != null ? trade.entry_price.toFixed(4) : '--'}
                   </td>
 
                   {/* Exit Price */}
-                  <td className="px-5 py-3 whitespace-nowrap text-right text-xs text-gray-650 dark:text-gray-400 font-mono font-medium">
+                  <td className="px-5 py-3 whitespace-nowrap text-right text-xs text-gray-600 dark:text-gray-400 font-mono font-medium">
                     {trade.exit_price != null ? trade.exit_price.toFixed(4) : '--'}
                   </td>
 
@@ -181,7 +181,7 @@ export default function RecentTradesList({ trades, isLoading }: RecentTradesList
                   <td className="px-5 py-3 whitespace-nowrap text-center">
                     <Link 
                       href={`/trades/${trade.id}`}
-                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-indigo-650 dark:hover:text-indigo-300 hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/10 transition-all hover:scale-105 active:scale-95"
+                      className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-indigo-500/10 border border-transparent hover:border-indigo-500/10 transition-all hover:scale-105 active:scale-95"
                       title="View trade details"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

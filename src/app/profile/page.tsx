@@ -313,7 +313,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.username || ''}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
+                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
                         placeholder="Choose a username"
                       />
                     </div>
@@ -328,7 +328,7 @@ export default function ProfilePage() {
                         type="text"
                         value={formData.full_name || ''}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-650 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
+                        className="w-full px-3 py-2 bg-white dark:bg-[var(--surface-3)] border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -343,7 +343,7 @@ export default function ProfilePage() {
                         type="email"
                         value={formData.email}
                         disabled
-                        className="w-full px-3 py-2 bg-gray-100 dark:bg-[var(--surface-3)]/50 border border-gray-300 dark:border-gray-650 rounded-md opacity-75 cursor-not-allowed text-gray-500 dark:text-gray-400"
+                        className="w-full px-3 py-2 bg-gray-100 dark:bg-[var(--surface-3)]/50 border border-gray-300 dark:border-gray-600 rounded-md opacity-75 cursor-not-allowed text-gray-500 dark:text-gray-400"
                       />
                       <p className="text-xs text-gray-400 mt-1">Email cannot be changed</p>
                     </div>

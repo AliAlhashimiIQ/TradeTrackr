@@ -87,12 +87,12 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                   {displayName}
                 </div>
                 
-                <Link href="/profile" className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-gray-650 dark:text-gray-300">
+                <Link href="/profile" className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-gray-600 dark:text-gray-300">
                   <User size={16} />
                   <span className="text-sm font-medium">Profile</span>
                 </Link>
                 
-                <Link href="/settings" className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-gray-650 dark:text-gray-300">
+                <Link href="/settings" className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors text-gray-600 dark:text-gray-300">
                   <Settings size={16} />
                   <span className="text-sm font-medium">Settings</span>
                 </Link>
