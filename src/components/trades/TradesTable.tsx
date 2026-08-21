@@ -1394,12 +1394,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         case 'strategy': return (
                           <div key={colKey} className="relative flex items-center gap-1.5 pr-4 min-w-0 h-full pr-2">
                             {trade.strategy ? (
-                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                              <button type="button" onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
                                 className="popover-trigger px-2.5 py-1 rounded-lg text-indigo-300 bg-indigo-500/10 border border-indigo-500/25 text-xs font-semibold tracking-wide capitalize hover:bg-indigo-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all truncate">
                                 {trade.strategy}
                               </button>
                             ) : (
-                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
+                              <button type="button" aria-label={`Set strategy for ${trade.symbol} trade`} onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'strategy' ? null : { tradeId: trade.id, type: 'strategy' })}
                                 className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             )}
                             <AnimatePresence>
@@ -1430,12 +1430,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                         case 'mindset': return (
                           <div key={colKey} className="relative flex items-center gap-1 pr-4 min-w-0 h-full pr-2">
                             {trade.emotional_state ? (
-                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
+                              <button type="button" aria-label={`Change emotional state for ${trade.symbol} trade`} onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
                                 className={`popover-trigger text-[10px] px-2.5 py-1 rounded-lg border font-semibold capitalize tracking-wide transition-all ${EMOTIONS.find(e => e.value === trade.emotional_state)?.bg || 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
                                 {trade.emotional_state}
                               </button>
                             ) : (
-                              <button onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
+                              <button type="button" aria-label={`Set mindset for ${trade.symbol} trade`} onClick={() => setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mindset' ? null : { tradeId: trade.id, type: 'mindset' })}
                                 className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0" title="Set mindset">+</button>
                             )}
                             <AnimatePresence>
@@ -1447,7 +1447,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                                     {EMOTIONS.map(emotion => {
                                       const isSelected = trade.emotional_state === emotion.value;
                                       return (
-                                        <button key={emotion.value} onClick={async () => { setActivePopover(null); onInlineChange('emotional_state', emotion.value); const updatedTrade = { ...trade, emotional_state: emotion.value }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
+                                        <button key={emotion.value} type="button" onClick={async () => { setActivePopover(null); onInlineChange('emotional_state', emotion.value); const updatedTrade = { ...trade, emotional_state: emotion.value }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
                                           className={`w-full flex items-center justify-between text-left px-2 py-1.5 rounded-lg text-xs font-medium transition-colors ${isSelected ? 'bg-indigo-500/10 text-indigo-300' : 'text-gray-300 hover:bg-white/[0.04]'}`}>
                                           <span className="capitalize">{emotion.label}</span>{isSelected && <span className="text-indigo-400 font-bold">✓</span>}
                                         </button>
@@ -1455,7 +1455,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                                     })}
                                   </div>
                                   {trade.emotional_state && (
-                                    <button onClick={async () => { setActivePopover(null); const updatedTrade = { ...trade, emotional_state: null as any }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
+                                    <button type="button" onClick={async () => { setActivePopover(null); const updatedTrade = { ...trade, emotional_state: null as any }; onToggleTag(updatedTrade, 'EMOTION_UPDATE_DUMMY_TAG', false); }}
                                       className="w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors">Clear Mindset</button>
                                   )}
                                 </motion.div>
@@ -1471,12 +1471,12 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                                 const style = getTagStyle(tc?.color, false);
                                 return (
                                   <span key={tag} style={style} className="text-[11px] px-2.5 py-1 rounded-full border flex items-center gap-1.5 transition-colors duration-150 font-medium group/pill shrink-0">
-                                    {tag}<button onClick={() => onToggleTag(trade, tag, false)} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
+                                    {tag}<button type="button" onClick={() => onToggleTag(trade, tag, false)} className="hover:opacity-80 text-[10px] font-bold transition-opacity font-sans">✕</button>
                                   </span>
                                 );
                               })}
                             </div>
-                            <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
+                            <button type="button" aria-label={`Add tag to ${trade.symbol} trade`} onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'tags' ? null : { tradeId: trade.id, type: 'tags' }) }}
                               className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'tags' && renderTagsPopover(trade, false, idx >= filteredTrades.length - 2)}
@@ -1496,8 +1496,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                                 );
                               })}
                             </div>
-                            <button onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
-                              aria-label={`Add mistake tag to ${trade.symbol} trade`}
+                            <button type="button" aria-label={`Add mistake tag to ${trade.symbol} trade`} onClick={e => { setPopoverAnchorEl(e.currentTarget); setActivePopover(activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' ? null : { tradeId: trade.id, type: 'mistakes' }) }}
                               className="popover-trigger w-5 h-5 rounded-full bg-slate-100 dark:bg-white/[0.04] hover:bg-red-500/10 dark:hover:bg-red-500/25 border border-slate-200 dark:border-white/[0.04] text-slate-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-300 flex items-center justify-center transition-all text-xs font-bold hover:scale-105 active:scale-95 shrink-0">+</button>
                             <AnimatePresence>
                               {activePopover?.tradeId === trade.id && activePopover?.type === 'mistakes' && renderTagsPopover(trade, true, idx >= filteredTrades.length - 2)}

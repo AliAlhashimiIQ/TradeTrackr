@@ -579,7 +579,10 @@ export default function AccountsPage() {
           >
             <div className="space-y-1">
               <h3 className="text-white font-bold flex items-center gap-2">
-                <span className="text-amber-400">⚠️</span> Legacy Unassigned Trades Detected
+                <svg className="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Legacy Unassigned Trades Detected
               </h3>
               <p className="text-gray-400 text-xs leading-relaxed max-w-2xl">
                 You have <strong className="text-white">{unassignedCount} trades</strong> logged without an associated trading account. You can bulk-assign all of them to one of your accounts to make them visible under individual account analytics.

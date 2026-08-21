@@ -182,12 +182,13 @@ export function computeChallengeStatus(
   currentBalance: number,
   todayPnL: number,
 ): ChallengeStatus {
-  const pnl = currentBalance - startBalance
-  const pnlPercent = (pnl / startBalance) * 100
+  const safeStartBalance = startBalance > 0 ? startBalance : 10000
+  const pnl = currentBalance - safeStartBalance
+  const pnlPercent = (pnl / safeStartBalance) * 100
 
-  const profitTargetAmount = startBalance * (tier.profitTargetPercent / 100)
-  const maxDailyLossAmount = startBalance * (tier.maxDailyLossPercent / 100)
-  const maxTotalLossAmount = startBalance * (tier.maxTotalLossPercent / 100)
+  const profitTargetAmount = safeStartBalance * (tier.profitTargetPercent / 100)
+  const maxDailyLossAmount = safeStartBalance * (tier.maxDailyLossPercent / 100)
+  const maxTotalLossAmount = safeStartBalance * (tier.maxTotalLossPercent / 100)
 
   const start = new Date(startDate)
   const now = new Date()
@@ -198,10 +199,10 @@ export function computeChallengeStatus(
   let isViolated = false
   let violationReason: string | null = null
 
-  if (todayPnL < 0 && Math.abs(todayPnL) >= maxDailyLossAmount) {
+  if (todayPnL < 0 && maxDailyLossAmount > 0 && Math.abs(todayPnL) >= maxDailyLossAmount) {
     isViolated = true
     violationReason = `Daily loss limit breached (${fmt(todayPnL)} / -${fmt(maxDailyLossAmount)})`
-  } else if (pnl < 0 && Math.abs(pnl) >= maxTotalLossAmount) {
+  } else if (pnl < 0 && maxTotalLossAmount > 0 && Math.abs(pnl) >= maxTotalLossAmount) {
     isViolated = true
     violationReason = `Total loss limit breached (${fmt(pnl)} / -${fmt(maxTotalLossAmount)})`
   } else if (daysRemaining !== null && daysRemaining === 0 && pnl < profitTargetAmount) {
@@ -209,9 +210,9 @@ export function computeChallengeStatus(
     violationReason = `Time expired without reaching profit target`
   }
 
-  const progressPercent = Math.min(100, Math.max(0, (pnl / profitTargetAmount) * 100))
-  const dailyDrawdownPercent = todayPnL < 0 ? Math.min(100, (Math.abs(todayPnL) / maxDailyLossAmount) * 100) : 0
-  const totalDrawdownPercent = pnl < 0 ? Math.min(100, (Math.abs(pnl) / maxTotalLossAmount) * 100) : 0
+  const progressPercent = profitTargetAmount > 0 ? Math.min(100, Math.max(0, (pnl / profitTargetAmount) * 100)) : 0
+  const dailyDrawdownPercent = maxDailyLossAmount > 0 && todayPnL < 0 ? Math.min(100, (Math.abs(todayPnL) / maxDailyLossAmount) * 100) : 0
+  const totalDrawdownPercent = maxTotalLossAmount > 0 && pnl < 0 ? Math.min(100, (Math.abs(pnl) / maxTotalLossAmount) * 100) : 0
 
   return {
     firm, tier, startDate, startBalance, currentBalance,
