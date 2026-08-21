@@ -28,13 +28,13 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get('d2');
 
   const queryParts: string[] = [];
-  queryParts.push(`client=${apiKey}`);
+  queryParts.push(`client=${encodeURIComponent(apiKey)}`);
 
-  if (country) queryParts.push(`c=${country}`);
-  if (indicator) queryParts.push(`i=${indicator}`);
-  if (importance) queryParts.push(`importance=${importance}`);
-  if (startDate) queryParts.push(`d1=${startDate}`);
-  if (endDate) queryParts.push(`d2=${endDate}`);
+  if (country) queryParts.push(`c=${encodeURIComponent(country)}`);
+  if (indicator) queryParts.push(`i=${encodeURIComponent(indicator)}`);
+  if (importance) queryParts.push(`importance=${encodeURIComponent(importance)}`);
+  if (startDate) queryParts.push(`d1=${encodeURIComponent(startDate)}`);
+  if (endDate) queryParts.push(`d2=${encodeURIComponent(endDate)}`);
 
   const targetUrl = `${BASE_URL}?${queryParts.join('&')}`;
 

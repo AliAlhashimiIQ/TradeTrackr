@@ -658,25 +658,11 @@ Write in a supportive, professional, and coach-like tone. Return only a JSON obj
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   const token = authHeader?.replace('Bearer ', '');
-  const url = new URL(req.url);
-  const paramSecret = url.searchParams.get('secret');
 
-  const isDev = process.env.NODE_ENV !== 'production';
-
-  // Secure checks in production
-  if (!isDev) {
-    let authorized = false;
-    if (cronSecret && (token === cronSecret || paramSecret === cronSecret)) {
-      authorized = true;
-    } else if (serviceKey && (token === serviceKey || paramSecret === serviceKey)) {
-      authorized = true;
-    }
-    if (!authorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  // Verify CRON_SECRET from Bearer header
+  if (!cronSecret || token !== cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid CRON_SECRET' }, { status: 401 });
   }
 
   try {
@@ -695,32 +681,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
   const token = authHeader?.replace('Bearer ', '');
-  const url = new URL(req.url);
-  const paramSecret = url.searchParams.get('secret');
 
-  const isDev = process.env.NODE_ENV !== 'production';
-
-  // Secure checks in production
-  if (!isDev) {
-    let authorized = false;
-    if (cronSecret && (token === cronSecret || paramSecret === cronSecret)) {
-      authorized = true;
-    } else if (serviceKey && (token === serviceKey || paramSecret === serviceKey)) {
-      authorized = true;
-    }
-    if (!authorized) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+  if (!cronSecret || token !== cronSecret) {
+    return NextResponse.json({ error: 'Unauthorized: Missing or invalid CRON_SECRET' }, { status: 401 });
   }
 
   try {
     const reports = await runWeeklyDigest();
     return NextResponse.json({
       success: true,
-      message: `Weekly digest processed successfully for ${reports.length} user(s).`,
+      message: `Weekly digest processed successfully via POST for ${reports.length} user(s).`,
       reports
     });
   } catch (error: any) {

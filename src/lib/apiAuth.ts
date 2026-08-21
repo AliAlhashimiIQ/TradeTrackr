@@ -1,28 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Server-side Supabase auth helper for API routes.
- * Extracts the JWT from the Authorization header and verifies the user.
+ * Supports both Authorization Bearer tokens and HTTP-only session cookies.
  * Returns { user, supabase } on success, or a NextResponse error on failure.
  */
 export async function authenticateRequest(req: NextRequest) {
-  const authHeader = req.headers.get('authorization');
-  const token = authHeader?.replace('Bearer ', '') || undefined;
-
-  if (!token) {
-    return {
-      error: NextResponse.json(
-        { error: 'Missing authorization header or token parameter' },
-        { status: 401 }
-      ),
-    };
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!supabaseUrl || (!supabaseAnonKey && !supabaseServiceKey)) {
     return {
       error: NextResponse.json(
         { error: 'Server configuration error' },
@@ -31,19 +21,47 @@ export async function authenticateRequest(req: NextRequest) {
     };
   }
 
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
+  // 1. Check Authorization Bearer header first
+  const authHeader = req.headers.get('authorization');
+  const token = authHeader?.replace('Bearer ', '').trim();
 
-  if (error || !user) {
-    return {
-      error: NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 401 }
-      ),
-    };
+  if (token && supabaseServiceKey) {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (!error && user) {
+      return { user, supabase };
+    }
   }
 
-  return { user, supabase };
+  // 2. Fallback to SSR cookies from request
+  if (supabaseAnonKey) {
+    const ssrClient = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll();
+        },
+        setAll() {
+          // No-op in route handlers when only reading
+        },
+      },
+    });
+
+    const { data: { user }, error } = await ssrClient.auth.getUser();
+    if (!error && user) {
+      // Use service-role client for DB queries or ssrClient
+      const dbClient = supabaseServiceKey 
+        ? createClient(supabaseUrl, supabaseServiceKey)
+        : ssrClient;
+      return { user, supabase: dbClient };
+    }
+  }
+
+  return {
+    error: NextResponse.json(
+      { error: 'Unauthorized: Missing or invalid authentication' },
+      { status: 401 }
+    ),
+  };
 }
 
 /**

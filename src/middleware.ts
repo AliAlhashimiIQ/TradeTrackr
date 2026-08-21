@@ -39,6 +39,9 @@ export async function middleware(req: NextRequest) {
     '/accounts',
     '/playbook',
     '/import',
+    '/journal',
+    '/backtesting',
+    '/welcome',
   ].some(prefix => path.startsWith(prefix) || path === prefix)
 
   if (isProtectedPath && !user) {

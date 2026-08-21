@@ -11,10 +11,25 @@ const nextConfig = {
   swcMinify: true,
   poweredByHeader: false,
   async headers() {
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.jsdelivr.net;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      img-src 'self' data: blob: https://*.supabase.co https://*.tradingview.com https://s3.tradingview.com https://images.unsplash.com;
+      media-src 'self' data: blob: https://*.supabase.co;
+      connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.stripe.com https://api.openai.com https://api.twelvedata.com https://query1.finance.yahoo.com https://api.tradingeconomics.com;
+      frame-src 'self' https://js.stripe.com https://hooks.stripe.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    `.replace(/\s{2,}/g, ' ').trim();
+
     return [
       {
         source: '/(.*)',
         headers: [
+          { key: 'Content-Security-Policy', value: cspHeader },
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
@@ -69,6 +84,11 @@ const nextConfig = {
   // 6.4 — Use remotePatterns (replaces deprecated `domains`)
   images: {
     remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
       {
         protocol: 'https',
         hostname: 'lasbltckupplodtvwzsq.supabase.co',

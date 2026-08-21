@@ -73,7 +73,8 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const timestamp = Date.now();
-    const fileName = `${userId}/trade-video-${timestamp}-${videoFile.name}`;
+    const sanitizedFileName = videoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${userId}/trade-video-${timestamp}-${sanitizedFileName}`;
     
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('trade-videos')

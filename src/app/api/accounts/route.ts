@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           last_sync: null,
         },
       ])
-      .select()
+      .select('id, user_id, name, account_number, server_name, type, platform, balance, connection_status, connection_type, last_sync, created_at, updated_at')
       .single();
 
     if (error) {
@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest) {
       })
       .eq('id', id)
       .eq('user_id', userId)
-      .select()
+      .select('id, user_id, name, account_number, server_name, type, platform, balance, connection_status, connection_type, last_sync, created_at, updated_at')
       .single();
 
     if (error) {
@@ -125,7 +125,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data, error } = await supabase
       .from('trading_accounts')
-      .select('*')
+      .select('id, user_id, name, account_number, server_name, type, platform, balance, connection_status, connection_type, last_sync, created_at, updated_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
