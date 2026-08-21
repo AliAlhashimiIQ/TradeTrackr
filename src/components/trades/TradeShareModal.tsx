@@ -22,7 +22,8 @@ import {
   Sparkles,
   Flame,
   Terminal,
-  Crown
+  Crown,
+  Maximize2
 } from 'lucide-react'
 
 interface TradeShareModalProps {
@@ -42,6 +43,7 @@ export default function TradeShareModal({
 }: TradeShareModalProps) {
   const [theme, setTheme] = useState<CardTheme>('cyber')
   const [hideDollarPnl, setHideDollarPnl] = useState(false)
+  const [withCanvasFrame, setWithCanvasFrame] = useState(true)
   const [isExporting, setIsExporting] = useState(false)
   const [copied, setCopied] = useState(false)
   const cardRef = useRef<HTMLDivElement>(null)
@@ -98,8 +100,10 @@ export default function TradeShareModal({
     label: string
     icon: any
     colorSwatch: string
+    outerFrameBg: string
     cardBg: string
     border: string
+    specularGlow: string
     accentGlow: string
     titleColor: string
     badgeBg: string
@@ -112,13 +116,15 @@ export default function TradeShareModal({
       label: 'Cyber HUD',
       icon: Terminal,
       colorSwatch: 'bg-indigo-500',
-      cardBg: 'bg-[#070913]',
-      border: 'border-[#1e2338]',
-      accentGlow: isWin ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)',
+      outerFrameBg: 'bg-[#030408]',
+      cardBg: 'bg-[#070914]',
+      border: 'border-[#22273f] ring-1 ring-indigo-500/25',
+      specularGlow: 'via-indigo-400/40',
+      accentGlow: isWin ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)',
       titleColor: 'text-white',
       badgeBg: 'bg-[#101426] border-[#252b48] text-indigo-300',
-      gridColor: 'rgba(99, 102, 241, 0.07)',
-      heroBacklight: isWin ? 'from-emerald-500/15 via-emerald-500/5 to-transparent' : 'from-rose-500/15 via-rose-500/5 to-transparent',
+      gridColor: 'rgba(99, 102, 241, 0.08)',
+      heroBacklight: isWin ? 'from-emerald-500/20 via-emerald-500/5 to-transparent' : 'from-rose-500/20 via-rose-500/5 to-transparent',
       accentText: 'text-indigo-400',
       hudTag: 'border-indigo-500/40 text-indigo-300 bg-indigo-500/10'
     },
@@ -126,13 +132,15 @@ export default function TradeShareModal({
       label: 'Gold Obsidian',
       icon: Crown,
       colorSwatch: 'bg-amber-400',
-      cardBg: 'bg-[#050505]',
-      border: 'border-[#2a2415]',
-      accentGlow: 'rgba(245, 158, 11, 0.2)',
+      outerFrameBg: 'bg-[#030303]',
+      cardBg: 'bg-[#060606]',
+      border: 'border-[#382f1b] ring-1 ring-amber-500/30',
+      specularGlow: 'via-amber-300/40',
+      accentGlow: 'rgba(245, 158, 11, 0.25)',
       titleColor: 'text-amber-100',
       badgeBg: 'bg-[#161208] border-amber-500/30 text-amber-300',
-      gridColor: 'rgba(245, 158, 11, 0.05)',
-      heroBacklight: isWin ? 'from-amber-500/15 via-emerald-500/5 to-transparent' : 'from-amber-500/10 via-rose-500/5 to-transparent',
+      gridColor: 'rgba(245, 158, 11, 0.06)',
+      heroBacklight: isWin ? 'from-amber-500/20 via-emerald-500/5 to-transparent' : 'from-amber-500/15 via-rose-500/5 to-transparent',
       accentText: 'text-amber-400',
       hudTag: 'border-amber-500/40 text-amber-300 bg-amber-500/10'
     },
@@ -140,13 +148,15 @@ export default function TradeShareModal({
       label: 'Terminal Phos',
       icon: Crosshair,
       colorSwatch: 'bg-emerald-500',
+      outerFrameBg: 'bg-[#010604]',
       cardBg: 'bg-[#030d08]',
-      border: 'border-emerald-900/50',
-      accentGlow: 'rgba(16, 185, 129, 0.3)',
+      border: 'border-emerald-800/60 ring-1 ring-emerald-500/30',
+      specularGlow: 'via-emerald-400/40',
+      accentGlow: 'rgba(16, 185, 129, 0.35)',
       titleColor: 'text-emerald-100',
       badgeBg: 'bg-[#06180f] border-emerald-500/30 text-emerald-400',
-      gridColor: 'rgba(16, 185, 129, 0.08)',
-      heroBacklight: isWin ? 'from-emerald-500/20 via-emerald-500/5 to-transparent' : 'from-rose-500/20 via-rose-500/5 to-transparent',
+      gridColor: 'rgba(16, 185, 129, 0.09)',
+      heroBacklight: isWin ? 'from-emerald-500/25 via-emerald-500/5 to-transparent' : 'from-rose-500/25 via-rose-500/5 to-transparent',
       accentText: 'text-emerald-400',
       hudTag: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
     },
@@ -154,13 +164,15 @@ export default function TradeShareModal({
       label: 'Tokyo Neon',
       icon: Flame,
       colorSwatch: 'bg-fuchsia-500',
+      outerFrameBg: 'bg-[#040208]',
       cardBg: 'bg-[#0a0512]',
-      border: 'border-fuchsia-900/40',
-      accentGlow: 'rgba(217, 70, 239, 0.25)',
+      border: 'border-fuchsia-800/60 ring-1 ring-fuchsia-500/30',
+      specularGlow: 'via-fuchsia-400/40',
+      accentGlow: 'rgba(217, 70, 239, 0.3)',
       titleColor: 'text-fuchsia-100',
       badgeBg: 'bg-[#180b26] border-fuchsia-500/30 text-fuchsia-300',
-      gridColor: 'rgba(217, 70, 239, 0.07)',
-      heroBacklight: isWin ? 'from-fuchsia-500/15 via-emerald-500/5 to-transparent' : 'from-fuchsia-500/15 via-rose-500/5 to-transparent',
+      gridColor: 'rgba(217, 70, 239, 0.08)',
+      heroBacklight: isWin ? 'from-fuchsia-500/20 via-emerald-500/5 to-transparent' : 'from-fuchsia-500/20 via-rose-500/5 to-transparent',
       accentText: 'text-fuchsia-400',
       hudTag: 'border-fuchsia-500/40 text-fuchsia-300 bg-fuchsia-500/10'
     }
@@ -183,7 +195,8 @@ export default function TradeShareModal({
       const blob = await toBlob(cardRef.current, {
         quality: 0.98,
         pixelRatio: 2.5,
-        cacheBust: true
+        cacheBust: true,
+        backgroundColor: withCanvasFrame ? '#030408' : undefined
       })
       if (!blob) throw new Error('Failed to generate image blob')
 
@@ -195,7 +208,7 @@ export default function TradeShareModal({
         toast.success('P&L Card copied to clipboard!')
         setTimeout(() => setCopied(false), 2500)
       } else {
-        const dataUrl = await toPng(cardRef.current, { pixelRatio: 2.5 })
+        const dataUrl = await toPng(cardRef.current, { pixelRatio: 2.5, backgroundColor: withCanvasFrame ? '#030408' : undefined })
         const link = document.createElement('a')
         link.download = `TradeTrackr-${trade.symbol}-${isWin ? 'WIN' : 'LOSS'}.png`
         link.href = dataUrl
@@ -218,7 +231,8 @@ export default function TradeShareModal({
       const dataUrl = await toPng(cardRef.current, {
         quality: 0.98,
         pixelRatio: 2.5,
-        cacheBust: true
+        cacheBust: true,
+        backgroundColor: withCanvasFrame ? '#030408' : undefined
       })
       const link = document.createElement('a')
       link.download = `TradeTrackr-${trade.symbol}-${isWin ? 'WIN' : 'LOSS'}.png`
@@ -309,200 +323,227 @@ Verified on @TradeTrackr 🚀
               })}
             </div>
 
-            {/* Privacy Toggle */}
-            <button
-              type="button"
-              onClick={() => setHideDollarPnl(!hideDollarPnl)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
-                hideDollarPnl
-                  ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-inner'
-                  : 'bg-white/[0.04] text-gray-300 border-white/[0.08] hover:bg-white/[0.08]'
-              }`}
-            >
-              {hideDollarPnl ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              <span>{hideDollarPnl ? 'Dollar Hidden' : 'Hide Dollar P&L'}</span>
-            </button>
+            {/* Right Controls */}
+            <div className="flex items-center gap-2">
+              {/* Frame Padding Toggle */}
+              <button
+                type="button"
+                onClick={() => setWithCanvasFrame(!withCanvasFrame)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  withCanvasFrame
+                    ? 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30'
+                    : 'bg-white/[0.04] text-gray-400 border-white/[0.08]'
+                }`}
+                title="Toggle canvas border frame"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>{withCanvasFrame ? 'Border Frame' : 'Frameless'}</span>
+              </button>
+
+              {/* Privacy Toggle */}
+              <button
+                type="button"
+                onClick={() => setHideDollarPnl(!hideDollarPnl)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  hideDollarPnl
+                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-inner'
+                    : 'bg-white/[0.04] text-gray-300 border-white/[0.08] hover:bg-white/[0.08]'
+                }`}
+              >
+                {hideDollarPnl ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span>{hideDollarPnl ? 'Dollar Hidden' : 'Hide Dollar'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Card Preview Canvas */}
-          <div className="p-6 sm:p-8 flex justify-center items-center bg-[#05060b] overflow-hidden">
-            {/* ── THE PRO SHARE CARD (Export Target) ── */}
+          <div className="p-4 sm:p-8 flex justify-center items-center bg-[#05060b] overflow-hidden">
+            {/* ── THE PRO SHARE CARD (Export Target with Safe Padding) ── */}
             <div
               ref={cardRef}
-              className={`w-full max-w-[560px] rounded-[24px] p-6 sm:p-7 border ${activeTheme.cardBg} ${activeTheme.border} relative overflow-hidden select-none transition-all duration-300`}
-              style={{
-                boxShadow: `0 20px 50px -15px ${activeTheme.accentGlow}`
-              }}
+              className={`w-full max-w-[560px] ${withCanvasFrame ? `p-4 sm:p-5 rounded-[30px] ${activeTheme.outerFrameBg}` : ''} transition-all duration-300`}
             >
-              {/* High-Tech Perspective Grid Background */}
-              <div 
-                className="absolute inset-0 pointer-events-none opacity-40"
-                style={{
-                  backgroundImage: `linear-gradient(to right, ${activeTheme.gridColor} 1px, transparent 1px), linear-gradient(to bottom, ${activeTheme.gridColor} 1px, transparent 1px)`,
-                  backgroundSize: '24px 24px',
-                  maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)',
-                  WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)'
-                }}
-              />
-
-              {/* Ambient Glowing Spotlight behind P&L */}
               <div
-                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[180px] rounded-full blur-[70px] pointer-events-none bg-gradient-to-b ${activeTheme.heroBacklight}`}
-              />
+                className={`w-full rounded-[24px] p-6 sm:p-7 border ${activeTheme.cardBg} ${activeTheme.border} relative overflow-hidden select-none`}
+                style={{
+                  boxShadow: `0 20px 50px -12px ${activeTheme.accentGlow}`
+                }}
+              >
+                {/* Top Specular Light Highlight Border */}
+                <div 
+                  className={`absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent ${activeTheme.specularGlow} to-transparent pointer-events-none z-20`} 
+                />
 
-              {/* Top Precision HUD Strip */}
-              <div className="relative z-10 flex items-center justify-between pb-4 mb-5 border-b border-white/[0.08]">
-                {/* Brand Monogram Mark */}
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-md border border-indigo-400/30">
-                    <span className="text-white font-black text-[10px] tracking-tighter font-mono">TT</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-white font-black text-xs tracking-wider uppercase font-mono">
-                        TradeTrackr
-                      </span>
-                      <ShieldCheck className={`w-3.5 h-3.5 ${activeTheme.accentText}`} />
-                    </div>
-                    <span className="text-[9px] text-gray-400 font-mono tracking-widest uppercase block">
-                      Verified Telemetry
-                    </span>
-                  </div>
-                </div>
+                {/* High-Tech Perspective Grid Background */}
+                <div 
+                  className="absolute inset-0 pointer-events-none opacity-40"
+                  style={{
+                    backgroundImage: `linear-gradient(to right, ${activeTheme.gridColor} 1px, transparent 1px), linear-gradient(to bottom, ${activeTheme.gridColor} 1px, transparent 1px)`,
+                    backgroundSize: '24px 24px',
+                    maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)',
+                    WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)'
+                  }}
+                />
 
-                {/* Account / Date Meta */}
-                <div className="text-right flex flex-col items-end">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider font-mono bg-white/[0.04] border-white/[0.08] text-gray-300 whitespace-nowrap">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    {accountName || 'Prop Verified'}
-                  </div>
-                  <div className="text-[9px] text-gray-400 font-mono mt-1 whitespace-nowrap">
-                    {formattedDate} • {formattedTime} UTC
-                  </div>
-                </div>
-              </div>
-
-              {/* Hero Asset Title + Badges */}
-              <div className="relative z-10 flex items-start justify-between gap-3 mb-4">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">
-                      {trade.symbol}
-                    </h3>
-                    <span
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm whitespace-nowrap ${
-                        trade.type === 'Long'
-                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                          : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                      }`}
-                    >
-                      {trade.type === 'Long' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                      {trade.type}
-                    </span>
-                  </div>
-
-                  {/* Strategy & Tags HUD pills (No line breaking glitch) */}
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    {trade.strategy && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-200 font-mono whitespace-nowrap">
-                        {trade.strategy}
-                      </span>
-                    )}
-                    {trade.emotional_state && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold capitalize tracking-wide bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono whitespace-nowrap">
-                        {trade.emotional_state}
-                      </span>
-                    )}
-                    {trade.lots && (
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-300 font-mono whitespace-nowrap">
-                        {trade.lots} Lots
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Duration Pill */}
-                {durationStr && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.06] text-gray-300 text-[11px] font-mono shrink-0 whitespace-nowrap">
-                    <Clock className="w-3 h-3 text-gray-400" />
-                    <span>{durationStr}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* ── BIG HERO P&L SHOWCASE ── */}
-              <div className="relative z-10 my-5 p-5 sm:p-6 rounded-2xl bg-black/50 border border-white/[0.08] backdrop-blur-md flex flex-col items-center justify-center text-center shadow-inner">
-                <span className="text-[10px] font-mono font-bold tracking-[0.25em] text-gray-400 uppercase mb-1">
-                  Net Realized Performance
-                </span>
-                
+                {/* Ambient Glowing Spotlight behind P&L */}
                 <div
-                  className={`text-4xl sm:text-5xl font-black font-mono tracking-tight tabular-nums drop-shadow-md ${
-                    isWin ? 'text-emerald-400' : 'text-rose-500'
-                  }`}
-                >
-                  {hideDollarPnl ? (
-                    <span className="text-3xl sm:text-4xl tracking-wider">
-                      {isWin ? 'PROFIT CLOSED' : 'RISK MANAGED'}
-                    </span>
-                  ) : (
-                    <>
-                      {isWin ? '+' : '-'}{formatAmount(pnl)}
-                    </>
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[180px] rounded-full blur-[70px] pointer-events-none bg-gradient-to-b ${activeTheme.heroBacklight}`}
+                />
+
+                {/* Top Precision HUD Strip */}
+                <div className="relative z-10 flex items-center justify-between pb-4 mb-5 border-b border-white/[0.08]">
+                  {/* Brand Monogram Mark */}
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 via-indigo-600 to-indigo-800 flex items-center justify-center shadow-md border border-indigo-400/30">
+                      <span className="text-white font-black text-[10px] tracking-tighter font-mono">TT</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-white font-black text-xs tracking-wider uppercase font-mono">
+                          TradeTrackr
+                        </span>
+                        <ShieldCheck className={`w-3.5 h-3.5 ${activeTheme.accentText}`} />
+                      </div>
+                      <span className="text-[9px] text-gray-400 font-mono tracking-widest uppercase block">
+                        Verified Telemetry
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Account / Date Meta */}
+                  <div className="text-right flex flex-col items-end">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md border text-[10px] font-bold uppercase tracking-wider font-mono bg-white/[0.04] border-white/[0.08] text-gray-300 whitespace-nowrap">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {accountName || 'Prop Verified'}
+                    </div>
+                    <div className="text-[9px] text-gray-400 font-mono mt-1 whitespace-nowrap">
+                      {formattedDate} • {formattedTime} UTC
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hero Asset Title + Badges */}
+                <div className="relative z-10 flex items-start justify-between gap-3 mb-4">
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <h3 className="text-3xl sm:text-4xl font-black text-white tracking-tight font-mono">
+                        {trade.symbol}
+                      </h3>
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm whitespace-nowrap ${
+                          trade.type === 'Long'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                        }`}
+                      >
+                        {trade.type === 'Long' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                        {trade.type}
+                      </span>
+                    </div>
+
+                    {/* Strategy & Tags HUD pills (No line breaking glitch) */}
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      {trade.strategy && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-200 font-mono whitespace-nowrap">
+                          {trade.strategy}
+                        </span>
+                      )}
+                      {trade.emotional_state && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold capitalize tracking-wide bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono whitespace-nowrap">
+                          {trade.emotional_state}
+                        </span>
+                      )}
+                      {trade.lots && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide bg-white/[0.06] border border-white/[0.08] text-gray-300 font-mono whitespace-nowrap">
+                          {trade.lots} Lots
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Duration Pill */}
+                  {durationStr && (
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/40 border border-white/[0.06] text-gray-300 text-[11px] font-mono shrink-0 whitespace-nowrap">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      <span>{durationStr}</span>
+                    </div>
                   )}
                 </div>
 
-                {/* Clean Sub-Metrics Strip (No floating orphan dots) */}
-                <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-white/[0.06] text-xs font-mono">
-                  {heroSubMetrics.map((metric, idx) => (
-                    <React.Fragment key={idx}>
-                      {idx > 0 && <span className="text-gray-600">•</span>}
-                      <div className="inline-flex items-center gap-1 whitespace-nowrap">
-                        <span className="text-gray-400 font-semibold">{metric.label}:</span>
-                        <span className={`font-bold ${metric.color}`}>{metric.value}</span>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
+                {/* ── BIG HERO P&L SHOWCASE ── */}
+                <div className="relative z-10 my-5 p-5 sm:p-6 rounded-2xl bg-black/50 border border-white/[0.08] backdrop-blur-md flex flex-col items-center justify-center text-center shadow-inner">
+                  <span className="text-[10px] font-mono font-bold tracking-[0.25em] text-gray-400 uppercase mb-1">
+                    Net Realized Performance
+                  </span>
+                  
+                  <div
+                    className={`text-4xl sm:text-5xl font-black font-mono tracking-tight tabular-nums drop-shadow-md ${
+                      isWin ? 'text-emerald-400' : 'text-rose-500'
+                    }`}
+                  >
+                    {hideDollarPnl ? (
+                      <span className="text-3xl sm:text-4xl tracking-wider">
+                        {isWin ? 'PROFIT CLOSED' : 'RISK MANAGED'}
+                      </span>
+                    ) : (
+                      <>
+                        {isWin ? '+' : '-'}{formatAmount(pnl)}
+                      </>
+                    )}
+                  </div>
 
-              {/* ── EXECUTION TELEMETRY (Entry / Exit / Risk) ── */}
-              <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
-                {/* Entry Price */}
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
-                    Entry Level
-                  </span>
-                  <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
-                    {trade.entry_price != null ? trade.entry_price : '—'}
-                  </span>
+                  {/* Clean Sub-Metrics Strip (No floating orphan dots) */}
+                  <div className="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-white/[0.06] text-xs font-mono">
+                    {heroSubMetrics.map((metric, idx) => (
+                      <React.Fragment key={idx}>
+                        {idx > 0 && <span className="text-gray-600">•</span>}
+                        <div className="inline-flex items-center gap-1 whitespace-nowrap">
+                          <span className="text-gray-400 font-semibold">{metric.label}:</span>
+                          <span className={`font-bold ${metric.color}`}>{metric.value}</span>
+                        </div>
+                      </React.Fragment>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Exit Price */}
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
-                    Exit Level
-                  </span>
-                  <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
-                    {trade.exit_price != null ? trade.exit_price : '—'}
-                  </span>
+                {/* ── EXECUTION TELEMETRY (Entry / Exit / Risk) ── */}
+                <div className="relative z-10 grid grid-cols-3 gap-2.5 pt-3 border-t border-white/[0.08]">
+                  {/* Entry Price */}
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
+                      Entry Level
+                    </span>
+                    <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
+                      {trade.entry_price != null ? trade.entry_price : '—'}
+                    </span>
+                  </div>
+
+                  {/* Exit Price */}
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
+                      Exit Level
+                    </span>
+                    <span className="text-sm sm:text-base font-bold font-mono text-white tabular-nums truncate">
+                      {trade.exit_price != null ? trade.exit_price : '—'}
+                    </span>
+                  </div>
+
+                  {/* Risk Factor */}
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
+                      Risk Factor
+                    </span>
+                    <span className={`text-sm sm:text-base font-bold font-mono tabular-nums truncate ${isWin ? 'text-emerald-400' : 'text-gray-300'}`}>
+                      {rMultiple ? `${rMultiple}R` : '1.0R'}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Risk Factor */}
-                <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.04] flex flex-col justify-center text-left">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-gray-400 block mb-1 whitespace-nowrap">
-                    Risk Factor
-                  </span>
-                  <span className={`text-sm sm:text-base font-bold font-mono tabular-nums truncate ${isWin ? 'text-emerald-400' : 'text-gray-300'}`}>
-                    {rMultiple ? `${rMultiple}R` : '1.0R'}
-                  </span>
+                {/* Footer Stamp */}
+                <div className="relative z-10 flex items-center justify-between mt-5 pt-3 text-[9px] text-gray-500 font-mono border-t border-white/[0.04]">
+                  <span className="tracking-widest uppercase">tradetrackr.com // Edge Command</span>
+                  <span className="text-gray-400 font-bold">#TradeTrackr</span>
                 </div>
-              </div>
-
-              {/* Footer Stamp */}
-              <div className="relative z-10 flex items-center justify-between mt-5 pt-3 text-[9px] text-gray-500 font-mono border-t border-white/[0.04]">
-                <span className="tracking-widest uppercase">tradetrackr.com // Edge Command</span>
-                <span className="text-gray-400 font-bold">#TradeTrackr</span>
               </div>
             </div>
           </div>
