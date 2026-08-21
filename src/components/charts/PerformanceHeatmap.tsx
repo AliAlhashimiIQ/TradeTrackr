@@ -421,7 +421,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => {
                 const hour = HOURS[value] || '';
-                return isClient && highlightedHour === hour ? `★ ${hour}` : hour;
+                return isClient && highlightedHour === hour ? `[${hour}]` : hour;
               }}
               domain={[0, 23]}
               onClick={isClient ? (data) => handleAxisLabelClick(HOURS[data.value], 'hour') : undefined}
@@ -433,7 +433,7 @@ const PerformanceHeatmap: React.FC<PerformanceHeatmapProps> = ({
               tick={{ fontSize: 10 }}
               tickFormatter={(value) => {
                 const day = DAYS[value] || '';
-                return isClient && highlightedDay === day ? `★ ${day}` : day;
+                return isClient && highlightedDay === day ? `[${day}]` : day;
               }}
               domain={[0, 6]}
               reversed

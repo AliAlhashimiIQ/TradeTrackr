@@ -1,5 +1,6 @@
 import React from 'react';
 import { Trade } from '@/lib/types';
+import { Check, X } from 'lucide-react';
 
 interface FormTagsProps {
   formData: Partial<Trade>;
@@ -180,13 +181,14 @@ export const FormTags: React.FC<FormTagsProps> = ({
               key={tag}
               type="button"
               onClick={() => onToggleTag(tag)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
+              className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
                 formData.tags?.includes(tag)
                   ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
                   : 'bg-white dark:bg-[#0d0e16] text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 border-black/10 dark:border-transparent hover:border-black/20 dark:hover:border-white/[0.06]'
               }`}
             >
-              {formData.tags?.includes(tag) && '✓ '}{tag}
+              {formData.tags?.includes(tag) && <Check className="w-3.5 h-3.5 inline-block mr-1.5" />}
+              {tag}
             </button>
           ))}
         </div>
@@ -234,13 +236,14 @@ export const FormTags: React.FC<FormTagsProps> = ({
               key={m}
               type="button"
               onClick={() => onToggleMistake(m)}
-              className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
+              className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
                 formData.mistakes?.includes(m)
                   ? 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30'
                   : 'bg-white dark:bg-[#0d0e16] text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 border-black/10 dark:border-transparent hover:border-black/20 dark:hover:border-white/[0.06]'
               }`}
             >
-              {formData.mistakes?.includes(m) && '✕ '}{m}
+              {formData.mistakes?.includes(m) && <X className="w-3.5 h-3.5 inline-block mr-1.5" />}
+              {m}
             </button>
           ))}
         </div>

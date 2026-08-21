@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
+import { Star, X, Check } from 'lucide-react';
 
 export interface JournalEntry {
   id?: string;
@@ -339,13 +340,14 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                     key={star}
                     type="button"
                     onClick={() => setConfidence(star)}
-                    className={`flex-1 py-3 rounded-xl text-lg font-bold transition-all duration-200 flex justify-center items-center ${
+                    aria-label={`Rate conviction ${star} out of 5 stars`}
+                    className={`flex-1 py-2.5 rounded-xl transition-all duration-200 flex justify-center items-center ${
                       star <= confidence
-                        ? 'text-amber-500 bg-amber-500/15 border border-amber-500/40 shadow-sm scale-[1.02]'
-                        : 'text-slate-300 dark:text-slate-700 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08]'
+                        ? 'text-amber-400 bg-amber-500/15 border border-amber-500/40 shadow-sm shadow-amber-500/10 scale-[1.02]'
+                        : 'text-slate-300 dark:text-slate-700 bg-white dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] hover:text-slate-400 dark:hover:text-slate-500'
                     }`}
                   >
-                    ★
+                    <Star className="w-4 h-4 fill-current" />
                   </button>
                 ))}
               </div>

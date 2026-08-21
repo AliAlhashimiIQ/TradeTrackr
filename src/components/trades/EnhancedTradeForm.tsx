@@ -13,6 +13,7 @@ import { isForexPair, calculatePips, getSymbolMultiplier, usesLots } from '@/lib
 import { resolveTradingViewUrl, toLocalYMD, toLocalISOString, getPLColorClasses } from '@/lib/utils';
 import { useSettings } from '@/providers/SettingsProvider';
 import { useAccount } from '@/hooks/useAccount';
+import { X } from 'lucide-react';
 
 interface EnhancedTradeFormProps {
   initialTrade?: Partial<Trade>;
@@ -556,9 +557,10 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                             setScreenshotPreview(null);
                             handleChange('screenshot_url', '');
                           }}
+                          aria-label="Remove screenshot"
                           className="absolute top-2 right-2 w-7 h-7 bg-black/80 rounded-full flex items-center justify-center text-white hover:bg-red-500 transition-colors text-xs"
                         >
-                          ✕
+                          <X className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     ) : (

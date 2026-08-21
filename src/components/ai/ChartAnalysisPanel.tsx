@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { TradingViewAnalysisResult, storeUserCorrection, getTrainingStatistics, TrainingStatistics } from '@/lib/ai/aiService';
 
 interface ChartAnalysisPanelProps {
@@ -157,7 +158,7 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
       });
     } catch (error) {
       console.error('Error saving corrections:', error);
-      alert('There was an error saving your corrections. Please try again.');
+      toast.error('Failed to save AI corrections. Please try again.');
     }
   };
   
@@ -177,19 +178,18 @@ const ChartAnalysisPanel: React.FC<ChartAnalysisPanelProps> = ({
   
   // Format a pattern name for display
   const formatPatternName = (name: string): string => {
-    // Help distinguish FVG and OB patterns with special formatting
     const lowerName = name.toLowerCase();
     
     if (lowerName.includes('fvg') || lowerName.includes('fair value gap')) {
-      return '✧ ' + name; // Star symbol for FVG
+      return '[FVG] ' + name.replace(/^(fvg|fair value gap)[:\s-]*/i, '');
     }
     
     if (lowerName.includes('ob') || lowerName.includes('order block')) {
-      return '■ ' + name; // Square symbol for Order Block
+      return '[OB] ' + name.replace(/^(ob|order block)[:\s-]*/i, '');
     }
     
     if (lowerName.includes('liquidity')) {
-      return '⚬ ' + name; // Circle symbol for liquidity
+      return '[LQ] ' + name.replace(/^(liquidity)[:\s-]*/i, '');
     }
     
     return name;

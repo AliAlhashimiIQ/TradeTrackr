@@ -119,18 +119,16 @@ function LoginContent() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[var(--background)]">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative">
-            <div className="absolute inset-0 rounded-2xl bg-indigo-500/20 blur-xl animate-pulse" />
-            <div className="w-16 h-16 bg-slate-950 border border-white/[0.08] rounded-2xl flex items-center justify-center shadow-2xl shadow-black/40 relative z-10 animate-bounce" style={{ animationDuration: '2s' }}>
-              <Logo className="w-10 h-10 animate-pulse" />
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-slate-950 border border-white/[0.08] flex items-center justify-center shadow-2xl relative z-10">
+              <Logo className="w-8 h-8 text-indigo-400" />
             </div>
+            <div className="absolute -inset-2 rounded-3xl border border-indigo-500/20 animate-spin [animation-duration:3s] border-t-indigo-500/80" />
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-bounce" />
-          </div>
+          <span className="text-[11px] font-mono text-slate-500 uppercase tracking-widest">
+            Authenticating Session...
+          </span>
         </div>
       </div>
     );

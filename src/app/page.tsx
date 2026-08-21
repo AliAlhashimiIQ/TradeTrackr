@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import Logo from '@/components/ui/Logo'
+import { AlertTriangle } from 'lucide-react'
 
 export default function Home() {
   const { user, loading } = useAuth()
@@ -211,7 +212,10 @@ export default function Home() {
               {activeTab === 'MISTAKES' && (
                 <motion.div key="MISTAKES" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                   <div className="p-5 rounded-xl bg-rose-950/20 border border-rose-500/30 text-rose-300 text-xs font-mono space-y-2">
-                    <div className="font-bold text-sm text-rose-400">⚠️ Discipline Leak Diagnostic</div>
+                    <div className="font-bold text-sm text-rose-400 flex items-center gap-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-400" />
+                      <span>Discipline Leak Diagnostic</span>
+                    </div>
                     <div>FOMO & revenge trading cost you <strong className="text-white">-$4,108.00</strong> this month.</div>
                     <div>Without these 4 emotional trades, your P&L would be <strong className="text-emerald-400">+$12,450.00</strong>.</div>
                   </div>

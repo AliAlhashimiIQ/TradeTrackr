@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { Target, AlertOctagon, Activity, CheckCircle2 } from 'lucide-react';
 
 interface Candle {
   open: number;
@@ -373,11 +374,31 @@ export default function BacktestingPage() {
                   ))}
                 </div>
               </div>
-              <div className="text-[9.5px] text-slate-400 dark:text-gray-500 font-mono mt-3">
-                {tradeState === 'WIN' && '🎯 Trade closed at profit target limit.'}
-                {tradeState === 'LOSS' && '🛑 Trade closed at stop loss threshold.'}
-                {tradeState === 'ACTIVE' && '⏳ Monitoring market ticks...'}
-                {tradeState === 'IDLE' && '✓ Standby mode active.'}
+              <div className="text-[10px] text-slate-400 dark:text-gray-400 font-mono mt-3 flex items-center gap-1.5">
+                {tradeState === 'WIN' && (
+                  <>
+                    <Target className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-emerald-400 font-bold">Trade closed at profit target limit.</span>
+                  </>
+                )}
+                {tradeState === 'LOSS' && (
+                  <>
+                    <AlertOctagon className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="text-rose-400 font-bold">Trade closed at stop loss threshold.</span>
+                  </>
+                )}
+                {tradeState === 'ACTIVE' && (
+                  <>
+                    <Activity className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                    <span className="text-indigo-300">Monitoring market ticks in real-time...</span>
+                  </>
+                )}
+                {tradeState === 'IDLE' && (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Standby mode active.</span>
+                  </>
+                )}
               </div>
             </div>
 

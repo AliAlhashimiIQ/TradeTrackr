@@ -22,6 +22,7 @@ import {
   Radar
 } from 'recharts';
 import { TradeTypePerformance as TradeTypePerformanceType } from '@/lib/tradeMetrics';
+import { Trophy } from 'lucide-react';
 
 interface TradeTypePerformanceProps {
   data: TradeTypePerformanceType[];
@@ -417,9 +418,16 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
       {/* Stats cards */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
-          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
-            <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 mr-1.5"></span>
-            Long Trades {betterPnL === 'Long' && <span className="ml-1 text-green-500 text-xs">★</span>}
+          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 mr-1.5"></span>
+              <span>Long Trades</span>
+            </div>
+            {betterPnL === 'Long' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold">
+                <Trophy className="w-3 h-3" /> BEST P&L
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
@@ -433,7 +441,11 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
               <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Win Rate</div>
               <div className="text-base font-bold text-slate-900 dark:text-white flex items-center">
                 {formatPercent(longData.winRate)}
-                {betterWinRate === 'Long' && <span className="ml-1 text-emerald-500 text-xs">★</span>}
+                {betterWinRate === 'Long' && (
+                  <span title="Higher Win Rate" className="ml-1 text-emerald-500">
+                    <Trophy className="w-3 h-3 inline" />
+                  </span>
+                )}
               </div>
               <div className="text-xs text-slate-500 dark:text-gray-400">
                 {longData.profitFactor.toFixed(2)} profit factor
@@ -452,9 +464,16 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
         </div>
         
         <div className="bg-slate-50 dark:bg-[var(--surface-3)] border border-slate-200 dark:border-white/[0.03] p-3.5 rounded-xl">
-          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-500 mr-1.5"></span>
-            Short Trades {betterPnL === 'Short' && <span className="ml-1 text-green-500 text-xs">★</span>}
+          <div className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between">
+            <div className="flex items-center">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 mr-1.5"></span>
+              <span>Short Trades</span>
+            </div>
+            {betterPnL === 'Short' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[10px] font-mono font-bold">
+                <Trophy className="w-3 h-3" /> BEST P&L
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
@@ -468,7 +487,11 @@ const TradeTypePerformance: React.FC<TradeTypePerformanceProps> = ({
               <div className="text-[10px] font-bold text-slate-400 dark:text-gray-500 uppercase tracking-wider">Win Rate</div>
               <div className="text-base font-bold text-slate-900 dark:text-white flex items-center">
                 {formatPercent(shortData.winRate)}
-                {betterWinRate === 'Short' && <span className="ml-1 text-green-500 text-xs">★</span>}
+                {betterWinRate === 'Short' && (
+                  <span title="Higher Win Rate" className="ml-1 text-emerald-500">
+                    <Trophy className="w-3 h-3 inline" />
+                  </span>
+                )}
               </div>
               <div className="text-[10px] text-slate-400 dark:text-gray-500">
                 {shortData.profitFactor.toFixed(2)} PF
