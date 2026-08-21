@@ -947,8 +947,8 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Monthly Performance</h2>
-                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
-                    {!loading && monthlyData.length > 0 ? `${monthlyData.length} months` : 'No data'}
+                  <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
+                    {!loading && monthlyData.length > 0 ? `${monthlyData.length} ${monthlyData.length === 1 ? 'month' : 'months'}` : 'No data'}
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
@@ -958,7 +958,7 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-white text-base font-medium">Drawdown Analysis</h2>
-                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
+                  <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
                     {!loading && metrics ? `Max: ${metrics.maxDrawdownPercent.toFixed(1)}%` : 'No data'}
                   </div>
                 </div>
@@ -1001,8 +1001,8 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-base font-medium">Strategy Performance</h2>
                     <p className="text-gray-400 text-xs mt-1">Analysis of your trading strategies</p>
                   </div>
-                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
-                    {!loading && strategyData.length > 0 ? `${strategyData.length} strategies` : 'No data'}
+                  <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
+                    {!loading && strategyData.length > 0 ? `${strategyData.length} ${strategyData.length === 1 ? 'strategy' : 'strategies'}` : 'No data'}
                   </div>
                 </div>
                 <StrategyPerformance data={strategyData} loading={loading} />
@@ -1015,8 +1015,8 @@ export default function AnalyticsPage() {
                     <h2 className="text-white text-base font-medium">Symbol Performance</h2>
                     <p className="text-gray-400 text-xs mt-1">Breakdown by trading symbols</p>
                   </div>
-                  <div className="bg-white/[0.04] border border-white/[0.06] text-xs text-slate-400 px-2.5 py-1 rounded-lg shadow-inner">
-                    {!loading && symbolData.length > 0 ? `${symbolData.length} symbols` : 'No data'}
+                  <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
+                    {!loading && symbolData.length > 0 ? `${symbolData.length} ${symbolData.length === 1 ? 'symbol' : 'symbols'}` : 'No data'}
                   </div>
                 </div>
                 <SymbolPerformance data={symbolData} loading={loading} />
