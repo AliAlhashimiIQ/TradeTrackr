@@ -282,16 +282,18 @@ export default function BacktestingPage() {
             <div className="mt-5 flex flex-wrap gap-3 items-center justify-between">
               <div className="flex gap-2">
                 <button
+                  type="button"
                   onClick={() => handleExecuteTrade('LONG')}
                   disabled={tradeState === 'ACTIVE'}
-                  className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl shadow-md shadow-emerald-600/20 transition-all active:scale-95"
                 >
                   Buy (Long)
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleExecuteTrade('SHORT')}
                   disabled={tradeState === 'ACTIVE'}
-                  className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white rounded-lg transition-colors"
+                  className="px-4 py-2 text-xs font-mono font-bold uppercase tracking-wider bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white rounded-xl shadow-md shadow-rose-600/20 transition-all active:scale-95"
                 >
                   Sell (Short)
                 </button>
@@ -299,8 +301,9 @@ export default function BacktestingPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors"
+                  className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white transition-all shadow-sm active:scale-95"
                   title={isPlaying ? 'Pause simulation' : 'Auto Play simulation'}
                 >
                   {isPlaying ? (
@@ -310,15 +313,17 @@ export default function BacktestingPage() {
                   )}
                 </button>
                 <button
+                  type="button"
                   onClick={handleNextCandle}
-                  className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors"
+                  className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white transition-all shadow-sm active:scale-95"
                   title="Next Candle step"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                 </button>
                 <button
+                  type="button"
                   onClick={handleResetSimulation}
-                  className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white transition-colors"
+                  className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-white transition-all shadow-sm active:scale-95"
                   title="Reset simulation"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" /></svg>
@@ -331,30 +336,30 @@ export default function BacktestingPage() {
           <div className="lg:col-span-4 flex flex-col gap-6">
             
             {/* Waitlist Form Card */}
-            <div className="bg-slate-50 dark:bg-gradient-to-b dark:from-indigo-900/30 dark:to-slate-900/30 border border-slate-200 dark:border-indigo-500/15 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-              <span className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">Coming Soon Features</span>
-              <h2 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">Request Beta Access</h2>
+            <div className="bg-slate-50 dark:bg-gradient-to-b dark:from-indigo-900/30 dark:to-slate-900/30 border border-slate-200 dark:border-indigo-500/20 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+              <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest block mb-1">Coming Soon Features</span>
+              <h2 className="text-lg font-bold mb-2 text-slate-900 dark:text-white">Request Beta Access</h2>
               <p className="text-slate-500 dark:text-gray-400 text-xs leading-relaxed mb-5">
                 Practice execution bar-by-bar with 24h CFD index & Forex feeds. Get notified when early beta begins.
               </p>
 
               {submitted ? (
-                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl p-4 text-center">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-2xl p-4 text-center">
                   <p className="font-bold text-xs">Priority registered successfully.</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-2">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter email address"
                     required
-                    className="w-full bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-lg px-3.5 py-2.5 text-xs focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white transition-colors"
+                    className="w-full bg-white dark:bg-slate-950/60 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-indigo-500 text-slate-900 dark:text-white transition-colors"
                   />
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-lg shadow-indigo-600/15"
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md shadow-indigo-600/25 active:scale-95"
                   >
                     Join Waitlist
                   </button>
@@ -363,7 +368,7 @@ export default function BacktestingPage() {
             </div>
 
             {/* Execution logs log */}
-            <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-2xl p-6 flex-1 flex flex-col justify-between shadow-xl min-h-48">
+            <div className="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/[0.08] rounded-3xl p-6 flex-1 flex flex-col justify-between shadow-xl min-h-48">
               <div>
                 <span className="text-[9px] font-extrabold text-gray-500 uppercase tracking-widest block mb-3 font-mono">SIMULATION_LOGS</span>
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
