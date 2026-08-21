@@ -247,13 +247,25 @@ export default function TradeShareModal({
     }
   }
 
-  // Share to Twitter/X
-  const handleShareToTwitter = () => {
-    const pnlDisplay = hideDollarPnl 
-      ? (rMultiple ? `+${rMultiple}R` : isWin ? 'Winning Trade' : 'Risk Managed')
-      : `${isWin ? '+' : '-'}${formatAmount(pnl)}`
-    
-    const text = `🎯 Just closed $${trade.symbol} (${trade.type})!
+  // Share to Twitter/X with auto-copied image
+  const handleShareToTwitter = async () => {
+    if (!cardRef.current) return
+    try {
+      setIsExporting(true)
+      
+      // 1. Generate high-res image blob
+      const blob = await toBlob(cardRef.current, {
+        quality: 0.98,
+        pixelRatio: 2.5,
+        cacheBust: true,
+        backgroundColor: withCanvasFrame ? '#030408' : undefined
+      })
+
+      const pnlDisplay = hideDollarPnl 
+        ? (rMultiple ? `+${rMultiple}R` : isWin ? 'Winning Trade' : 'Risk Managed')
+        : `${isWin ? '+' : '-'}${formatAmount(pnl)}`
+      
+      const tweetText = `🎯 Just closed $${trade.symbol} (${trade.type})!
 
 📊 Result: ${pnlDisplay}${rMultiple ? ` (${rMultiple}R)` : ''}${pips ? ` • ${pips} pips` : ''}
 ⚡ Strategy: ${trade.strategy || 'Systematic Edge'}
@@ -261,7 +273,39 @@ export default function TradeShareModal({
 Verified on @TradeTrackr 🚀
 #Trading #Forex #PropFirm #PriceAction`
 
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
+      // 2. Try Native Web Share API if device supports file sharing (mobile / native app)
+      if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], 'trade.png', { type: 'image/png' })] })) {
+        const file = new File([blob], `TradeTrackr-${trade.symbol}.png`, { type: 'image/png' })
+        await navigator.share({
+          files: [file],
+          text: tweetText
+        })
+        toast.success('Shared to X with photo!')
+        return
+      }
+
+      // 3. Auto-copy image to clipboard for instant Ctrl+V on Twitter Web
+      if (blob && navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ])
+        toast.success('Card image copied! Press Ctrl+V (⌘+V) in the tweet to paste your photo 📸', {
+          duration: 6000
+        })
+      } else {
+        toast.success('Opening X composer...', { duration: 3000 })
+      }
+
+      // 4. Open X Intent Composer
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`, '_blank')
+    } catch (err) {
+      console.error('Share to X error:', err)
+      // Fallback: Just open Twitter intent
+      const fallbackText = `🎯 Just closed $${trade.symbol} (${trade.type}) on @TradeTrackr 🚀`
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(fallbackText)}`, '_blank')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   return (
@@ -550,14 +594,17 @@ Verified on @TradeTrackr 🚀
 
           {/* Modal Action Buttons */}
           <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.06] bg-[#0c0d16]">
-            {/* Post to X */}
+            {/* Post on X */}
             <button
               type="button"
               onClick={handleShareToTwitter}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/25 text-xs font-bold transition-all active:scale-95"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-black hover:bg-neutral-900 text-white border border-white/20 text-xs font-bold transition-all shadow-md active:scale-95"
+              title="Post on X (auto-copies card photo to clipboard so you can paste into tweet)"
             >
-              <Twitter className="w-4 h-4" />
-              <span>Post to X</span>
+              <svg className="w-3.5 h-3.5 fill-current text-white" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              <span>Post on X</span>
             </button>
 
             {/* Download PNG */}
