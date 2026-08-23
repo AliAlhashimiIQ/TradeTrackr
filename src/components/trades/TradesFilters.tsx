@@ -618,24 +618,6 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Bulk Actions Panel */}
-      <AnimatePresence>
-        {selectedTradeIds.length > 0 && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
-            className="mb-4 p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-indigo-600 dark:text-indigo-300 font-semibold">{selectedTradeIds.length} selected</span>
-              <div className="flex gap-1.5">
-                <button onClick={() => onBulkAction('delete')} className="px-3 py-1.5 text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-500/20 transition-colors">Delete</button>
-                <button onClick={() => onBulkAction('export')} className="px-3 py-1.5 text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors">Export</button>
-                <button onClick={() => onBulkAction('tag')} className="px-3 py-1.5 text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-lg hover:bg-purple-500/20 transition-colors">Tag</button>
-              </div>
-            </div>
-            <button onClick={onClearSelection} className="text-xs text-gray-500 hover:text-gray-800 dark:hover:text-white transition-colors font-medium">Clear</button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 };

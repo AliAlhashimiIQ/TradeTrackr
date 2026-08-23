@@ -942,94 +942,28 @@
   color: #94a3b8 !important;
 }
 
-/* Text overrides */
+/* Clean Light Mode Typography Defaults */
 :root:not(.dark) h1,
 :root:not(.dark) h2,
 :root:not(.dark) h3,
 :root:not(.dark) h4,
 :root:not(.dark) h5,
-:root:not(.dark) h6,
-:root:not(.dark) .text-white,
-:root:not(.dark) .dark\:text-white {
-  color: #0f172a !important;
-}
-
-/* Keep active navigation and primary button text white in light mode */
-:root:not(.dark) nav a.text-white,
-:root:not(.dark) nav a.text-white *,
-:root:not(.dark) .btn-primary,
-:root:not(.dark) .btn-primary *,
-:root:not(.dark) [class*="bg-indigo-600"],
-:root:not(.dark) [class*="bg-indigo-600"] *,
-:root:not(.dark) [class*="bg-indigo-500"],
-:root:not(.dark) [class*="bg-indigo-500"] *,
-:root:not(.dark) [class*="bg-emerald-600"],
-:root:not(.dark) [class*="bg-emerald-600"] *,
-:root:not(.dark) [class*="bg-rose-600"],
-:root:not(.dark) [class*="bg-rose-600"] *,
-:root:not(.dark) [class*="bg-slate-900"],
-:root:not(.dark) [class*="bg-slate-900"] *,
-:root:not(.dark) [class*="bg-black"],
-:root:not(.dark) [class*="bg-black"] *,
-:root:not(.dark) button[class*="bg-indigo"],
-:root:not(.dark) button[class*="bg-indigo"] * {
-  color: #ffffff !important;
-}
-
-/* High-contrast colors for warning, info, and streak alerts in light mode */
-:root:not(.dark) .text-blue-300,
-:root:not(.dark) .text-indigo-300 {
-  color: #1d4ed8 !important; /* blue-700 */
-}
-:root:not(.dark) .text-red-300 {
-  color: #b91c1c !important; /* red-700 */
-}
-:root:not(.dark) .text-emerald-300,
-:root:not(.dark) .text-green-300 {
-  color: #047857 !important; /* green-700 */
-}
-:root:not(.dark) .text-yellow-300,
-:root:not(.dark) .text-amber-300,
-:root:not(.dark) [class*="text-amber-"] {
-  color: #b45309 !important; /* amber-700 */
+:root:not(.dark) h6 {
+  color: #0f172a;
 }
 
 :root:not(.dark) p,
 :root:not(.dark) label {
-  color: #334155 !important;
+  color: #334155;
 }
 
-/* Text gray adjustments */
-:root:not(.dark) .text-gray-300,
-:root:not(.dark) .text-slate-300 {
-  color: #334155 !important;
-}
-:root:not(.dark) .text-gray-400,
-:root:not(.dark) .text-slate-400 {
-  color: #475569 !important;
-}
-:root:not(.dark) .text-gray-500,
-:root:not(.dark) .text-slate-500 {
-  color: #64748b !important;
-}
-:root:not(.dark) .text-gray-600,
-:root:not(.dark) .text-slate-600 {
-  color: #64748b !important;
-}
-
-/* Primary actions preservation */
-:root:not(.dark) button.btn-primary,
-:root:not(.dark) .btn-primary *,
-:root:not(.dark) button.bg-gradient-to-r,
+/* Specific Solid Buttons in Light Mode */
+:root:not(.dark) .btn-primary,
 :root:not(.dark) button.bg-indigo-600,
-:root:not(.dark) button.bg-blue-600,
-:root:not(.dark) a.bg-gradient-to-r,
+:root:not(.dark) button.bg-violet-600,
 :root:not(.dark) a.bg-indigo-600,
-:root:not(.dark) a.bg-blue-600,
-:root:not(.dark) .btn-primary span,
-:root:not(.dark) button.bg-gradient-to-r span,
-:root:not(.dark) button.bg-indigo-600 span {
-  color: #ffffff !important;
+:root:not(.dark) a.bg-violet-600 {
+  color: #ffffff;
 }
 
 /* Secondary and ghost buttons */

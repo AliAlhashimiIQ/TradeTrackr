@@ -1230,7 +1230,6 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                       </div>
                     </div>
                   )}
-
                   <div
                     className={`grid gap-4 px-5 ${
                       tableDensity === 'compact' ? 'py-3' : 'py-4'
@@ -1241,16 +1240,16 @@ export const TradesTable: React.FC<TradesTableProps> = ({
                     <div className="hidden md:flex items-center justify-center gap-1.5 pr-2 h-full">
                       <button
                         onClick={() => onStartInlineAdd(idx + 1)}
-                        className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.04] hover:bg-indigo-500/10 dark:hover:bg-indigo-500/25 border border-slate-200 dark:border-white/[0.04] text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all opacity-20 group-hover/row:opacity-100 hover:scale-105 active:scale-95"
-                        title="Add trade"
+                        className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-white/[0.06] hover:bg-indigo-50 dark:hover:bg-indigo-500/20 border border-slate-200/80 dark:border-white/[0.08] text-slate-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 flex items-center justify-center transition-all opacity-0 group-hover/row:opacity-100 hover:scale-105 active:scale-95 shadow-sm"
+                        title="Insert trade below"
                       >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 6v12m6-6H6" /></svg>
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                       <input
                         type="checkbox"
                         checked={selectedTradeIds.includes(trade.id)}
                         onChange={e => onToggleSelectTrade(trade.id, e.target.checked)}
-                        className="rounded border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-indigo-500 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer"
+                        className="rounded-md border-slate-300 dark:border-white/[0.15] bg-white dark:bg-white/[0.04] text-indigo-600 focus:ring-indigo-500/30 w-4 h-4 cursor-pointer transition-all"
                       />
                     </div>
 
