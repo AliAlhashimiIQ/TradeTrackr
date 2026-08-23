@@ -46,7 +46,7 @@ export const TradesHeader: React.FC<TradesHeaderProps> = React.memo(({
             onClick={onToggleFilters}
             className={`p-2.5 min-h-[44px] min-w-[44px] justify-center rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
               showFilters
-                ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.12)]'
+                ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.12)]'
                 : 'bg-black/[0.04] dark:bg-[var(--surface-1)] text-gray-500 dark:text-gray-400 border-black/[0.08] dark:border-white/[0.06] hover:text-gray-700 dark:hover:text-white hover:border-black/[0.15] dark:hover:border-white/[0.12]'
             }`}
             title="Toggle Filter Panel"

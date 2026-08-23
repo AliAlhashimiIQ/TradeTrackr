@@ -222,15 +222,15 @@ const TradeTagSelector: React.FC<TradeTagSelectorProps> = ({
             </svg>
           </motion.button>
         </div>
-        <p className="text-indigo-300/80 text-sm mt-1 font-light">
+        <p className="text-indigo-600/80 dark:text-indigo-300/80 text-sm mt-1 font-light">
           Categorize trades and analyze patterns
         </p>
       </div>
 
       {/* Selected Tags Display */}
       <div className="px-5 py-4">
-        <h4 className="text-indigo-300 text-xs font-medium mb-2 flex items-center">
-          <svg className="w-3.5 h-3.5 mr-1.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h4 className="text-indigo-600 dark:text-indigo-300 text-xs font-medium mb-2 flex items-center">
+          <svg className="w-3.5 h-3.5 mr-1.5 text-indigo-500 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
           </svg>
           Selected Tags
@@ -252,7 +252,7 @@ const TradeTagSelector: React.FC<TradeTagSelectorProps> = ({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="group bg-gradient-to-r from-indigo-600/20 to-blue-600/20 text-indigo-300 px-3 py-1.5 rounded-full text-sm flex items-center border border-indigo-600/30 shadow-sm hover:shadow-md transition-all"
+                  className="group bg-indigo-500/10 dark:bg-gradient-to-r dark:from-indigo-600/20 dark:to-blue-600/20 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-full text-sm flex items-center border border-indigo-500/30 dark:border-indigo-600/30 shadow-sm hover:shadow-md transition-all"
                 >
                   <span className="mr-1.5">{tag}</span>
                   <motion.button

@@ -147,23 +147,23 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
   const isProfitable = profitLoss !== null && profitLoss > 0;
 
   return (
-    <div className={`bg-gradient-to-b from-[#111827] to-[#0f1117] rounded-xl shadow-xl border border-indigo-900/20 overflow-hidden ${className}`}>
+    <div className={`bg-white dark:bg-[#111827] rounded-2xl shadow-xl border border-slate-200 dark:border-indigo-900/20 overflow-hidden ${className}`}>
       <div className="p-6">
-        <h3 className="text-white text-base font-medium flex items-center mb-4">
-          <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <h3 className="text-slate-900 dark:text-white text-base font-bold flex items-center mb-4">
+          <svg className="w-5 h-5 mr-2 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
           </svg>
           Advanced Price Entry
-      </h3>
+        </h3>
 
         {/* Market Data */}
         <div className="mb-6">
           <div className="grid grid-cols-3 gap-4">
-            <div className="bg-gradient-to-r from-indigo-900/10 to-blue-900/10 rounded-lg border border-indigo-900/20 p-4">
-              <div className="text-xs text-indigo-300/70 mb-1">Market Price</div>
-              <div className="text-lg font-medium text-white">
+            <div className="bg-slate-50 dark:bg-gradient-to-r dark:from-indigo-900/10 dark:to-blue-900/10 rounded-xl border border-slate-200 dark:border-indigo-900/20 p-4">
+              <div className="text-xs text-slate-500 dark:text-indigo-300/70 mb-1">Market Price</div>
+              <div className="text-lg font-bold text-slate-900 dark:text-white">
                 {isLoading ? (
-                  <div className="animate-pulse bg-indigo-900/30 h-6 w-24 rounded"></div>
+                  <div className="animate-pulse bg-slate-200 dark:bg-indigo-900/30 h-6 w-24 rounded"></div>
                 ) : marketPrice ? (
                   formatCurrency(marketPrice)
                 ) : (
@@ -172,19 +172,19 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-indigo-900/10 to-blue-900/10 rounded-lg border border-indigo-900/20 p-4">
-              <div className="text-xs text-indigo-300/70 mb-1">Change</div>
-              <div className={`text-lg font-medium ${
+            <div className="bg-slate-50 dark:bg-gradient-to-r dark:from-indigo-900/10 dark:to-blue-900/10 rounded-xl border border-slate-200 dark:border-indigo-900/20 p-4">
+              <div className="text-xs text-slate-500 dark:text-indigo-300/70 mb-1">Change</div>
+              <div className={`text-lg font-bold ${
                 marketChange
                   ? marketChange > 0
-                    ? 'text-green-400'
+                    ? 'text-emerald-600 dark:text-green-400'
                     : marketChange < 0
-                      ? 'text-red-400'
-                      : 'text-white'
-                  : 'text-white'
+                      ? 'text-rose-600 dark:text-red-400'
+                      : 'text-slate-900 dark:text-white'
+                  : 'text-slate-900 dark:text-white'
               }`}>
                 {isLoading ? (
-                  <div className="animate-pulse bg-indigo-900/30 h-6 w-24 rounded"></div>
+                  <div className="animate-pulse bg-slate-200 dark:bg-indigo-900/30 h-6 w-24 rounded"></div>
                 ) : marketChange ? (
                   `${marketChange > 0 ? '+' : ''}${formatCurrency(marketChange)}`
                 ) : (
@@ -193,19 +193,19 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-indigo-900/10 to-blue-900/10 rounded-lg border border-indigo-900/20 p-4">
-              <div className="text-xs text-indigo-300/70 mb-1">% Change</div>
-              <div className={`text-lg font-medium ${
+            <div className="bg-slate-50 dark:bg-gradient-to-r dark:from-indigo-900/10 dark:to-blue-900/10 rounded-xl border border-slate-200 dark:border-indigo-900/20 p-4">
+              <div className="text-xs text-slate-500 dark:text-indigo-300/70 mb-1">% Change</div>
+              <div className={`text-lg font-bold ${
                 marketPercentChange
                   ? marketPercentChange > 0
-                    ? 'text-green-400'
+                    ? 'text-emerald-600 dark:text-green-400'
                     : marketPercentChange < 0
-                      ? 'text-red-400'
-                      : 'text-white'
-                  : 'text-white'
+                      ? 'text-rose-600 dark:text-red-400'
+                      : 'text-slate-900 dark:text-white'
+                  : 'text-slate-900 dark:text-white'
               }`}>
                 {isLoading ? (
-                  <div className="animate-pulse bg-indigo-900/30 h-6 w-24 rounded"></div>
+                  <div className="animate-pulse bg-slate-200 dark:bg-indigo-900/30 h-6 w-24 rounded"></div>
                 ) : marketPercentChange ? (
                   `${marketPercentChange > 0 ? '+' : ''}${marketPercentChange.toFixed(2)}%`
                 ) : (
@@ -216,7 +216,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
           </div>
 
           {error && (
-            <div className="mt-3 p-3 bg-red-900/20 border border-red-900/30 rounded-lg text-red-400 text-sm">
+            <div className="mt-3 p-3 bg-rose-50 dark:bg-red-900/20 border border-rose-200 dark:border-red-900/30 rounded-xl text-rose-600 dark:text-red-400 text-sm">
               {error}
             </div>
           )}
@@ -227,16 +227,16 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
         {/* Entry Price */}
         <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-indigo-300">Entry Price</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-indigo-300">Entry Price</label>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => useMarketPrice('entry')}
                 disabled={!marketPrice}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                   marketPrice
-                    ? 'bg-gradient-to-r from-indigo-600/20 to-blue-600/20 text-indigo-300 border border-indigo-600/30 hover:shadow-md'
-                    : 'bg-gray-800/50 text-gray-500 cursor-not-allowed'
+                    ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-600/30 hover:shadow-md'
+                    : 'bg-slate-100 dark:bg-gray-800/50 text-slate-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
               >
                 Use Market
@@ -244,7 +244,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500">$</span>
+                <span className="text-slate-400 dark:text-gray-500 font-bold">$</span>
               </div>
               <input
                 type="number"
@@ -252,7 +252,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
                 onChange={(e) => onEntryPriceChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                 step="0.01"
                 placeholder="0.00"
-                className="w-full py-2.5 pl-8 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
+                className="w-full py-2.5 pl-8 pr-4 bg-slate-50 dark:bg-[#171f31] border border-slate-200 dark:border-indigo-800/30 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm"
               />
             </div>
         </div>
@@ -260,16 +260,16 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
         {/* Exit Price */}
         <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-indigo-300">Exit Price</label>
+              <label className="text-sm font-semibold text-slate-700 dark:text-indigo-300">Exit Price</label>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => useMarketPrice('exit')}
                 disabled={!marketPrice}
-                className={`px-3 py-1.5 text-xs rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all ${
                   marketPrice
-                    ? 'bg-gradient-to-r from-indigo-600/20 to-blue-600/20 text-indigo-300 border border-indigo-600/30 hover:shadow-md'
-                    : 'bg-gray-800/50 text-gray-500 cursor-not-allowed'
+                    ? 'bg-indigo-50 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-600/30 hover:shadow-md'
+                    : 'bg-slate-100 dark:bg-gray-800/50 text-slate-400 dark:text-gray-500 cursor-not-allowed'
                 }`}
               >
                 Use Market
@@ -277,7 +277,7 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
             </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500">$</span>
+                <span className="text-slate-400 dark:text-gray-500 font-bold">$</span>
               </div>
               <input
                 type="number"
@@ -285,14 +285,14 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
                 onChange={(e) => onExitPriceChange(e.target.value === '' ? undefined : parseFloat(e.target.value))}
                 step="0.01"
                 placeholder="0.00"
-                className="w-full py-2.5 pl-8 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
-          />
+                className="w-full py-2.5 pl-8 pr-4 bg-slate-50 dark:bg-[#171f31] border border-slate-200 dark:border-indigo-800/30 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm"
+              />
+            </div>
         </div>
-      </div>
 
         {/* Quantity Input */}
         <div>
-          <label className="text-sm font-medium text-indigo-300 mb-2 block">Quantity</label>
+          <label className="text-sm font-semibold text-slate-700 dark:text-indigo-300 mb-2 block">Quantity</label>
           <div className="relative">
             <input
               type="number"
@@ -301,27 +301,27 @@ const AdvancedPriceEntry: React.FC<AdvancedPriceEntryProps> = ({
               value={quantity ?? ''}
               onChange={e => onQuantityChange && onQuantityChange(e.target.value === '' ? undefined : parseInt(e.target.value))}
               placeholder="0"
-              className="w-full py-2.5 pl-4 pr-4 bg-gradient-to-r from-[#171f31] to-[#1a202e] border border-indigo-800/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-inner"
-          />
-        </div>
-      </div>
-
-          {/* Visual Price Slider */}
-          <div>
-            <label className="block text-sm font-medium text-indigo-300 mb-2">Visual Price Range</label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={sliderValue}
-              onChange={(e) => handleSliderChange(e)}
-              className="w-full h-2 bg-gradient-to-r from-indigo-900/30 to-blue-900/30 rounded-lg appearance-none cursor-pointer"
+              className="w-full py-2.5 pl-4 pr-4 bg-slate-50 dark:bg-[#171f31] border border-slate-200 dark:border-indigo-800/30 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 shadow-sm"
             />
-            <div className="flex justify-between mt-1 text-xs text-indigo-300/70">
-              <span>{formatCurrency(visualRange.min)}</span>
-              <span>{formatCurrency(visualRange.max)}</span>
-            </div>
-      </div>
+          </div>
+        </div>
+
+        {/* Visual Price Slider */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 dark:text-indigo-300 mb-2">Visual Price Range</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={sliderValue}
+            onChange={(e) => handleSliderChange(e)}
+            className="w-full h-2 bg-slate-200 dark:bg-indigo-900/30 rounded-lg appearance-none cursor-pointer"
+          />
+          <div className="flex justify-between mt-1 text-xs text-slate-500 dark:text-indigo-300/70">
+            <span>{formatCurrency(visualRange.min)}</span>
+            <span>{formatCurrency(visualRange.max)}</span>
+          </div>
+        </div>
 
           {/* Profit/Loss Display */}
           {entryPrice && exitPrice && quantity && (

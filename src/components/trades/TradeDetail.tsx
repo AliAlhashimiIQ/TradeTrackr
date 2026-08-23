@@ -172,7 +172,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
             <button
               type="button"
               onClick={() => setShowShareModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/30 text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-sm"
               title="Share Social P&L Card"
             >
               <Share2 className="w-4 h-4" />
@@ -182,7 +182,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
             {onEdit && (
               <button 
                 onClick={onEdit}
-                className="p-2 rounded-full bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 transition-colors"
+                className="p-2 rounded-xl bg-slate-100 dark:bg-white/[0.06] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/[0.08] transition-all shadow-sm"
                 title="Edit Trade"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
