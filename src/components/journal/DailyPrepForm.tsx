@@ -56,27 +56,6 @@ const DEFAULT_RULES = [
   { text: 'Confirmed minimum 1:2 Risk-to-Reward ratio before entry', checked: false },
 ];
 
-const PRE_MARKET_PROMPTS = [
-  'Only take setups at key 15m orderblocks',
-  'No entries before 9:30 AM NY Open',
-  'Max 2 executions today',
-  'Wait for liquidity sweep before entering',
-];
-
-const LEVEL_PROMPTS = [
-  'PDH / PDL Liquidity',
-  'Asia Session Range Sweep',
-  '1H Fair Value Gap (FVG)',
-  'Daily Orderblock',
-];
-
-const POST_MARKET_PROMPTS = [
-  'Followed trade plan 100%',
-  'Cut losers quickly with zero hesitation',
-  'Felt slight FOMO on the morning breakout',
-  'Great patience waiting for confirmation',
-];
-
 export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: DailyPrepFormProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -429,25 +408,11 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                 </label>
               </div>
 
-              {/* Quick Prompt Chips */}
-              <div className="flex flex-wrap gap-1.5">
-                {PRE_MARKET_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => setDailyGoal((prev) => (prev ? `${prev}\n• ${prompt}` : `• ${prompt}`))}
-                    className="text-[10px] px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-medium transition-colors text-left"
-                  >
-                    + {prompt}
-                  </button>
-                ))}
-              </div>
-
               <textarea
                 value={dailyGoal}
                 onChange={(e) => setDailyGoal(e.target.value)}
-                placeholder="Structure your session rules. What setups are valid? What timeframes? E.g. Only take setups on 15m orderblocks after 9:30 AM open..."
-                rows={3}
+                placeholder="Define session execution criteria, valid setup rules, and risk constraints..."
+                rows={4}
                 className="w-full bg-white dark:bg-[#121524] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-inner leading-relaxed"
               />
             </div>
@@ -461,25 +426,11 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
                 </label>
               </div>
 
-              {/* Quick Prompt Chips */}
-              <div className="flex flex-wrap gap-1.5">
-                {LEVEL_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => setKeyLevels((prev) => (prev ? `${prev} | ${prompt}` : prompt))}
-                    className="text-[10px] px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-medium transition-colors text-left"
-                  >
-                    + {prompt}
-                  </button>
-                ))}
-              </div>
-
               <textarea
                 value={keyLevels}
                 onChange={(e) => setKeyLevels(e.target.value)}
-                placeholder="EURUSD Key Levels: 1.0820 Support, 1.0895 FVG. NQ Liquidity: 20,450 PDH sweep..."
-                rows={3}
+                placeholder="Key price levels, liquidity pools, session ranges, and invalidation points..."
+                rows={4}
                 className="w-full bg-white dark:bg-[#121524] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 font-mono transition-all shadow-inner leading-relaxed"
               />
             </div>
@@ -494,8 +445,8 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
             <textarea
               value={economicNotes}
               onChange={(e) => setEconomicNotes(e.target.value)}
-              placeholder="e.g. 8:30 AM Core CPI Release (High Impact) · 2:00 PM FOMC Minutes · Expect elevated volatility during NY open..."
-              rows={2}
+              placeholder="High-impact macroeconomic releases, central bank speeches, and session catalyst times..."
+              rows={3}
               className="w-full bg-white dark:bg-[#121524] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-inner leading-relaxed"
             />
           </div>
@@ -646,24 +597,10 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
               </label>
             </div>
 
-            {/* Quick Prompt Chips */}
-            <div className="flex flex-wrap gap-1.5">
-              {POST_MARKET_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  onClick={() => setReflection((prev) => (prev ? `${prev}\n• ${prompt}` : `• ${prompt}`))}
-                  className="text-[10px] px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 font-medium transition-colors text-left"
-                >
-                  + {prompt}
-                </button>
-              ))}
-            </div>
-
             <textarea
               value={reflection}
               onChange={(e) => setReflection(e.target.value)}
-              placeholder="Reflect honestly on today's trading. Did you stick to your plan? Were stops respected? What psychological lessons did you learn for tomorrow?"
+              placeholder="Session takeaways, plan adherence, emotional state, and psychological observations..."
               rows={5}
               className="w-full bg-white dark:bg-[#121524] border border-slate-200/90 dark:border-white/[0.08] rounded-2xl p-4 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition-all shadow-inner leading-relaxed"
             />
