@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trade, TradingAccount } from '@/lib/types';
-import { BrainCircuit, TrendingDown, ShieldCheck, ShieldAlert, ArrowRight, Sparkles, ChevronDown, Flame, Scale, AlertTriangle, Layers } from 'lucide-react';
+import { BrainCircuit, TrendingDown, ShieldCheck, ShieldAlert, ArrowRight, Sparkles, ChevronDown, Flame, Scale, AlertTriangle, Layers, Award, Activity, CheckCircle2, Zap, Target } from 'lucide-react';
 
 type SavedView = 'all' | 'forex' | 'mistakes' | 'winners' | 'losers' | 'review';
 type TableDensity = 'compact' | 'comfortable';
@@ -322,17 +322,35 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
           </div>
         </div>
       </div>
-{/* Intelligence Strip */}
+      {/* Intelligence Strip */}
       <div className="mb-6 text-left">
         <button
           onClick={onToggleIntelligence}
-          className="mb-4 px-4 py-2.5 rounded-2xl text-xs font-bold bg-white dark:bg-[#0e111d] border border-slate-200/80 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all inline-flex items-center gap-2.5 shadow-sm active:scale-95 group"
+          className="mb-4 px-4 py-2.5 rounded-2xl text-xs font-bold bg-white dark:bg-[#0c0f1d] border border-slate-200/80 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-all inline-flex items-center gap-3 shadow-sm active:scale-95 group"
         >
-          <div className="w-5 h-5 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <div className="w-6 h-6 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
             <BrainCircuit className="w-3.5 h-3.5" />
           </div>
-          <span>{showIntelligence ? 'Hide AI Intelligence' : 'Show AI Intelligence'}</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
+          <span className="font-extrabold">{showIntelligence ? 'Hide AI Intelligence' : 'AI Performance Intelligence'}</span>
+          
+          <div className="flex items-center gap-1.5 pl-1">
+            {reviewQueue.length > 0 ? (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/25 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                {reviewQueue.length} In Review
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Queue Clear
+              </span>
+            )}
+
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-slate-100 dark:bg-white/[0.05] text-slate-600 dark:text-slate-400 border border-slate-200/80 dark:border-white/[0.06]">
+              {topMistakeCost.length === 0 ? '$0 Leakage' : `-$${topMistakeCost.reduce((s, [, c]) => s + c, 0).toFixed(0)} Leaks`}
+            </span>
+          </div>
+
           <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 ${showIntelligence ? 'rotate-180' : ''}`} />
         </button>
 
@@ -344,95 +362,178 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                {/* Left Panel: Top Mistake Cost */}
-                <div className="card rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0e111d] shadow-sm dark:shadow-2xl flex flex-col justify-between">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
+                
+                {/* Left Panel: Executive Discipline & Leakage Command (5 cols) */}
+                <div className="lg:col-span-5 rounded-3xl p-5 border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0c0f1d] shadow-sm dark:shadow-2xl flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-600 dark:text-rose-400">
-                          <TrendingDown className="w-4 h-4" />
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-white/[0.04]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm">
+                          <ShieldCheck className="w-4 h-4" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Top Mistake Cost</h3>
+                        <div>
+                          <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-none">
+                            Discipline Health
+                          </h3>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                            Psychological Drag &amp; Leakage
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                        Realized Loss Impact
-                      </span>
+                      
+                      {topMistakeCost.length === 0 ? (
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          100% Clean
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-xl bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/25 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-rose-500" />
+                          Leakage Detected
+                        </span>
+                      )}
                     </div>
 
                     {topMistakeCost.length === 0 ? (
-                      <div className="py-8 px-4 flex flex-col items-center justify-center text-center rounded-xl bg-slate-50/50 dark:bg-white/[0.015] border border-dashed border-slate-200 dark:border-white/[0.06]">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400 mb-3 shadow-inner">
-                          <ShieldCheck className="w-6 h-6" />
+                      /* Zero Leakage Clean Discipline Scorecard */
+                      <div className="space-y-4">
+                        {/* Hero Scorecard Box */}
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/[0.06] to-transparent border border-emerald-500/20">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                                Capital Drag Rate
+                              </span>
+                              <span className="text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 tracking-tight block">
+                                $0.00
+                              </span>
+                            </div>
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-black text-sm font-mono shadow-sm">
+                              0.0%
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-2 font-medium">
+                            No realized losses currently attributed to FOMO, Revenge Trading, or Rule Violations.
+                          </p>
                         </div>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">No Mistake Leaks Detected</h4>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                          Your closed trades currently have no realized losses attributed to mistake tags. Continue maintaining disciplined trade executions.
-                        </p>
-                        <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                          <span>$0.00 Lost to Discipline Mistakes</span>
+
+                        {/* 3 Telemetry Pillars */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/[0.04] text-center">
+                            <Target className="w-3.5 h-3.5 mx-auto mb-1 text-emerald-500" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Plan Health</span>
+                            <span className="text-xs font-mono font-black text-slate-900 dark:text-white">100%</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/[0.04] text-center">
+                            <Flame className="w-3.5 h-3.5 mx-auto mb-1 text-emerald-500" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">FOMO Hits</span>
+                            <span className="text-xs font-mono font-black text-slate-900 dark:text-white">0</span>
+                          </div>
+
+                          <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200/70 dark:border-white/[0.04] text-center">
+                            <ShieldCheck className="w-3.5 h-3.5 mx-auto mb-1 text-emerald-500" />
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400 block">Risk Guard</span>
+                            <span className="text-xs font-mono font-black text-slate-900 dark:text-white">Optimal</span>
+                          </div>
+                        </div>
+
+                        {/* AI Behavioral Tip */}
+                        <div className="p-3 rounded-xl bg-indigo-500/[0.04] border border-indigo-500/15 flex items-start gap-2.5">
+                          <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                            <strong className="text-slate-900 dark:text-white font-bold">Pro Tip:</strong> Keep tagging your trade setups and emotional states in the table. Real-time mistake tracking calculates exact dollar leaks when rules are broken.
+                          </p>
                         </div>
                       </div>
                     ) : (
+                      /* Populated Leakage Breakdown */
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-white/[0.04]">
-                          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Leakage Drag</span>
-                          <span className="text-sm font-bold font-mono text-rose-600 dark:text-rose-400">
-                            -${topMistakeCost.reduce((sum, [, cost]) => sum + cost, 0).toFixed(2)}
+                        <div className="p-3.5 rounded-2xl bg-rose-500/[0.06] border border-rose-500/20 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+                              Total Realized Leakage
+                            </span>
+                            <span className="text-2xl font-black font-mono text-rose-600 dark:text-rose-400">
+                              -${topMistakeCost.reduce((sum, [, cost]) => sum + cost, 0).toFixed(2)}
+                            </span>
+                          </div>
+                          <span className="text-xs font-mono font-bold px-2 py-1 rounded-lg bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
+                            {topMistakeCost.length} Flagged Triggers
                           </span>
                         </div>
-                        {topMistakeCost.map(([mistake, cost]) => {
-                          const total = topMistakeCost.reduce((sum, [, c]) => sum + c, 0);
-                          const pct = total > 0 ? (cost / total) * 100 : 0;
-                          return (
-                            <div key={mistake} className="p-3 rounded-xl bg-slate-50/50 dark:bg-white/[0.015] border border-slate-200/80 dark:border-white/[0.04] space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 capitalize flex items-center gap-1.5">
-                                  <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
-                                  {mistake}
-                                </span>
-                                <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400">
-                                  -${cost.toFixed(2)}
-                                </span>
+
+                        <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                          {topMistakeCost.map(([mistake, cost]) => {
+                            const total = topMistakeCost.reduce((sum, [, c]) => sum + c, 0);
+                            const pct = total > 0 ? (cost / total) * 100 : 0;
+                            return (
+                              <div key={mistake} className="p-3 rounded-xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200 capitalize flex items-center gap-1.5">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+                                    {mistake}
+                                  </span>
+                                  <div className="text-right">
+                                    <span className="text-xs font-bold font-mono text-rose-600 dark:text-rose-400">
+                                      -${cost.toFixed(2)}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-mono ml-1">({pct.toFixed(0)}%)</span>
+                                  </div>
+                                </div>
+                                <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/[0.06] overflow-hidden">
+                                  <div className="h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" style={{ width: `${Math.min(100, Math.max(5, pct))}%` }} />
+                                </div>
                               </div>
-                              <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/[0.06] overflow-hidden">
-                                <div className="h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full" style={{ width: `${Math.min(100, Math.max(5, pct))}%` }} />
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Right Panel: Smart Review Queue */}
-                <div className="card rounded-2xl p-5 border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0e111d] shadow-sm dark:shadow-2xl flex flex-col justify-between">
+                {/* Right Panel: Smart Review Queue (7 cols) */}
+                <div className="lg:col-span-7 rounded-3xl p-5 border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0e111d] shadow-sm dark:shadow-2xl flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    {/* Panel Header */}
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-white/[0.04]">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
                           <Sparkles className="w-4 h-4" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 dark:text-white">Smart Review Queue</h3>
+                        <div>
+                          <h3 className="text-sm font-extrabold text-slate-900 dark:text-white leading-none">
+                            Smart Review Queue
+                          </h3>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                            Priority Audits &amp; Missing Tags
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                        Needs Attention ({reviewQueue.length})
+
+                      <span className="text-[10px] font-mono uppercase tracking-wider font-bold px-2.5 py-1 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/25 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        {reviewQueue.length} Needs Review
                       </span>
                     </div>
 
                     {reviewQueue.length === 0 ? (
-                      <div className="py-8 px-4 flex flex-col items-center justify-center text-center rounded-xl bg-slate-50/50 dark:bg-white/[0.015] border border-dashed border-slate-200 dark:border-white/[0.06]">
+                      /* Empty Queue State */
+                      <div className="py-12 px-4 flex flex-col items-center justify-center text-center rounded-2xl bg-slate-50/50 dark:bg-white/[0.015] border border-dashed border-slate-200 dark:border-white/[0.06]">
                         <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-3 shadow-inner">
                           <Sparkles className="w-6 h-6" />
                         </div>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Review Queue Clear</h4>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">Queue Completely Clear</h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs leading-relaxed">
-                          All logged trades have complete strategy tags and healthy execution discipline.
+                          All logged trades have complete strategy tags, risk parameters, and disciplined execution scores.
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                      /* Review Trade List */
+                      <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
                         {reviewQueue.map(({ trade, reasons, quality }) => {
                           const isHighRisk = reasons.length >= 3 || quality < 50;
                           const isMedRisk = reasons.length === 2 || (quality >= 50 && quality < 70);
@@ -443,16 +544,17 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               ? 'border-amber-500/30 hover:border-amber-500/60 dark:hover:border-amber-500/60' 
                               : 'border-indigo-500/30 hover:border-indigo-500/60 dark:hover:border-indigo-500/60';
                           
+                          const gradeLetter = quality >= 85 ? 'A' : quality >= 70 ? 'B' : quality >= 50 ? 'C' : 'F';
                           const hasStrategyTags = trade.tags && trade.tags.length > 0;
                           
                           return (
                             <button
                               key={trade.id}
                               onClick={() => onReviewClick(trade)}
-                              className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-2xl bg-slate-50/70 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] border ${borderClass} transition-all duration-200 gap-3 group shadow-sm hover:shadow-md hover:-translate-y-0.5`}
+                              className={`w-full flex flex-col sm:flex-row sm:items-center justify-between text-left p-3.5 rounded-2xl bg-slate-50/80 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] border ${borderClass} transition-all duration-200 gap-3 group shadow-sm hover:shadow-md hover:-translate-y-0.5`}
                             >
                               <div className="flex items-start gap-3 min-w-0">
-                                {/* Status Indicator Strip */}
+                                {/* Severity Edge Strip */}
                                 <div 
                                   className={`w-1.5 self-stretch rounded-full shrink-0 ${
                                     isHighRisk ? 'bg-rose-500' : isMedRisk ? 'bg-amber-500' : 'bg-indigo-500'
@@ -460,20 +562,22 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                                 />
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                    <span className="text-sm font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                       {trade.symbol}
                                     </span>
-                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold bg-slate-200/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 uppercase">
+                                    <span className="text-[10px] px-2 py-0.5 rounded-md font-mono font-bold bg-slate-200/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 uppercase">
                                       {trade.type} {trade.lots ? `${trade.lots} Lot` : ''}
                                     </span>
                                     {trade.profit_loss !== undefined && (
-                                      <span className={`text-xs font-mono font-bold ${
+                                      <span className={`text-xs font-mono font-black ${
                                         trade.profit_loss >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                                       }`}>
                                         {trade.profit_loss >= 0 ? '+' : ''}{fmtCurrency(trade.profit_loss)}
                                       </span>
                                     )}
                                   </div>
+
+                                  {/* Badges / Reasons */}
                                   <div className="flex flex-wrap gap-1.5 mt-2">
                                     {hasStrategyTags ? (
                                       trade.tags?.map(tag => (
@@ -517,18 +621,18 @@ export const TradesFilters: React.FC<TradesFiltersProps> = ({
                               </div>
                               
                               <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                                {/* Execution Score Badge */}
+                                {/* Execution Grade Badge */}
                                 <div className="text-right">
-                                  <span className="text-[9px] uppercase font-mono font-bold text-slate-400 dark:text-slate-500 block">Score</span>
-                                  <span className={`text-xs font-extrabold font-mono px-2 py-0.5 rounded-md ${
-                                    quality >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : quality >= 50 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20'
+                                  <span className="text-[9px] uppercase font-mono font-bold text-slate-400 dark:text-slate-500 block">Grade</span>
+                                  <span className={`text-xs font-black font-mono px-2 py-0.5 rounded-lg border ${
+                                    quality >= 70 ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' : quality >= 50 ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25'
                                   }`}>
-                                    {quality}%
+                                    {gradeLetter} · {quality}%
                                   </span>
                                 </div>
                                 
                                 {/* Review CTA Button */}
-                                <div className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-200 flex items-center gap-1 shadow-sm">
+                                <div className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.08] text-slate-700 dark:text-slate-200 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-500 transition-all duration-200 flex items-center gap-1.5 shadow-sm">
                                   <span>Review</span>
                                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                                 </div>
