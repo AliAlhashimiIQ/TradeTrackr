@@ -153,29 +153,29 @@ function MiniCalendarHeatmap({ trades }: { trades: Trade[] }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays className="w-3.5 h-3.5 text-indigo-400" />
-          <span className="text-[11px] font-black text-white uppercase tracking-wider">
+          <span className="text-[11px] font-black text-[var(--foreground)] uppercase tracking-wider">
             {MONTHS[viewMonth]} {viewYear}
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={prevMonth} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors text-[11px]">‹</button>
-          <button onClick={nextMonth} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-white/[0.06] text-gray-500 hover:text-white transition-colors text-[11px]">›</button>
+          <button onClick={prevMonth} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--surface-3)] text-gray-500 hover:text-[var(--foreground)] transition-colors text-[11px]">‹</button>
+          <button onClick={nextMonth} className="w-6 h-6 rounded-lg flex items-center justify-center hover:bg-[var(--surface-3)] text-gray-500 hover:text-[var(--foreground)] transition-colors text-[11px]">›</button>
         </div>
       </div>
 
       {/* Monthly summary strip */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white/[0.03] rounded-xl px-2.5 py-1.5 text-center border border-white/[0.04]">
+        <div className="bg-[var(--surface-2)] rounded-xl px-2.5 py-1.5 text-center border border-[var(--card-border)]">
           <div className={`text-sm font-black font-mono ${monthlyStats.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {monthlyStats.pnl >= 0 ? '+' : ''}{fmtShort(monthlyStats.pnl)}
           </div>
           <div className="text-[9px] text-gray-600 uppercase tracking-wide font-bold mt-0.5">Net P&L</div>
         </div>
-        <div className="bg-white/[0.03] rounded-xl px-2.5 py-1.5 text-center border border-white/[0.04]">
+        <div className="bg-[var(--surface-2)] rounded-xl px-2.5 py-1.5 text-center border border-[var(--card-border)]">
           <div className="text-sm font-black font-mono text-emerald-500">{monthlyStats.wins}</div>
           <div className="text-[9px] text-gray-600 uppercase tracking-wide font-bold mt-0.5">Green Days</div>
         </div>
-        <div className="bg-white/[0.03] rounded-xl px-2.5 py-1.5 text-center border border-white/[0.04]">
+        <div className="bg-[var(--surface-2)] rounded-xl px-2.5 py-1.5 text-center border border-[var(--card-border)]">
           <div className="text-sm font-black font-mono text-rose-500">{monthlyStats.losses}</div>
           <div className="text-[9px] text-gray-600 uppercase tracking-wide font-bold mt-0.5">Red Days</div>
         </div>
@@ -197,8 +197,8 @@ function MiniCalendarHeatmap({ trades }: { trades: Trade[] }) {
           const isToday = key === todayStr
           const intensity = data ? Math.min(0.9, Math.abs(data.pnl) / maxAbsPnL) : 0
 
-          let bg = 'bg-white/[0.02]'
-          let border = 'border-white/[0.04]'
+          let bg = 'bg-[var(--surface-2)]'
+          let border = 'border-[var(--card-border)]'
           if (data && data.pnl > 0) {
             bg = `bg-emerald-500`
             border = 'border-emerald-500/30'
@@ -218,18 +218,20 @@ function MiniCalendarHeatmap({ trades }: { trades: Trade[] }) {
                   ? data.pnl > 0
                     ? `rgba(16,185,129,${0.15 + intensity * 0.55})`
                     : `rgba(244,63,94,${0.15 + intensity * 0.55})`
-                  : 'rgba(255,255,255,0.02)'
+                  : undefined
               }}
             >
               <span className={`text-[9px] font-bold select-none ${
-                data ? (data.pnl > 0 ? 'text-emerald-300' : 'text-rose-300') : 'text-gray-700'
-              } ${isToday ? 'text-indigo-300' : ''}`}>
+                data
+                  ? data.pnl > 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'
+                  : 'text-gray-500'
+              } ${isToday ? '!text-indigo-500 dark:!text-indigo-300' : ''}`}>
                 {day}
               </span>
               {/* Tooltip */}
               {data && (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50 pointer-events-none">
-                  <div className="bg-[#0d0e16] border border-white/[0.12] rounded-lg px-2.5 py-1.5 text-[10px] font-mono whitespace-nowrap shadow-xl">
+                  <div className="bg-[var(--tooltip-bg)] border border-[var(--card-border)] rounded-lg px-2.5 py-1.5 text-[10px] font-mono whitespace-nowrap shadow-xl">
                     <div className={`font-black ${data.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {data.pnl >= 0 ? '+' : ''}{fmtShort(data.pnl)}
                     </div>
@@ -249,7 +251,7 @@ function MiniCalendarHeatmap({ trades }: { trades: Trade[] }) {
           <span>Loss</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-white/[0.05]" />
+          <div className="w-3 h-3 rounded bg-[var(--surface-3)]" />
           <span>No trade</span>
         </div>
         <div className="flex items-center gap-1">
@@ -264,7 +266,7 @@ function MiniCalendarHeatmap({ trades }: { trades: Trade[] }) {
 // ─── Equity chart lazy load ───────────────────────────────────────────────────
 const EquityAreaChart = dynamic(() => import('@/components/dashboard/EquityAreaChart'), {
   ssr: false,
-  loading: () => <div className="h-56 rounded-xl bg-white/[0.02] animate-pulse" />
+  loading: () => <div className="h-56 rounded-xl bg-[var(--surface-2)] animate-pulse" />
 })
 
 // ─── Animation variants ───────────────────────────────────────────────────────
@@ -405,7 +407,7 @@ export default function Dashboard() {
               <div className="w-8 h-8 rounded-xl bg-indigo-500/15 border border-indigo-500/25 flex items-center justify-center shrink-0">
                 <Activity className="w-4 h-4 text-indigo-400" />
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">Command Center</h1>
+              <h1 className="text-xl sm:text-2xl font-black text-[var(--foreground)] tracking-tight">Command Center</h1>
             </div>
             <p className="text-gray-500 text-xs font-medium mt-0.5 ml-10">
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
@@ -471,11 +473,11 @@ export default function Dashboard() {
                     icon: metrics.total_pnl >= 0 ? TrendingUp : TrendingDown,
                     sub: `${metrics.avg_win > 0 ? fmt(metrics.avg_win) : '—'} avg win`,
                     extra: (
-                      <div className="mt-3 pt-2.5 border-t border-white/[0.05] space-y-1.5">
+                      <div className="mt-3 pt-2.5 border-t border-[var(--card-border)] space-y-1.5">
                         <div className="flex justify-between text-[9px] font-black text-gray-600 uppercase tracking-wider">
                           <span>Avg Win</span><span>Avg Loss</span>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-white/[0.05] overflow-hidden flex">
+                        <div className="h-1.5 w-full rounded-full bg-[var(--surface-3)] overflow-hidden flex">
                           <div className="h-full bg-emerald-500 transition-all"
                             style={{ width: `${(metrics.avg_win + Math.abs(metrics.avg_loss)) > 0 ? (metrics.avg_win / (metrics.avg_win + Math.abs(metrics.avg_loss))) * 100 : 50}%` }} />
                           <div className="h-full bg-rose-500"
@@ -495,7 +497,7 @@ export default function Dashboard() {
                     icon: Target,
                     sub: `${metrics.winning_trades}W · ${metrics.losing_trades}L`,
                     extra: (
-                      <div className="mt-3 pt-2.5 border-t border-white/[0.05]">
+                      <div className="mt-3 pt-2.5 border-t border-[var(--card-border)]">
                         <div className="flex justify-center">
                           <svg className="w-[110px] h-[44px]" viewBox="0 0 100 50">
                             <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9" strokeLinecap="round" />
@@ -523,7 +525,7 @@ export default function Dashboard() {
                       const pf = advancedMetrics?.profitFactor ?? 0
                       const ratio = pf > 0 ? (pf / (pf + 1)) * 100 : 50
                       return (
-                        <div className="mt-3 pt-2.5 border-t border-white/[0.05] flex items-center gap-3">
+                        <div className="mt-3 pt-2.5 border-t border-[var(--card-border)] flex items-center gap-3">
                           <span className="text-[9px] text-gray-600 leading-tight flex-1">Gross profit vs gross loss</span>
                           <svg className="w-9 h-9 shrink-0 -rotate-90" viewBox="0 0 36 36">
                             <circle cx="18" cy="18" r="15.915" fill="none" stroke="#f43f5e" strokeWidth="5" />
@@ -546,11 +548,11 @@ export default function Dashboard() {
                       const tot = lc + sc
                       const lp = tot > 0 ? (lc / tot) * 100 : 50
                       return (
-                        <div className="mt-3 pt-2.5 border-t border-white/[0.05] space-y-1.5">
+                        <div className="mt-3 pt-2.5 border-t border-[var(--card-border)] space-y-1.5">
                           <div className="flex justify-between text-[9px] font-bold uppercase tracking-wider text-gray-600">
                             <span>Buy ({lc})</span><span>Sell ({sc})</span>
                           </div>
-                          <div className="h-1.5 w-full rounded-full bg-white/[0.05] overflow-hidden flex">
+                          <div className="h-1.5 w-full rounded-full bg-[var(--surface-3)] overflow-hidden flex">
                             <div className="h-full bg-emerald-500" style={{ width: `${lp}%` }} />
                             <div className="h-full bg-rose-500" style={{ width: `${100 - lp}%` }} />
                           </div>
@@ -568,8 +570,8 @@ export default function Dashboard() {
                       const rr = advancedMetrics?.riskRewardRatio ?? 0
                       const fill = Math.min(100, Math.max(0, (rr / 2) * 100))
                       return (
-                        <div className="mt-3 pt-2.5 border-t border-white/[0.05] space-y-1.5">
-                          <div className="h-1.5 w-full rounded-full bg-white/[0.05] overflow-hidden">
+                        <div className="mt-3 pt-2.5 border-t border-[var(--card-border)] space-y-1.5">
+                          <div className="h-1.5 w-full rounded-full bg-[var(--surface-3)] overflow-hidden">
                             <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${fill}%` }} />
                           </div>
                           <div className="flex justify-between text-[9px] font-mono font-bold">
@@ -585,7 +587,7 @@ export default function Dashboard() {
                   const accent = s.positive ? '#10b981' : '#f43f5e'
                   return (
                     <motion.div key={i} variants={item}
-                      className="relative rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4 overflow-hidden flex flex-col hover:border-white/[0.10] transition-all duration-200">
+                      className="relative rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4 overflow-hidden flex flex-col hover:border-[var(--border)] transition-all duration-200">
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{s.label}</span>
                         <div className="p-1.5 rounded-lg" style={{ background: `${accent}14` }}>
@@ -614,11 +616,11 @@ export default function Dashboard() {
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15, duration: 0.35 }}
-                  className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-5"
+                  className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-5"
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h2 className="text-white font-extrabold text-sm">Equity Curve</h2>
+                      <h2 className="text-[var(--foreground)] font-extrabold text-sm">Equity Curve</h2>
                       <p className="text-gray-500 text-[11px] mt-0.5">Account growth over time</p>
                     </div>
                     <div className={`text-base font-black font-mono ${metrics.total_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
@@ -634,7 +636,7 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.35 }}
-                className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-5"
+                className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-5"
               >
                 <MiniCalendarHeatmap trades={allTimeTrades} />
               </motion.div>
@@ -654,36 +656,36 @@ export default function Dashboard() {
               <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 
                 {/* Journal Streak */}
-                <motion.div variants={item} className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4 flex flex-col justify-between">
+                <motion.div variants={item} className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4 flex flex-col justify-between">
                   <div>
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2.5">Journal Streak</div>
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${journalStreak.currentStreak > 0 ? 'bg-amber-500/15 text-amber-400' : 'bg-white/[0.04] text-gray-600'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${journalStreak.currentStreak > 0 ? 'bg-amber-500/15 text-amber-400' : 'bg-[var(--surface-3)] text-gray-600'}`}>
                         <Flame className="w-5 h-5" />
                       </div>
                       <div>
-                        <div className="text-3xl font-black text-white font-mono">{journalStreak.currentStreak}</div>
+                        <div className="text-3xl font-black text-[var(--foreground)] font-mono">{journalStreak.currentStreak}</div>
                         <div className="text-[10px] text-gray-600">consecutive days</div>
                       </div>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-2">
+                  <div className="mt-3 pt-3 border-t border-[var(--card-border)] space-y-2">
                     <div className="flex justify-between text-[10px] text-gray-600">
                       <span>Best</span><span className="font-mono font-bold text-white">{journalStreak.longestStreak}d</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
                       {[{ n: 'Bronze', t: 3 }, { n: 'Silver', t: 5 }, { n: 'Gold', t: 10 }, { n: 'Master', t: 20 }].map(b => (
-                        <span key={b.n} className={`px-1.5 py-0.5 rounded text-[9px] font-bold border tracking-wide ${journalStreak.currentStreak >= b.t ? 'text-amber-400 border-amber-400/20 bg-amber-400/5' : 'text-gray-700 border-white/[0.04] opacity-40'}`}>{b.n}</span>
+                        <span key={b.n} className={`px-1.5 py-0.5 rounded text-[9px] font-bold border tracking-wide ${journalStreak.currentStreak >= b.t ? 'text-amber-400 border-amber-400/20 bg-amber-400/5' : 'text-gray-700 border-[var(--card-border)] opacity-40'}`}>{b.n}</span>
                       ))}
                     </div>
                   </div>
                 </motion.div>
 
                 {/* Trade Streak */}
-                <motion.div variants={item} className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <motion.div variants={item} className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2.5">Trade Streak</div>
                   <div className="flex items-center gap-2.5">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black ${streak.type === 'win' ? 'bg-emerald-500/15 text-emerald-400' : streak.type === 'loss' ? 'bg-rose-500/15 text-rose-400' : 'bg-white/[0.04] text-gray-600'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black ${streak.type === 'win' ? 'bg-emerald-500/15 text-emerald-400' : streak.type === 'loss' ? 'bg-rose-500/15 text-rose-400' : 'bg-[var(--surface-3)] text-gray-600'}`}>
                       {streak.count}
                     </div>
                     <div>
@@ -701,7 +703,7 @@ export default function Dashboard() {
                 </motion.div>
 
                 {/* Max Drawdown */}
-                <motion.div variants={item} className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <motion.div variants={item} className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2.5">Max Drawdown</div>
                   <div className={`text-3xl font-black font-mono ${drawdown.percentage > 10 ? 'text-rose-400' : drawdown.percentage > 5 ? 'text-amber-400' : 'text-emerald-400'}`}>
                     {drawdown.percentage.toFixed(1)}%
@@ -710,7 +712,7 @@ export default function Dashboard() {
                     <div className="flex justify-between text-[9px] text-gray-600 font-mono">
                       <span>0%</span><span className="text-amber-500/50">10% limit</span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[var(--surface-3)] overflow-hidden">
                       <div className={`h-full rounded-full transition-all ${drawdown.percentage > 10 ? 'bg-rose-500' : drawdown.percentage > 5 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                         style={{ width: `${Math.min(100, drawdown.percentage * 10)}%` }} />
                     </div>
@@ -719,13 +721,13 @@ export default function Dashboard() {
                 </motion.div>
 
                 {/* Psychology Score */}
-                <motion.div variants={item} className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <motion.div variants={item} className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2.5">Psychology</div>
                   <div className={`text-3xl font-black font-mono ${psychScore >= 80 ? 'text-emerald-400' : psychScore >= 60 ? 'text-amber-400' : 'text-rose-400'}`}>
                     {psychScore}%
                   </div>
                   <div className="mt-3 space-y-1.5">
-                    <div className="h-1.5 rounded-full bg-white/[0.05] overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-[var(--surface-3)] overflow-hidden">
                       <div className={`h-full rounded-full ${psychScore >= 80 ? 'bg-emerald-500' : psychScore >= 60 ? 'bg-amber-500' : 'bg-rose-500'}`}
                         style={{ width: `${psychScore}%` }} />
                     </div>
@@ -736,13 +738,13 @@ export default function Dashboard() {
                 </motion.div>
 
                 {/* Today's P&L */}
-                <motion.div variants={item} className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <motion.div variants={item} className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2.5">Today's P&L</div>
                   <div className={`text-3xl font-black font-mono ${todayPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {todayPnL >= 0 ? '+' : ''}{fmt(todayPnL)}
                   </div>
                   <div className="text-[10px] text-gray-600 font-mono mt-1">{todayTrades.length} trades today</div>
-                  <div className="mt-3 pt-3 border-t border-white/[0.04]">
+                  <div className="mt-3 pt-3 border-t border-[var(--card-border)]">
                     <div className="text-[10px] font-black text-gray-600 uppercase tracking-widest mb-1">Best Session</div>
                     <div className="text-[11px] text-indigo-400 font-semibold">{bestSession}</div>
                   </div>
@@ -756,14 +758,14 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-4">
 
               {/* Recent Executions */}
-              <div className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] overflow-hidden">
-                <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.05]">
-                  <h2 className="text-white font-extrabold text-sm">Recent Executions</h2>
+              <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] overflow-hidden">
+                <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--card-border)]">
+                  <h2 className="text-[var(--foreground)] font-extrabold text-sm">Recent Executions</h2>
                   <Link href="/trades" className="text-[11px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
                     View all <ArrowUpRight className="w-3 h-3" />
                   </Link>
                 </div>
-                <div className="divide-y divide-white/[0.03]">
+                <div className="divide-y divide-[var(--card-border)]">
                   {recent.length === 0 ? (
                     <div className="p-8 text-center text-gray-600 text-xs">No trades in this period</div>
                   ) : recent.map(trade => {
@@ -771,13 +773,13 @@ export default function Dashboard() {
                     const isLong = trade.type === 'Long'
                     return (
                       <Link href={`/trades/${trade.id}`} key={trade.id}
-                        className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.02] transition-colors group">
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-[var(--surface-2)] transition-colors group">
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${pos ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                           {isLong ? 'B' : 'S'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-sm font-extrabold text-white">{trade.symbol}</span>
+                            <span className="text-sm font-extrabold text-[var(--foreground)]">{trade.symbol}</span>
                             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded border ${isLong ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20'}`}>
                               {isLong ? 'LONG' : 'SHORT'}
                             </span>
@@ -807,23 +809,23 @@ export default function Dashboard() {
               {/* Right column: Insights + Quick Actions */}
               <div className="space-y-3">
                 {/* Behavior Alert */}
-                <div className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Behavior Alert</div>
                   </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
+                  <p className="text-xs text-[var(--secondary)] leading-relaxed">
                     {behaviors.behaviors[0]?.message || 'No reactive behavior spikes detected.'}
                   </p>
                 </div>
 
                 {/* Setup Leak */}
-                <div className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Eye className="w-3.5 h-3.5 text-rose-400" />
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Setup Leak</div>
                   </div>
-                  <p className="text-xs text-gray-300 leading-relaxed">
+                  <p className="text-xs text-[var(--secondary)] leading-relaxed">
                     {tagPerf.worst && tagPerf.worst.count >= 3
                       ? `"${tagPerf.worst.tag}" — ${tagPerf.worst.winRate.toFixed(0)}% WR. Investigate this setup.`
                       : 'No significant setup leak detected yet.'}
@@ -831,7 +833,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Win/Loss Ratios */}
-                <div className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4">
+                <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <BarChart3 className="w-3.5 h-3.5 text-indigo-400" />
                     <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Edge Stats</div>
@@ -852,7 +854,7 @@ export default function Dashboard() {
 
                 {/* Forex Pips (conditional) */}
                 {forexCount > 0 && (
-                  <div className="rounded-2xl border border-white/[0.06] bg-[var(--surface-1)] p-4 flex items-center gap-3">
+                  <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--surface-1)] p-4 flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
                       <TrendingUp className="w-4 h-4" />
                     </div>
@@ -876,11 +878,11 @@ export default function Dashboard() {
                   </Link>
                   <div className="grid grid-cols-2 gap-2">
                     <Link href="/analytics"
-                      className="py-2.5 bg-white/[0.04] border border-white/[0.07] text-white text-xs font-extrabold rounded-xl text-center hover:bg-white/[0.07] transition-all">
+                      className="py-2.5 bg-[var(--surface-3)] border border-white/[0.07] text-white text-xs font-extrabold rounded-xl text-center hover:bg-[var(--surface-3)] transition-all">
                       Analytics
                     </Link>
                     <Link href="/calendar"
-                      className="py-2.5 bg-white/[0.04] border border-white/[0.07] text-gray-400 text-xs font-extrabold rounded-xl text-center hover:bg-white/[0.07] transition-all">
+                      className="py-2.5 bg-[var(--surface-3)] border border-white/[0.07] text-gray-400 text-xs font-extrabold rounded-xl text-center hover:bg-[var(--surface-3)] transition-all">
                       Calendar
                     </Link>
                   </div>
