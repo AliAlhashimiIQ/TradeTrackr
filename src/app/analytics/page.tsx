@@ -87,8 +87,8 @@ export default function AnalyticsPage() {
   const [timeOfDayData, setTimeOfDayData] = useState<TimeOfDayPerformanceType[]>([]);
   const [heatmapData, setHeatmapData] = useState<HeatmapData[]>([]);
   const [totalPips, setTotalPips] = useState(0);
-  const panelClass = 'card rounded-2xl border border-black/5 dark:border-white/5 bg-white/80 dark:bg-slate-900/40 backdrop-blur-md shadow-2xl text-gray-900 dark:text-white';
-  const subPanelClass = 'card rounded-xl border border-black/[0.04] dark:border-white/[0.04] bg-black/[0.005] dark:bg-slate-950/50 text-gray-900 dark:text-white';
+  const panelClass = 'rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] shadow-sm text-slate-900 dark:text-white';
+  const subPanelClass = 'rounded-xl border border-slate-200 dark:border-white/[0.06] bg-slate-50 dark:bg-[var(--surface-2)] text-slate-900 dark:text-white';
   
   // Auth check and redirect
   useEffect(() => {
@@ -395,7 +395,7 @@ export default function AnalyticsPage() {
             <div className="relative">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
+                className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-[var(--card-border)] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
               >
                 <svg className="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -407,7 +407,7 @@ export default function AnalyticsPage() {
               </button>
               
               {showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[var(--surface-1)] border border-slate-200 dark:border-[var(--card-border)] rounded-xl shadow-lg z-20 overflow-hidden backdrop-blur-md">
                   {(['7d', '30d', '90d', '1y', 'all'] as TimePeriod[]).map((period) => (
                     <button
                       key={period}
@@ -427,7 +427,7 @@ export default function AnalyticsPage() {
             {/* Filters Button */}
             <button 
               onClick={() => setShowAdvancedFilters(true)}
-              className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
+              className="flex items-center px-4 py-2.5 bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.08] border border-slate-200 dark:border-[var(--card-border)] text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all duration-150"
             >
               <svg className="w-4 h-4 mr-2 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -555,7 +555,7 @@ export default function AnalyticsPage() {
             
             <button 
               onClick={() => setActiveFilters(null)}
-              className="text-xs text-slate-400 hover:text-white ml-auto"
+              className="text-xs text-slate-400 hover:text-[var(--foreground)] ml-auto"
             >
               Clear All
             </button>
@@ -566,8 +566,8 @@ export default function AnalyticsPage() {
         <div className={`${panelClass} p-5 mb-8`}>
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-100">Analytics Brief</h2>
-              <p className="text-sm text-slate-400 mt-1">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Analytics Brief</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 {loading
                   ? 'Preparing your latest performance brief...'
                   : `Analyzing ${filteredTrades.length} trades for ${timePeriod === 'all' ? 'all time' : `last ${timePeriod}`}.`}
@@ -575,20 +575,20 @@ export default function AnalyticsPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
               <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
-                <div className="text-xs text-slate-400 uppercase tracking-wider">Edge</div>
-                <div className="text-sm text-slate-100 mt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Edge</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                   {bestStrategy ? `${bestStrategy.strategy} (${bestStrategy.winRate.toFixed(0)}% WR)` : 'No strategy edge yet'}
                 </div>
               </div>
               <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
-                <div className="text-xs text-slate-400 uppercase tracking-wider">Main Leak</div>
-                <div className="text-sm text-slate-100 mt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Main Leak</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                   {largestLeak?.mistakes?.[0] || 'No logged mistake leak yet'}
                 </div>
               </div>
               <div className={`${subPanelClass} px-4 py-3 min-w-[180px]`}>
-                <div className="text-xs text-slate-400 uppercase tracking-wider">Focus This Week</div>
-                <div className="text-sm text-slate-100 mt-1">
+                <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Focus This Week</div>
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100 mt-1">
                   {metrics ? `Protect DD below ${Math.max(6, Math.round(metrics.maxDrawdownPercent || 0))}%` : 'Add more trades for focus'}
                 </div>
               </div>
@@ -597,19 +597,19 @@ export default function AnalyticsPage() {
         </div>
         
         {/* Tab Navigation */}
-        <div className="flex p-1 bg-white/[0.03] dark:bg-slate-950/40 backdrop-blur-md border border-white/[0.08] rounded-xl mb-8 w-fit max-w-full overflow-x-auto shadow-lg" role="tablist">
+        <div className="flex p-1.5 bg-slate-100 dark:bg-[var(--surface-2)] border border-slate-200 dark:border-[var(--card-border)] rounded-2xl mb-8 w-fit max-w-full overflow-x-auto shadow-sm gap-1.5" role="tablist">
           <button
             role="tab"
             aria-selected={activeTab === 'overview'}
             onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+            className={`px-4 py-2 text-sm font-bold rounded-xl transition-all duration-150 flex items-center gap-2 ${
               activeTab === 'overview'
-                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/35 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm border border-slate-200 dark:border-transparent'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-[var(--surface-3)]'
             }`}
           >
-            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            <svg className={`w-4 h-4 ${activeTab === 'overview' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
             Overview
           </button>
@@ -617,14 +617,14 @@ export default function AnalyticsPage() {
             role="tab"
             aria-selected={activeTab === 'breakdown'}
             onClick={() => setActiveTab('breakdown')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+            className={`px-4 py-2 text-sm font-bold rounded-xl transition-all duration-150 flex items-center gap-2 ${
               activeTab === 'breakdown'
-                ? 'bg-blue-500/15 text-blue-400 border border-blue-500/35 shadow-[0_0_12px_rgba(59,130,246,0.15)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm border border-slate-200 dark:border-transparent'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-[var(--surface-3)]'
             }`}
           >
-            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <svg className={`w-4 h-4 ${activeTab === 'breakdown' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
             Detailed Breakdown
           </button>
@@ -632,14 +632,14 @@ export default function AnalyticsPage() {
             role="tab"
             aria-selected={activeTab === 'mistakes'}
             onClick={() => setActiveTab('mistakes')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-2 ${
+            className={`px-4 py-2 text-sm font-bold rounded-xl transition-all duration-150 flex items-center gap-2 ${
               activeTab === 'mistakes'
-                ? 'bg-red-500/15 text-red-400 border border-red-500/35 shadow-[0_0_12px_rgba(239,68,68,0.15)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-white dark:bg-rose-600 text-rose-600 dark:text-white shadow-sm border border-slate-200 dark:border-transparent'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-[var(--surface-3)]'
             }`}
           >
-            <svg className="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg className={`w-4 h-4 ${activeTab === 'mistakes' ? 'text-rose-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             Cost of Mistakes
           </button>
@@ -647,21 +647,21 @@ export default function AnalyticsPage() {
             role="tab"
             aria-selected={activeTab === 'propfirm'}
             onClick={() => setActiveTab('propfirm')}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
+            className={`px-4 py-2 text-sm font-bold rounded-xl transition-all duration-150 flex items-center gap-1.5 ${
               activeTab === 'propfirm'
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/35 shadow-[0_0_12px_rgba(99,102,241,0.15)]'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                ? 'bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-sm border border-slate-200 dark:border-transparent'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-[var(--surface-3)]'
             }`}
           >
-            <svg className="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className={`w-4 h-4 ${activeTab === 'propfirm' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
             </svg>
             Prop Firm
             {challengeStatus && !challengeStatus.isViolated && (
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
             )}
             {challengeStatus?.isViolated && (
-              <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+              <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900"></span>
             )}
           </button>
         </div>
@@ -673,36 +673,33 @@ export default function AnalyticsPage() {
             ) : (
             <>
             {/* Key Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
               {/* Win Rate Card */}
-              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] p-5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3 relative z-10">
-                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Win Rate</span>
-                    <div className="p-2 bg-blue-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-blue-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Win Rate</span>
+                    <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500 dark:text-blue-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1 relative z-10">
-                    <div className="text-4xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(59,130,246,0.2)' }}>
+                  <div className="flex items-baseline space-x-2">
+                    <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
                       {loading ? '-' : `${metrics?.winRate.toFixed(0)}%`}
                     </div>
                     
                     {!loading && metrics && metrics.winRate > 50 ? (
-                      <div className="text-green-400 text-sm font-medium flex items-center">
-                        <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                        <svg className="w-3.5 h-3.5 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                         </svg>
                         <span>Good</span>
                       </div>
                     ) : !loading && metrics ? (
-                      <div className="text-yellow-400 text-sm font-medium flex items-center">
-                        <svg className="w-4 h-4 mr-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
+                      <div className="text-amber-600 dark:text-amber-400 text-xs font-bold flex items-center bg-amber-50 dark:bg-amber-500/10 px-2 py-0.5 rounded-md">
                         <span>Improve</span>
                       </div>
                     ) : null}
@@ -710,10 +707,10 @@ export default function AnalyticsPage() {
                 </div>
 
                 {/* Semicircular Gauge Arc */}
-                <div className="mt-3 pt-2 border-t border-white/[0.04] relative z-10 space-y-1.5">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
                   <div className="flex justify-center">
                     <svg className="w-[140px] h-[55px]" viewBox="0 0 100 50">
-                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="9.5" strokeLinecap="round" />
+                      <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="currentColor" className="text-slate-100 dark:text-white/[0.06]" strokeWidth="9.5" strokeLinecap="round" />
                       <path
                         d="M 10 45 A 35 35 0 0 1 90 45"
                         fill="none"
@@ -733,48 +730,46 @@ export default function AnalyticsPage() {
                       </defs>
                     </svg>
                   </div>
-                  <div className="flex justify-between items-center text-xs text-gray-400 font-semibold tracking-wide px-1">
+                  <div className="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 font-semibold tracking-wide px-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 block" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 block" />
                       <span>{metrics?.winningTrades} Wins</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-red-400 block" />
+                      <span className="w-2 h-2 rounded-full bg-rose-500 block" />
                       <span>{metrics ? metrics.totalTrades - metrics.winningTrades : 0} Losses</span>
                     </div>
                   </div>
                 </div>
-                
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(59,130,246,0.05) 0%, transparent 70%)' }} />
               </div>
               
               {/* R Distribution (Avg R:R) Card */}
-              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] p-5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3 relative z-10">
-                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Avg R:R</span>
-                    <div className="p-2 bg-green-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-green-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Avg R:R</span>
+                    <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600 dark:text-emerald-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1 relative z-10">
-                    <div className="text-4xl font-bold text-white tracking-tight" style={{ textShadow: '0 0 20px rgba(16,185,129,0.2)' }}>
+                  <div className="flex items-baseline space-x-1.5">
+                    <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
                       {loading ? '-' : `${metrics?.riskRewardRatio.toFixed(2)}`}
                     </div>
-                    <div className="text-gray-400 text-xl font-medium">R</div>
+                    <div className="text-slate-400 text-lg font-bold">R</div>
                   </div>
                 </div>
                 
                 {/* Ratio Win vs Loss progress bar */}
-                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
-                  <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
+                  <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                     <span>Avg Win</span>
                     <span>Avg Loss</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-[var(--surface-3)] overflow-hidden flex">
                     <div
                       style={{
                         width: `${(metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0) > 0 ? ((metrics?.averageWin || 0) / ((metrics?.averageWin || 0) + Math.abs(metrics?.averageLoss || 0))) * 100 : 50}%`,
@@ -791,75 +786,71 @@ export default function AnalyticsPage() {
                     />
                   </div>
                   <div className="flex justify-between text-xs font-semibold font-mono">
-                    <span className="text-emerald-400">{formatCurrency(metrics?.averageWin || 0)}</span>
-                    <span className="text-red-400">-{formatCurrency(Math.abs(metrics?.averageLoss || 0))}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(metrics?.averageWin || 0)}</span>
+                    <span className="text-rose-600 dark:text-rose-400">-{formatCurrency(Math.abs(metrics?.averageLoss || 0))}</span>
                   </div>
                 </div>
-                
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.05) 0%, transparent 70%)' }} />
               </div>
               
               {/* Strategy Usage Card */}
-              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] p-5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3 relative z-10">
-                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Strategy Usage</span>
-                    <div className="p-2 bg-purple-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-purple-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Strategy Usage</span>
+                    <div className="p-2 bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="text-4xl font-bold text-white tracking-tight relative z-10" style={{ textShadow: '0 0 20px rgba(168,85,247,0.2)' }}>
+                  <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
                     {loading ? '-' : strategyData.length}
                   </div>
                 </div>
                 
                 {/* Win rate progress bar for top strategy */}
-                <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
                   {strategyData.length > 0 ? (
                     <>
-                      <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                      <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                         <span className="truncate max-w-[70%]">{strategyData[0].strategy} Win Rate</span>
                         <span>{strategyData[0].winRate.toFixed(0)}%</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-[var(--surface-3)] overflow-hidden flex">
                         <div 
                           style={{ width: `${strategyData[0].winRate}%` }} 
                           className="h-full bg-indigo-500" 
                         />
                       </div>
-                      <div className="flex justify-between text-xs text-gray-400 font-semibold">
-                        <span>Top Strategy</span>
-                        <span className="text-indigo-400">{formatCurrency(strategyData[0].pnL)} P&L</span>
+                      <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-500 dark:text-slate-400">Top Strategy</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">{formatCurrency(strategyData[0].pnL)} P&L</span>
                       </div>
                     </>
                   ) : (
-                    <div className="text-xs text-gray-500 py-3 text-center">No strategies tagged yet</div>
+                    <div className="text-xs text-slate-400 py-3 text-center">No strategies tagged yet</div>
                   )}
                 </div>
-                
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(168,85,247,0.05) 0%, transparent 70%)' }} />
               </div>
 
               {/* Total Pips Card */}
-              <div className="stat-card group relative p-5 overflow-hidden hover:scale-[1.01] transition-all duration-300 flex flex-col justify-between">
+              <div className="rounded-2xl border border-slate-200 dark:border-white/[0.06] bg-white dark:bg-[var(--surface-1)] p-5 shadow-sm hover:border-slate-300 dark:hover:border-white/10 transition-all duration-200 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between mb-3 relative z-10">
-                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Total Pips</span>
-                    <div className="p-2 bg-indigo-500/10 rounded-lg group-hover:scale-110 transition-transform duration-300 text-indigo-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Total Pips</span>
+                    <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                       </svg>
                     </div>
                   </div>
                   
-                  <div className="flex items-baseline space-x-1 relative z-10">
-                    <div className={`text-4xl font-bold tracking-tight ${totalPips >= 0 ? 'text-emerald-400' : 'text-red-400'}`} style={{ textShadow: totalPips >= 0 ? '0 0 20px rgba(52,211,153,0.2)' : '0 0 20px rgba(248,113,113,0.2)' }}>
+                  <div className="flex items-baseline space-x-1.5">
+                    <div className={`text-3xl sm:text-4xl font-black font-mono tracking-tight ${totalPips >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
                       {loading ? '-' : formatPips(totalPips)}
                     </div>
-                    <div className="text-gray-500 text-xl font-medium ml-1">PIPS</div>
+                    <div className="text-slate-400 text-lg font-bold">PIPS</div>
                   </div>
                 </div>
                 
@@ -869,39 +860,37 @@ export default function AnalyticsPage() {
                   const nonForexCount = filteredTrades.length - forexCount;
                   const pct = filteredTrades.length > 0 ? (forexCount / filteredTrades.length) * 100 : 50;
                   return (
-                    <div className="mt-4 pt-3 border-t border-white/[0.04] space-y-2 relative z-10">
-                      <div className="flex justify-between text-xs text-gray-500 font-bold uppercase tracking-wider">
+                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/[0.05] space-y-2">
+                      <div className="flex justify-between text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                         <span>Forex ({forexCount})</span>
                         <span>Other ({nonForexCount})</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-white/[0.04] overflow-hidden flex">
+                      <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-[var(--surface-3)] overflow-hidden flex">
                         <div style={{ width: `${pct}%` }} className="h-full bg-indigo-500" />
                         <div style={{ width: `${100 - pct}%` }} className="h-full bg-blue-500" />
                       </div>
-                      <div className="flex justify-between text-xs text-gray-400 font-bold">
+                      <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 font-bold font-mono">
                         <span>{filteredTrades.length > 0 ? `${pct.toFixed(0)}%` : '--'}</span>
                         <span>{filteredTrades.length > 0 ? `${(100 - pct).toFixed(0)}%` : '--'}</span>
                       </div>
                     </div>
                   );
                 })()}
-                
-                <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-[50px] pointer-events-none" style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.05) 0%, transparent 70%)' }} />
               </div>
             </div>
 
             {/* Advanced Stats Strip */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {[
-                { label: 'Sharpe Ratio', value: loading ? '-' : (metrics?.sharpeRatio?.toFixed(2) ?? '—'), desc: 'Risk-adjusted return', color: 'text-blue-400' },
-                { label: 'Sortino Ratio', value: loading ? '-' : (metrics?.sortinoRatio?.toFixed(2) ?? '—'), desc: 'Downside risk only', color: 'text-violet-400' },
-                { label: 'Expected Value', value: loading ? '-' : formatCurrency(metrics?.expectedValue ?? 0), desc: 'Per trade on average', color: (metrics?.expectedValue ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400' },
-                { label: 'Largest Win', value: loading ? '-' : formatCurrency(metrics?.largestWin ?? 0), desc: `Largest loss: ${loading ? '-' : formatCurrency(Math.abs(metrics?.largestLoss ?? 0))}`, color: 'text-emerald-400' },
+                { label: 'Sharpe Ratio', value: loading ? '-' : (metrics?.sharpeRatio?.toFixed(2) ?? '—'), desc: 'Risk-adjusted return', color: 'text-blue-600 dark:text-blue-400' },
+                { label: 'Sortino Ratio', value: loading ? '-' : (metrics?.sortinoRatio?.toFixed(2) ?? '—'), desc: 'Downside risk only', color: 'text-violet-600 dark:text-violet-400' },
+                { label: 'Expected Value', value: loading ? '-' : formatCurrency(metrics?.expectedValue ?? 0), desc: 'Per trade on average', color: (metrics?.expectedValue ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' },
+                { label: 'Largest Win', value: loading ? '-' : formatCurrency(metrics?.largestWin ?? 0), desc: `Largest loss: ${loading ? '-' : formatCurrency(Math.abs(metrics?.largestLoss ?? 0))}`, color: 'text-emerald-600 dark:text-emerald-400' },
               ].map((s, i) => (
-                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}>
-                  <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{s.label}</div>
-                  <div className={`text-xl font-bold mt-1 ${s.color}`}>{s.value}</div>
-                  <div className="text-[11px] text-gray-600 mt-0.5">{s.desc}</div>
+                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.01] transition-transform duration-200 relative overflow-hidden shadow-sm`}>
+                  <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{s.label}</div>
+                  <div className={`text-xl font-black font-mono mt-1 ${s.color}`}>{s.value}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{s.desc}</div>
                 </div>
               ))}
             </div>
@@ -910,60 +899,60 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-white text-base font-medium">Equity Curve</h2>
+                  <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Equity Curve</h2>
                   <div className="flex items-center space-x-2">
                     <div className="flex items-center text-xs">
-                      <div className="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
-                      <span className="text-gray-400">P&L</span>
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mr-1.5"></div>
+                      <span className="text-slate-500 dark:text-slate-400">P&L</span>
                     </div>
                     <div className="flex items-center text-xs">
-                      <div className="w-3 h-3 rounded-full bg-red-500/30 mr-1"></div>
-                      <span className="text-gray-400">Drawdown</span>
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500/30 mr-1.5"></div>
+                      <span className="text-slate-500 dark:text-slate-400">Drawdown</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                <EquityCurve data={equityChartData} loading={loading} />
+                  <EquityCurve data={equityChartData} loading={loading} />
                 </div>
               </div>
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-white text-base font-medium">Trade Distribution</h2>
-                  <div className="flex items-center space-x-2 text-xs text-gray-400">
+                  <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Trade Distribution</h2>
+                  <div className="flex items-center space-x-3 text-xs text-slate-500 dark:text-slate-400">
                     <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-green-500 mr-1"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></div>
                       <span>Profit</span>
                     </div>
                     <div className="flex items-center">
-                      <div className="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></div>
                       <span>Loss</span>
                     </div>
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                <WinLossDistribution data={distributionData} loading={loading} />
+                  <WinLossDistribution data={distributionData} loading={loading} />
+                </div>
               </div>
-            </div>
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-white text-base font-medium">Monthly Performance</h2>
+                  <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Monthly Performance</h2>
                   <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
                     {!loading && monthlyData.length > 0 ? `${monthlyData.length} ${monthlyData.length === 1 ? 'month' : 'months'}` : 'No data'}
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                <MonthlyPerformance data={monthlyData} loading={loading} />
+                  <MonthlyPerformance data={monthlyData} loading={loading} />
                 </div>
               </div>
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-white text-base font-medium">Drawdown Analysis</h2>
+                  <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Drawdown Analysis</h2>
                   <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
                     {!loading && metrics ? `Max: ${metrics.maxDrawdownPercent.toFixed(1)}%` : 'No data'}
                   </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                <DrawdownChart data={equityCurveData} loading={loading} />
+                  <DrawdownChart data={equityCurveData} loading={loading} />
                 </div>
               </div>
               
@@ -971,10 +960,10 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5 min-h-[400px] flex flex-col`}>
                 <div className="flex justify-between items-center mb-4">
                   <div>
-                    <h2 className="text-white text-base font-medium">Cost of Mistakes</h2>
-                    <p className="text-gray-500 text-xs mt-0.5">Total P&L lost to specific bad habits</p>
+                    <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Cost of Mistakes</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Total P&L lost to specific bad habits</p>
                   </div>
-                  <div className="bg-red-500/10 text-red-400 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-tighter">
+                  <div className="bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[10px] font-bold px-2 py-1 rounded border border-rose-200 dark:border-rose-500/20 uppercase tracking-wider">
                     Critical Insights
                   </div>
                 </div>
@@ -998,8 +987,8 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-white text-base font-medium">Strategy Performance</h2>
-                    <p className="text-gray-400 text-xs mt-1">Analysis of your trading strategies</p>
+                    <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Strategy Performance</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Analysis of your trading strategies</p>
                   </div>
                   <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
                     {!loading && strategyData.length > 0 ? `${strategyData.length} ${strategyData.length === 1 ? 'strategy' : 'strategies'}` : 'No data'}
@@ -1012,8 +1001,8 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-white text-base font-medium">Symbol Performance</h2>
-                    <p className="text-gray-400 text-xs mt-1">Breakdown by trading symbols</p>
+                    <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Symbol Performance</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Breakdown by trading symbols</p>
                   </div>
                   <div className="bg-slate-100 dark:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] text-xs font-mono font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl shadow-sm">
                     {!loading && symbolData.length > 0 ? `${symbolData.length} ${symbolData.length === 1 ? 'symbol' : 'symbols'}` : 'No data'}
@@ -1028,8 +1017,8 @@ export default function AnalyticsPage() {
               <div className={`${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-white text-base font-medium">Long vs Short</h2>
-                    <p className="text-gray-400 text-xs mt-1">Directional bias analysis</p>
+                    <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Long vs Short</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Directional bias analysis</p>
                   </div>
                 </div>
                 <TradeTypePerformance data={tradeTypeData} loading={loading} />
@@ -1039,8 +1028,8 @@ export default function AnalyticsPage() {
               <div className={`col-span-1 lg:col-span-2 ${panelClass} p-5`}>
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="text-white text-base font-medium">Time of Day Analysis</h2>
-                    <p className="text-gray-400 text-xs mt-1">Performance across different trading sessions</p>
+                    <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Time of Day Analysis</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Performance across different trading sessions</p>
                   </div>
                 </div>
                 <TimeOfDayPerformance data={timeOfDayData} loading={loading} />
@@ -1051,17 +1040,17 @@ export default function AnalyticsPage() {
             <div className={`${panelClass} p-5 mb-8`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-white text-base font-medium">Performance Heatmap</h2>
-                  <p className="text-gray-400 text-xs mt-1">Trading performance by day and time</p>
+                  <h2 className="text-slate-900 dark:text-slate-100 text-base font-bold">Performance Heatmap</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-xs mt-0.5">Trading performance by day and time</p>
                 </div>
                 <div className="flex space-x-2">
                   <div className="flex items-center text-xs">
-                    <div className="w-3 h-3 rounded-full bg-green-500/80 mr-1"></div>
-                    <span className="text-gray-400">Profit</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></div>
+                    <span className="text-slate-500 dark:text-slate-400">Profit</span>
                   </div>
                   <div className="flex items-center text-xs">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80 mr-1"></div>
-                    <span className="text-gray-400">Loss</span>
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></div>
+                    <span className="text-slate-500 dark:text-slate-400">Loss</span>
                   </div>
                 </div>
               </div>
@@ -1071,21 +1060,21 @@ export default function AnalyticsPage() {
             {/* Performance Summary */}
             <div className={`${panelClass} p-6 mb-6`}>
               <div className="flex items-start">
-                <div className="flex-shrink-0 p-3 bg-blue-500/20 rounded-lg mr-4">
-                  <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex-shrink-0 p-3 bg-blue-500/15 rounded-xl mr-4 text-blue-600 dark:text-blue-400">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-white text-lg font-medium mb-2">Performance Insights</h3>
+                  <h3 className="text-slate-900 dark:text-slate-100 text-base font-bold mb-2">Performance Insights</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <p className="text-gray-300 text-sm">
+                    <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
                       Based on your trading data, consider focusing on your top-performing strategies and symbols.
                       Your best trading occurs during market hours, especially in the morning session.
                     </p>
-                    <div className="bg-red-500/5 rounded-xl p-3.5 border border-red-500/15 backdrop-blur-sm shadow-[0_0_12px_rgba(239,68,68,0.05)]">
-                      <p className="text-red-400 text-xs font-bold mb-1 uppercase tracking-wider">Top Mistake to Fix:</p>
-                      <p className="text-gray-300 text-sm italic">
+                    <div className="bg-rose-50 dark:bg-rose-500/5 rounded-xl p-3.5 border border-rose-200 dark:border-rose-500/15 shadow-sm">
+                      <p className="text-rose-600 dark:text-rose-400 text-xs font-bold mb-1 uppercase tracking-wider">Top Mistake to Fix:</p>
+                      <p className="text-slate-600 dark:text-slate-300 text-xs italic leading-relaxed">
                         {filteredTrades.some(t => t.mistakes?.length) 
                           ? "Check the 'Cost of Mistakes' chart above. Eliminating your #1 mistake could increase your bottom line significantly."
                           : "Start logging mistakes in your trades to unlock powerful 'Cost of Mistakes' analytics."}
@@ -1103,14 +1092,14 @@ export default function AnalyticsPage() {
             {/* Summary bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
               {[
-                { label: 'Trades with Mistakes', value: filteredTrades.filter(t => t.mistakes?.length).length.toString(), color: 'text-red-400' },
-                { label: 'Clean Trades', value: filteredTrades.filter(t => !t.mistakes?.length).length.toString(), color: 'text-emerald-400' },
-                { label: 'Psychology Score', value: filteredTrades.length ? `${Math.round((filteredTrades.filter(t => !t.mistakes?.length).length / filteredTrades.length) * 100)}%` : '—', color: 'text-indigo-400' },
-                { label: 'Unique Mistake Types', value: [...new Set(filteredTrades.flatMap(t => t.mistakes || []))].length.toString(), color: 'text-yellow-400' },
+                { label: 'Trades with Mistakes', value: filteredTrades.filter(t => t.mistakes?.length).length.toString(), color: 'text-rose-600 dark:text-rose-400' },
+                { label: 'Clean Trades', value: filteredTrades.filter(t => !t.mistakes?.length).length.toString(), color: 'text-emerald-600 dark:text-emerald-400' },
+                { label: 'Psychology Score', value: filteredTrades.length ? `${Math.round((filteredTrades.filter(t => !t.mistakes?.length).length / filteredTrades.length) * 100)}%` : '—', color: 'text-indigo-600 dark:text-indigo-400' },
+                { label: 'Unique Mistake Types', value: [...new Set(filteredTrades.flatMap(t => t.mistakes || []))].length.toString(), color: 'text-amber-600 dark:text-amber-400' },
               ].map((s, i) => (
-                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden`}>
-                  <div className="text-xs text-gray-500 uppercase tracking-widest mb-1">{s.label}</div>
-                  <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
+                <div key={i} className={`${subPanelClass} p-4 hover:scale-[1.01] transition-transform duration-200 relative overflow-hidden shadow-sm`}>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider mb-1">{s.label}</div>
+                  <div className={`text-3xl font-black font-mono ${s.color}`}>{s.value}</div>
                 </div>
               ))}
             </div>
@@ -1151,7 +1140,7 @@ export default function AnalyticsPage() {
                           className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer ${
                             isChecked 
                               ? 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-500/30' 
-                              : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-white/[0.04]'
+                              : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.06] hover:bg-slate-100 dark:hover:bg-[var(--surface-3)]'
                           }`}
                         >
                           <div className="flex items-center gap-3">
