@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import { PROP_FIRMS } from '@/lib/propFirms';
 import PropFirmLogo from '@/components/ui/PropFirmLogo';
 import { useSettings } from '@/providers/SettingsProvider';
+import { SettingsSkeleton } from '@/components/ui/SkeletonLoader';
 
 function SettingsContent() {
   const { user, loading, signOut } = useAuth();
@@ -252,9 +253,9 @@ function SettingsContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-[var(--surface-0)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-      </div>
+      <AuthenticatedLayout>
+        <SettingsSkeleton />
+      </AuthenticatedLayout>
     );
   }
 

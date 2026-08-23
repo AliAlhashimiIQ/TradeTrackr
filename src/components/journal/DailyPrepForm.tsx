@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
+import { JournalSkeleton } from '@/components/ui/SkeletonLoader';
 import { 
   Sun, 
   Moon, 
@@ -217,12 +218,7 @@ export default function DailyPrepForm({ date, tradesCount, netPnL, onSaved }: Da
   };
 
   if (loading) {
-    return (
-      <div className="p-16 text-center text-slate-500 dark:text-slate-400 font-mono text-xs animate-pulse bg-white dark:bg-[#0c0f1d] rounded-3xl border border-slate-200/80 dark:border-white/[0.08] shadow-sm">
-        <Sparkles className="w-6 h-6 mx-auto mb-3 text-indigo-500 animate-spin" />
-        Loading session prep &amp; macro intelligence for {date}...
-      </div>
-    );
+    return <JournalSkeleton />;
   }
 
   return (

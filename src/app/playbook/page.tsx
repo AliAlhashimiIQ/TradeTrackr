@@ -10,6 +10,7 @@ import { useSettings } from '@/providers/SettingsProvider';
 import TradeDetail from '@/components/trades/TradeDetail';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PlaybookSkeleton } from '@/components/ui/SkeletonLoader';
 import { 
   BookOpen, 
   Plus, 
@@ -353,14 +354,7 @@ export default function PlaybookPage() {
   };
 
   if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3">
-          <Sparkles className="w-8 h-8 text-indigo-500 animate-spin" />
-          <span className="text-sm font-mono text-slate-400">Loading your playbook &amp; edge analytics...</span>
-        </div>
-      </div>
-    );
+    return <PlaybookSkeleton />;
   }
 
   return (

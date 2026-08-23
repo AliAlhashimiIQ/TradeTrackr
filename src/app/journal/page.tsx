@@ -8,7 +8,7 @@ import { getAllTrades } from '@/lib/tradingApi';
 import { Trade } from '@/lib/types';
 import { toLocalYMD } from '@/lib/utils';
 import { useAccount } from '@/providers/AccountProvider';
-import { SkeletonCard } from '@/components/ui/SkeletonLoader';
+import { SkeletonCard, JournalSkeleton } from '@/components/ui/SkeletonLoader';
 import DatePickerPopover from '@/components/ui/DatePickerPopover';
 
 export default function JournalPage() {
@@ -70,10 +70,7 @@ export default function JournalPage() {
 
         {/* Daily Prep Form */}
         {loading ? (
-          <div className="space-y-6">
-            <SkeletonCard className="h-64" />
-            <SkeletonCard className="h-64" />
-          </div>
+          <JournalSkeleton />
         ) : (
           <DailyPrepForm
             date={selectedDate}

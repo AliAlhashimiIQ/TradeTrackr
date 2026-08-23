@@ -276,3 +276,211 @@ export function CalendarSkeleton() {
     </motion.div>
   )
 }
+
+export function PlaybookSkeleton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto space-y-8"
+    >
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-white/[0.06]">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Bone className="w-10 h-10 rounded-2xl" />
+            <Bone className="h-8 w-64" />
+          </div>
+          <Bone className="h-3 w-96 max-w-full" />
+        </div>
+        <Bone className="h-10 w-36 rounded-2xl" />
+      </div>
+
+      {/* 2-Column Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
+        {/* Left Column (4 cols) */}
+        <div className="lg:col-span-4 space-y-3.5">
+          <div className="flex justify-between items-center px-1">
+            <Bone className="h-3 w-28" />
+            <Bone className="h-4 w-16 rounded-lg" />
+          </div>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="p-4 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] bg-white dark:bg-[#0c0f1d] space-y-3">
+              <div className="flex justify-between items-center">
+                <Bone className="h-4 w-36" />
+                <Bone className="h-5 w-14 rounded-lg" />
+              </div>
+              <div className="flex justify-between items-center pt-1">
+                <Bone className="h-3 w-24" />
+                <Bone className="h-4 w-20" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Column (8 cols) */}
+        <div className="lg:col-span-8 rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0c0f1d] space-y-7">
+          {/* Workspace Header */}
+          <div className="flex justify-between items-center pb-5 border-b border-slate-100 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <Bone className="w-4 h-4 rounded-full" />
+              <Bone className="h-7 w-48" />
+            </div>
+            <div className="flex gap-2.5">
+              <Bone className="h-9 w-28 rounded-xl" />
+              <Bone className="h-9 w-32 rounded-xl" />
+            </div>
+          </div>
+
+          {/* 4 Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="p-4 rounded-2xl border border-slate-200/80 dark:border-white/[0.04] bg-slate-50/70 dark:bg-white/[0.02] space-y-2">
+                <Bone className="h-2.5 w-20" />
+                <Bone className="h-6 w-24" />
+              </div>
+            ))}
+          </div>
+
+          {/* Rules & Description 2-Col */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-5 rounded-3xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+              <Bone className="h-3.5 w-40" />
+              <div className="space-y-2 pt-2">
+                {[...Array(4)].map((_, i) => (
+                  <Bone key={i} className="h-10 w-full rounded-2xl" />
+                ))}
+              </div>
+            </div>
+            <div className="p-5 rounded-3xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+              <Bone className="h-3.5 w-40" />
+              <Bone className="h-44 w-full rounded-2xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+export function JournalSkeleton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="bg-white dark:bg-[#0c0f1d] border border-slate-200/80 dark:border-white/[0.08] rounded-3xl p-6 sm:p-8 space-y-7"
+    >
+      {/* Top Header Strip */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-white/[0.06]">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Bone className="h-7 w-64" />
+            <Bone className="h-6 w-24 rounded-xl" />
+          </div>
+          <Bone className="h-3 w-80 max-w-full" />
+        </div>
+        <Bone className="h-10 w-44 rounded-2xl" />
+      </div>
+
+      {/* Segmented Tabs */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-white/[0.06] pb-4">
+        <div className="flex gap-2 p-1.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.03] w-fit">
+          <Bone className="h-9 w-44 rounded-xl" />
+          <Bone className="h-9 w-44 rounded-xl" />
+        </div>
+        <Bone className="h-6 w-28 rounded-xl" />
+      </div>
+
+      {/* Bias & Conviction Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div className="lg:col-span-7 bg-slate-50/70 dark:bg-white/[0.02] p-5 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+          <Bone className="h-3 w-32" />
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(3)].map((_, i) => (
+              <Bone key={i} className="h-20 w-full rounded-2xl" />
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-5 bg-slate-50/70 dark:bg-white/[0.02] p-5 rounded-3xl border border-slate-200/80 dark:border-white/[0.06] space-y-3 flex flex-col justify-between">
+          <div className="flex justify-between items-center">
+            <Bone className="h-3 w-28" />
+            <Bone className="h-3 w-32" />
+          </div>
+          <div className="flex gap-2">
+            {[...Array(5)].map((_, i) => (
+              <Bone key={i} className="h-11 flex-1 rounded-2xl" />
+            ))}
+          </div>
+          <Bone className="h-1.5 w-full rounded-full" />
+        </div>
+      </div>
+
+      {/* 2 Large Input Boxes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="p-5 rounded-3xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+          <Bone className="h-3.5 w-44" />
+          <Bone className="h-24 w-full rounded-2xl" />
+        </div>
+        <div className="p-5 rounded-3xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+          <Bone className="h-3.5 w-44" />
+          <Bone className="h-24 w-full rounded-2xl" />
+        </div>
+      </div>
+
+      {/* Economic Calendar */}
+      <div className="p-5 rounded-3xl bg-slate-50/70 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.06] space-y-3">
+        <Bone className="h-3.5 w-52" />
+        <Bone className="h-16 w-full rounded-2xl" />
+      </div>
+    </motion.div>
+  )
+}
+
+export function SettingsSkeleton() {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2 }}
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8"
+    >
+      {/* Header */}
+      <div className="space-y-2 pb-6 border-b border-slate-100 dark:border-white/[0.06]">
+        <Bone className="h-8 w-48" />
+        <Bone className="h-3.5 w-80" />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 p-1.5 rounded-2xl bg-slate-100/80 dark:bg-white/[0.03] w-fit">
+        {[...Array(5)].map((_, i) => (
+          <Bone key={i} className="h-9 w-28 rounded-xl" />
+        ))}
+      </div>
+
+      {/* Card panels */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0c0f1d] space-y-4">
+          <Bone className="h-5 w-44" />
+          <Bone className="h-3 w-64" />
+          <div className="space-y-3 pt-2">
+            <Bone className="h-10 w-full rounded-2xl" />
+            <Bone className="h-10 w-full rounded-2xl" />
+          </div>
+        </div>
+
+        <div className="p-6 rounded-3xl border border-slate-200/80 dark:border-white/[0.08] bg-white dark:bg-[#0c0f1d] space-y-4">
+          <Bone className="h-5 w-44" />
+          <Bone className="h-3 w-64" />
+          <div className="space-y-3 pt-2">
+            <Bone className="h-10 w-full rounded-2xl" />
+            <Bone className="h-10 w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
