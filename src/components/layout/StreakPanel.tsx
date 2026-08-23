@@ -534,7 +534,7 @@ export function StreakPanel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-[200] bg-slate-950/70 backdrop-blur-md"
+            className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-xl"
           />
 
           {/* Modal */}

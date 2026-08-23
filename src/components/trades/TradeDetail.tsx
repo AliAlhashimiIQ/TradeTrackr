@@ -165,7 +165,7 @@ export default function TradeDetail({ trade, onClose, onEdit, onDelete, onUpdate
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-6 animate-fade-in">
       <div className="bg-white dark:bg-[#0c0f1d] border border-slate-200/90 dark:border-white/[0.08] rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-slate-900 dark:text-slate-100">
         
         {/* Header */}

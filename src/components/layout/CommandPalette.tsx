@@ -323,7 +323,7 @@ export default function CommandPalette() {
   const categoryKeys = Object.keys(categories);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-slate-950/60 dark:bg-black/80 backdrop-blur-sm transition-opacity duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/40 backdrop-blur-xl transition-opacity duration-200">
       <div 
         ref={containerRef}
         onKeyDown={handleKeyDown}

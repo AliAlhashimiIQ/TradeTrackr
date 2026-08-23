@@ -1924,7 +1924,7 @@ export const TradesTable: React.FC<TradesTableProps> = ({
       </div>
 
       {showInlineScreenshotModal && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowInlineScreenshotModal(false)}>
+        <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-xl flex items-center justify-center p-4" onClick={() => setShowInlineScreenshotModal(false)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
