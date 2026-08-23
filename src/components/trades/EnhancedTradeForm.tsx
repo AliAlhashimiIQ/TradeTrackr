@@ -58,6 +58,18 @@ const PRESET_MISTAKES = [
   'Held Through News'
 ];
 
+const normalizeArray = (val: unknown): string[] => {
+  if (Array.isArray(val)) return val.filter(Boolean).map(String);
+  if (typeof val === 'string' && val.trim()) {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+    } catch {}
+    return val.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   initialTrade,
   onSubmit,
@@ -69,21 +81,40 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
   const { accounts, selectedAccountIds } = useAccount();
   const isEditing = !!initialTrade;
   
-  const [formData, setFormData] = useState<Partial<Trade>>({
-    symbol: '',
-    type: 'Long',
-    entry_price: undefined,
-    exit_price: undefined,
-    quantity: undefined,
-    entry_time: toLocalYMD(new Date().toISOString()),
-    exit_time: toLocalYMD(new Date().toISOString()),
-    notes: '',
-    tags: [],
-    mistakes: [],
-    lots: 0.01,
-    pips: 0,
-    strategy: null,
-    ...initialTrade
+  const [formData, setFormData] = useState<Partial<Trade>>(() => {
+    if (initialTrade) {
+      return {
+        symbol: '',
+        type: 'Long',
+        entry_price: undefined,
+        exit_price: undefined,
+        quantity: undefined,
+        lots: 0.01,
+        pips: 0,
+        strategy: null,
+        notes: '',
+        ...initialTrade,
+        entry_time: initialTrade.entry_time ? toLocalYMD(initialTrade.entry_time) : toLocalYMD(new Date().toISOString()),
+        exit_time: initialTrade.exit_time ? toLocalYMD(initialTrade.exit_time) : toLocalYMD(new Date().toISOString()),
+        tags: normalizeArray(initialTrade.tags),
+        mistakes: normalizeArray(initialTrade.mistakes),
+      };
+    }
+    return {
+      symbol: '',
+      type: 'Long',
+      entry_price: undefined,
+      exit_price: undefined,
+      quantity: undefined,
+      entry_time: toLocalYMD(new Date().toISOString()),
+      exit_time: toLocalYMD(new Date().toISOString()),
+      notes: '',
+      tags: [],
+      mistakes: [],
+      lots: 0.01,
+      pips: 0,
+      strategy: null,
+    };
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -192,11 +223,14 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
       if (initialTrade.entry_time) formatted.entry_time = toLocalYMD(initialTrade.entry_time);
       if (initialTrade.exit_time) formatted.exit_time = toLocalYMD(initialTrade.exit_time);
       formatted.notes = initialTrade.notes || '';
+      formatted.tags = normalizeArray(initialTrade.tags);
+      formatted.mistakes = normalizeArray(initialTrade.mistakes);
       formatted.stop_loss = initialTrade.stop_loss;
       formatted.take_profit = initialTrade.take_profit;
       formatted.commission = initialTrade.commission;
       
       setFormData(formatted);
+      setScreenshotPreview(initialTrade.screenshot_url || null);
     } else {
       if (user) {
         setFormData(prev => ({ ...prev, user_id: user.id }));
@@ -798,15 +832,15 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                     <div>
                       <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Pips / Points</div>
-                      <div className={`text-lg font-bold ${getPLColorClasses(displayPips, colorblindMode).text}`}>
-                        {displayPips >= 0 ? '+' : ''}{displayPips.toFixed(1)}
+                      <div className={`text-lg font-bold ${getPLColorClasses(Number(displayPips) || 0, colorblindMode).text}`}>
+                        {(Number(displayPips) || 0) >= 0 ? '+' : ''}{(Number(displayPips) || 0).toFixed(1)}
                       </div>
                     </div>
-                    {initialTrade?.r_multiple !== undefined && initialTrade?.r_multiple !== null && (
+                    {initialTrade?.r_multiple !== undefined && initialTrade?.r_multiple !== null && !isNaN(Number(initialTrade.r_multiple)) && (
                       <div className="col-span-2 mt-1 border-t border-black/[0.05] dark:border-white/[0.04] pt-2 flex justify-between items-center">
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">R-Multiple</span>
-                        <span className={`text-sm font-bold ${getPLColorClasses(initialTrade.r_multiple, colorblindMode).text}`}>
-                          {initialTrade.r_multiple > 0 ? '+' : ''}{initialTrade.r_multiple.toFixed(2)}R
+                        <span className={`text-sm font-bold ${getPLColorClasses(Number(initialTrade.r_multiple), colorblindMode).text}`}>
+                          {Number(initialTrade.r_multiple) > 0 ? '+' : ''}{Number(initialTrade.r_multiple).toFixed(2)}R
                         </span>
                       </div>
                     )}
@@ -814,8 +848,8 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
 
                   {/* P&L Display */}
                   <div className={`rounded-xl p-5 text-center mb-6 border ${
-                    pnl !== null 
-                      ? `${getPLColorClasses(pnl, colorblindMode).bg10} ${getPLColorClasses(pnl, colorblindMode).border30}`
+                    pnl !== null && !isNaN(Number(pnl))
+                      ? `${getPLColorClasses(Number(pnl), colorblindMode).bg10} ${getPLColorClasses(Number(pnl), colorblindMode).border30}`
                       : 'bg-black/[0.01] dark:bg-white/[0.02] border-black/[0.04] dark:border-white/[0.04]'
                   }`}>
                     <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
@@ -823,22 +857,22 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                     </div>
                     <AnimatePresence mode="wait">
                       <motion.div
-                        key={pnl?.toFixed(2) || 'empty'}
+                        key={pnl !== null && !isNaN(Number(pnl)) ? Number(pnl).toFixed(2) : 'empty'}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         className={`text-5xl font-black tracking-tight ${
-                          pnl !== null ? getPLColorClasses(pnl, colorblindMode).text : 'text-gray-400 dark:text-gray-700'
+                          pnl !== null && !isNaN(Number(pnl)) ? getPLColorClasses(Number(pnl), colorblindMode).text : 'text-gray-400 dark:text-gray-700'
                         }`}
-                        style={pnl !== null ? { textShadow: `0 0 30px ${getPLColorClasses(pnl, colorblindMode).hexShadow}` } : {}}
+                        style={pnl !== null && !isNaN(Number(pnl)) ? { textShadow: `0 0 30px ${getPLColorClasses(Number(pnl), colorblindMode).hexShadow}` } : {}}
                       >
-                        {pnl !== null ? `${pnl >= 0 ? '+' : ''}$${Math.abs(pnl).toFixed(2)}` : '$0.00'}
+                        {pnl !== null && !isNaN(Number(pnl)) ? `${Number(pnl) >= 0 ? '+' : ''}$${Math.abs(Number(pnl)).toFixed(2)}` : '$0.00'}
                       </motion.div>
                     </AnimatePresence>
                   </div>
 
                   {/* Tags Preview */}
-                  {formData.tags && formData.tags.length > 0 && (
+                  {Array.isArray(formData.tags) && formData.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-6">
                       {formData.tags.map(tag => (
                         <span key={tag} className="px-2 py-0.5 text-[10px] font-medium rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300">
@@ -849,7 +883,7 @@ const EnhancedTradeForm: React.FC<EnhancedTradeFormProps> = ({
                   )}
 
                   {/* Mistakes Preview */}
-                  {formData.mistakes && formData.mistakes.length > 0 && (
+                  {Array.isArray(formData.mistakes) && formData.mistakes.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-6">
                       {formData.mistakes.map(mistake => (
                         <span key={mistake} className={`px-2 py-0.5 text-[10px] font-medium rounded ${getPLColorClasses(-1, colorblindMode).bg10} ${getPLColorClasses(-1, colorblindMode).text} border ${getPLColorClasses(-1, colorblindMode).border30}`}>

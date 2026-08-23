@@ -525,23 +525,31 @@ const DEFAULT_VISIBLE_COLUMNS = {
   };
 
   const handleTradeFormSubmit = async (tradeData: Partial<Trade>) => {
-    if (selectedTrade && tradeData.id) {
-      await updateTrade({ ...selectedTrade, ...tradeData } as Trade);
-      await fetchPagedTrades();
-      await fetchGlobalMetrics();
-      setShowForm(false); setSelectedTrade(null);
-      toast.success('Trade updated');
-    } else {
-      if (!user) return;
-      const isFirst = trades.length === 0;
-      await addTrade({ ...tradeData, user_id: user.id } as Trade);
-      await fetchPagedTrades();
-      await fetchGlobalMetrics();
-      setShowForm(false); setSelectedTrade(null);
-      toast.success('Trade saved successfully');
-      if (isFirst) {
-        setShowConfetti(true);
+    try {
+      if (selectedTrade) {
+        const tradeId = tradeData.id || selectedTrade.id;
+        await updateTrade({ ...selectedTrade, ...tradeData, id: tradeId } as Trade);
+        await fetchPagedTrades();
+        await fetchGlobalMetrics();
+        setShowForm(false);
+        setSelectedTrade(null);
+        toast.success('Trade updated');
+      } else {
+        if (!user) return;
+        const isFirst = trades.length === 0;
+        await addTrade({ ...tradeData, user_id: user.id } as Trade);
+        await fetchPagedTrades();
+        await fetchGlobalMetrics();
+        setShowForm(false);
+        setSelectedTrade(null);
+        toast.success('Trade saved successfully');
+        if (isFirst) {
+          setShowConfetti(true);
+        }
       }
+    } catch (err) {
+      console.error('Failed to submit trade:', err);
+      toast.error('Failed to save trade');
     }
   };
 

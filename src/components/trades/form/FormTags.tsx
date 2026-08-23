@@ -134,12 +134,12 @@ export const FormTags: React.FC<FormTagsProps> = ({
                 Strategy Entry Checklist
               </span>
               <span className="text-[10px] text-gray-500 font-medium">
-                {formData.tags?.filter(t => strategyRules.includes(t))?.length || 0} / {strategyRules.length} met
+                {(Array.isArray(formData.tags) ? formData.tags : []).filter(t => strategyRules.includes(t))?.length || 0} / {strategyRules.length} met
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {strategyRules.map((rule: string, idx: number) => {
-                const isChecked = formData.tags?.includes(rule) ?? false;
+                const isChecked = Array.isArray(formData.tags) && formData.tags.includes(rule);
                 return (
                   <button
                     key={idx}
@@ -182,12 +182,12 @@ export const FormTags: React.FC<FormTagsProps> = ({
               type="button"
               onClick={() => onToggleTag(tag)}
               className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
-                formData.tags?.includes(tag)
+                Array.isArray(formData.tags) && formData.tags.includes(tag)
                   ? 'bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
                   : 'bg-white dark:bg-[#0d0e16] text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 border-black/10 dark:border-transparent hover:border-black/20 dark:hover:border-white/[0.06]'
               }`}
             >
-              {formData.tags?.includes(tag) && <Check className="w-3.5 h-3.5 inline-block mr-1.5" />}
+              {Array.isArray(formData.tags) && formData.tags.includes(tag) && <Check className="w-3.5 h-3.5 inline-block mr-1.5" />}
               {tag}
             </button>
           ))}
@@ -237,12 +237,12 @@ export const FormTags: React.FC<FormTagsProps> = ({
               type="button"
               onClick={() => onToggleMistake(m)}
               className={`inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg border transition-all ${
-                formData.mistakes?.includes(m)
+                Array.isArray(formData.mistakes) && formData.mistakes.includes(m)
                   ? 'bg-red-500/20 text-red-700 dark:text-red-300 border-red-500/30'
                   : 'bg-white dark:bg-[#0d0e16] text-gray-500 hover:text-gray-900 dark:hover:text-gray-300 border-black/10 dark:border-transparent hover:border-black/20 dark:hover:border-white/[0.06]'
               }`}
             >
-              {formData.mistakes?.includes(m) && <X className="w-3.5 h-3.5 inline-block mr-1.5" />}
+              {Array.isArray(formData.mistakes) && formData.mistakes.includes(m) && <X className="w-3.5 h-3.5 inline-block mr-1.5" />}
               {m}
             </button>
           ))}

@@ -40,7 +40,7 @@ export function formatPercentage(value: number): string {
  * into a direct static image URL (e.g. https://s3.tradingview.com/snapshots/p/pCPdcgL4.png).
  */
 export function resolveTradingViewUrl(url: string | null | undefined): string {
-  if (!url) return '';
+  if (!url || typeof url !== 'string') return '';
   const trimmed = url.trim();
   
   // If it's a Supabase storage URL, rewrite it to go through the media proxy (authenticated via cookies)
